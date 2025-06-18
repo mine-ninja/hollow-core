@@ -6,10 +6,14 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.List;
+
 public abstract class SimpleCommand extends Command {
 
     protected String requiredPermission = null;
     protected String noPermissionMessage;
+
 
     public SimpleCommand(String name) {
         super(name);
@@ -36,4 +40,8 @@ public abstract class SimpleCommand extends Command {
     }
 
     public abstract void performCommand(@NotNull CommandContext ctx) throws CommandFailedException;
+
+    public List<String> performTabComplete(@NotNull CommandContext ctx) {
+        return Collections.emptyList();
+    }
 }

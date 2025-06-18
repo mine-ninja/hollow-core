@@ -16,6 +16,19 @@ public class CommandContext {
     private final CommandSender sender;
     private final String[] args;
 
+    public boolean isArgsLength(int length) {
+        return args.length == length;
+    }
+
+    public void sendMessage(@NotNull String message) {
+        sender.sendMessage(message);
+    }
+
+    public void sendMessage(@NotNull String... message) {
+        for (String msg : message) {
+            sender.sendMessage(msg);
+        }
+    }
 
     public @Nullable Player getSenderAsPlayer() {
         if (sender instanceof Player player) {
