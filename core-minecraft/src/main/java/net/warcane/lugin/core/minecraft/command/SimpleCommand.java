@@ -11,32 +11,31 @@ import java.util.List;
 
 public abstract class SimpleCommand extends Command {
 
-    protected String requiredPermission = null;
+    protected String requiredPermission;
     protected String noPermissionMessage;
-
 
     public SimpleCommand(String name) {
         super(name);
+        this.requiredPermission = null;
         this.noPermissionMessage = "§cVocê não tem permissão para executar este comando.";
     }
 
     @Override
-    public boolean execute(CommandSender commandSender, String s, String[] strings) {
+    public boolean execute(CommandSender commandSender, String s, String[] args) {
         if (requiredPermission != null && !commandSender.hasPermission(requiredPermission)) {
             commandSender.sendMessage(noPermissionMessage);
             return false;
         }
 
+        CommandContext ctx = new CommandContext(commandSender, args);
         try {
-            CommandContext ctx = new CommandContext(commandSender, strings);
             performCommand(ctx);
-            return true;
         } catch (CommandFailedException e) {
             commandSender.sendMessage("§c" + e.getMessage());
             return false;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
+
+        return true;
     }
 
     public abstract void performCommand(@NotNull CommandContext ctx) throws CommandFailedException;
