@@ -20,6 +20,7 @@ public class CommandContext {
         return args.length == length;
     }
 
+
     public void sendMessage(@NotNull String message) {
         sender.sendMessage(message);
     }
@@ -30,11 +31,11 @@ public class CommandContext {
         }
     }
 
-    public @Nullable Player getSenderAsPlayer() {
+    public Player getSenderAsPlayer() {
         if (sender instanceof Player player) {
             return player;
         }
-        return null;
+        throw new CommandFailedException("§cNão é possível executar este comando, pois o executor não é um jogador.");
     }
 
     public <R> R getArgOrThrow(int argIndex, @NotNull Function<String, R> function, @NotNull String errorMessage) throws CommandFailedException {
@@ -46,6 +47,20 @@ public class CommandContext {
         } catch (Exception e) {
             throw new CommandFailedException(errorMessage);
         }
+    }
+
+    public String getRawArgOrNull(int argIndex) {
+        if (argIndex < 0 || argIndex >= args.length) {
+            return null;
+        }
+        return args[argIndex];
+    }
+
+    public String getRawArgOrThrow(int argIndex, @NotNull String errorMessage) throws CommandFailedException {
+        if (argIndex < 0 || argIndex >= args.length) {
+            throw new CommandFailedException(errorMessage);
+        }
+        return args[argIndex];
     }
 
     public <R> R getArgOrDefault(int argIndex, @NotNull Function<String, R> function, @Nullable R defaultValue) {

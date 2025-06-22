@@ -5,7 +5,7 @@ plugins {
 
 allprojects {
   group = "net.warcane.core"
-  version = "0.0.1-SNAPSHOT"
+  version = "0.1.0"
 }
 
 subprojects {
@@ -17,7 +17,7 @@ subprojects {
     targetCompatibility = JavaVersion.VERSION_17
   }
 
-  val artifactIdValue = "lugin-core-${project.name}"
+  val artifactIdValue = "lugin-${project.name}"
   val repositoryUser = (project.findProperty("luginUser") ?: "lugin") as String
   val repositoryPassword = (project.findProperty("luginPassword") ?: "lugin") as String
 
