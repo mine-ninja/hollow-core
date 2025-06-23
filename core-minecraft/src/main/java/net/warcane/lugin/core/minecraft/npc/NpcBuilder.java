@@ -7,6 +7,8 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Predicate;
 
 public class NpcBuilder {
@@ -17,7 +19,7 @@ public class NpcBuilder {
     private NpcSkinProvider skinProvider;
 
     private Predicate<Player> renderFilter = player -> true;
-
+    private final Map<String, Object> metadata = new HashMap<>();
 
     public NpcBuilder(Location location) {
         this.location = location;
@@ -38,6 +40,10 @@ public class NpcBuilder {
         return this;
     }
 
+    public NpcBuilder withMetadata(@NotNull String key, @NotNull Object value) {
+        this.metadata.put(key, value);
+        return this;
+    }
 
     public Npc build(@NotNull NpcManager npcManager) {
         Npc npc = npcManager.createNpc(location);
@@ -50,6 +56,8 @@ public class NpcBuilder {
         if (renderFilter != null) {
             npc.getVisibilityHandler().setRenderFilter(renderFilter);
         }
+
+        metadata.forEach(npc::setMetadata);
         return npc;
     }
 }
