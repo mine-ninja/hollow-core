@@ -34,9 +34,9 @@ public class SkinFetcher {
 
 
     /**
-     * URL da API da Ashcon para buscar skins por nome de usuário.
+     * Endpoint do playerdb.co para buscar informações de jogadores.
      */
-    private static final String ASHCON_API = "https://api.ashcon.app/mojang/v2/user/%s";
+    private static final String PLAYER_DB_ENDPOINT = "https://playerdb.co/api/player/minecraft/%s";
 
 
     /**
@@ -87,12 +87,9 @@ public class SkinFetcher {
         }
 
         try {
-            JsonElement element = fetchJsonFromApi(ASHCON_API, username);
+            JsonElement element = fetchJsonFromApi(PLAYER_DB_ENDPOINT, username);
             if (element instanceof JsonObject object) {
-                if (hasError(object)) {
-                    throw new Exception(object.get("errorMessage").getAsString());
-                }
-                Skin skin = processAshconResponse(object);
+                Skin skin = processPlayerDBResponse(object);
                 if (skin != null) {
                     CACHED_BY_NAME.put(username, skin);
                     CACHED_BY_UUID.put(UUID.fromString(skin.getUuid()), skin);
@@ -123,6 +120,38 @@ public class SkinFetcher {
                   raw.get("value").getAsString(),
                   raw.get("signature").getAsString()
                 );
+                skin.setUuid(uuid);
+                skin.setName(username);
+                return skin;
+            }
+        }
+        return null;
+    }
+
+
+    /**
+     * Processa a resposta JSON da API da PlayerDB e cria um objeto Skin.
+     *
+     * @param object Objeto JSON da resposta.
+     * @return Objeto Skin com os dados da skin ou null se não houver dados válidos.
+     */
+    private Skin processPlayerDBResponse(JsonObject object) {
+        if (!object.get("success").getAsBoolean()) return null;
+
+        JsonObject player = object.getAsJsonObject("data").getAsJsonObject("player");
+        if (player == null || !player.has("id") || !player.has("username") || !player.has("properties")) {
+            return null;
+        }
+
+        String uuid = player.get("id").getAsString();
+        String username = player.get("username").getAsString();
+        JsonArray properties = player.getAsJsonArray("properties");
+
+        for (JsonElement prop : properties) {
+            JsonObject property = prop.getAsJsonObject();
+            if ("textures".equals(property.get("name").getAsString())
+                && property.has("value") && property.has("signature")) {
+                Skin skin = new Skin(property.get("value").getAsString(), property.get("signature").getAsString());
                 skin.setUuid(uuid);
                 skin.setName(username);
                 return skin;

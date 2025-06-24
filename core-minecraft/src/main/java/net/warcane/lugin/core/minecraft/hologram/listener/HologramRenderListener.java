@@ -71,10 +71,20 @@ public class HologramRenderListener implements Listener {
             hologram.hideTo(viewer);
         } else if (hologram.canView(viewer)) {
             if (hologram.isShown(viewer)) {
-                boolean canUpdate = hologram.canAutoUpdate() && fromTask;
+                boolean canUpdate = fromTask && hologram.isAutoUpdate() && hologram.isExpired();
+
+//                viewer.sendMessage(new String[]{
+//                  "§cholo_id: " + hologram.getUniqueId(),
+//                  "§cloc: " + hologram.getLocation().toString(),
+//                  "§cupdate_interval: " + hologram.getUpdateInterval(),
+//                  "§cis_auto_update: " + hologram.isAutoUpdate(),
+//                  "§cfrom_task: " + fromTask,
+//                  "§cis_expired: " + hologram.isExpired()
+//                });
                 if (canUpdate) {
+//                    viewer.sendMessage("§aUpdating hologram: " + hologram.getUniqueId());
                     hologram.updateAllLines(viewer);
-                    hologram.refreshAutoUpdateInterval();
+                    hologram.setUpdateInterval(System.currentTimeMillis() + hologram.getUpdateInterval());
                 }
             } else {
                 hologram.showTo(viewer);

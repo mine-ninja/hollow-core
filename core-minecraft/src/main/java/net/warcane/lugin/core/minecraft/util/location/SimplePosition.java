@@ -1,7 +1,9 @@
 package net.warcane.lugin.core.minecraft.util.location;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.util.NumberConversions;
@@ -10,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class SimplePosition {
 
     @NotNull
@@ -31,14 +34,17 @@ public class SimplePosition {
         return new Location(world, x, y, z);
     }
 
+    @JsonIgnore
     public int getBlockX() {
         return NumberConversions.floor(x);
     }
 
+    @JsonIgnore
     public int getBlockY() {
         return NumberConversions.floor(y);
     }
 
+    @JsonIgnore
     public int getBlockZ() {
         return NumberConversions.floor(z);
     }

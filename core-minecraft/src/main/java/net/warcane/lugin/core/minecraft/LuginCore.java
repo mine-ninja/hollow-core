@@ -44,8 +44,6 @@ public class LuginCore extends SimplePlugin {
 
             Tasks.runAsync(() -> {
                 var npcLocation = ctx.getSenderAsPlayer().getLocation();
-
-
                 var npcHologram = new HologramBuilder(npcLocation.clone().add(0, 2.3, 0))
                   .withAutoUpdate(false)
                   .withLine("§3§LNPC CONTADOR")

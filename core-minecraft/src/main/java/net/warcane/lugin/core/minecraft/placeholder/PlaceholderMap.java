@@ -44,8 +44,10 @@ public class PlaceholderMap {
     }
 
 
+    @NotNull
     public static String parseString(@NotNull String input) {
-        return parseString(input, null);
+        String output = parseString(input, null);
+        return output == null ? input : output;
     }
 
     /**
@@ -56,12 +58,12 @@ public class PlaceholderMap {
             return input;
         }
 
-        return input.transform(text -> {
-            for (TextPlaceholder textPlaceholder : TEXT_PLACEHOLDERS) {
-                text = transformString(playerToReceiveMessage, text, textPlaceholder);
-            }
-            return text;
-        });
+        String text = input;
+        for (TextPlaceholder textPlaceholder : TEXT_PLACEHOLDERS) {
+            text = transformString(playerToReceiveMessage, text, textPlaceholder);
+        }
+
+        return text;
     }
 
     private static String transformString(@Nullable Player playerToReceiveMessage, String text, TextPlaceholder textPlaceholder) {

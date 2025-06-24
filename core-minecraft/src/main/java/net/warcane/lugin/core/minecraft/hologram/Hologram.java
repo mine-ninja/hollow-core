@@ -22,7 +22,6 @@ public class Hologram {
     private static final double LINE_SPACING = 0.30;
     protected static double DEFAULT_RANGE = NumberConversions.square(Bukkit.getViewDistance() << 4);
 
-
     private final UUID uniqueId;
     private Location location;
 
@@ -32,7 +31,8 @@ public class Hologram {
     private final Set<UUID> viewers = new HashSet<>();
 
     private boolean autoUpdate;
-    private long updateInterval = 20L;
+    private long updateInterval = 20L; // Intervalo em ticks ou milissegundos
+    private long nextUpdateTime = 0L;  // Timestamp de quando deve ser a próxima atualização
 
     public Hologram(@NotNull Location location) {
         this.uniqueId = UUID.randomUUID();
@@ -59,19 +59,31 @@ public class Hologram {
         addLine(player -> lineText);
     }
 
-
     public void addLine(@NotNull Function<Player, String> lineFunction) {
-        var yOffset = lines.size() * LINE_SPACING;
-        var lineLocation = location.clone().subtract(0, yOffset, 0);
-
-        var line = new HologramLine(this, lineLocation, lineFunction);
+        var line = new HologramLine(this, location.clone(), lineFunction);
         lines.add(line);
+
+        recalculateLinePositions();
 
         location.getWorld()
           .getPlayers()
           .stream()
           .filter(this::canView)
           .forEach(line::showTo);
+    }
+
+    /**
+     * Recalcula as posições de todas as linhas baseado no alinhamento de baixo para cima
+     */
+    private void recalculateLinePositions() {
+        for (int i = 0; i < lines.size(); i++) {
+            HologramLine line = lines.get(i);
+            double yOffset = (lines.size() - 1 - i) * LINE_SPACING;
+            Location newLineLocation = location.clone().add(0, yOffset, 0);
+            line.setLocation(newLineLocation);
+
+            forEachViewers(line::teleport);
+        }
     }
 
     public void updateAllLines(@NotNull Player player) {
@@ -96,9 +108,10 @@ public class Hologram {
         if (lineToRemove != null) {
             lines.remove(lineIndex);
             forEachViewers(lineToRemove::hideTo);
+
+            recalculateLinePositions();
         }
     }
-
 
     @Nullable
     public HologramLine getLine(int index) {
@@ -112,11 +125,7 @@ public class Hologram {
     public void teleport(@NotNull Location newLocation) {
         this.location = newLocation;
 
-        for (HologramLine line : lines) {
-            double yOffset = newLocation.getY() - (lines.indexOf(line) * LINE_SPACING);
-            line.setLocation(newLocation.clone().add(0, yOffset, 0));
-            forEachViewers(line::teleport);
-        }
+        recalculateLinePositions();
     }
 
     public void showToAll() {
@@ -146,12 +155,18 @@ public class Hologram {
         viewers.clear();
     }
 
-    public boolean canAutoUpdate() {
-        return autoUpdate && System.currentTimeMillis() >= updateInterval;
+    // CORREÇÃO: Métodos de controle de tempo corrigidos
+    public void refreshAutoUpdateInterval() {
+        this.nextUpdateTime = System.currentTimeMillis() + updateInterval;
     }
 
-    public void refreshAutoUpdateInterval() {
-        this.updateInterval = System.currentTimeMillis() + updateInterval;
+    public boolean isExpired() {
+        return System.currentTimeMillis() >= nextUpdateTime;
+    }
+
+    // Método adicional para facilitar o uso
+    public void resetUpdateTimer() {
+        refreshAutoUpdateInterval();
     }
 
     public void forEachViewers(@NotNull Consumer<Player> action) {
@@ -165,5 +180,32 @@ public class Hologram {
 
     public boolean matchesWithWorld(@NotNull World world) {
         return world.getName().equals(location.getWorld().getName());
+    }
+
+    /**
+     * Adiciona uma linha em uma posição específica (0 = topo, último índice = base)
+     */
+    public void insertLine(int index, @NotNull Function<Player, String> lineFunction) {
+        if (index < 0 || index > lines.size()) {
+            throw new IndexOutOfBoundsException("Índice inválido: " + index);
+        }
+
+        var line = new HologramLine(this, location.clone(), lineFunction);
+        lines.add(index, line);
+
+        recalculateLinePositions();
+
+        location.getWorld()
+          .getPlayers()
+          .stream()
+          .filter(this::canView)
+          .forEach(line::showTo);
+    }
+
+    /**
+     * Adiciona uma linha em uma posição específica (0 = topo, último índice = base)
+     */
+    public void insertLine(int index, @NotNull String lineText) {
+        insertLine(index, player -> lineText);
     }
 }

@@ -2,12 +2,14 @@ package net.warcane.lugin.core.minecraft.util.location;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.jetbrains.annotations.NotNull;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class SimpleLocation {
 
     @NotNull
@@ -22,10 +24,10 @@ public class SimpleLocation {
         );
     }
 
-    private final String worldName;
-    private final double x;
-    private final double y;
-    private final double z;
+    private String worldName;
+    private double x;
+    private double y;
+    private double z;
 
     private float yaw;
     private float pitch;

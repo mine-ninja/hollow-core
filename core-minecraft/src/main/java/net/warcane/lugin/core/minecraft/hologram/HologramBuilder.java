@@ -43,7 +43,7 @@ public class HologramBuilder {
     }
 
     public HologramBuilder withUpdateInterval(long updateInterval, TimeUnit unit) {
-        this.updateInterval = unit.toMillis(updateInterval);
+        this.updateInterval = unit.toSeconds(updateInterval) * 1000L;
         return this;
     }
 

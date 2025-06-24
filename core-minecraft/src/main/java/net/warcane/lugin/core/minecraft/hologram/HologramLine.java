@@ -51,13 +51,13 @@ public class HologramLine {
             Packet<?> spawnPacket = createSpawnPacket(player);
             PacketUtil.sendPacket(player, spawnPacket);
 
-            String text = line.apply(player);
-            System.out.println(
-              "Showing hologram to " + player.getName() +
-              " | EntityID: " + entityId +
-              " | Text: '" + text + "'" +
-              " | Location: " + location.toString()
-            );
+//            String text = line.apply(player);
+//            System.out.println(
+//              "Showing hologram to " + player.getName() +
+//              " | EntityID: " + entityId +
+//              " | Text: '" + text + "'" +
+//              " | Location: " + location.toString()
+//            );
         } catch (Exception e) {
             throw new RuntimeException("Failed to show hologram line to player: " + player.getName(), e);
         }
