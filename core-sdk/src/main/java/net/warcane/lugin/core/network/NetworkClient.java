@@ -8,7 +8,6 @@ import net.warcane.lugin.core.network.packet.listener.PacketListener;
 import net.warcane.lugin.core.network.packet.listener.PacketListenerMap;
 import net.warcane.lugin.core.network.packet.sender.PacketSender;
 import net.warcane.lugin.core.util.address.HostAddress;
-import net.warcane.lugin.core.util.property.Property;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -32,7 +31,7 @@ public class NetworkClient {
         this.platform = platform;
         this.hostAddres = address;
         this.executorService = executorService;
-        this.redisConnector = new RedisConnector(Property.get("REDIS_URL"));
+        this.redisConnector = RedisConnector.getInstance();
         this.packetSender = new PacketSender(platform, address, redisConnector);
     }
 
@@ -51,6 +50,9 @@ public class NetworkClient {
             final var pubSub = new InternalPubSub(redisConnector, packetListenerMap, List.of(channels));
             jedis.subscribe(pubSub, networkChannelNames);
         }), "NetworkClient-SubscriptionThread");
+
+        this.subscriptionThread.setDaemon(true);
+        this.subscriptionThread.start();
     }
 
     public void sendPacket(@NotNull NetworkChannel channel, @NotNull NetworkPacket packet) {

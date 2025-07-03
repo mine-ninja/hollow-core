@@ -5,7 +5,6 @@ import net.md_5.bungee.api.config.ListenerInfo;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.warcane.lugin.core.AbstractPlatform;
 import net.warcane.lugin.core.ProxyPlatform;
-import net.warcane.lugin.core.database.RedisConnector;
 import net.warcane.lugin.core.network.NetworkClient;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
@@ -25,7 +24,7 @@ public class BungeecordPlatform extends AbstractPlatform implements ProxyPlatfor
     private final NetworkClient networkClient;
 
     public BungeecordPlatform(@NotNull Plugin plugin) {
-        super(RedisConnector.fromInternalProperties());
+        super(localAddress());
 
         this.plugin = plugin;
         this.networkClient = new NetworkClient(this, localAddress(), executorService);

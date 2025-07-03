@@ -14,6 +14,20 @@ import org.bson.codecs.pojo.PojoCodecProvider;
 
 public class MongoDbConnector {
 
+    private static MongoDbConnector instance;
+
+    /**
+     * Retorna uma instância singleton do MongoDbConnector.
+     *
+     * @return Instância do MongoDbConnector.
+     */
+    public static MongoDbConnector getInstance() {
+        if (instance == null) {
+            instance = fromLocalProperty();
+        }
+        return instance;
+    }
+
     public static MongoDbConnector fromLocalProperty() {
         final var mongoUrl = Property.getOrThrow("MONGO_URL");
         final var databaseName = Property.get("MONGO_DATABASE", "warcane");

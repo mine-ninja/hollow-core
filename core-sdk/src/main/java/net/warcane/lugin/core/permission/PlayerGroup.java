@@ -1,0 +1,48 @@
+package net.warcane.lugin.core.permission;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+import java.util.Arrays;
+import java.util.Map;
+
+import static java.util.stream.Collectors.toMap;
+
+@Getter
+@AllArgsConstructor
+public enum PlayerGroup {
+    MASTER("master", "§6[Master]", 10),
+    MANAGER("manager", "§4[Gerente] ", 9),
+    ADMIN("admin", "§c[Admin]", 8),
+    MODERATOR("moderator", "§2[Moderador]", 7),
+    HELPER("helper", "§e[Ajudante]", 6),
+    INFLUENCER("influencer", "§c[Influencer]", 5),
+    YOUTUBER("youtuber", "§b[Youtuber]", 4),
+    VIP_PLUS("vip_plus", "§b[VIP+]", 3),
+    VIP("vip", "§a[VIP]", 2),
+    MEMBER("member", "§7", 1);
+
+
+    public static final Map<String, PlayerGroup> BY_ID = Arrays.stream(values())
+      .collect(toMap(PlayerGroup::getId, group -> group));
+
+
+    private final String id;
+    private final String prefix;
+    private final int powerLevel;
+
+    public boolean isGreaterOrEqualTo(PlayerGroup other) {
+        return this.powerLevel >= other.powerLevel;
+    }
+
+    public boolean isLowerThan(PlayerGroup other) {
+        return this.powerLevel < other.powerLevel;
+    }
+
+    public char getPrefixColorCode() {
+        if (prefix.isEmpty()) {
+            return '7'; // Default color code for gray
+        }
+        return prefix.charAt(1);
+    }
+}

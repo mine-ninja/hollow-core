@@ -33,7 +33,7 @@ final class PacketMappings {
      * <p>
      * Os IDs devem ser únicos e não podem ser alterados após a definição.
      */
-    private static final Int2ObjectMap<Class<? extends NetworkPacket>> PACKET_CLASS_BY_ID = new Int2ObjectOpenHashMap<>(
+    static final Int2ObjectMap<Class<? extends NetworkPacket>> PACKET_CLASS_BY_ID = new Int2ObjectOpenHashMap<>(
       ofEntries(
         // internal
         entry(0, PingPacket.class),
@@ -52,7 +52,7 @@ final class PacketMappings {
     /**
      * Mapeia o ID de um pacote para a classe correspondente.
      */
-    private static final Object2IntMap<Class<? extends NetworkPacket>> PACKET_ID_BY_CLASS = new Object2IntOpenHashMap<>(
+    static final Object2IntMap<Class<? extends NetworkPacket>> PACKET_ID_BY_CLASS = new Object2IntOpenHashMap<>(
       PACKET_CLASS_BY_ID
         .int2ObjectEntrySet()
         .stream()

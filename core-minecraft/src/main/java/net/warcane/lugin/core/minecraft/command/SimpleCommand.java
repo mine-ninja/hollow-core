@@ -1,11 +1,13 @@
 package net.warcane.lugin.core.minecraft.command;
 
-import net.warcane.lugin.core.group.PlayerGroup;
+import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
 import net.warcane.lugin.core.minecraft.command.subcommand.SimpleSubCommand;
+import net.warcane.lugin.core.permission.PlayerGroup;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +21,7 @@ public abstract class SimpleCommand extends Command {
     @Deprecated
     protected String requiredPermission;
 
-    protected PlayerGroup requiredGroup;
+    protected PlayerGroup requiredGroup = PlayerGroup.MEMBER;
     protected String noPermissionMessage;
 
 
@@ -39,6 +41,19 @@ public abstract class SimpleCommand extends Command {
     @Override
     public boolean execute(CommandSender commandSender, String s, String[] args) {
         try {
+            if (requiredGroup != null && BukkitPlatform.isInitialized() && commandSender instanceof Player player) {
+                final var account = BukkitPlatform.getInstance().getPlayerAccountService().getCachedAccount(player.getUniqueId());
+                if (account == null) {
+                    commandSender.sendMessage("§cOcorreu um erro ao obter suas informações de conta.");
+                    return false;
+                }
+
+                if (!account.hasGroupPowers(requiredGroup)) {
+                    commandSender.sendMessage("§cVocê não tem permissão para executar este comando.");
+                    return false;
+                }
+            }
+
             if (requiredPermission != null && !commandSender.hasPermission(requiredPermission)) {
                 commandSender.sendMessage(noPermissionMessage);
                 return false;

@@ -15,6 +15,20 @@ import java.util.function.Function;
 @Data
 public class RedisConnector {
 
+    private static RedisConnector instance;
+
+    /**
+     * Obtém a instância singleton do RedisConnector.
+     *
+     * @return Instância do RedisConnector.
+     */
+    public static @NotNull RedisConnector getInstance() {
+        if (instance == null) {
+            instance = fromInternalProperties();
+        }
+        return instance;
+    }
+
     public static @NotNull RedisConnector fromInternalProperties() {
         final var redisUrl = Property.getOrThrow("REDIS_URL");
         return new RedisConnector(redisUrl);

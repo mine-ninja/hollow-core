@@ -1,0 +1,3 @@
+name: LuginCoreProxyPlugin
+main: net.warcane.lugin.core.proxy.BungeecordPlatformPlugin
+version: 0.0.1

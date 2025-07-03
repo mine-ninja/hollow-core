@@ -5,10 +5,10 @@ import java.io.Serializable;
 public interface NetworkPacket extends Serializable {
 
     static int idOf(Class<? extends NetworkPacket> packetClass) {
-        throw new UnsupportedOperationException("Method not implemented yet");
+        return PacketMappings.PACKET_ID_BY_CLASS.getInt(packetClass);
     }
 
     static Class<? extends NetworkPacket> classOf(int id) {
-        throw new UnsupportedOperationException("Method not implemented yet");
+        return PacketMappings.PACKET_CLASS_BY_ID.get(id);
     }
 }

@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.AbstractPlatform;
 import net.warcane.lugin.core.MinecraftServerPlatform;
 import net.warcane.lugin.core.Platform;
-import net.warcane.lugin.core.database.RedisConnector;
 import net.warcane.lugin.core.minecraft.listener.InternalPlayerListener;
 import net.warcane.lugin.core.network.NetworkClient;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
@@ -25,6 +24,25 @@ import static net.warcane.lugin.core.minecraft.task.Tasks.runAsyncLater;
 
 @Slf4j
 public class BukkitPlatform extends AbstractPlatform implements MinecraftServerPlatform {
+
+    /**
+     * Cria uma instância da plataforma Bukkit (Se não existir) e a registra no Bukkit ServicesManager.
+     *
+     * @param plugin       o plugin Bukkit associado a esta plataforma.
+     * @param categoryType o tipo de categoria do servidor.
+     * @return a instância de BukkitPlatform.
+     */
+    public static BukkitPlatform provide(@NotNull Plugin plugin, @NotNull ServerCategoryType categoryType) {
+        if (isInitialized()) {
+            final var currentInstance = getInstance();
+            if (currentInstance.getServerCategoryType() != categoryType) {
+                log.warn("Attempted to provide a BukkitPlatform with a different category type. Current: {}, Provided: {}",
+                  currentInstance.getServerCategoryType(), categoryType);
+            }
+            return currentInstance;
+        }
+        return new BukkitPlatform(plugin, categoryType);
+    }
 
     /**
      * Verifica se a plataforma Bukkit está inicializada.
@@ -51,19 +69,18 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     }
 
 
+
     private final Plugin plugin;
-    private final HostAddress hostAddress;
     private final ServerCategoryType serverCategoryType;
 
     private final NetworkClient networkClient;
 
     private boolean online;
 
-    public BukkitPlatform(Plugin plugin, @NotNull ServerCategoryType serverCategoryType) {
-        super(RedisConnector.fromInternalProperties());
+    private BukkitPlatform(Plugin plugin, @NotNull ServerCategoryType serverCategoryType) {
+        super(HostAddress.localAddress((short) Bukkit.getPort()));
 
         this.plugin = plugin;
-        this.hostAddress = HostAddress.localAddress((short) Bukkit.getPort());
         this.serverCategoryType = serverCategoryType;
         this.networkClient = new NetworkClient(this, hostAddress, executorService);
 
@@ -119,8 +136,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     }
 
     public GameServer getGameServer() {
-        return new GameServer(this.getId(), this.getServerCategoryType(), this.getServerHostAddress(),
-          this.getPlayerCount(), this.online);
+        return new GameServer(this.getId(), this.getServerCategoryType(), this.getServerHostAddress(), this.getPlayerCount(), this.online);
     }
 
     @NotNull
