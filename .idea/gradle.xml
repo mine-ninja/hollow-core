@@ -10,6 +10,7 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/core-minecraft" />
+            <option value="$PROJECT_DIR$/core-proxy" />
             <option value="$PROJECT_DIR$/core-sdk" />
           </set>
         </option>

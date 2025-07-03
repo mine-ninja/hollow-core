@@ -6,12 +6,19 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import net.warcane.lugin.core.util.property.Property;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 
 public class MongoDbConnector {
+
+    public static MongoDbConnector fromLocalProperty() {
+        final var mongoUrl = Property.getOrThrow("MONGO_URL");
+        final var databaseName = Property.get("MONGO_DATABASE", "warcane");
+        return new MongoDbConnector(mongoUrl, databaseName);
+    }
 
     private static final CodecRegistry CODEC_REGISTRY = CodecRegistries.fromRegistries(
       MongoClientSettings.getDefaultCodecRegistry(),

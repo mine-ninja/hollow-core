@@ -139,11 +139,11 @@ public class SkinFetcher {
         if (!object.get("success").getAsBoolean()) return null;
 
         JsonObject player = object.getAsJsonObject("data").getAsJsonObject("player");
-        if (player == null || !player.has("id") || !player.has("username") || !player.has("properties")) {
+        if (player == null || !player.has("serverId") || !player.has("username") || !player.has("properties")) {
             return null;
         }
 
-        String uuid = player.get("id").getAsString();
+        String uuid = player.get("serverId").getAsString();
         String username = player.get("username").getAsString();
         JsonArray properties = player.getAsJsonArray("properties");
 

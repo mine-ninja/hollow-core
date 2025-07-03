@@ -60,7 +60,7 @@ public class PacketUtil {
     public static PacketPlayOutSpawnEntityLiving buildSpawnerEntityLivingPacket(DataWatcher watcher, int entityId, int typeId, Location location) {
         PacketPlayOutSpawnEntityLiving packet = new PacketPlayOutSpawnEntityLiving();
         setFieldValue(packet, "a", entityId);
-        setFieldValue(packet, "b", typeId); // id da entidade
+        setFieldValue(packet, "b", typeId); // serverId da entidade
         setFieldValue(packet, "c", floor(location.getX() * 32D));
         setFieldValue(packet, "d", floor(location.getY() * 32D));
         setFieldValue(packet, "e", floor(location.getZ() * 32D));
@@ -90,7 +90,7 @@ public class PacketUtil {
         dataWatcher.a(6, (float) 20);
 
         PacketPlayOutNamedEntitySpawn packet = new PacketPlayOutNamedEntitySpawn();
-        setFieldValue(packet, "a", entityId);//id
+        setFieldValue(packet, "a", entityId);//serverId
         setFieldValue(packet, "b", profile.getId());//uuid
         setFieldValue(packet, "c", floor(loc.getX() * 32));//x
         setFieldValue(packet, "d", floor(loc.getY() * 32));//y

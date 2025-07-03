@@ -1,27 +1,71 @@
 package net.warcane.lugin.core.database;
 
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.sync.RedisCommands;
 import lombok.Data;
+import net.warcane.lugin.core.util.property.Property;
+import org.jetbrains.annotations.NotNull;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPoolConfig;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 @Data
 public class RedisConnector {
 
-    private final RedisClient redisClient;
-    private final StatefulRedisConnection<String, String> connection;
+    public static @NotNull RedisConnector fromInternalProperties() {
+        final var redisUrl = Property.getOrThrow("REDIS_URL");
+        return new RedisConnector(redisUrl);
+    }
+
+    public static @NotNull RedisConnector fromUrl(@NotNull String redisUri) {
+        return new RedisConnector(redisUri);
+    }
+
+    private JedisPool jedisPool;
+    private final String redisUri;
 
     public RedisConnector(String redisUri) {
-        this.redisClient = RedisClient.create(redisUri);
-        this.connection = redisClient.connect();
+        this.redisUri = redisUri;
+        initializePool();
     }
 
-    public RedisCommands<String, String> getCommands() {
-        return connection.sync();
+    private void initializePool() {
+        try {
+            URI uri = new URI(redisUri);
+            String host = uri.getHost();
+            int port = uri.getPort() != -1 ? uri.getPort() : 6379;
+            String password =
+              uri.getUserInfo() != null && uri.getUserInfo().contains(":") ? uri.getUserInfo().split(":", 2)[1] : null;
+
+            JedisPoolConfig poolConfig = new JedisPoolConfig();
+            poolConfig.setMaxTotal(8);
+            poolConfig.setMaxIdle(4);
+            poolConfig.setMinIdle(2);
+            poolConfig.setTestOnBorrow(true);
+            poolConfig.setTestOnReturn(true);
+
+            jedisPool = new JedisPool(poolConfig, host, port, 2000, password);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid Redis URI: " + redisUri, e);
+        }
     }
 
-    public void close() {
-        connection.close();
-        redisClient.shutdown();
+    public <T> T supplyFromJedis(@NotNull Function<Jedis, T> jedisFunction) {
+        try (var jedisInstance = jedisPool.getResource()) {
+            return jedisFunction.apply(jedisInstance);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to execute Jedis function", e);
+        }
+    }
+
+    public void useJedis(@NotNull Consumer<Jedis> jedis) {
+        try (Jedis jedisInstance = jedisPool.getResource()) {
+            jedis.accept(jedisInstance);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to use Jedis instance", e);
+        }
     }
 }

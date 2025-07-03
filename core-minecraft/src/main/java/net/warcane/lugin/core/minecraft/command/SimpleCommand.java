@@ -1,5 +1,6 @@
 package net.warcane.lugin.core.minecraft.command;
 
+import net.warcane.lugin.core.group.PlayerGroup;
 import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
 import net.warcane.lugin.core.minecraft.command.subcommand.SimpleSubCommand;
@@ -15,8 +16,12 @@ import java.util.List;
 
 public abstract class SimpleCommand extends Command {
 
+    @Deprecated
     protected String requiredPermission;
+
+    protected PlayerGroup requiredGroup;
     protected String noPermissionMessage;
+
 
     protected boolean playersOnly;
     protected String playersOnlyMessage;
