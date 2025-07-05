@@ -2,6 +2,8 @@ package net.warcane.lugin.core.minecraft.command.context;
 
 import lombok.Data;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
+import net.warcane.lugin.core.util.time.Time;
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -19,7 +21,6 @@ public class CommandContext {
     public boolean isArgsLength(int length) {
         return args.length == length;
     }
-
 
     public void sendMessage(@NotNull String message) {
         sender.sendMessage(message);
@@ -145,5 +146,31 @@ public class CommandContext {
         } catch (IllegalArgumentException e) {
             throw new CommandFailedException(errorMessage);
         }
+    }
+
+    public <T> T throwIfNull(@Nullable T obj, @NotNull String errorMsg) {
+        if (obj == null) {
+            throw new CommandFailedException(errorMsg);
+        }
+        return obj;
+    }
+
+    public Time getTimeOrThrow(int argIndex, @NotNull String errorMessage) throws CommandFailedException {
+        if (argIndex < 0 || argIndex >= args.length) {
+            throw new CommandFailedException(errorMessage);
+        }
+        try {
+            return Time.parseString(args[argIndex]);
+        } catch (Exception e) {
+            throw new CommandFailedException(errorMessage);
+        }
+    }
+
+    public String joinArgs(int startIndex) {
+        if (startIndex < 0 || startIndex >= args.length) {
+            throw new CommandFailedException("§cÍndice de início inválido para junção de argumentos.");
+        }
+
+        return StringUtils.join(args, " ", startIndex, args.length);
     }
 }

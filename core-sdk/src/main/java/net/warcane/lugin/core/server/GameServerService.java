@@ -3,9 +3,9 @@ package net.warcane.lugin.core.server;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.database.RedisConnector;
-import net.warcane.lugin.core.player.PlayerCount;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
 import net.warcane.lugin.core.util.JsonUtil;
+import net.warcane.lugin.core.util.address.HostAddress;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,17 +34,30 @@ public class GameServerService {
     public int getTotalPlayerCount() {
         return queryAllServersInNetwork()
           .stream()
-          .map(GameServer::playerCount)
-          .mapToInt(PlayerCount::online)
+          .map(GameServer::serverPlayerCount)
+          .mapToInt(ServerPlayerCount::online)
           .sum();
     }
 
     public int getPlayerCountForServerCategory(@NotNull ServerCategoryType categoryType) {
         return queryServersByCategoryType(categoryType)
           .stream()
-          .map(GameServer::playerCount)
-          .mapToInt(PlayerCount::online)
+          .map(GameServer::serverPlayerCount)
+          .mapToInt(ServerPlayerCount::online)
           .sum();
+    }
+
+    @Nullable
+    public GameServer getByAddress(@NotNull HostAddress hostAddress) {
+        return connector.supplyFromJedis(jedis -> {
+            final var rawData = jedis.hvals(KEY);
+            return rawData.stream()
+              .map(data -> JsonUtil.fromJson(data, GameServer.class))
+              .filter(Objects::nonNull)
+              .filter(server -> server.hostAddress().equals(hostAddress))
+              .findFirst()
+              .orElse(null);
+        });
     }
 
     @Nullable

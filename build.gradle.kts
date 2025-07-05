@@ -5,7 +5,7 @@ plugins {
 
 allprojects {
   group = "net.warcane.core"
-  version = "0.1.7"
+  version = "0.1.8"
 }
 
 subprojects {
@@ -37,8 +37,8 @@ subprojects {
   publishing {
     repositories {
       maven {
-        name = "lugin"
-        url = uri("http://repo.luginbr.net/releases")
+        name = "reposiliteRepositoryReleases"
+        url = uri("http://node.luginbr.net:19133/releases")
         credentials {
           username = repositoryUser
           password = repositoryPassword

@@ -1,4 +1,4 @@
-package net.warcane.lugin.core.account;
+package net.warcane.lugin.core.player.account;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +19,7 @@ public interface PlayerAccountService {
      * @param executorService ExecutorService para operações assíncronas (não nulo).
      * @return Nova instância do PlayerAccountService.
      */
-    static @NotNull PlayerAccountService createNewInstance(@NotNull ExecutorService executorService) {
+    static @NotNull PlayerAccountService of(@NotNull ExecutorService executorService) {
         return new PlayerAccountServiceImpl(executorService);
     }
 
@@ -47,6 +47,10 @@ public interface PlayerAccountService {
      * @return CompletableFuture contendo a conta atualizada.
      */
     CompletableFuture<@NotNull PlayerAccount> updatePlayerAccount(@NotNull PlayerAccount toUpdate, @NotNull AccountUpdateOptions options);
+
+    default CompletableFuture<@NotNull PlayerAccount> updatePlayerAccount(@NotNull PlayerAccount toUpdate) {
+        return updatePlayerAccount(toUpdate, AccountUpdateOptions.DEFAULT);
+    }
 
     /**
      * Carrega a conta de um jogador pelo seu identificador único.

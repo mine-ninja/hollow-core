@@ -127,4 +127,11 @@ public record HostAddress(
     public String toString() {
         return port() <= 0 ? host() : host() + SEPARATOR + port();
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof HostAddress other)) return false;
+        return host.equals(other.host) && port == other.port;
+    }
 }

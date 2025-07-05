@@ -48,6 +48,15 @@ public class RedisCache<O> {
         return defaultValue;
     }
 
+    @NotNull
+    public O hget(@NotNull String key, @NotNull String field, @NotNull O defaultValue) {
+        final var value = hget(key, field);
+        if (value != null) return value;
+
+        hset(key, field, defaultValue);
+        return defaultValue;
+    }
+
     @Nullable
     public O hget(@NotNull String key, @NotNull String field) {
         return connector.supplyFromJedis(jedis -> {

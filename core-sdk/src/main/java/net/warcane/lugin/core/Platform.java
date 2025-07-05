@@ -1,8 +1,9 @@
 package net.warcane.lugin.core;
 
-import net.warcane.lugin.core.account.PlayerAccountService;
+import net.warcane.lugin.core.player.account.PlayerAccountService;
 import net.warcane.lugin.core.network.NetworkClient;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
+import net.warcane.lugin.core.group.GroupPermissionService;
 import net.warcane.lugin.core.server.GameServerService;
 
 /**
@@ -25,4 +26,6 @@ public interface Platform {
     GameServerService getGameServerService();
 
     PlayerAccountService getPlayerAccountService();
+
+    GroupPermissionService getGroupPermissionService();
 }

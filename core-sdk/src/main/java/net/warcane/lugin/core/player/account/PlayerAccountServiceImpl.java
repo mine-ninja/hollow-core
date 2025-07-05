@@ -1,4 +1,4 @@
-package net.warcane.lugin.core.account;
+package net.warcane.lugin.core.player.account;
 
 import net.warcane.lugin.core.util.data.MongoRepository;
 import net.warcane.lugin.core.util.data.RedisCache;

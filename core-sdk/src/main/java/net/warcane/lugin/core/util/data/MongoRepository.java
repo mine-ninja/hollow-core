@@ -55,4 +55,9 @@ public class MongoRepository<ID, O> {
     public List<O> queryAll() {
         return collection.find().into(new ArrayList<>());
     }
+
+    @NotNull
+    public MongoCollection<O> getCollection() {
+        return collection;
+    }
 }

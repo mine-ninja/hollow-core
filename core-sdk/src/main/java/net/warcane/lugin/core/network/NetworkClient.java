@@ -55,7 +55,7 @@ public class NetworkClient {
         this.subscriptionThread.start();
     }
 
-    public void sendPacket(@NotNull NetworkChannel channel, @NotNull NetworkPacket packet) {
+    public void sendNetworkPacket(@NotNull NetworkChannel channel, @NotNull NetworkPacket packet) {
         executorService.execute(() -> packetSender.sendPacket(channel, packet));
     }
 

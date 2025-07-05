@@ -8,6 +8,7 @@ import net.warcane.lugin.core.network.packet.impl.internal.PingPacket;
 import net.warcane.lugin.core.network.packet.impl.internal.PongPacket;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerConnectedToServerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDisconnectedFromServerPacket;
+import net.warcane.lugin.core.network.packet.impl.player.PlayerJoinRequestPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerUnregisterPacket;
 
@@ -45,7 +46,8 @@ final class PacketMappings {
 
         // player lifecycle
         entry(4, PlayerConnectedToServerPacket.class),
-        entry(5, PlayerDisconnectedFromServerPacket.class)
+        entry(5, PlayerDisconnectedFromServerPacket.class),
+        entry(6, PlayerJoinRequestPacket.class)
       )
     );
 

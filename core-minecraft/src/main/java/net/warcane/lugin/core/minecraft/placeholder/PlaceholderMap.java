@@ -36,6 +36,17 @@ public class PlaceholderMap {
     }
 
     /**
+     * Desregistra um placeholder de texto do sistema.
+     * Remove o placeholder e seu pattern do cache.
+     *
+     * @param textPlaceholder O placeholder a ser desregistrado.
+     */
+    public static void unregisterPlaceholder(@NotNull TextPlaceholder textPlaceholder) {
+        TEXT_PLACEHOLDERS.remove(textPlaceholder);
+        CACHED_PATTERN.remove(textPlaceholder.getTag());
+    }
+
+    /**
      * Cacheia o pattern compilado para um placeholder específico
      */
     private static void cachePattern(@NotNull String placeholder) {

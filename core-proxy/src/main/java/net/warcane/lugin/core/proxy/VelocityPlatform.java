@@ -1,0 +1,76 @@
+package net.warcane.lugin.core.proxy;
+
+import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.server.ServerInfo;
+import lombok.extern.slf4j.Slf4j;
+import net.warcane.lugin.core.AbstractPlatform;
+import net.warcane.lugin.core.ProxyPlatform;
+import net.warcane.lugin.core.network.channel.NetworkChannel;
+import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
+import net.warcane.lugin.core.network.packet.impl.server.ServerUnregisterPacket;
+import net.warcane.lugin.core.server.GameServer;
+import net.warcane.lugin.core.server.type.ServerCategoryType;
+import net.warcane.lugin.core.util.address.HostAddress;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.ThreadLocalRandom;
+
+@Slf4j
+public class VelocityPlatform extends AbstractPlatform implements ProxyPlatform {
+
+    private static final ThreadLocalRandom RANDOM = ThreadLocalRandom.current();
+
+    private final ProxyServer proxyServer;
+
+    public VelocityPlatform(@NotNull ProxyServer proxyServer) {
+        super(HostAddress.fromInetSocketAddress(proxyServer.getBoundAddress()));
+        this.proxyServer = proxyServer;
+    }
+
+    @Override
+    public void init(NetworkChannel... channels) {
+        networkClient.subscribeToChannels(channels);
+        networkClient.registerPacketListener(ServerRegisterPacket.class, (packet, headers) -> this.registerServer(packet.serverId(), packet.hostAddress()));
+        networkClient.registerPacketListener(ServerUnregisterPacket.class, (packet, headers) -> this.unregisterServer(packet.serverId()));
+
+        int serverCount = 0;
+        for (GameServer gameServer : gameServerService.queryAllServersInNetwork()) {
+            this.registerServer(gameServer.serverId(), gameServer.hostAddress());
+            serverCount++;
+        }
+
+        log.info("Registered {} servers in the proxy platform.", serverCount);
+    }
+
+    @Override
+    public void close() {
+
+    }
+
+    @Override
+    public void registerServer(@NotNull String serverId, @NotNull HostAddress address) {
+        final var byAddress = gameServerService.getByAddress(address);
+        if (byAddress != null) return;
+
+        proxyServer.registerServer(new ServerInfo(serverId, address.asInetAddress()));
+    }
+
+    @Override
+    public void unregisterServer(@NotNull String serverId) {
+        final var query = proxyServer.getServer(serverId);
+        if (query.isEmpty()) return;
+
+        final var serverInfo = query.get();
+        proxyServer.unregisterServer(serverInfo.getServerInfo());
+    }
+
+
+    GameServer getRandomLobby() {
+        final var allLobbyServers = gameServerService.queryServersByCategoryType(ServerCategoryType.LOBBY);
+        if (allLobbyServers.isEmpty()) {
+            return null; // No lobby servers available
+        }
+
+        return allLobbyServers.get(RANDOM.nextInt(allLobbyServers.size()));
+    }
+}

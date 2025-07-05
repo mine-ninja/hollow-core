@@ -7,6 +7,21 @@ import java.util.function.Supplier;
 
 public class Property {
 
+
+    @NotNull
+    public static String getOrThrow(@NotNull String key, @NotNull Supplier<Throwable> exceptionSupplier) {
+        var value = get(key);
+        if (value == null) {
+            try {
+                throw exceptionSupplier.get();
+            } catch (Throwable e) {
+                throw new RuntimeException("Property '" + key + "' not found in environment or system properties.", e);
+            }
+        }
+        return value;
+
+    }
+
     @NotNull
     public static String getOrThrow(@NotNull String key) {
         var value = get(key);

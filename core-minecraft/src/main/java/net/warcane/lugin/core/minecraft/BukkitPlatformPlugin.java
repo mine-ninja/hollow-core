@@ -4,7 +4,6 @@ import net.warcane.lugin.core.minecraft.command.SimpleCommand;
 import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
 import net.warcane.lugin.core.minecraft.plugin.SimplePlugin;
-import net.warcane.lugin.core.permission.PlayerGroup;
 import net.warcane.lugin.core.server.GameServer;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +25,7 @@ public class BukkitPlatformPlugin extends SimplePlugin {
     final class ListServersCommand extends SimpleCommand {
         public ListServersCommand() {
             super("listservers");
-            this.requiredGroup = PlayerGroup.MANAGER;
+            this.requiredPermission = "lugin.manager";
         }
 
         @Override
@@ -41,9 +40,8 @@ public class BukkitPlatformPlugin extends SimplePlugin {
             final var message = new StringBuilder("§aServidores disponíveis §7(").append(size).append("):\n");
             for (GameServer server : gameServers) {
                 final var address = server.hostAddress().toString();
-                final var playerCount = server.playerCount().toFormattedString();
+                final var playerCount = server.serverPlayerCount().toFormattedString();
                 final var serverCategory = server.categoryType().name();
-
                 message.append("§7- §a").append(server.serverId())
                   .append(" §7(§b").append(playerCount).append("§7) §8[§e").append(serverCategory).append("§8] §7- ")
                   .append(address).append("\n");

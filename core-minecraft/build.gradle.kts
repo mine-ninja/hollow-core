@@ -21,3 +21,8 @@ dependencies {
     exclude(group = "net.md-5", module = "bungeecord-chat")
   }
 }
+
+tasks.shadowJar {
+  mergeServiceFiles()
+  minimize()
+}

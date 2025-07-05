@@ -4,13 +4,16 @@ import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.AbstractPlatform;
 import net.warcane.lugin.core.MinecraftServerPlatform;
 import net.warcane.lugin.core.Platform;
-import net.warcane.lugin.core.minecraft.listener.InternalPlayerListener;
-import net.warcane.lugin.core.network.NetworkClient;
+import net.warcane.lugin.core.minecraft.internal.command.InternalCommandManager;
+import net.warcane.lugin.core.minecraft.internal.listener.InternalPlayerListener;
+import net.warcane.lugin.core.minecraft.permission.NmsPermissionInjector;
+import net.warcane.lugin.core.minecraft.permission.PermissionInjector;
+import net.warcane.lugin.core.minecraft.util.team.NametagAPI;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerUnregisterPacket;
-import net.warcane.lugin.core.player.PlayerCount;
 import net.warcane.lugin.core.server.GameServer;
+import net.warcane.lugin.core.server.ServerPlayerCount;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
 import net.warcane.lugin.core.util.address.HostAddress;
 import org.bukkit.Bukkit;
@@ -72,8 +75,8 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
     private final Plugin plugin;
     private final ServerCategoryType serverCategoryType;
-
-    private final NetworkClient networkClient;
+    private final InternalCommandManager internalCommandManager;
+    private final PermissionInjector permissionInjector;
 
     private boolean online;
 
@@ -82,36 +85,38 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
         this.plugin = plugin;
         this.serverCategoryType = serverCategoryType;
-        this.networkClient = new NetworkClient(this, hostAddress, executorService);
+        this.internalCommandManager = new InternalCommandManager(this);
+        this.permissionInjector = new NmsPermissionInjector(this);
+        NametagAPI.registerApi(plugin);
 
         Bukkit.getServicesManager().register(Platform.class, this, plugin, org.bukkit.plugin.ServicePriority.Normal);
     }
 
     @Override
     public void init(@NotNull NetworkChannel... channels) {
+        internalCommandManager.registerInternalCommands();
+
         log.info("Initializing Bukkit Platform with category: {}", serverCategoryType.getDisplayName());
 
         networkClient.subscribeToChannels(channels);
         log.info("Bukkit Platform initialized with channels: {}", Arrays.toString(channels));
 
         final var serverRegisterPacket = new ServerRegisterPacket(this.getId(), serverCategoryType, hostAddress);
-        runAsyncLater(() -> networkClient.sendPacket(NetworkChannel.SERVER_STATUS, serverRegisterPacket), 20);
+        runAsyncLater(() -> networkClient.sendNetworkPacket(NetworkChannel.SERVER_STATUS, serverRegisterPacket), 20);
 
         Bukkit.getPluginManager().registerEvents(new InternalPlayerListener(this), plugin);
 
         this.online = true;
         gameServerService.update(this.getGameServer().withOnlineStatus(true));
+
+        log.info("Bukkit Platform is now online with ID: {}", this.getId());
+        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::updateServerInfo, 20, 20 * 10);
     }
 
     @Override
     public void close() {
         log.info("Closing Bukkit Platform with category: {}", serverCategoryType.getDisplayName());
-        networkClient.sendPacket(NetworkChannel.SERVER_STATUS, new ServerUnregisterPacket(this.getId()));
-    }
-
-    @Override
-    public @NotNull NetworkClient getNetworkClient() {
-        return networkClient;
+        networkClient.sendNetworkPacket(NetworkChannel.SERVER_STATUS, new ServerUnregisterPacket(this.getId()));
     }
 
     @Override
@@ -121,8 +126,8 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
     @Override
     @Contract(pure = true)
-    public @NotNull PlayerCount getPlayerCount() {
-        return new PlayerCount(Bukkit.getOnlinePlayers().size(), Bukkit.getMaxPlayers());
+    public @NotNull ServerPlayerCount getPlayerCount() {
+        return new ServerPlayerCount(Bukkit.getOnlinePlayers().size(), Bukkit.getMaxPlayers());
     }
 
     @Override
@@ -142,5 +147,17 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     @NotNull
     public Plugin getPlugin() {
         return plugin;
+    }
+
+    @NotNull
+    public PermissionInjector getPermissionInjector() {
+        return permissionInjector;
+    }
+
+    public void updateServerInfo() {
+        if (!online) return;
+
+        gameServerService.update(this.getGameServer());
+        log.info("Updated server info for platform: {}", this.getId());
     }
 }
