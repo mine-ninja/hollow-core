@@ -1,5 +1,6 @@
 package net.warcane.lugin.core.minecraft.internal.command.permission;
 
+import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.group.GroupPermissionService;
 import net.warcane.lugin.core.group.GroupPermissionSet;
 import net.warcane.lugin.core.group.PlayerGroup;
@@ -9,6 +10,7 @@ import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
 import org.jetbrains.annotations.NotNull;
 
+@Slf4j
 public class GroupPermissionCommand extends SimpleCommand {
 
     private final BukkitPlatform platform;
@@ -31,17 +33,22 @@ public class GroupPermissionCommand extends SimpleCommand {
         final var subCommand = ctx.getRawArgOrThrow(0, "§cVocê deve especificar um subcomando: add, remove ou list.");
         final var group = ctx.getEnumOrThrow(1, PlayerGroup.class, "§cGrupo inválido. Use um dos seguintes: " + String.join(", ", PlayerGroup.NAMES));
 
-        final var groupPermissions = service.getCachedPermissionsForGroup(group);
-        if (groupPermissions == null) {
-            throw new CommandFailedException("§cPermissões do grupo " + group.name() + " não encontradas.");
-        }
+        service.loadPermissions(group, true).whenComplete((found, error) -> {
+            if (error != null) {
+                log.error("Erro ao carregar permissões do grupo {}: {}", group.name(), error.getMessage());
+            } else if (found == null) {
+                ctx.sendMessage("§cGrupo " + group.name() + " não encontrado ou sem permissões definidas.");
+            } else {
+                switch (subCommand.toLowerCase()) {
+                    case "add" -> handleAddCommand(ctx, group, found);
+                    case "remove" -> handleRemoveCommand(ctx, group, found);
+                    case "list" -> handleListCommand(ctx, group, found);
+                    default -> throw new CommandFailedException("§cSubcomando inválido. Use: add, remove ou list.");
+                }
+            }
+        });
 
-        switch (subCommand.toLowerCase()) {
-            case "add" -> handleAddCommand(ctx, group, groupPermissions);
-            case "remove" -> handleRemoveCommand(ctx, group, groupPermissions);
-            case "list" -> handleListCommand(ctx, group, groupPermissions);
-            default -> throw new CommandFailedException("§cSubcomando inválido. Use: add, remove ou list.");
-        }
+
     }
 
     private void handleAddCommand(@NotNull CommandContext ctx, @NotNull PlayerGroup group, @NotNull GroupPermissionSet currentPermissions) throws CommandFailedException {

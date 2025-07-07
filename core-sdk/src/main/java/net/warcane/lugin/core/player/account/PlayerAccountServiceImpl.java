@@ -1,5 +1,6 @@
 package net.warcane.lugin.core.player.account;
 
+import com.mongodb.client.model.Indexes;
 import net.warcane.lugin.core.util.data.MongoRepository;
 import net.warcane.lugin.core.util.data.RedisCache;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +26,8 @@ public class PlayerAccountServiceImpl implements PlayerAccountService {
 
     public PlayerAccountServiceImpl(@NotNull ExecutorService executorService) {
         this.executorService = executorService;
+
+        repository.useCollection(collection -> collection.createIndex(Indexes.hashed("uniqueId")));
     }
 
     @Override

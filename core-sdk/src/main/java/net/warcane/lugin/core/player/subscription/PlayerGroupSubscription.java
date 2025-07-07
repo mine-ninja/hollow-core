@@ -23,12 +23,12 @@ public record PlayerGroupSubscription(
 
 
     public static PlayerGroupSubscription defaultSubscription() {
-        return new PlayerGroupSubscription(PlayerGroup.DEFAULT, Instant.now(), Instant.MAX);
+        return new PlayerGroupSubscription(PlayerGroup.DEFAULT, Instant.now(), Instant.now());
     }
 
 
     public boolean isExpired() {
-        return subscriptionEnd.isBefore(Instant.now());
+        return group != PlayerGroup.DEFAULT && subscriptionEnd.isBefore(Instant.now());
     }
 
     @Contract(pure = true)

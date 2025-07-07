@@ -7,7 +7,7 @@ dependencies {
   api("ch.qos.logback:logback-classic:1.4.8")
   api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.15.3")
   api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.3")
-  api("com.fasterxml.jackson.module:jackson-module-parameter-names:2.19.1")
+  api("com.fasterxml.jackson.module:jackson-module-parameter-names:2.15.3")
   api("com.github.luben:zstd-jni:1.5.7-3")
 
   api("org.mongodb:mongodb-driver-sync:5.5.0")

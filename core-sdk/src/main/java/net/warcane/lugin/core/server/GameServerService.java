@@ -40,11 +40,15 @@ public class GameServerService {
     }
 
     public int getPlayerCountForServerCategory(@NotNull ServerCategoryType categoryType) {
-        return queryServersByCategoryType(categoryType)
-          .stream()
-          .map(GameServer::serverPlayerCount)
-          .mapToInt(ServerPlayerCount::online)
-          .sum();
+        int sum = 0;
+        for (GameServer gameServer : queryAllServersInNetwork()) {
+            if (gameServer.categoryType() != categoryType) continue;
+
+            ServerPlayerCount serverPlayerCount = gameServer.serverPlayerCount();
+            int online = serverPlayerCount.online();
+            sum += online;
+        }
+        return sum;
     }
 
     @Nullable
@@ -87,10 +91,9 @@ public class GameServerService {
             if (serverIds.isEmpty()) {
                 return Collections.emptyList();
             }
-
-            final var rawData = jedis.hmget(KEY, serverIds.toArray(new String[0]));
-            return rawData.stream()
-              .map(data -> JsonUtil.fromJson(data, GameServer.class))
+            return serverIds
+              .stream()
+              .map(this::getById)
               .filter(Objects::nonNull)
               .toList();
         });
@@ -103,7 +106,6 @@ public class GameServerService {
 
             jedis.hset(KEY, server.serverId(), rawData);
             jedis.sadd(CATEGORY_IDX_KEY + categoryId, server.serverId());
-            log.info("Servidor {} atualizado na rede com sucesso.", server.serverId());
         });
     }
 

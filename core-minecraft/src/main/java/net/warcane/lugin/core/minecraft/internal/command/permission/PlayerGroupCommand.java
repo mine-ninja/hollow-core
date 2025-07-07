@@ -26,6 +26,7 @@ public class PlayerGroupCommand extends SimpleCommand {
     public PlayerGroupCommand(@NotNull BukkitPlatform platform) {
         super("playergroup");
         this.platform = platform;
+        this.requiredPermission = "lugin.master";
     }
 
     // /playergroup set <player> <group> <time>

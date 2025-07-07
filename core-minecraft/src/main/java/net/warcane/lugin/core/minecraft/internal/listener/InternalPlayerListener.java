@@ -12,6 +12,8 @@ import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerConnectedToServerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDisconnectedFromServerPacket;
 import net.warcane.lugin.core.player.account.PlayerAccountService.AccountUnloadOptions;
+import net.warcane.lugin.core.server.type.ServerCategoryType;
+import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -39,6 +41,7 @@ public final class InternalPlayerListener implements Listener {
 
     private final BukkitPlatform platform;
 
+
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerJoin(PlayerJoinEvent event) {
         final var player = event.getPlayer();
@@ -59,7 +62,7 @@ public final class InternalPlayerListener implements Listener {
             }
 
             PlayerGroup group = playerAccount.currentSubscription().group();
-            final var priority = group.getPowerLevel();
+            final var priority = group.getPriorityValue();
             final var groupPrefix = group.getPrefix();
 
             NametagAPI.getInstance().applyTag(player, groupPrefix + " ", "", priority);
@@ -75,6 +78,10 @@ public final class InternalPlayerListener implements Listener {
             platform.getPermissionInjector().injectPermissions(player);
 
             TAB.tick(player);
+
+            if (platform.getServerCategoryType() == ServerCategoryType.LOGIN) {
+                Tasks.runSync(() -> player.setGameMode(GameMode.ADVENTURE));
+            }
         });
     }
 
@@ -97,7 +104,6 @@ public final class InternalPlayerListener implements Listener {
                 log.info("Player account unloaded for {}: {}", player.getName(), unloaded);
             }
 
-
             runAsyncLater(platform::updateServerInfo, 20);
         });
     }
@@ -108,7 +114,7 @@ public final class InternalPlayerListener implements Listener {
         if (localPlayer == null) return;
 
         PlayerGroup group = event.getPlayerAccount().currentSubscription().group();
-        final var priority = group.getPowerLevel();
+        final var priority = group.getPriorityValue();
         final var groupPrefix = group.getPrefix();
         NametagAPI.getInstance().applyTag(localPlayer, groupPrefix + " ", "", priority);
     }

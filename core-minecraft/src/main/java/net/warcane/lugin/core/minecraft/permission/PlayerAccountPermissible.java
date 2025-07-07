@@ -23,14 +23,15 @@ final class PlayerAccountPermissible extends PermissibleBase {
     @Override
     public boolean hasPermission(String inName) {
         final var group = account.currentSubscription().group();
-        final var permissionGraph = groupPermissionService.getCachedPermissionsForGroupOrThrow(group);
+        final var permissionSet = groupPermissionService.getCachedPermissionsForGroupOrThrow(group);
+        if (permissionSet.hasPermission(inName) || permissionSet.hasPermission("*")) return true;
 
         final PermissionGraph graph = PermissionGraph.getInstance();
         final var highest = graph.findHighestPermissionNode(inName);
-        if (highest != null && permissionGraph.hasPermission(highest)) return true;
+        if (highest != null && permissionSet.hasPermission(highest)) return true;
 
         for (var subPermission : graph.getHigherPermissions(inName)) {
-            if (permissionGraph.hasPermission(subPermission)) {
+            if (permissionSet.hasPermission(subPermission)) {
                 return true;
             }
         }

@@ -6,11 +6,10 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.warcane.lugin.core.network.packet.impl.internal.PingPacket;
 import net.warcane.lugin.core.network.packet.impl.internal.PongPacket;
-import net.warcane.lugin.core.network.packet.impl.player.PlayerConnectedToServerPacket;
-import net.warcane.lugin.core.network.packet.impl.player.PlayerDisconnectedFromServerPacket;
-import net.warcane.lugin.core.network.packet.impl.player.PlayerJoinRequestPacket;
+import net.warcane.lugin.core.network.packet.impl.player.*;
 import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerUnregisterPacket;
+import net.warcane.lugin.core.network.packet.impl.staff.StaffMessagePacket;
 
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -47,7 +46,10 @@ final class PacketMappings {
         // player lifecycle
         entry(4, PlayerConnectedToServerPacket.class),
         entry(5, PlayerDisconnectedFromServerPacket.class),
-        entry(6, PlayerJoinRequestPacket.class)
+        entry(6, PlayerJoinRequestPacket.class),
+        entry(7, PlayerDirectPlayGameCategoryPacket.class),
+        entry(8, SendMessageToPlayerPacket.class),
+        entry(9, StaffMessagePacket.class)
       )
     );
 

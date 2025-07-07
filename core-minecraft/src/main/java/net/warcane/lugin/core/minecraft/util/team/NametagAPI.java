@@ -8,7 +8,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitRunnable;
 
 /**
  * NametagAPI by @KAZHIEL
@@ -41,19 +40,11 @@ public class NametagAPI implements Listener {
     }
 
     public void applyTag(Player player, NametagTeam nametagTeam) {
-        new BukkitRunnable() {
-            public void run() {
-                handler.setNametag(player, nametagTeam.getPrefix(), nametagTeam.getSuffix(), nametagTeam.getPriority());
-            }
-        }.runTaskLater(plugin, 0L);
+        handler.setNametag(player, nametagTeam.getPrefix(), nametagTeam.getSuffix(), nametagTeam.getPriority());
     }
 
     public void applyTag(Player player, String prefix, String suffix, int sortPriority) {
-        new BukkitRunnable() {
-            public void run() {
-                handler.setNametag(player, prefix, suffix, sortPriority);
-            }
-        }.runTaskLater(plugin, 0L);
+        handler.setNametag(player, prefix, suffix, sortPriority);
     }
 
     public void resetPlayer(Player p) {
@@ -63,5 +54,4 @@ public class NametagAPI implements Listener {
     public static void registerApi(Plugin javaPlugin) {
         instance = new NametagAPI(javaPlugin);
     }
-
 }

@@ -12,6 +12,7 @@ import static java.util.stream.Collectors.toMap;
 public enum NetworkChannel {
 
     PLAYER_CONNECTION,
+    PLAYER_MESSAGE,
     SERVER_STATUS,
     FRIENDS,
     PARTY,

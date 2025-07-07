@@ -100,6 +100,7 @@ public class GroupPermissionService {
             final Supplier<GroupPermissionSet> supplier = () -> permissionsRepository.findById(group.getId());
             final var fromDb = redisCache.hget(CACHE_KEY, group.getId(), supplier);
             if (fromDb != null) {
+                localCache.put(group.getId(), fromDb);
                 return fromDb;
             }
 

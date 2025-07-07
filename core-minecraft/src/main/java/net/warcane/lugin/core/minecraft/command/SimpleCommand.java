@@ -5,10 +5,8 @@ import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException
 import net.warcane.lugin.core.minecraft.command.subcommand.SimpleSubCommand;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -84,19 +82,23 @@ public abstract class SimpleCommand extends Command {
 
     @Override
     public List<String> tabComplete(CommandSender sender, String alias, String[] args) throws IllegalArgumentException {
-        List<String> list = subCommands.stream()
-          .map(SimpleSubCommand::getSubCommandName)
-          .toList();
-
-        if (args.length == 0) {
-            return list;
+        if (subCommands.isEmpty()) {
+            return performTabComplete(new CommandContext(sender, args));
+        } else {
+            if (args.length == 1) {
+                return subCommands.stream()
+                  .filter(subCommand -> subCommand.matchesWith(args[0]))
+                  .map(SimpleSubCommand::getSubCommandName)
+                  .toList();
+            } else {
+                SimpleSubCommand subCommand = getSubCommand(args[0]);
+                if (subCommand != null) {
+                    var newArgs = Arrays.copyOfRange(args, 1, args.length);
+                    return subCommand.performSubCommandTabComplete(new CommandContext(sender, newArgs));
+                }
+                return Collections.emptyList();
+            }
         }
-
-        if (args.length == 1) {
-            return StringUtil.copyPartialMatches(args[0], list, new ArrayList<>());
-        }
-
-        return performTabComplete(new CommandContext(sender, args));
     }
 
     public abstract void performCommand(@NotNull CommandContext ctx) throws CommandFailedException;

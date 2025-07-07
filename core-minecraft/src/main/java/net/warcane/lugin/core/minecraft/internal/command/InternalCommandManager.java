@@ -2,9 +2,13 @@ package net.warcane.lugin.core.minecraft.internal.command;
 
 import lombok.RequiredArgsConstructor;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
+import net.warcane.lugin.core.minecraft.internal.command.lobby.LobbyCommand;
 import net.warcane.lugin.core.minecraft.internal.command.permission.GroupPermissionCommand;
 import net.warcane.lugin.core.minecraft.internal.command.permission.PlayerGroupCommand;
 import net.warcane.lugin.core.minecraft.internal.command.permission.TestPermission;
+import net.warcane.lugin.core.minecraft.internal.command.staff.PlayerInfoCommand;
+import net.warcane.lugin.core.minecraft.internal.command.staff.StaffMessageCommand;
+import net.warcane.lugin.core.util.property.Property;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandMap;
 
@@ -28,5 +32,12 @@ public class InternalCommandManager {
         commandMap.register("lugin", new GroupPermissionCommand(platform));
         commandMap.register("lugin", new TestPermission());
         commandMap.register("lugin", new PlayerGroupCommand(platform));
+
+        final var lobbyEnabled = Property.get("LOBBY_ENABLED", "false").equalsIgnoreCase("true");
+        if (lobbyEnabled) {
+            commandMap.register("lugin", new LobbyCommand(platform));
+        }
+        commandMap.register("lugin", new StaffMessageCommand(platform));
+        commandMap.register("lugin", new PlayerInfoCommand(platform));
     }
 }

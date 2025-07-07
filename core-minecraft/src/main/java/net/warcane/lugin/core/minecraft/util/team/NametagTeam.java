@@ -28,8 +28,8 @@ public class NametagTeam {
         this.name = UNIQUE_ID + "_" + getNameFromInput(priority) + ID;
         this.name = (this.name.length() > 16) ? this.name.substring(0, 16) : this.name;
 
-        this.prefix = ChatColor.translateAlternateColorCodes('&', prefix);
-        this.suffix = ChatColor.translateAlternateColorCodes('&', suffix);
+        this.prefix = prefix.isEmpty() ? prefix : ChatColor.translateAlternateColorCodes('&', prefix);
+        this.suffix = suffix.isEmpty() ? suffix : ChatColor.translateAlternateColorCodes('&', suffix);
         this.priority = priority;
 
         ID++; //Increase ID

@@ -5,23 +5,28 @@ import net.warcane.lugin.core.AbstractPlatform;
 import net.warcane.lugin.core.MinecraftServerPlatform;
 import net.warcane.lugin.core.Platform;
 import net.warcane.lugin.core.minecraft.internal.command.InternalCommandManager;
+import net.warcane.lugin.core.minecraft.internal.listener.InternalPacketListeners;
 import net.warcane.lugin.core.minecraft.internal.listener.InternalPlayerListener;
 import net.warcane.lugin.core.minecraft.permission.NmsPermissionInjector;
 import net.warcane.lugin.core.minecraft.permission.PermissionInjector;
 import net.warcane.lugin.core.minecraft.util.team.NametagAPI;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
+import net.warcane.lugin.core.network.packet.impl.player.PlayerDirectPlayGameCategoryPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerUnregisterPacket;
 import net.warcane.lugin.core.server.GameServer;
 import net.warcane.lugin.core.server.ServerPlayerCount;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
 import net.warcane.lugin.core.util.address.HostAddress;
+import net.warcane.lugin.core.util.property.Property;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.ServicePriority;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.UUID;
 
 import static net.warcane.lugin.core.minecraft.task.Tasks.runAsyncLater;
 
@@ -32,10 +37,12 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
      * Cria uma instância da plataforma Bukkit (Se não existir) e a registra no Bukkit ServicesManager.
      *
      * @param plugin       o plugin Bukkit associado a esta plataforma.
-     * @param categoryType o tipo de categoria do servidor.
      * @return a instância de BukkitPlatform.
      */
-    public static BukkitPlatform provide(@NotNull Plugin plugin, @NotNull ServerCategoryType categoryType) {
+    public static BukkitPlatform provide(@NotNull Plugin plugin) {
+        final var rawType = Property.getOrThrow("SERVER_TYPE");
+        final var categoryType = ServerCategoryType.fromName(rawType);
+
         if (isInitialized()) {
             final var currentInstance = getInstance();
             if (currentInstance.getServerCategoryType() != categoryType) {
@@ -87,9 +94,11 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         this.serverCategoryType = serverCategoryType;
         this.internalCommandManager = new InternalCommandManager(this);
         this.permissionInjector = new NmsPermissionInjector(this);
-        NametagAPI.registerApi(plugin);
 
-        Bukkit.getServicesManager().register(Platform.class, this, plugin, org.bukkit.plugin.ServicePriority.Normal);
+        this.loadGroupPermissions();
+
+        NametagAPI.registerApi(plugin);
+        Bukkit.getServicesManager().register(Platform.class, this, plugin, ServicePriority.Normal);
     }
 
     @Override
@@ -105,6 +114,9 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         runAsyncLater(() -> networkClient.sendNetworkPacket(NetworkChannel.SERVER_STATUS, serverRegisterPacket), 20);
 
         Bukkit.getPluginManager().registerEvents(new InternalPlayerListener(this), plugin);
+
+        final var internalPackets = new InternalPacketListeners(this);
+        internalPackets.setup();
 
         this.online = true;
         gameServerService.update(this.getGameServer().withOnlineStatus(true));
@@ -158,6 +170,10 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         if (!online) return;
 
         gameServerService.update(this.getGameServer());
-        log.info("Updated server info for platform: {}", this.getId());
+    }
+
+    public void tryConnectPlayerToServerCategory(@NotNull UUID player, @NotNull ServerCategoryType categoryType) {
+        final var packet = new PlayerDirectPlayGameCategoryPacket(player, categoryType);
+        networkClient.sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, packet);
     }
 }

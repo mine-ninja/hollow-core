@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class MongoRepository<ID, O> {
@@ -54,6 +55,15 @@ public class MongoRepository<ID, O> {
 
     public List<O> queryAll() {
         return collection.find().into(new ArrayList<>());
+    }
+
+
+    public <T> T supplyFromCollection(@NotNull Function<MongoCollection<O>, T> function) {
+        return function.apply(collection);
+    }
+
+    public void useCollection(@NotNull Consumer<MongoCollection<O>> consumer) {
+        consumer.accept(collection);
     }
 
     @NotNull

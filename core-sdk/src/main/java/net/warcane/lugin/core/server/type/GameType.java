@@ -16,7 +16,7 @@ public enum GameType {
     BEDWARS_DOUBLES(1, "Bedwars Duplas", ServerCategoryType.BEDWARS),
     BEDWARS_QUARTER(2, "Bedwars Quarteto", ServerCategoryType.BEDWARS),
 
-    FACTIONS_FIRE(3, "Factions Fire", ServerCategoryType.FACTIONS);
+    FACTIONS_ICE(3, "Factions Ice", ServerCategoryType.FACTIONS);
 
     public static final Int2ObjectMap<GameType> ID_MAP = Arrays.stream(values())
       .collect(Collectors.toMap(

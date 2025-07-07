@@ -6,8 +6,10 @@ import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.AbstractPlatform;
 import net.warcane.lugin.core.ProxyPlatform;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
+import net.warcane.lugin.core.network.packet.impl.player.PlayerDirectPlayGameCategoryPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerUnregisterPacket;
+import net.warcane.lugin.core.proxy.listener.PlayerDirectPlayGameCategoryListener;
 import net.warcane.lugin.core.server.GameServer;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
 import net.warcane.lugin.core.util.address.HostAddress;
@@ -32,7 +34,7 @@ public class VelocityPlatform extends AbstractPlatform implements ProxyPlatform 
         networkClient.subscribeToChannels(channels);
         networkClient.registerPacketListener(ServerRegisterPacket.class, (packet, headers) -> this.registerServer(packet.serverId(), packet.hostAddress()));
         networkClient.registerPacketListener(ServerUnregisterPacket.class, (packet, headers) -> this.unregisterServer(packet.serverId()));
-
+        networkClient.registerPacketListener(PlayerDirectPlayGameCategoryPacket.class, new PlayerDirectPlayGameCategoryListener(this));
         int serverCount = 0;
         for (GameServer gameServer : gameServerService.queryAllServersInNetwork()) {
             this.registerServer(gameServer.serverId(), gameServer.hostAddress());
@@ -49,10 +51,8 @@ public class VelocityPlatform extends AbstractPlatform implements ProxyPlatform 
 
     @Override
     public void registerServer(@NotNull String serverId, @NotNull HostAddress address) {
-        final var byAddress = gameServerService.getByAddress(address);
-        if (byAddress != null) return;
-
         proxyServer.registerServer(new ServerInfo(serverId, address.asInetAddress()));
+        log.info("Registered server: {} at address: {}", serverId, address);
     }
 
     @Override
@@ -62,11 +62,15 @@ public class VelocityPlatform extends AbstractPlatform implements ProxyPlatform 
 
         final var serverInfo = query.get();
         proxyServer.unregisterServer(serverInfo.getServerInfo());
+        log.info("Unregistered server: {}", serverId);
     }
 
+    public ProxyServer getProxyServer() {
+        return proxyServer;
+    }
 
     GameServer getRandomLobby() {
-        final var allLobbyServers = gameServerService.queryServersByCategoryType(ServerCategoryType.LOBBY);
+        final var allLobbyServers = gameServerService.queryServersByCategoryType(ServerCategoryType.LOGIN);
         if (allLobbyServers.isEmpty()) {
             return null; // No lobby servers available
         }

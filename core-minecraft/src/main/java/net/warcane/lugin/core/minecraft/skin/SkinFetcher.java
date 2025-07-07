@@ -96,10 +96,11 @@ public class SkinFetcher {
                     return skin;
                 }
             }
+            throw new Exception("Skin não encontrada para o usuário: " + username);
         } catch (Exception e) {
             throw new RuntimeException("Erro ao buscar skin pelo nome: " + username, e);
         }
-        return null;
+
     }
 
     /**
@@ -139,11 +140,11 @@ public class SkinFetcher {
         if (!object.get("success").getAsBoolean()) return null;
 
         JsonObject player = object.getAsJsonObject("data").getAsJsonObject("player");
-        if (player == null || !player.has("serverId") || !player.has("username") || !player.has("properties")) {
+        if (player == null || !player.has("id") || !player.has("username") || !player.has("properties")) {
             return null;
         }
 
-        String uuid = player.get("serverId").getAsString();
+        String uuid = player.get("id").getAsString(); // Alterado de "serverId" para "id"
         String username = player.get("username").getAsString();
         JsonArray properties = player.getAsJsonArray("properties");
 

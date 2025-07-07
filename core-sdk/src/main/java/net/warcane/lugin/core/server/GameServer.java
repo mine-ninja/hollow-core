@@ -20,6 +20,7 @@ public record GameServer(
   @JsonProperty("o") boolean online
 ) {
 
+
     public GameServer withPlayerCount(ServerPlayerCount newServerPlayerCount) {
         return new GameServer(serverId, categoryType, hostAddress,
           newServerPlayerCount, online);
