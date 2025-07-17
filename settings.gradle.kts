@@ -4,4 +4,8 @@ plugins {
 rootProject.name = "lugin-core"
 
 
-include("core-sdk", "core-proxy", "core-minecraft")
+include(
+  "core-sdk",
+  "core-proxy",
+  "core-minecraft"
+)

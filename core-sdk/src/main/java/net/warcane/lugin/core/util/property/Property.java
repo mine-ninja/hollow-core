@@ -59,6 +59,21 @@ public class Property {
     }
 
     /**
+     * Obtém o valor de uma propriedade do sistema como um booleano, seja do ambiente ou da propriedade do sistema.
+     *
+     * @param key          a chave da propriedade a ser obtida
+     * @param defaultValue o valor padrão a ser usado caso a propriedade não exista
+     * @return o valor da propriedade como booleano, ou o valor padrão fornecido se a propriedade não existir
+     */
+    public static boolean getBoolean(@NotNull String key, boolean defaultValue) {
+        var value = get(key);
+        if (value == null) {
+            return defaultValue;
+        }
+        return Boolean.parseBoolean(value);
+    }
+
+    /**
      * Obtém o valor de uma propriedade do sistema, seja do ambiente ou da propriedade do sistema.
      *
      * @param key                  a chave da propriedade a ser obtida

@@ -7,12 +7,16 @@ import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.event.PlayerAccountUpdateEvent;
 import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.util.Tab;
-import net.warcane.lugin.core.minecraft.util.team.NametagAPI;
+import net.warcane.lugin.core.minecraft.util.nametag.NameTags;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerConnectedToServerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDisconnectedFromServerPacket;
 import net.warcane.lugin.core.player.account.PlayerAccountService.AccountUnloadOptions;
+import net.warcane.lugin.core.player.fetcher.PlayerUuidFetcher;
+import net.warcane.lugin.core.player.state.PlayerNetworkState;
+import net.warcane.lugin.core.player.state.PlayerNetworkStateManager;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
+import net.warcane.lugin.core.util.property.Property;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -61,13 +65,17 @@ public final class InternalPlayerListener implements Listener {
                 return;
             }
 
-            PlayerGroup group = playerAccount.currentSubscription().group();
+            PlayerGroup group = playerAccount.getHighestSubscription().group();
             final var priority = group.getPriorityValue();
             final var groupPrefix = group.getPrefix();
 
-            NametagAPI.getInstance().applyTag(player, groupPrefix + " ", "", priority);
 
-            // Só envia o pacote de connect caso realmente carregue as informações dele.
+            final var loadTagsOnJoin = Property.getBoolean("LOAD_TAGS_ON_JOIN", true);
+            if (loadTagsOnJoin) {
+                NameTags.setNameTag(player, groupPrefix, "", priority);
+            }
+
+            // Só envia o pacote de connect caso realmente carregue as informações do jogador.
             // caso o contrario ele vai ser kickado (como mostra no código acima).
             final var packet = new PlayerConnectedToServerPacket(playerId, currentServerId);
             platform.getNetworkClient().sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, packet);
@@ -82,6 +90,9 @@ public final class InternalPlayerListener implements Listener {
             if (platform.getServerCategoryType() == ServerCategoryType.LOGIN) {
                 Tasks.runSync(() -> player.setGameMode(GameMode.ADVENTURE));
             }
+
+            PlayerUuidFetcher.getInstance().cachePlayerUuid(name, playerId);
+            PlayerNetworkStateManager.getInstance().register(new PlayerNetworkState(player.getUniqueId(), player.getName(), currentServerId));
         });
     }
 
@@ -94,8 +105,12 @@ public final class InternalPlayerListener implements Listener {
         final var packet = new PlayerDisconnectedFromServerPacket(player.getUniqueId(), currentServerId);
         platform.getNetworkClient().sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, packet);
 
+        NameTags.removeNameTag(player);
+
         final var unloadOptions = new AccountUnloadOptions(false, true);
-        platform.getPlayerAccountService().unloadPlayerAccount(player.getUniqueId(), unloadOptions).whenComplete((unloaded, error) -> {
+        platform.getPlayerAccountService()
+          .unloadPlayerAccount(player.getUniqueId(), unloadOptions)
+          .whenComplete((unloaded, error) -> {
             if (error != null) {
                 log.error("Failed to unload player account for {}: {}", player.getName(), error.getMessage(), error);
             } else if (unloaded == null) {
@@ -113,11 +128,16 @@ public final class InternalPlayerListener implements Listener {
         Player localPlayer = event.getLocalPlayer();
         if (localPlayer == null) return;
 
-        PlayerGroup group = event.getPlayerAccount().currentSubscription().group();
+        PlayerGroup group = event.getPlayerAccount().getHighestSubscription().group();
         final var priority = group.getPriorityValue();
         final var groupPrefix = group.getPrefix();
-        NametagAPI.getInstance().applyTag(localPlayer, groupPrefix + " ", "", priority);
+
+        final var loadTagsOnJoin = Property.get("LOAD_TAGS_ON_JOIN", "true").equalsIgnoreCase("true");
+        if (loadTagsOnJoin) {
+            NameTags.setNameTag(localPlayer, groupPrefix, "", priority);
+        }
     }
+
 
     private void syncKick(@NotNull Player player) {
         Tasks.runSync(() -> {

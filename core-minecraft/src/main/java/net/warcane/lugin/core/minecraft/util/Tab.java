@@ -1,15 +1,13 @@
 package net.warcane.lugin.core.minecraft.util;
 
-import net.minecraft.server.v1_8_R3.ChatComponentText;
-import net.minecraft.server.v1_8_R3.IChatBaseComponent;
-import net.minecraft.server.v1_8_R3.Packet;
-import net.minecraft.server.v1_8_R3.PacketPlayOutPlayerListHeaderFooter;
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.wrapper.PacketWrapper;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerListHeaderAndFooter;
+import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 
 import java.util.List;
 
-import static net.warcane.lugin.core.minecraft.util.ReflectionUtils.Modifier;
-import static net.warcane.lugin.core.minecraft.util.ReflectionUtils.modifyClass;
 
 public class Tab {
 
@@ -22,12 +20,13 @@ public class Tab {
     }
 
     public void tick(Player p) {
-        PacketUtil.sendPacket(p, getCreateHeaderFooterPacket());
+        PacketEvents.getAPI().getPlayerManager().sendPacket(p, getCreateHeaderFooterPacket());
     }
 
-    private Packet<?> getCreateHeaderFooterPacket() {
-        return modifyClass(new PacketPlayOutPlayerListHeaderFooter(),
-          new Modifier<IChatBaseComponent>("a", new ChatComponentText(tabHeader)),
-          new Modifier<IChatBaseComponent>("b", new ChatComponentText(tabFooter)));
+    private PacketWrapper<?> getCreateHeaderFooterPacket() {
+        return new WrapperPlayServerPlayerListHeaderAndFooter(
+          Component.text(tabHeader),
+          Component.text(tabFooter)
+        );
     }
 }

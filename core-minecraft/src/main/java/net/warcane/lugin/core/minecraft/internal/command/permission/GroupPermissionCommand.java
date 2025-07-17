@@ -47,8 +47,6 @@ public class GroupPermissionCommand extends SimpleCommand {
                 }
             }
         });
-
-
     }
 
     private void handleAddCommand(@NotNull CommandContext ctx, @NotNull PlayerGroup group, @NotNull GroupPermissionSet currentPermissions) throws CommandFailedException {

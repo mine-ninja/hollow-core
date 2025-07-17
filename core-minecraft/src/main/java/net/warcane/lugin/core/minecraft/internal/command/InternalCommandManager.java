@@ -6,6 +6,7 @@ import net.warcane.lugin.core.minecraft.internal.command.lobby.LobbyCommand;
 import net.warcane.lugin.core.minecraft.internal.command.permission.GroupPermissionCommand;
 import net.warcane.lugin.core.minecraft.internal.command.permission.PlayerGroupCommand;
 import net.warcane.lugin.core.minecraft.internal.command.permission.TestPermission;
+import net.warcane.lugin.core.minecraft.internal.command.server.ServerCommand;
 import net.warcane.lugin.core.minecraft.internal.command.staff.PlayerInfoCommand;
 import net.warcane.lugin.core.minecraft.internal.command.staff.StaffMessageCommand;
 import net.warcane.lugin.core.util.property.Property;
@@ -39,5 +40,6 @@ public class InternalCommandManager {
         }
         commandMap.register("lugin", new StaffMessageCommand(platform));
         commandMap.register("lugin", new PlayerInfoCommand(platform));
+        commandMap.register("lugin" , new ServerCommand());
     }
 }

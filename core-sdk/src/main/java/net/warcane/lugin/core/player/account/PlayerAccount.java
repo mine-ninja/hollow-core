@@ -7,20 +7,20 @@ import net.warcane.lugin.core.group.PlayerGroup;
 import net.warcane.lugin.core.player.subscription.PlayerGroupSubscription;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.time.Instant;
-import java.util.UUID;
+import java.util.*;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record PlayerAccount(
-  @JsonProperty("unique_id") UUID uniqueId,
-  @JsonProperty("player_name") String playerName,
-  @JsonProperty("primary_group") PlayerGroupSubscription currentSubscription,
-  @JsonProperty("created_at") Instant createdAt,
-  @JsonProperty("last_login") Instant lastLogin
+  @JsonProperty("i") UUID uniqueId,
+  @JsonProperty("n") String playerName,
+  @JsonProperty("sb") List<PlayerGroupSubscription> subscriptions,
+  @JsonProperty("c") Instant createdAt,
+  @JsonProperty("l") Instant lastLogin
 ) implements Serializable {
-
 
     /**
      * Cria uma conta de jogador padrão com o grupo "MEMBER".
@@ -31,7 +31,7 @@ public record PlayerAccount(
      */
     @NotNull
     public static PlayerAccount createDefaultAccount(@NotNull UUID uniqueId, @NotNull String playerName) {
-        return new PlayerAccount(uniqueId, playerName, PlayerGroupSubscription.defaultSubscription(), Instant.now(), Instant.now());
+        return new PlayerAccount(uniqueId, playerName, List.of(PlayerGroupSubscription.defaultSubscription()), Instant.now(), Instant.now());
     }
 
 
@@ -43,7 +43,9 @@ public record PlayerAccount(
      */
     @JsonIgnore
     public boolean hasGroupPowers(@NotNull PlayerGroup group) {
-        return currentSubscription.group().isGreaterOrEqualTo(group);
+        return this.getSubscriptions()
+          .stream()
+          .anyMatch(subscription -> subscription.group().equals(group) && !subscription.isExpired());
     }
 
 
@@ -61,6 +63,7 @@ public record PlayerAccount(
     @NotNull
     @JsonIgnore
     public String getFormattedTagInput(@NotNull String input) {
+        final var currentSubscription = this.getHighestSubscription();
         final var primaryGroup = currentSubscription.group();
         final var groupPrefix = primaryGroup.getPrefix();
         return groupPrefix + " §" + primaryGroup.getPrefixColorCode() + input;
@@ -68,8 +71,39 @@ public record PlayerAccount(
 
     @NotNull
     @Contract(pure = true)
+    @JsonIgnore
     public PlayerAccount withNewGroupSubscription(@NotNull PlayerGroup newGroup, @NotNull Instant expirationTime) {
-        return new PlayerAccount(uniqueId, playerName,
-          currentSubscription.changeGroup(newGroup).changeEnd(expirationTime), createdAt, lastLogin);
+        final var list = new ArrayList<>(this.subscriptions);
+        final var toAdd = PlayerGroupSubscription.createNewSubscription(newGroup, expirationTime);
+
+        list.removeIf(subscription -> subscription.group().equals(newGroup));
+        list.add(toAdd);
+
+        return new PlayerAccount(uniqueId, playerName, list, createdAt, lastLogin);
+    }
+
+    @NotNull
+    @JsonIgnore
+    public PlayerGroupSubscription getHighestSubscription() {
+        return this.getSubscriptions()
+          .stream()
+          .max(Comparator.comparingInt(sub -> sub.group().getPowerLevel()))
+          .orElse(PlayerGroupSubscription.defaultSubscription());
+    }
+
+    @Nullable
+    @JsonIgnore
+    public PlayerGroupSubscription getSubscriptionForGroup(@NotNull PlayerGroup group) {
+        return this.getSubscriptions()
+          .stream()
+          .filter(subscription -> subscription.group() == group)
+          .findFirst()
+          .orElse(null);
+    }
+
+    @NotNull
+    @JsonProperty
+    public List<PlayerGroupSubscription> getSubscriptions() {
+        return subscriptions == null ? Collections.emptyList() : subscriptions;
     }
 }

@@ -13,22 +13,23 @@ import static java.util.stream.Collectors.toMap;
 @AllArgsConstructor
 public enum PlayerGroup {
 
-    MASTER("master", "§6[Master]", 10),
-    MANAGER("manager", "§4[Gerente]", 9),
-    ADMIN("admin", "§c[Admin]", 8),
-    MODERATOR("moderator", "§2[Moderador]", 7),
-    HELPER("helper", "§e[Ajudante]", 6),
-    INFLUENCER("influencer", "§c[Influencer]", 5),
-    YOUTUBER("youtuber", "§b[Youtuber]", 4),
-    VIP_PLUS("vip_plus", "§b[VIP+]", 3),
-    VIP("vip", "§a[VIP]", 2),
+    MASTER("master", "§6[Master] ", 11),
+    MANAGER("manager", "§4[Gerente] ", 11),
+    ADMIN("admin", "§c[Admin] ", 10),
+    MODERATOR("moderator", "§2[Moderador] ", 9),
+    HELPER("helper", "§e[Ajudante] ", 8),
+    INFLUENCER("influencer", "§c[Influencer] ", 7),
+    SUPREME("supreme", "§4[Supremo] ", 6),
+    LEGENDARY("legendary", "§2[Lendário] ", 5),
+    HERO("hero", "§5[Heroi] ", 4),
+    CHAMPION("champion", "§3[Campeão] ", 3),
     DEFAULT("member", "§7", 1);
 
 
     public static final Map<String, PlayerGroup> BY_ID = Arrays.stream(values())
       .collect(toMap(PlayerGroup::getId, group -> group));
 
-    public static List<String> NAMES = Arrays.stream(values())
+    public static final List<String> NAMES = Arrays.stream(values())
       .map(PlayerGroup::getId)
       .toList();
 

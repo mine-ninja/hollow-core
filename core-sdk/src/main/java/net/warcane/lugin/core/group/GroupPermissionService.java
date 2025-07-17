@@ -1,5 +1,6 @@
 package net.warcane.lugin.core.group;
 
+import com.mongodb.client.model.Indexes;
 import net.warcane.lugin.core.util.data.MongoRepository;
 import net.warcane.lugin.core.util.data.RedisCache;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,7 @@ public class GroupPermissionService {
     private final RedisCache<GroupPermissionSet> redisCache = new RedisCache<>(GroupPermissionSet.class);
     private final MongoRepository<String, GroupPermissionSet> permissionsRepository = new MongoRepository<>(
       GroupPermissionSet.class,
-      "uniqueId"
+      "groupId"
     );
 
     /**
@@ -34,6 +35,7 @@ public class GroupPermissionService {
 
     public GroupPermissionService(@NotNull ExecutorService executorService) {
         this.executorService = executorService;
+        this.permissionsRepository.useCollection(collection -> collection.createIndex(Indexes.hashed("groupId")));
     }
 
     /**

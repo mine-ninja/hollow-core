@@ -7,9 +7,7 @@ import net.warcane.lugin.core.Platform;
 import net.warcane.lugin.core.minecraft.internal.command.InternalCommandManager;
 import net.warcane.lugin.core.minecraft.internal.listener.InternalPacketListeners;
 import net.warcane.lugin.core.minecraft.internal.listener.InternalPlayerListener;
-import net.warcane.lugin.core.minecraft.permission.NmsPermissionInjector;
 import net.warcane.lugin.core.minecraft.permission.PermissionInjector;
-import net.warcane.lugin.core.minecraft.util.team.NametagAPI;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDirectPlayGameCategoryPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
@@ -28,10 +26,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.UUID;
 
-import static net.warcane.lugin.core.minecraft.task.Tasks.runAsyncLater;
-
 @Slf4j
 public class BukkitPlatform extends AbstractPlatform implements MinecraftServerPlatform {
+
+    @SuppressWarnings("UnstableApiUsage")
 
     /**
      * Cria uma instância da plataforma Bukkit (Se não existir) e a registra no Bukkit ServicesManager.
@@ -42,16 +40,16 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     public static BukkitPlatform provide(@NotNull Plugin plugin) {
         final var rawType = Property.getOrThrow("SERVER_TYPE");
         final var categoryType = ServerCategoryType.fromName(rawType);
-
-        if (isInitialized()) {
-            final var currentInstance = getInstance();
-            if (currentInstance.getServerCategoryType() != categoryType) {
-                log.warn("Attempted to provide a BukkitPlatform with a different category type. Current: {}, Provided: {}",
-                  currentInstance.getServerCategoryType(), categoryType);
-            }
-            return currentInstance;
+        if (!isInitialized()) {
+            return new BukkitPlatform(plugin, categoryType);
         }
-        return new BukkitPlatform(plugin, categoryType);
+
+        final var currentInstance = getInstance();
+        if (currentInstance.getServerCategoryType() != categoryType) {
+            log.warn("Attempted to provide a BukkitPlatform with a different category type. Current: {}, Provided: {}",
+              currentInstance.getServerCategoryType(), categoryType);
+        }
+        return currentInstance;
     }
 
     /**
@@ -85,6 +83,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     private final InternalCommandManager internalCommandManager;
     private final PermissionInjector permissionInjector;
 
+
     private boolean online;
 
     private BukkitPlatform(Plugin plugin, @NotNull ServerCategoryType serverCategoryType) {
@@ -93,11 +92,12 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         this.plugin = plugin;
         this.serverCategoryType = serverCategoryType;
         this.internalCommandManager = new InternalCommandManager(this);
-        this.permissionInjector = new NmsPermissionInjector(this);
+        this.permissionInjector = PermissionInjector.fromCurrentPlatform(this);
+
+
 
         this.loadGroupPermissions();
 
-        NametagAPI.registerApi(plugin);
         Bukkit.getServicesManager().register(Platform.class, this, plugin, ServicePriority.Normal);
     }
 
@@ -111,7 +111,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         log.info("Bukkit Platform initialized with channels: {}", Arrays.toString(channels));
 
         final var serverRegisterPacket = new ServerRegisterPacket(this.getId(), serverCategoryType, hostAddress);
-        runAsyncLater(() -> networkClient.sendNetworkPacket(NetworkChannel.SERVER_STATUS, serverRegisterPacket), 20);
+        networkClient.sendNetworkPacket(NetworkChannel.SERVER_STATUS, serverRegisterPacket);
 
         Bukkit.getPluginManager().registerEvents(new InternalPlayerListener(this), plugin);
 
@@ -149,7 +149,11 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
     @Override
     public double[] getTps() {
-        return Bukkit.getServer().spigot().getTPS();
+        try {
+            return Bukkit.getServer().getTPS();
+        } catch (Exception e) {
+            return new double[]{20, 20, 20}; // fallback sem errors.
+        }
     }
 
     public GameServer getGameServer() {

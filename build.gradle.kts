@@ -1,11 +1,12 @@
 plugins {
   java
   id("maven-publish")
+
 }
 
 allprojects {
   group = "net.warcane.core"
-  version = "0.0.2-alpha"
+  version = "0.1.1-alpha"
 }
 
 subprojects {
@@ -13,8 +14,9 @@ subprojects {
   apply(plugin = "maven-publish")
 
   java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+    withSourcesJar()
   }
 
   val artifactIdValue = "lugin-${project.name}"
@@ -30,15 +32,16 @@ subprojects {
     compileOnly("org.projectlombok:lombok:1.18.38")
     annotationProcessor("org.projectlombok:lombok:1.18.38")
 
-    compileOnly("org.jetbrains:annotations:24.0.0")
-    annotationProcessor("org.jetbrains:annotations:24.0.0")
+    compileOnly("org.jetbrains:annotations:26.0.0")
+    annotationProcessor("org.jetbrains:annotations:26.0.0")
   }
+
 
   publishing {
     repositories {
       maven {
         name = "reposiliteRepositoryReleases"
-        url = uri("http://node.luginbr.net:19133/releases")
+        url = uri("http://node.luginbr.net:19133/private")
         credentials {
           username = repositoryUser
           password = repositoryPassword
