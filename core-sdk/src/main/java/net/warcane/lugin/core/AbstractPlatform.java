@@ -106,6 +106,11 @@ public abstract class AbstractPlatform implements Platform {
         return networkClient;
     }
 
+    @Override
+    public ExecutorService getExecutorService() {
+        return ASYNC_EXECUTOR;
+    }
+
     @NotNull
     public CurrencyService getCurrencyService() {
         return currencyService;
