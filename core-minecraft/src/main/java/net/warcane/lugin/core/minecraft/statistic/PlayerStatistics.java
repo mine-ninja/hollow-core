@@ -1,4 +1,4 @@
-package net.warcane.lugin.core.minecraft.player.statistic;
+package net.warcane.lugin.core.minecraft.statistic;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.UpdateOptions;

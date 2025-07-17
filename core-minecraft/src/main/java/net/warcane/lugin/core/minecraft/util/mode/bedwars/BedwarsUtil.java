@@ -1,0 +1,32 @@
+package net.warcane.lugin.core.minecraft.util.mode.bedwars;
+
+import net.warcane.lugin.core.minecraft.BukkitPlatform;
+import net.warcane.lugin.core.minecraft.statistic.PlayerStatistics;
+import net.warcane.lugin.core.minecraft.util.mode.StatsType;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+
+public class BedwarsUtil {
+
+    public static void setStats(@NotNull PlayerStatistics playerStatistics, @NotNull BedwarsMode bedwarsMode, @NotNull StatsType statsType, int value) {
+        long millisecondsPerDay = 1000L * 60 * 60 * 24;
+        int correspondingDay = (int) (System.currentTimeMillis() / millisecondsPerDay);
+
+        playerStatistics.setValue(correspondingDay, bedwarsMode.getSmallName() + "_" + statsType.name(), value);
+    }
+
+    public static void addStats(@NotNull PlayerStatistics playerStatistics, @NotNull BedwarsMode bedwarsMode, @NotNull StatsType statsType, int value) {
+        setStats(playerStatistics, bedwarsMode, statsType, getStats(playerStatistics, bedwarsMode, statsType) + value);
+    }
+
+    public static void removeStats(@NotNull PlayerStatistics playerStatistics, @NotNull BedwarsMode bedwarsMode, @NotNull StatsType statsType, int value) {
+        setStats(playerStatistics, bedwarsMode, statsType, getStats(playerStatistics, bedwarsMode, statsType) - value);
+    }
+
+
+    public static int getStats(@NotNull PlayerStatistics playerStatistics, @NotNull BedwarsMode bedwarsMode, @NotNull StatsType statsType) {
+                return playerStatistics.getTotalValue(bedwarsMode.getSmallName() + "_" + statsType.name());
+    }
+}
