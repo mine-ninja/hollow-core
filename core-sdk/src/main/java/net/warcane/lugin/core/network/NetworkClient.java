@@ -1,5 +1,6 @@
 package net.warcane.lugin.core.network;
 
+import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.Platform;
 import net.warcane.lugin.core.database.RedisConnector;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
@@ -14,6 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
+@Slf4j
 public class NetworkClient {
 
     protected final Platform platform;
@@ -56,6 +58,7 @@ public class NetworkClient {
     }
 
     public void sendNetworkPacket(@NotNull NetworkChannel channel, @NotNull NetworkPacket packet) {
+        log.info("Sending packet {}", NetworkPacket.idOf(packet.getClass()));
         executorService.execute(() -> packetSender.sendPacket(channel, packet));
     }
 

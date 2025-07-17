@@ -1,3 +1,6 @@
 name: BukkitPlatformPlugin
 main: net.warcane.lugin.core.minecraft.BukkitPlatformPlugin
 version: 1.0.0
+author: sasuked
+api-version: 1.13
+depend: [ packetevents ]

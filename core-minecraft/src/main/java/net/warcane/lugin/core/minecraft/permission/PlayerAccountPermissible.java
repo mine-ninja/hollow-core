@@ -3,6 +3,7 @@ package net.warcane.lugin.core.minecraft.permission;
 import net.warcane.lugin.core.group.GroupPermissionService;
 import net.warcane.lugin.core.minecraft.util.permission.PermissionGraph;
 import net.warcane.lugin.core.player.account.PlayerAccount;
+import net.warcane.lugin.core.player.subscription.PlayerGroupSubscription;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissibleBase;
 import org.jetbrains.annotations.NotNull;
@@ -21,19 +22,23 @@ final class PlayerAccountPermissible extends PermissibleBase {
     }
 
     @Override
-    public boolean hasPermission(String inName) {
-        final var group = account.currentSubscription().group();
-        final var permissionSet = groupPermissionService.getCachedPermissionsForGroupOrThrow(group);
-        if (permissionSet.hasPermission(inName) || permissionSet.hasPermission("*")) return true;
+    public boolean hasPermission(@NotNull String inName) {
 
-        final PermissionGraph graph = PermissionGraph.getInstance();
-        final var highest = graph.findHighestPermissionNode(inName);
-        if (highest != null && permissionSet.hasPermission(highest)) return true;
+        for (PlayerGroupSubscription subscription : account.getSubscriptions()) {
+            final var group = subscription.group();
+            final var permissionSet = groupPermissionService.getCachedPermissionsForGroupOrThrow(group);
+            if (permissionSet.hasPermission(inName) || permissionSet.hasPermission("*")) return true;
 
-        for (var subPermission : graph.getHigherPermissions(inName)) {
-            if (permissionSet.hasPermission(subPermission)) {
-                return true;
+            final PermissionGraph graph = PermissionGraph.getInstance();
+            final var highest = graph.findHighestPermissionNode(inName);
+            if (highest != null && permissionSet.hasPermission(highest)) return true;
+
+            for (var subPermission : graph.getHigherPermissions(inName)) {
+                if (permissionSet.hasPermission(subPermission)) {
+                    return true;
+                }
             }
+
         }
 
         return false;

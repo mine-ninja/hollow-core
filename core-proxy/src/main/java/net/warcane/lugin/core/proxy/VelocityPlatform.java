@@ -10,6 +10,8 @@ import net.warcane.lugin.core.network.packet.impl.player.PlayerDirectPlayGameCat
 import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerUnregisterPacket;
 import net.warcane.lugin.core.proxy.listener.PlayerDirectPlayGameCategoryListener;
+import net.warcane.lugin.core.proxy.listener.ServerRegisterPacketListener;
+import net.warcane.lugin.core.proxy.listener.ServerUnregisterPacketListener;
 import net.warcane.lugin.core.server.GameServer;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
 import net.warcane.lugin.core.util.address.HostAddress;
@@ -32,9 +34,10 @@ public class VelocityPlatform extends AbstractPlatform implements ProxyPlatform 
     @Override
     public void init(NetworkChannel... channels) {
         networkClient.subscribeToChannels(channels);
-        networkClient.registerPacketListener(ServerRegisterPacket.class, (packet, headers) -> this.registerServer(packet.serverId(), packet.hostAddress()));
-        networkClient.registerPacketListener(ServerUnregisterPacket.class, (packet, headers) -> this.unregisterServer(packet.serverId()));
+        networkClient.registerPacketListener(ServerRegisterPacket.class, new ServerRegisterPacketListener(this));
+        networkClient.registerPacketListener(ServerUnregisterPacket.class, new ServerUnregisterPacketListener(this));
         networkClient.registerPacketListener(PlayerDirectPlayGameCategoryPacket.class, new PlayerDirectPlayGameCategoryListener(this));
+
         int serverCount = 0;
         for (GameServer gameServer : gameServerService.queryAllServersInNetwork()) {
             this.registerServer(gameServer.serverId(), gameServer.hostAddress());
@@ -58,7 +61,10 @@ public class VelocityPlatform extends AbstractPlatform implements ProxyPlatform 
     @Override
     public void unregisterServer(@NotNull String serverId) {
         final var query = proxyServer.getServer(serverId);
-        if (query.isEmpty()) return;
+        if (query.isEmpty()) {
+            log.info("Server with ID {} is not registered in the proxy, skipping unregistration.", serverId);
+            return;
+        }
 
         final var serverInfo = query.get();
         proxyServer.unregisterServer(serverInfo.getServerInfo());
@@ -70,7 +76,11 @@ public class VelocityPlatform extends AbstractPlatform implements ProxyPlatform 
     }
 
     GameServer getRandomLobby() {
-        final var allLobbyServers = gameServerService.queryServersByCategoryType(ServerCategoryType.LOGIN);
+        final var allLobbyServers = gameServerService.queryAllServersInNetwork()
+          .stream()
+          .filter(server -> server.categoryType() == ServerCategoryType.LOBBY)
+          .toList();
+
         if (allLobbyServers.isEmpty()) {
             return null; // No lobby servers available
         }

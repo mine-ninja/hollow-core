@@ -47,20 +47,6 @@ public class LobbyCommand extends SimpleCommand {
 
     private void sendToLobby(Player player) {
         Tasks.runAsyncLater(() -> {
-            if (!queuedPlayers.contains(player.getUniqueId())) return;
-
-            // todo implementar lógica de seleção de servidor de lobby
-            final var lobbyServer = platform.getGameServerService()
-              .queryServersByCategoryType(ServerCategoryType.LOBBY)
-              .stream()
-              .findFirst()
-              .orElse(null);
-
-            queuedPlayers.remove(player.getUniqueId());
-
-            if(lobbyServer != null){
-
-            }
 
         }, 20 * 3);
     }

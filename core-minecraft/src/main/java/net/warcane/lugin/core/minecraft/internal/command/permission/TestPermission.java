@@ -23,7 +23,5 @@ public class TestPermission extends SimpleCommand {
         } else {
             ctx.getSender().sendMessage("§cO jogador " + playerToTest.getName() + " não tem a permissão: " + permissionToTest);
         }
-
-
     }
 }

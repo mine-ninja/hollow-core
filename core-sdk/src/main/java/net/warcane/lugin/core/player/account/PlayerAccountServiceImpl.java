@@ -1,6 +1,7 @@
 package net.warcane.lugin.core.player.account;
 
 import com.mongodb.client.model.Indexes;
+import net.warcane.lugin.core.player.fetcher.PlayerUuidFetcher;
 import net.warcane.lugin.core.util.data.MongoRepository;
 import net.warcane.lugin.core.util.data.RedisCache;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,10 @@ public class PlayerAccountServiceImpl implements PlayerAccountService {
     public PlayerAccountServiceImpl(@NotNull ExecutorService executorService) {
         this.executorService = executorService;
 
-        repository.useCollection(collection -> collection.createIndex(Indexes.hashed("uniqueId")));
+        repository.useCollection(collection -> {
+            collection.createIndex(Indexes.hashed("uniqueId"));
+            collection.createIndex(Indexes.hashed("playerName"));
+        });
     }
 
     @Override
@@ -36,17 +40,51 @@ public class PlayerAccountServiceImpl implements PlayerAccountService {
     }
 
     @Override
+    public @Nullable PlayerAccount getCachedAccountByName(@NotNull String playerName) {
+        return localCache.values()
+          .stream()
+          .filter(account -> account.playerName().equalsIgnoreCase(playerName))
+          .findFirst()
+          .orElse(null);
+    }
+
+    @Override
     public CompletableFuture<@Nullable PlayerAccount> getPlayerAccount(@NotNull UUID playerId) {
         final var locallyCached = localCache.get(playerId);
         if (locallyCached != null) return CompletableFuture.completedFuture(locallyCached);
 
         return supply(() -> {
-            final var fromRedis = redisCache.hget(CACHE_KEY, playerId.toString(),
-              () -> repository.findById(playerId));
+            final var fromRedis = redisCache.hget(CACHE_KEY, playerId.toString(), () -> repository.findById(playerId));
             if (fromRedis != null) {
                 localCache.put(playerId, fromRedis);
             }
             return fromRedis;
+        });
+    }
+
+    @Override
+    public CompletableFuture<@Nullable PlayerAccount> getPlayerAccountByName(@NotNull String playerName) {
+        final var local = getCachedAccountByName(playerName);
+        if (local != null) return CompletableFuture.completedFuture(local);
+
+        return supply(() -> {
+            final var uuid = PlayerUuidFetcher.getInstance().fetchPlayerUuid(playerName);
+            if (uuid != null) {
+                final var fromUniqueId = redisCache.hget(CACHE_KEY, uuid.toString(), () -> repository.findById(uuid));
+                if (fromUniqueId != null) {
+                    localCache.put(uuid, fromUniqueId);
+                    return fromUniqueId;
+                }
+            }
+
+            final var fromMongo = repository.findFirstFromPropertyIgnoreCase("playerName", playerName);
+            if (fromMongo != null) {
+                localCache.put(fromMongo.uniqueId(), fromMongo);
+                redisCache.hset(CACHE_KEY, fromMongo.uniqueId().toString(), fromMongo);
+                return fromMongo;
+            }
+
+            return null;
         });
     }
 

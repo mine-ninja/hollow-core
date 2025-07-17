@@ -17,8 +17,6 @@ public class RedisCache<O> {
     protected final RedisConnector connector;
     protected final GenericSerializer<O> serializer;
 
-//    private final Map<String , Function<O , ?>> indexes = new HashMap<>();
-
     public RedisCache(@NotNull Class<O> clazz) {
         this(RedisConnector.getInstance(), GenericSerializer.jsonSerializer(clazz));
     }
@@ -32,9 +30,45 @@ public class RedisCache<O> {
         this.serializer = serializer;
     }
 
+    public void set(@NotNull String key, @NotNull O value, long seconds) {
+        connector.useJedis(jedis -> {
+            jedis.set(key, serializer.serialize(value));
+            jedis.expire(key, seconds);
+        });
+    }
+
+    public void set(@NotNull String key, @NotNull O value) {
+        connector.useJedis(jedis -> jedis.set(key, serializer.serialize(value)));
+    }
+
+    public void del(@NotNull String key) {
+        connector.useJedis(jedis -> jedis.del(key));
+    }
+
+    @Nullable
+    public O get(@NotNull String key) {
+        return connector.supplyFromJedis(jedis -> {
+            final var rawData = jedis.get(key);
+            return rawData == null ? null : serializer.deserialize(rawData);
+        });
+    }
+
+    @Nullable
+    public O get(@NotNull String key, @NotNull Supplier<@Nullable O> defaultValueSupplier) {
+        final var value = get(key);
+        if (value != null) return value;
+
+        final var defaultValue = defaultValueSupplier.get();
+        if (defaultValue != null) {
+            set(key, defaultValue);
+        }
+        return defaultValue;
+    }
+
     public void hset(@NotNull String key, @NotNull String field, @NotNull O value) {
         connector.useJedis(jedis -> jedis.hset(key, field, serializer.serialize(value)));
     }
+
 
     @Nullable
     public O hget(@NotNull String key, @NotNull String field, @NotNull Supplier<@Nullable O> defaultValueSupplier) {
@@ -64,7 +98,6 @@ public class RedisCache<O> {
             return rawData == null ? null : serializer.deserialize(rawData);
         });
     }
-
 
     public void hdel(@NotNull String key, @NotNull String field) {
         connector.useJedis(jedis -> jedis.hdel(key, field));

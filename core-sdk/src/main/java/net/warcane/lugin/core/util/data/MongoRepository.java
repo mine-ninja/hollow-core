@@ -2,10 +2,9 @@ package net.warcane.lugin.core.util.data;
 
 import com.mongodb.Function;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.FindOneAndReplaceOptions;
-import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.model.*;
 import net.warcane.lugin.core.database.MongoDbConnector;
+import org.bson.conversions.Bson;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -19,8 +18,13 @@ public class MongoRepository<ID, O> {
       .upsert(true)
       .returnDocument(ReturnDocument.AFTER);
 
+    private static final FindOneAndUpdateOptions FIND_ONE_AND_UPDATE_OPTIONS = new FindOneAndUpdateOptions()
+      .upsert(true)
+      .returnDocument(ReturnDocument.AFTER);
+
     private final MongoCollection<O> collection;
     private final String idFieldName;
+
 
     public MongoRepository(Class<O> clazz, String idFieldName) {
         this.collection = MongoDbConnector.getInstance().getCollection(clazz.getSimpleName(), clazz);
@@ -49,8 +53,16 @@ public class MongoRepository<ID, O> {
         return collection.findOneAndReplace(Filters.eq(idFieldName, id), object, FIND_ONE_AND_REPLACE_OPTIONS);
     }
 
+    public O set(@NotNull Bson filter, @NotNull String key, @NotNull Object value) {
+        return collection.findOneAndUpdate(filter, Updates.set(key, value), FIND_ONE_AND_UPDATE_OPTIONS);
+    }
+
     public O findFirstFromProperty(@NotNull String key, @NotNull Object value) {
         return collection.find(Filters.eq(key, value)).first();
+    }
+
+    public O findFirstFromPropertyIgnoreCase(@NotNull String key, @NotNull String value) {
+        return collection.find(Filters.regex(key, value, "i")).first();
     }
 
     public List<O> queryAll() {

@@ -24,12 +24,20 @@ public interface PlayerAccountService {
     }
 
     /**
-     * Obtém uma conta de jogador do cache, se disponível.
+     * Obtém uma conta de jogador do cache local, se disponível.
      *
      * @param playerId Identificador único do jogador (não nulo).
      * @return Conta do jogador ou null se não estiver no cache.
      */
     @Nullable PlayerAccount getCachedAccount(@NotNull UUID playerId);
+
+    /**
+     * Obtém uma conta de jogador do cache local, se disponível, pelo nome do jogador.
+     *
+     * @param playerName Nome do jogador (não nulo).
+     * @return Conta do jogador ou null se não estiver no cache.
+     */
+    @Nullable PlayerAccount getCachedAccountByName(@NotNull String playerName);
 
     /**
      * Busca a conta de um jogador pelo seu identificador único.
@@ -38,6 +46,14 @@ public interface PlayerAccountService {
      * @return CompletableFuture contendo a conta do jogador ou null se não encontrada.
      */
     CompletableFuture<@Nullable PlayerAccount> getPlayerAccount(@NotNull UUID playerId);
+
+    /**
+     * Busca a conta de um jogador pelo seu nome.
+     *
+     * @param playerName Nome do jogador (não nulo).
+     * @return CompletableFuture contendo a conta do jogador ou null se não encontrada.
+     */
+    CompletableFuture<@Nullable PlayerAccount> getPlayerAccountByName(@NotNull String playerName);
 
     /**
      * Atualiza a conta de um jogador.
