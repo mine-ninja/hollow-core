@@ -1,22 +1,18 @@
-package net.warcane.lugin.core.minecraft.statistic;
+package net.warcane.lugin.core.player.statistic;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.UpdateOptions;
 import lombok.Getter;
 import net.warcane.lugin.core.database.MongoDbConnector;
 import net.warcane.lugin.core.database.RedisConnector;
-import net.warcane.lugin.core.minecraft.BukkitPlatform;
-import net.warcane.lugin.core.player.account.PlayerAccount;
 import org.bson.Document;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import redis.clients.jedis.Jedis;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 public class PlayerStatistics {
 
@@ -45,16 +41,6 @@ public class PlayerStatistics {
     @NotNull
     public static PlayerStatistics createBlankCache(@NotNull UUID uniqueId) {
         return new PlayerStatistics(uniqueId);
-    }
-
-    /**
-     * Retorna a conta principal do jogador baseado no UUID.
-     *
-     * @return Uma instância de PlayerAccount.
-     */
-    @NotNull
-    public CompletableFuture<@Nullable PlayerAccount> getPlayerAccount() {
-        return BukkitPlatform.getInstance().getPlayerAccountService().getPlayerAccount(uuid);
     }
 
     /**

@@ -1,4 +1,4 @@
-package net.warcane.lugin.core.minecraft.statistic;
+package net.warcane.lugin.core.player.statistic;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

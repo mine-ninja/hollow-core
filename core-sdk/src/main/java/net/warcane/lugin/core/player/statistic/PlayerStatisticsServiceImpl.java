@@ -1,4 +1,4 @@
-package net.warcane.lugin.core.minecraft.statistic;
+package net.warcane.lugin.core.player.statistic;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Indexes;
@@ -90,24 +90,25 @@ public class PlayerStatisticsServiceImpl implements PlayerStatisticsService {
 
             if (document != null) {
                 for (Map.Entry<String, Object> entry : document.entrySet()) {
-                    String encoded = (String) entry.getValue();
-                    byte[] bytes = encoded.getBytes(StandardCharsets.UTF_8);
+                    if (entry.getValue() instanceof String encoded) {
+                        byte[] bytes = encoded.getBytes(StandardCharsets.UTF_8);
 
-                    DataInputStream dataIn = new DataInputStream(new ByteArrayInputStream(bytes));
+                        DataInputStream dataIn = new DataInputStream(new ByteArrayInputStream(bytes));
 
-                    jedisPool.hset(PlayerStatistics.REDIS_PREFIX + playerId, entry.getKey(), encoded);
+                        jedisPool.hset(PlayerStatistics.REDIS_PREFIX + playerId, entry.getKey(), encoded);
 
-                    try {
-                        int amount = dataIn.readInt();
+                        try {
+                            int amount = dataIn.readInt();
 
-                        for (int i = 0; i <= amount; i++) {
-                            int day = dataIn.readInt();
-                            int value = dataIn.readInt();
+                            for (int i = 0; i <= amount; i++) {
+                                int day = dataIn.readInt();
+                                int value = dataIn.readInt();
 
-                            playerStatistics.getCache().computeIfAbsent(entry.getKey(), k -> new HashMap<>()).put(day, value);
+                                playerStatistics.getCache().computeIfAbsent(entry.getKey(), k -> new HashMap<>()).put(day, value);
+                            }
+                        } catch (IOException exception) {
+                            throw new RuntimeException(exception);
                         }
-                    } catch (IOException exception) {
-                        throw new RuntimeException(exception);
                     }
                 }
             }
