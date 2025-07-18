@@ -62,22 +62,26 @@ public class PlayerStatisticsServiceImpl implements PlayerStatisticsService {
                 Map<String, String> hashMap = jedisPool.hgetAll(PlayerStatistics.REDIS_PREFIX + playerId);
 
                 for (Map.Entry<String, String> entry : hashMap.entrySet()) {
-                    String encoded = entry.getValue();
-                    byte[] bytes = encoded.getBytes(StandardCharsets.UTF_8);
+                    if (!entry.getKey().equalsIgnoreCase("key")) {
+                        String encoded = entry.getValue();
 
-                    DataInputStream dataIn = new DataInputStream(new ByteArrayInputStream(bytes));
+                        try {
+                            byte[] bytes = java.util.Base64.getDecoder().decode(encoded);
+                            DataInputStream dataIn = new DataInputStream(new ByteArrayInputStream(bytes));
 
-                    try {
-                        int amount = dataIn.readInt();
+                            int amount = dataIn.readInt();
 
-                        for (int i = 0; i <= amount; i++) {
-                            int day = dataIn.readInt();
-                            int value = dataIn.readInt();
+                            for (int i = 0; i < amount; i++) {
+                                int day = dataIn.readInt();
+                                int value = dataIn.readInt();
 
-                            playerStatistics.getCache().computeIfAbsent(entry.getKey(), k -> new HashMap<>()).put(day, value);
+                                playerStatistics.getCache().computeIfAbsent(entry.getKey(), k -> new HashMap<>()).put(day, value);
+                            }
+                        } catch (IOException exception) {
+                            throw new RuntimeException(exception);
+                        } catch (IllegalArgumentException exception) {
+                            System.err.println(exception.getMessage());
                         }
-                    } catch (IOException exception) {
-                        throw new RuntimeException(exception);
                     }
                 }
 
@@ -90,8 +94,8 @@ public class PlayerStatisticsServiceImpl implements PlayerStatisticsService {
 
             if (document != null) {
                 for (Map.Entry<String, Object> entry : document.entrySet()) {
-                    if (entry.getValue() instanceof String encoded) {
-                        byte[] bytes = encoded.getBytes(StandardCharsets.UTF_8);
+                    if (entry.getValue() instanceof String encoded && !entry.getKey().equalsIgnoreCase("key")) {
+                        byte[] bytes = java.util.Base64.getDecoder().decode(encoded);
 
                         DataInputStream dataIn = new DataInputStream(new ByteArrayInputStream(bytes));
 
@@ -100,7 +104,7 @@ public class PlayerStatisticsServiceImpl implements PlayerStatisticsService {
                         try {
                             int amount = dataIn.readInt();
 
-                            for (int i = 0; i <= amount; i++) {
+                            for (int i = 0; i < amount; i++) {
                                 int day = dataIn.readInt();
                                 int value = dataIn.readInt();
 
