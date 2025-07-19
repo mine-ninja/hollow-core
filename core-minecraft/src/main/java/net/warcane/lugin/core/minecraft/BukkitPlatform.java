@@ -12,6 +12,7 @@ import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDirectPlayGameCategoryPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerUnregisterPacket;
+import net.warcane.lugin.core.player.subscription.SubscriptionCategoryType;
 import net.warcane.lugin.core.server.GameServer;
 import net.warcane.lugin.core.server.ServerPlayerCount;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
@@ -93,8 +94,6 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         this.serverCategoryType = serverCategoryType;
         this.internalCommandManager = new InternalCommandManager(this);
         this.permissionInjector = PermissionInjector.fromCurrentPlatform(this);
-
-
 
         this.loadGroupPermissions();
 
@@ -180,4 +179,14 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         final var packet = new PlayerDirectPlayGameCategoryPacket(player, categoryType);
         networkClient.sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, packet);
     }
+
+    public SubscriptionCategoryType getSubscriptionCategoryType() {
+        return switch (serverCategoryType) {
+            case LOBBY -> SubscriptionCategoryType.MINIGAMES;
+            case FACTIONS -> SubscriptionCategoryType.FACTIONS;
+            default -> SubscriptionCategoryType.GLOBAL;
+        };
+    }
+
+
 }

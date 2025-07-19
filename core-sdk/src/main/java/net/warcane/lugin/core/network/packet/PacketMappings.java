@@ -7,6 +7,10 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.warcane.lugin.core.network.packet.impl.internal.PingPacket;
 import net.warcane.lugin.core.network.packet.impl.internal.PongPacket;
 import net.warcane.lugin.core.network.packet.impl.player.*;
+import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerLoseGroupPacket;
+import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerReceiveGroupPacket;
+import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleportToLocationPacket;
+import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleportToTargetPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerUnregisterPacket;
 import net.warcane.lugin.core.network.packet.impl.staff.StaffMessagePacket;
@@ -39,17 +43,21 @@ final class PacketMappings {
         entry(0, PingPacket.class),
         entry(1, PongPacket.class),
 
-        // server lifecycle
         entry(2, ServerRegisterPacket.class),
         entry(3, ServerUnregisterPacket.class),
 
-        // player lifecycle
         entry(4, PlayerConnectedToServerPacket.class),
         entry(5, PlayerDisconnectedFromServerPacket.class),
         entry(6, PlayerJoinRequestPacket.class),
         entry(7, PlayerDirectPlayGameCategoryPacket.class),
+
         entry(8, SendMessageToPlayerPacket.class),
-        entry(9, StaffMessagePacket.class)
+        entry(9, StaffMessagePacket.class),
+        entry(10, PlayerReceiveGroupPacket.class),
+        entry(11, PlayerLoseGroupPacket.class),
+
+        entry(12, PlayerTeleportToTargetPacket.class),
+        entry(13, PlayerTeleportToLocationPacket.class)
       )
     );
 

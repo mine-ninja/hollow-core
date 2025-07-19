@@ -65,7 +65,8 @@ public final class InternalPlayerListener implements Listener {
                 return;
             }
 
-            PlayerGroup group = playerAccount.getHighestSubscription().group();
+            final var categoryType = platform.getSubscriptionCategoryType();
+            PlayerGroup group = playerAccount.getHighestSubscription(categoryType).group();
             final var priority = group.getPriorityValue();
             final var groupPrefix = group.getPrefix();
 
@@ -73,6 +74,7 @@ public final class InternalPlayerListener implements Listener {
             final var loadTagsOnJoin = Property.getBoolean("LOAD_TAGS_ON_JOIN", true);
             if (loadTagsOnJoin) {
                 NameTags.setNameTag(player, groupPrefix, "", priority);
+                NameTags.updateAllTags();
             }
 
             // Só envia o pacote de connect caso realmente carregue as informações do jogador.
@@ -92,7 +94,12 @@ public final class InternalPlayerListener implements Listener {
             }
 
             PlayerUuidFetcher.getInstance().cachePlayerUuid(name, playerId);
-            PlayerNetworkStateManager.getInstance().register(new PlayerNetworkState(player.getUniqueId(), player.getName(), currentServerId));
+            PlayerNetworkStateManager.getInstance()
+              .register(new PlayerNetworkState(
+                player.getUniqueId(),
+                player.getName(),
+                currentServerId, platform.getServerCategoryType()
+              ));
         });
     }
 
@@ -128,13 +135,16 @@ public final class InternalPlayerListener implements Listener {
         Player localPlayer = event.getLocalPlayer();
         if (localPlayer == null) return;
 
-        PlayerGroup group = event.getPlayerAccount().getHighestSubscription().group();
+
+        final var categoryType = platform.getSubscriptionCategoryType();
+        PlayerGroup group = event.getPlayerAccount().getHighestSubscription(categoryType).group();
         final var priority = group.getPriorityValue();
         final var groupPrefix = group.getPrefix();
 
         final var loadTagsOnJoin = Property.get("LOAD_TAGS_ON_JOIN", "true").equalsIgnoreCase("true");
         if (loadTagsOnJoin) {
             NameTags.setNameTag(localPlayer, groupPrefix, "", priority);
+            NameTags.updateAllTags();
         }
     }
 

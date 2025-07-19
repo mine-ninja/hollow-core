@@ -1,8 +1,7 @@
 package net.warcane.lugin.core.player.state;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
+import net.warcane.lugin.core.server.type.ServerCategoryType;
 
 import java.util.UUID;
 
@@ -16,17 +15,7 @@ import java.util.UUID;
 public record PlayerNetworkState(
   @JsonProperty("i") UUID playerId,
   @JsonProperty("n") String playerName,
-  @JsonProperty("sid") String currentServerId
+  @JsonProperty("sid") String currentServerId,
+  @JsonProperty("sc") ServerCategoryType gameType
 ) {
-
-    /**
-     * Cria um novo estado de rede do jogador com o ID do jogador e nome.
-     *
-     * @param serverId ID do servidor atual do jogador.
-     * @return Uma nova instância de PlayerNetworkState com o ID do jogador, nome e ID do servidor.
-     */
-    @Contract(pure = true)
-    public PlayerNetworkState withCurrentServerId(@NotNull String serverId) {
-        return new PlayerNetworkState(this.playerId, this.playerName, serverId);
-    }
 }

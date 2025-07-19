@@ -14,12 +14,14 @@ import java.time.Instant;
  * @param group             O grupo ao qual o jogador está inscrito
  * @param subscriptionStart Data e hora de início da assinatura
  * @param subscriptionEnd   Data e hora de término da assinatura
+ * @param type              O tipo de categoria da assinatura
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record PlayerGroupSubscription(
   @JsonProperty("g") PlayerGroup group,
   @JsonProperty("ss") Instant subscriptionStart,
-  @JsonProperty("se") Instant subscriptionEnd
+  @JsonProperty("se") Instant subscriptionEnd,
+  @JsonProperty("c") SubscriptionCategoryType type
 ) {
 
     /**
@@ -33,7 +35,7 @@ public record PlayerGroupSubscription(
      * @return Uma nova instância de PlayerGroupSubscription com o grupo padrão e datas atuais
      */
     public static PlayerGroupSubscription defaultSubscription() {
-        return new PlayerGroupSubscription(PlayerGroup.DEFAULT, Instant.now(), Instant.now());
+        return new PlayerGroupSubscription(PlayerGroup.DEFAULT, Instant.now(), Instant.now(), SubscriptionCategoryType.GLOBAL);
     }
 
     /**
@@ -43,8 +45,8 @@ public record PlayerGroupSubscription(
      * @param end   A data e hora de término da assinatura
      * @return Uma nova instância de PlayerGroupSubscription
      */
-    public static PlayerGroupSubscription createNewSubscription(PlayerGroup group, Instant end) {
-        return new PlayerGroupSubscription(group, Instant.now(), end);
+    public static PlayerGroupSubscription createNewSubscription(PlayerGroup group, Instant end, SubscriptionCategoryType type) {
+        return new PlayerGroupSubscription(group, Instant.now(), end, type);
     }
 
     /**
@@ -74,7 +76,18 @@ public record PlayerGroupSubscription(
      */
     @Contract(pure = true)
     public PlayerGroupSubscription changeEnd(Instant newEnd) {
-        return new PlayerGroupSubscription(group, subscriptionStart, newEnd);
+        return new PlayerGroupSubscription(group, subscriptionStart, newEnd, type);
+    }
+
+    /**
+     * Altera a data do fim da assinatura do jogador para um tempo a partir de agora.
+     *
+     * @param instant O tempo a partir de agora para definir o novo término da assinatura
+     * @return Uma nova instância de PlayerGroupSubscription com a data de término atualizada
+     */
+    @Contract(pure = true)
+    public PlayerGroupSubscription changeEndFromNow(Instant instant){
+        return new PlayerGroupSubscription(group, subscriptionStart, Instant.now().plusMillis(instant.toEpochMilli()), type);
     }
 
     /**
@@ -85,6 +98,6 @@ public record PlayerGroupSubscription(
      */
     @Contract(pure = true)
     public PlayerGroupSubscription changeGroup(PlayerGroup newGroup) {
-        return new PlayerGroupSubscription(newGroup, subscriptionStart, subscriptionEnd);
+        return new PlayerGroupSubscription(newGroup, subscriptionStart, subscriptionEnd, type);
     }
 }

@@ -6,6 +6,7 @@ import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.staff.StaffMessagePacket;
+import net.warcane.lugin.core.player.subscription.SubscriptionCategoryType;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -32,7 +33,7 @@ public class StaffMessageCommand extends SimpleCommand {
         }
 
 
-        final var tagFormat = account.getFormattedDisplayName();
+        final var tagFormat = account.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL);
         final var msg = ctx.isArgsLength(0) ? "" : ctx.joinArgs(0);
         if (msg.isEmpty()) {
             throw new CommandFailedException("§cVocê precisa informar uma mensagem para enviar.");

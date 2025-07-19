@@ -33,11 +33,13 @@ public class PlayerInfoCommand extends SimpleCommand {
             throw new CommandFailedException("§cConta do jogador não encontrada.");
         }
 
+        final var subscriptionType = platform.getSubscriptionCategoryType();
+
         ctx.sendMessage(
           "§6§lINFORMAÇÕES AVANÇADAS: §6" + target.getName(),
           "§7UUID: §f" + target.getUniqueId(),
           "§7IP: §f" + target.getAddress().getAddress().getHostAddress(),
-          "§7Nome Formatado:" + targetAccount.getFormattedDisplayName(),
+          "§7Nome Formatado:" + targetAccount.getFormattedDisplayName(subscriptionType),
           "§7Ultima Conexão: §f" + targetAccount.lastLogin().toString(),
           "§7Primeira Conexão: §f" + targetAccount.createdAt().toString()
         );

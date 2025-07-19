@@ -6,8 +6,12 @@ import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.command.SimpleCommand;
 import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
-import net.warcane.lugin.core.player.subscription.PlayerGroupSubscription;
-import net.warcane.lugin.core.util.time.DateFormatter;
+import net.warcane.lugin.core.network.channel.NetworkChannel;
+import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerLoseGroupPacket;
+import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerReceiveGroupPacket;
+import net.warcane.lugin.core.player.account.PlayerAccountService;
+import net.warcane.lugin.core.player.subscription.SubscriptionCategoryType;
+import net.warcane.lugin.core.util.time.Time;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
@@ -23,129 +27,143 @@ public class PlayerGroupCommand extends SimpleCommand {
     private static final List<String> PERMANENT_ARG_VALUES = List.of("permanente", "perma", "-p", "-1");
 
     private final BukkitPlatform platform;
+    private final PlayerAccountService playerAccountService;
 
     public PlayerGroupCommand(@NotNull BukkitPlatform platform) {
         super("playergroup");
         this.platform = platform;
+        this.playerAccountService = platform.getPlayerAccountService();
         this.requiredPermission = "lugin.master";
     }
 
-    // /playergroup add <player> <group> [permanente|perma|-p|-1]
-    // /playergroup remove <player> <group>
+    // /playergroup add <player> <group> [permanente|perma|-p|-1] [category]
+    // /playergroup remove <player> <group> [category]
     // /playergroup list [<player>]
     @Override
     public void performCommand(@NotNull CommandContext ctx) throws CommandFailedException {
-        final var argument = ctx.getRawArgOrThrow(0, "Você deve especificar um comando válido: add, remove ou list.");
-        final var playerName = ctx.getRawArgOrThrow(1, "Você deve especificar o nome do jogador.");
-        switch (argument.toLowerCase()) {
+        final var subCommand = ctx.getRawArgOrThrow(0, "§cVocê deve especificar um subcomando: add, remove ou list.");
+        final var playerName = ctx.getRawArgOrThrow(1, "§cVocê deve especificar o nome do jogador.");
+
+        switch (subCommand.toLowerCase()) {
             case "add" -> handleAddGroupCommand(ctx, playerName);
             case "remove" -> handleRemoveGroupCommand(ctx, playerName);
             case "list" -> handleListGroupsCommand(ctx, playerName);
-            default -> ctx.sendMessage("Comando inválido. Use: add, remove ou list.");
+            default -> throw new CommandFailedException("§cSubcomando inválido. Use: add, remove ou list.");
         }
     }
 
     private void handleAddGroupCommand(@NotNull CommandContext ctx, @NotNull String playerName) {
-        final var group = ctx.getEnumOrThrow(2, PlayerGroup.class, "§cVocê deve especificar um grupo válido.");
-        final var rawTime = ctx.getRawArgOrThrow(3, "Você deve especificar um tempo para o grupo.");
-        platform.getPlayerAccountService().getPlayerAccountByName(playerName)
+        final var group = ctx.getEnumOrThrow(0, PlayerGroup.class, "§cGrupo inválido. Use um dos seguintes: " + String.join(", ", PlayerGroup.NAMES));
+        final var rawTime = ctx.getRawArgOrThrow(2, "§cVocê deve especificar o tempo de duração do grupo (use 'permanente' para um grupo permanente).");
+        final var parsedTime = this.parseInstant(rawTime);
+        final boolean isPermanent = PERMANENT_ARG_VALUES.contains(rawTime.toLowerCase()) || parsedTime.isAfter(ZonedDateTime.now().plusDays(36500).toInstant());
+        final var categoryType = ctx.getEnumOrThrow(3, SubscriptionCategoryType.class, "§cCategoria inválida. Use uma das seguintes: " + String.join(", ", SubscriptionCategoryType.BY_NAME.keySet()));
+
+        playerAccountService.getPlayerAccountByName(playerName)
           .whenComplete((account, error) -> {
               if (error != null)
-                  throw new CommandFailedException("§cErro ao buscar a conta do jogador: " + error.getMessage());
-              if (account == null) throw new CommandFailedException("§cConta do jogador não encontrada.");
+                  throw new CommandFailedException("§cErro ao buscar conta do jogador: " + error.getMessage());
+              if (account == null) throw new CommandFailedException("§cJogador não encontrado: " + playerName);
 
-              final var isPermanent = PERMANENT_ARG_VALUES.contains(rawTime);
-              Instant expirationTime;
-              if (isPermanent) {
-                  expirationTime = ZonedDateTime.now().plusYears(1000).toInstant();
-              } else {
-                  final var time = ctx.getTimeOrThrow(3, "Você deve especificar um tempo válido. Exemplo: 1h, 30m, 15s.");
-                  expirationTime = Instant.now().plusMillis(time.toMilliseconds());
-              }
-
-              ctx.sendMessage("§aAdicionando o grupo §e%s§a para o jogador §e%s§a com expiração em §e%s§a.".formatted(group.name(), playerName, DateFormatter.format(expirationTime)));
-              platform.getPlayerAccountService().updatePlayerAccount(account.withNewGroupSubscription(group, expirationTime))
+              playerAccountService.updatePlayerAccount(account.withNewSubscription(group, parsedTime, categoryType))
                 .whenComplete((updatedAccount, updateError) -> {
-                    if (updateError != null) {
-                        updateError.printStackTrace();
-                        throw new CommandFailedException("§cErro ao atualizar a conta do jogador: " + updateError.getMessage());
+                    if (updateError != null) throw new CommandFailedException("§cErro ao atualizar conta do jogador: " + updateError.getMessage());
+                    if (updatedAccount == null) throw new CommandFailedException("§cErro ao adicionar grupo ao jogador: " + playerName);
+
+                    final var updatedSubscription = updatedAccount.getSubscriptionForGroup(group, categoryType);
+                    if (updatedSubscription != null) {
+                        // envia um packet para notificar os outros servidores do grupo adicionado
+                        final var confirmationPacket = new PlayerReceiveGroupPacket(updatedAccount.uniqueId(), updatedSubscription.group(), categoryType);
+                        platform.getNetworkClient().sendNetworkPacket(NetworkChannel.SERVER_STATUS, confirmationPacket);
+
+                        ctx.sendMessage("§aGrupo %s adicionado ao jogador %s com sucesso. Expira em: %s".formatted(
+                          group.name(), playerName, updatedSubscription.subscriptionEnd()));
+                    } else {
+                        throw new CommandFailedException("§cErro ao adicionar grupo ao jogador: " + playerName + ". Verifique se o grupo e a categoria estão corretos.");
                     }
-                    if (updatedAccount == null)
-                        throw new CommandFailedException("§cErro ao atualizar a conta do jogador.");
-
-                    // sim, isso é necessário para confirmar a consistência do dado atualizado.
-                    PlayerGroupSubscription subscriptionForGroup = updatedAccount.getSubscriptionForGroup(group);
-                    if (subscriptionForGroup == null)
-                        throw new CommandFailedException("§cErro ao adicionar o grupo: " + group.name() + " para o jogador: " + playerName);
-
-                    final var formattedExpiration = DateFormatter.format(subscriptionForGroup.subscriptionEnd());
-                    ctx.sendMessage("§aGrupo §e%s§a adicionado com sucesso para o jogador §e%s§a. Expiração: §e%s§a.".formatted(group.name(), playerName, formattedExpiration));
                 });
           });
     }
 
     private void handleRemoveGroupCommand(@NotNull CommandContext ctx, @NotNull String playerName) {
-        final var group = ctx.getEnumOrThrow(2, PlayerGroup.class, "§cVocê deve especificar um grupo válido.");
+        final var group = ctx.getEnumOrThrow(0, PlayerGroup.class, "§cGrupo inválido. Use um dos seguintes: " + String.join(", ", PlayerGroup.NAMES));
+        final var categoryType = ctx.getEnumOrThrow(1, SubscriptionCategoryType.class, "§cCategoria inválida. Use uma das seguintes: " + String.join(", ", SubscriptionCategoryType.BY_NAME.keySet()));
 
-        if (group == PlayerGroup.DEFAULT) {
-            throw new CommandFailedException("§cVocê não pode remover o grupo padrão (DEFAULT) de um jogador.");
-        }
-
-        platform.getPlayerAccountService().getPlayerAccountByName(playerName)
+        playerAccountService.getPlayerAccountByName(playerName)
           .whenComplete((account, error) -> {
               if (error != null)
-                  throw new CommandFailedException("§cErro ao buscar a conta do jogador: " + error.getMessage());
-              if (account == null) throw new CommandFailedException("§cConta do jogador não encontrada.");
+                  throw new CommandFailedException("§cErro ao buscar conta do jogador: " + error.getMessage());
+              if (account == null) throw new CommandFailedException("§cJogador não encontrado: " + playerName);
 
-              final var subscription = account.getSubscriptionForGroup(group);
-              if (subscription == null) {
-                  ctx.sendMessage("§cO jogador §e%s§c não possui o grupo §e%s§c.".formatted(playerName, group.name()));
-                  return;
+              final var subscription = account.getSubscriptionForGroup(group, categoryType);
+              if (subscription == null || subscription.isExpired()) {
+                  throw new CommandFailedException("§cO jogador %s não possui o grupo %s na categoria %s.".formatted(playerName, group.name(), categoryType.name()));
               }
 
-              ctx.sendMessage("§aRemovendo o grupo §e%s§a do jogador §e%s§a.".formatted(group.name(), playerName));
-              platform.getPlayerAccountService().updatePlayerAccount(account.withNewGroupSubscription(PlayerGroup.DEFAULT, Instant.now()))
+              playerAccountService.updatePlayerAccount(account.removeSubscription(group, categoryType))
                 .whenComplete((updatedAccount, updateError) -> {
                     if (updateError != null)
-                        throw new CommandFailedException("§cErro ao atualizar a conta do jogador: " + updateError.getMessage());
+                        throw new CommandFailedException("§cErro ao atualizar conta do jogador: " + updateError.getMessage());
                     if (updatedAccount == null)
-                        throw new CommandFailedException("§cErro ao atualizar a conta do jogador.");
+                        throw new CommandFailedException("§cErro ao remover grupo do jogador: " + playerName);
 
-                    final var stillHasGroup = updatedAccount.getSubscriptionForGroup(group) != null;
-                    if (stillHasGroup) {
-                        throw new CommandFailedException("§cErro ao remover o grupo: " + group.name() + " do jogador: " + playerName);
+                    if (updatedAccount.getSubscriptionForGroup(group, categoryType) == null) {
+                        final var confirmationPacket = new PlayerLoseGroupPacket(updatedAccount.uniqueId(), group, categoryType);
+                        platform.getNetworkClient().sendNetworkPacket(NetworkChannel.SERVER_STATUS, confirmationPacket);
                     }
 
-
-
-                    ctx.sendMessage("§aGrupo §e%s§a removido com sucesso do jogador §e%s§a.".formatted(group.name(), playerName));
+                    ctx.sendMessage("§aGrupo %s removido do jogador %s com sucesso.".formatted(group.name(), playerName));
                 });
           });
     }
 
     private void handleListGroupsCommand(@NotNull CommandContext ctx, @NotNull String playerName) {
-        platform.getPlayerAccountService().getPlayerAccountByName(playerName)
+        playerAccountService.getPlayerAccountByName(playerName)
           .whenComplete((account, error) -> {
               if (error != null)
-                  throw new CommandFailedException("§cErro ao buscar a conta do jogador: " + error.getMessage());
-              if (account == null) throw new CommandFailedException("§cConta do jogador não encontrada.");
+                  throw new CommandFailedException("§cErro ao buscar conta do jogador: " + error.getMessage());
+              if (account == null) throw new CommandFailedException("§cJogador não encontrado: " + playerName);
 
-              final var subscriptions = account.getSubscriptions();
+              final var subscriptions = account.getSubscriptions(SubscriptionCategoryType.GLOBAL);
               if (subscriptions.isEmpty()) {
-                  ctx.sendMessage("§cO jogador §e%s§c não possui grupos.".formatted(playerName));
-                  return;
+                  ctx.sendMessage("§cO jogador %s não possui grupos definidos.".formatted(playerName));
+              } else {
+                  int size = subscriptions.size();
+                  ctx.sendMessage("§aGrupos do jogador %s (%d):".formatted(playerName, size));
+
+                  for (SubscriptionCategoryType value : SubscriptionCategoryType.BY_NAME.values()) {
+                      final var categorySubscriptions = account.getSubscriptions(value);
+                      if (categorySubscriptions.isEmpty()) {
+                          ctx.sendMessage(" §cNenhum grupo encontrado na categoria %s.".formatted(value.name()));
+                      } else {
+                          int categorySize = categorySubscriptions.size();
+                          ctx.sendMessage("  §eCategoria %s (%s):".formatted(value.name(), categorySize));
+                          for (var subscription : categorySubscriptions) {
+                              final var group = subscription.group();
+                              final var endTime = subscription.subscriptionEnd();
+                              final var isPermanent = subscription.isPermanent();
+                              ctx.sendMessage("   - %s §7(Expira em: %s, Permanente: %s)".formatted(group.getColoredDisplayName(), endTime, isPermanent));
+                          }
+                          ctx.sendMessage("");
+                      }
+                  }
               }
-
-              ctx.sendMessage("§aGrupos do jogador §e%s§a:".formatted(playerName));
-              ctx.sendMessage("§aMaior Grupo: " + account.getHighestSubscription().group().name());
-              subscriptions.forEach(subscription -> {
-                  final var group = subscription.group();
-                  final var expiration = subscription.isPermanent()
-                    ? "§ePermanente§a"
-                    : "§e%s§a".formatted(DateFormatter.format(subscription.subscriptionEnd()));
-
-                  ctx.sendMessage("§b- §e%s§a (Expiração: %s)".formatted(group.name(), expiration));
-              });
           });
+    }
+
+    @Override
+    public List<String> performTabComplete(@NotNull CommandContext ctx) {
+        return super.performTabComplete(ctx);
+    }
+
+    private Instant parseInstant(@NotNull String rawTime) {
+        if (PERMANENT_ARG_VALUES.contains(rawTime.toLowerCase())) {
+            return ZonedDateTime.now().plusDays(36500).toInstant();
+        }
+        try {
+            return Time.parseString(rawTime).toInstant();
+        } catch (Exception e) {
+            throw new CommandFailedException("§cFormato de tempo inválido: " + rawTime);
+        }
     }
 }

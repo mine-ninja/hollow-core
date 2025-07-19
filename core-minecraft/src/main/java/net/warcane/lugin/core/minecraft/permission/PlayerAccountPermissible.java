@@ -1,6 +1,7 @@
 package net.warcane.lugin.core.minecraft.permission;
 
 import net.warcane.lugin.core.group.GroupPermissionService;
+import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.util.permission.PermissionGraph;
 import net.warcane.lugin.core.player.account.PlayerAccount;
 import net.warcane.lugin.core.player.subscription.PlayerGroupSubscription;
@@ -23,8 +24,8 @@ final class PlayerAccountPermissible extends PermissibleBase {
 
     @Override
     public boolean hasPermission(@NotNull String inName) {
-
-        for (PlayerGroupSubscription subscription : account.getSubscriptions()) {
+        final var subscriptionCategory = BukkitPlatform.getInstance().getSubscriptionCategoryType();
+        for (PlayerGroupSubscription subscription : account.getSubscriptions(subscriptionCategory)) {
             final var group = subscription.group();
             final var permissionSet = groupPermissionService.getCachedPermissionsForGroupOrThrow(group);
             if (permissionSet.hasPermission(inName) || permissionSet.hasPermission("*")) return true;
