@@ -10,6 +10,7 @@ import net.warcane.lugin.core.server.GameServerService;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -38,6 +39,8 @@ public interface Platform {
     GroupPermissionService getGroupPermissionService();
 
     WalletService getWalletService();
+
+    ExecutorService getExecutorService();
 
     default void sendMessageToPlayer(@NotNull UUID playerId, @NotNull String message) {
         getNetworkClient().sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, new SendMessageToPlayerPacket(playerId , message));

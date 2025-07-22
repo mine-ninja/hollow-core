@@ -10,6 +10,8 @@ import net.warcane.lugin.core.minecraft.internal.command.InternalCommandManager;
 import net.warcane.lugin.core.minecraft.internal.listener.InternalPacketListeners;
 import net.warcane.lugin.core.minecraft.internal.listener.InternalPlayerListener;
 import net.warcane.lugin.core.minecraft.permission.PermissionInjector;
+import net.warcane.lugin.core.player.statistic.PlayerStatisticsService;
+import net.warcane.lugin.core.player.statistic.PlayerStatisticsServiceImpl;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDirectPlayGameCategoryPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
@@ -32,8 +34,6 @@ import java.util.UUID;
 
 @Slf4j
 public class BukkitPlatform extends AbstractPlatform implements MinecraftServerPlatform {
-
-    @SuppressWarnings("UnstableApiUsage")
 
     /**
      * Cria uma instância da plataforma Bukkit (Se não existir) throwable a registra no Bukkit ServicesManager.
@@ -86,6 +86,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     private final ServerCategoryType serverCategoryType;
     private final InternalCommandManager internalCommandManager;
     private final PermissionInjector permissionInjector;
+    private final PlayerStatisticsService playerStatisticsService;
     private final CurrencyManager currencyManager;
 
     private boolean online;
@@ -98,6 +99,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         this.internalCommandManager = new InternalCommandManager(this);
         this.permissionInjector = PermissionInjector.fromCurrentPlatform(this);
         this.currencyManager = new CurrencyManager(this);
+        this.playerStatisticsService = new PlayerStatisticsServiceImpl(getExecutorService());
 
         this.loadGroupPermissions();
 
@@ -182,6 +184,11 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     @NotNull
     public PermissionInjector getPermissionInjector() {
         return permissionInjector;
+    }
+
+    @NotNull
+    public PlayerStatisticsService getPlayerStatisticsService() {
+        return playerStatisticsService;
     }
 
     public void updateServerInfo() {

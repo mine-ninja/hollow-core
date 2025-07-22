@@ -44,7 +44,6 @@ public abstract class AbstractPlatform implements Platform {
     protected final WalletService walletService;
 
 
-
     public AbstractPlatform(HostAddress hostAddress) {
         this.hostAddress = hostAddress;
 
@@ -111,4 +110,8 @@ public abstract class AbstractPlatform implements Platform {
         return networkClient;
     }
 
+    @Override
+    public ExecutorService getExecutorService() {
+        return ASYNC_EXECUTOR;
+    }
 }
