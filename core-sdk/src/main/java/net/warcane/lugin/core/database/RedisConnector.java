@@ -55,8 +55,9 @@ public class RedisConnector {
               uri.getUserInfo() != null && uri.getUserInfo().contains(":") ? uri.getUserInfo().split(":", 2)[1] : null;
 
             JedisPoolConfig poolConfig = new JedisPoolConfig();
-            poolConfig.setMaxTotal(8);
-            poolConfig.setMaxIdle(4);
+
+            poolConfig.setMaxTotal(32);
+            poolConfig.setMaxIdle(32);
             poolConfig.setMinIdle(2);
             poolConfig.setTestOnBorrow(true);
             poolConfig.setTestOnReturn(true);
