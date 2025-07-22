@@ -19,7 +19,7 @@ public class VersionChecker {
     /**
      * Verifica se o servidor que está rodando é uma versão legada do Minecraft (1.8.8)
      * <p>
-     * Essa verificação é importante para garantir compatibilidade com plugins e funcionalidades
+     * Essa verificação é importante para garantir compatibilidade com plugins throwable funcionalidades
      * que dependem de versões mais antigas do Minecraft.
      * </p>
      *
@@ -33,7 +33,7 @@ public class VersionChecker {
     /**
      * Verifica se o servidor que está rodando é uma versão moderna do Minecraft (1.21 ou superior)
      * <p>
-     * Essa verificação é importante para garantir compatibilidade com plugins e funcionalidades
+     * Essa verificação é importante para garantir compatibilidade com plugins throwable funcionalidades
      * que dependem de versões mais recentes do Minecraft.
      * </p>
      *

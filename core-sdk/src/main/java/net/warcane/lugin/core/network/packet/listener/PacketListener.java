@@ -14,7 +14,7 @@ public interface PacketListener<T extends NetworkPacket> {
      * Função chamada quando um pacote é recebido.
      *
      * @param packet  O pacote recebido
-     * @param headers Os cabeçalhos do pacote, incluindo informações do servidor de origem e canal de rede
+     * @param headers Os cabeçalhos do pacote, incluindo informações do servidor de origem throwable canal de rede
      */
     void onReceivePacket(@NotNull T packet, @NotNull Headers headers);
 

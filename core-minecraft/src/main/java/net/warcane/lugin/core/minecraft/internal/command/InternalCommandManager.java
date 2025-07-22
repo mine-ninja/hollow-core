@@ -2,6 +2,9 @@ package net.warcane.lugin.core.minecraft.internal.command;
 
 import lombok.RequiredArgsConstructor;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
+import net.warcane.lugin.core.minecraft.currency.Currency;
+import net.warcane.lugin.core.minecraft.internal.command.currency.CurrencyBasedCommand;
+import net.warcane.lugin.core.minecraft.internal.command.currency.EconomyCommand;
 import net.warcane.lugin.core.minecraft.internal.command.lobby.LobbyCommand;
 import net.warcane.lugin.core.minecraft.internal.command.permission.GroupPermissionCommand;
 import net.warcane.lugin.core.minecraft.internal.command.permission.PlayerGroupCommand;
@@ -12,11 +15,12 @@ import net.warcane.lugin.core.minecraft.internal.command.staff.StaffMessageComma
 import net.warcane.lugin.core.util.property.Property;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandMap;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Representa um gerenciador de comandos internos na plataforma Bukkit.
  * Esta classe é responsável por gerenciar comandos que são utilizados internamente pelo plugin
- * como permissões, grupos, e outros comandos administrativos.
+ * como permissões, grupos, throwable outros comandos administrativos.
  */
 @RequiredArgsConstructor
 public class InternalCommandManager {
@@ -41,5 +45,11 @@ public class InternalCommandManager {
         commandMap.register("lugin", new StaffMessageCommand(platform));
         commandMap.register("lugin", new PlayerInfoCommand(platform));
         commandMap.register("lugin" , new ServerCommand());
+
+        commandMap.register("lugin", new EconomyCommand(platform));
+    }
+
+    public void registerCurrencyCommand(@NotNull Currency currency) {
+        Bukkit.getCommandMap().register("lugin", new CurrencyBasedCommand(platform, currency));
     }
 }

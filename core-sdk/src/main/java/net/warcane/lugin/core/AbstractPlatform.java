@@ -2,17 +2,16 @@ package net.warcane.lugin.core;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.extern.slf4j.Slf4j;
-import net.warcane.lugin.core.currency.CurrencyService;
 import net.warcane.lugin.core.database.MongoDbConnector;
 import net.warcane.lugin.core.database.RedisConnector;
 import net.warcane.lugin.core.group.GroupPermissionService;
 import net.warcane.lugin.core.group.PlayerGroup;
 import net.warcane.lugin.core.network.NetworkClient;
 import net.warcane.lugin.core.player.account.PlayerAccountService;
+import net.warcane.lugin.core.player.wallet.WalletService;
 import net.warcane.lugin.core.server.GameServerService;
 import net.warcane.lugin.core.util.address.HostAddress;
 import net.warcane.lugin.core.util.property.Property;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -42,8 +41,7 @@ public abstract class AbstractPlatform implements Platform {
     protected final GameServerService gameServerService;
     protected final PlayerAccountService playerAccountService;
     protected final GroupPermissionService groupPermissionService;
-
-    protected final CurrencyService currencyService;
+    protected final WalletService walletService;
 
 
     public AbstractPlatform(HostAddress hostAddress) {
@@ -58,8 +56,9 @@ public abstract class AbstractPlatform implements Platform {
         this.gameServerService = new GameServerService(redisConnector);
         this.playerAccountService = PlayerAccountService.of(executorService);
         this.groupPermissionService = new GroupPermissionService(executorService);
+        this.walletService = new WalletService(executorService);
 
-        this.currencyService = new CurrencyService();
+
     }
 
     protected void loadGroupPermissions() {
@@ -102,6 +101,11 @@ public abstract class AbstractPlatform implements Platform {
     }
 
     @Override
+    public WalletService getWalletService() {
+        return walletService;
+    }
+
+    @Override
     public NetworkClient getNetworkClient() {
         return networkClient;
     }
@@ -109,10 +113,5 @@ public abstract class AbstractPlatform implements Platform {
     @Override
     public ExecutorService getExecutorService() {
         return ASYNC_EXECUTOR;
-    }
-
-    @NotNull
-    public CurrencyService getCurrencyService() {
-        return currencyService;
     }
 }

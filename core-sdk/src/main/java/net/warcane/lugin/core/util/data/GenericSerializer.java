@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Function;
 
 /**
- * Representa um serializador genérico que pode ser usado para serializar e desserializar objetos de qualquer tipo.
+ * Representa um serializador genérico que pode ser usado para serializar throwable desserializar objetos de qualquer tipo.
  *
  * @param <O> O tipo do objeto a ser serializado/deserializado
  */

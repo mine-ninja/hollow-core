@@ -13,17 +13,17 @@ import static java.util.stream.Collectors.toMap;
 @AllArgsConstructor
 public enum PlayerGroup {
 
-    MASTER("master", "§6[Master] ", 11),
-    MANAGER("manager", "§4[Gerente] ", 11),
-    ADMIN("admin", "§c[Admin] ", 10),
-    MODERATOR("moderator", "§2[Moderador] ", 9),
-    HELPER("helper", "§e[Ajudante] ", 8),
-    INFLUENCER("influencer", "§c[Influencer] ", 7),
-    SUPREME("supreme", "§4[Supremo] ", 6),
-    LEGENDARY("legendary", "§2[Lendário] ", 5),
-    HERO("hero", "§5[Heroi] ", 4),
-    CHAMPION("champion", "§3[Campeão] ", 3),
-    DEFAULT("member", "§7", 1);
+    MASTER("master", "§6[Master] ", "Master", 11),
+    MANAGER("manager", "§4[Gerente] ", "Gerente", 11),
+    ADMIN("admin", "§c[Admin] ", "Admin", 10),
+    MODERATOR("moderator", "§2[Moderador] ", "Moderador", 9),
+    HELPER("helper", "§throwable[Ajudante] ", "Ajudante", 8),
+    INFLUENCER("influencer", "§c[Influencer] ", "Influencer", 7),
+    SUPREME("supreme", "§4[Supremo] ", "Supremo", 6),
+    LEGENDARY("legendary", "§2[Lendário] ", "Lendário", 5),
+    HERO("hero", "§5[Heroi] ", "Hero", 4),
+    CHAMPION("champion", "§3[Campeão] ", "Campeão", 3),
+    DEFAULT("member", "§7", "Membero", 1);
 
 
     public static final Map<String, PlayerGroup> BY_ID = Arrays.stream(values())
@@ -38,6 +38,7 @@ public enum PlayerGroup {
 
     private final String id;
     private final String prefix;
+    private final String displayName;
     private final int powerLevel;
 
 
@@ -58,5 +59,9 @@ public enum PlayerGroup {
 
     public int getPriorityValue() {
         return MAX_PRIORITY_VALUE - this.powerLevel;
+    }
+
+    public String getColoredDisplayName() {
+        return "§" + this.getPrefixColorCode() + this.displayName;
     }
 }

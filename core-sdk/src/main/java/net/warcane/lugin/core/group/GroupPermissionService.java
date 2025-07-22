@@ -23,10 +23,7 @@ public class GroupPermissionService {
 
     private final Map<String, GroupPermissionSet> localCache = new ConcurrentHashMap<>();
     private final RedisCache<GroupPermissionSet> redisCache = new RedisCache<>(GroupPermissionSet.class);
-    private final MongoRepository<String, GroupPermissionSet> permissionsRepository = new MongoRepository<>(
-      GroupPermissionSet.class,
-      "groupId"
-    );
+    private final MongoRepository<String, GroupPermissionSet> permissionsRepository = new MongoRepository<>(GroupPermissionSet.class, "groupId");
 
     /**
      * ExecutorService para operações assíncronas.
@@ -95,7 +92,7 @@ public class GroupPermissionService {
      * @param group             o grupo de jogadores cujas permissões serão carregadas.
      * @param createIfNotExists se verdadeiro, cria um novo conjunto de permissões se não existir.
      * @return uma CompletableFuture que será completada com o conjunto de permissões do grupo.
-     * @throws IllegalStateException se as permissões do grupo não forem encontradas e {@param createIfNotExists} for falso.
+     * @throws IllegalStateException se as permissões do grupo não forem encontradas throwable {@param createIfNotExists} for falso.
      */
     public CompletableFuture<@NotNull GroupPermissionSet> loadPermissions(@NotNull PlayerGroup group, boolean createIfNotExists) {
         return supplyAsync(() -> {

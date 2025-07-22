@@ -15,6 +15,8 @@ import net.warcane.lugin.core.player.account.PlayerAccountService.AccountUnloadO
 import net.warcane.lugin.core.player.fetcher.PlayerUuidFetcher;
 import net.warcane.lugin.core.player.state.PlayerNetworkState;
 import net.warcane.lugin.core.player.state.PlayerNetworkStateManager;
+import net.warcane.lugin.core.player.wallet.Wallet;
+import net.warcane.lugin.core.player.wallet.WalletService.LoadWalletOptions;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
 import net.warcane.lugin.core.util.property.Property;
 import org.bukkit.GameMode;
@@ -36,8 +38,8 @@ import static net.warcane.lugin.core.player.account.PlayerAccountService.Account
 @RequiredArgsConstructor
 public final class InternalPlayerListener implements Listener {
 
-    private static final List<String> HEADER = List.of("§e§lLUGIN.COM.BR");
-    private static final List<String> FOOTER = List.of("§aRanks, cosméticos e caixas em §c§lLUGIN.COM.BR");
+    private static final List<String> HEADER = List.of("§b§lLUGIN.COM.BR");
+    private static final List<String> FOOTER = List.of("§aRanks, cosméticos throwable caixas em §c§lLUGIN.COM.BR");
 
     private static final Tab TAB = new Tab(HEADER, FOOTER);
 
@@ -64,7 +66,8 @@ public final class InternalPlayerListener implements Listener {
                 return;
             }
 
-            PlayerGroup group = playerAccount.getHighestSubscription().group();
+            final var categoryType = platform.getSubscriptionCategoryType();
+            PlayerGroup group = playerAccount.getHighestSubscription(categoryType).group();
             final var priority = group.getPriorityValue();
             final var groupPrefix = group.getPrefix();
 
@@ -72,6 +75,7 @@ public final class InternalPlayerListener implements Listener {
             final var loadTagsOnJoin = Property.getBoolean("LOAD_TAGS_ON_JOIN", true);
             if (loadTagsOnJoin) {
                 NameTags.setNameTag(player, groupPrefix, "", priority);
+                NameTags.updateAllTags();
             }
 
             // Só envia o pacote de connect caso realmente carregue as informações do jogador.
@@ -91,7 +95,26 @@ public final class InternalPlayerListener implements Listener {
             }
 
             PlayerUuidFetcher.getInstance().cachePlayerUuid(name, playerId);
-            PlayerNetworkStateManager.getInstance().register(new PlayerNetworkState(player.getUniqueId(), player.getName(), currentServerId));
+            PlayerNetworkStateManager.getInstance()
+              .register(new PlayerNetworkState(
+                player.getUniqueId(),
+                player.getName(),
+                currentServerId, platform.getServerCategoryType()
+              ));
+
+            platform.getWalletService().loadPlayerWallet(
+              playerId,
+              LoadWalletOptions.withDefaultWallet(Wallet.createDefaultWallet(playerId, name), true)
+            ).whenComplete((playerWallet, walletError) -> {
+                if (walletError != null) {
+                    log.error("Failed to load player wallet for {}: {}", player.getName(), walletError.getMessage(), walletError);
+                    this.syncKick(player);
+                    return;
+                }
+
+                log.info("Player wallet loaded for {}: {}", player.getName(), playerWallet);
+            });
+
         });
 
         platform.getPlayerStatisticsService().loadPlayerAccount(playerId).whenComplete((playerStatistics, error) -> {
@@ -145,13 +168,16 @@ public final class InternalPlayerListener implements Listener {
         Player localPlayer = event.getLocalPlayer();
         if (localPlayer == null) return;
 
-        PlayerGroup group = event.getPlayerAccount().getHighestSubscription().group();
+
+        final var categoryType = platform.getSubscriptionCategoryType();
+        PlayerGroup group = event.getPlayerAccount().getHighestSubscription(categoryType).group();
         final var priority = group.getPriorityValue();
         final var groupPrefix = group.getPrefix();
 
         final var loadTagsOnJoin = Property.get("LOAD_TAGS_ON_JOIN", "true").equalsIgnoreCase("true");
         if (loadTagsOnJoin) {
             NameTags.setNameTag(localPlayer, groupPrefix, "", priority);
+            NameTags.updateAllTags();
         }
     }
 

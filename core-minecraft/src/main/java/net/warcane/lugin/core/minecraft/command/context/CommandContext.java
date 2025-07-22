@@ -10,10 +10,16 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 @Data
 public class CommandContext {
+
+    private static final Pattern BIG_INTEGER_PATTERN = Pattern.compile("^-?\\d+$");
+    private static final Pattern BIG_DECIMAL_PATTERN = Pattern.compile("^-?\\d+(\\.\\d+)?$");
 
     private final CommandSender sender;
     private final String[] args;
@@ -116,6 +122,34 @@ public class CommandContext {
             return Double.parseDouble(args[argIndex]);
         } catch (NumberFormatException e) {
             return defaultValue;
+        }
+    }
+
+    public BigInteger getBigIntegerOrThrow(int argIndex, @NotNull String errorMessage) throws CommandFailedException {
+        if (argIndex < 0 || argIndex >= args.length) {
+            throw new CommandFailedException(errorMessage);
+        }
+        if (!BIG_INTEGER_PATTERN.matcher(args[argIndex]).matches()) {
+            throw new CommandFailedException(errorMessage);
+        }
+        try {
+            return new BigInteger(args[argIndex]);
+        } catch (NumberFormatException e) {
+            throw new CommandFailedException(errorMessage);
+        }
+    }
+
+    public BigDecimal getBigDecimalOrThrow(int argIndex, @NotNull String errorMessage) throws CommandFailedException {
+        if (argIndex < 0 || argIndex >= args.length) {
+            throw new CommandFailedException(errorMessage);
+        }
+        if (!BIG_DECIMAL_PATTERN.matcher(args[argIndex]).matches()) {
+            throw new CommandFailedException(errorMessage);
+        }
+        try {
+            return new BigDecimal(args[argIndex]);
+        } catch (NumberFormatException e) {
+            throw new CommandFailedException(errorMessage);
         }
     }
 

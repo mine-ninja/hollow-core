@@ -1,6 +1,7 @@
 package net.warcane.lugin.core.player.account;
 
 import com.mongodb.client.model.Indexes;
+import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.player.fetcher.PlayerUuidFetcher;
 import net.warcane.lugin.core.util.data.MongoRepository;
 import net.warcane.lugin.core.util.data.RedisCache;
@@ -14,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 
+@Slf4j
 public class PlayerAccountServiceImpl implements PlayerAccountService {
 
     private static final String CACHE_KEY = "playeracc";
@@ -100,6 +102,7 @@ public class PlayerAccountServiceImpl implements PlayerAccountService {
                 redisCache.hset(CACHE_KEY, toUpdate.uniqueId().toString(), updated);
                 localCache.put(toUpdate.uniqueId(), updated);
             }
+
             return updated;
         });
     }
@@ -107,7 +110,15 @@ public class PlayerAccountServiceImpl implements PlayerAccountService {
     @Override
     public CompletableFuture<@NotNull PlayerAccount> loadPlayerAccount(@NotNull UUID playerId, @NotNull AccountLoadOptions options) {
         return supply(() -> {
-            final var fromDb = repository.findById(playerId, options::getAccountOrThrow);
+            var fromDb = repository.findById(playerId);
+            if (fromDb == null) {
+                if (!options.hasAccountCreator()) {
+                    throw new IllegalStateException("Failed to load player account: " + playerId);
+                }
+
+                fromDb = options.getAccountOrThrow();
+            }
+
             if (options.cacheResult()) {
                 redisCache.hset(CACHE_KEY, playerId.toString(), fromDb);
                 localCache.put(playerId, fromDb);

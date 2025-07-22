@@ -4,6 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.AbstractPlatform;
 import net.warcane.lugin.core.MinecraftServerPlatform;
 import net.warcane.lugin.core.Platform;
+import net.warcane.lugin.core.minecraft.currency.Currency;
+import net.warcane.lugin.core.minecraft.currency.CurrencyManager;
 import net.warcane.lugin.core.minecraft.internal.command.InternalCommandManager;
 import net.warcane.lugin.core.minecraft.internal.listener.InternalPacketListeners;
 import net.warcane.lugin.core.minecraft.internal.listener.InternalPlayerListener;
@@ -14,6 +16,7 @@ import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDirectPlayGameCategoryPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerUnregisterPacket;
+import net.warcane.lugin.core.player.subscription.SubscriptionCategoryType;
 import net.warcane.lugin.core.server.GameServer;
 import net.warcane.lugin.core.server.ServerPlayerCount;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
@@ -26,13 +29,14 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
 public class BukkitPlatform extends AbstractPlatform implements MinecraftServerPlatform {
 
     /**
-     * Cria uma instância da plataforma Bukkit (Se não existir) e a registra no Bukkit ServicesManager.
+     * Cria uma instância da plataforma Bukkit (Se não existir) throwable a registra no Bukkit ServicesManager.
      *
      * @param plugin       o plugin Bukkit associado a esta plataforma.
      * @return a instância de BukkitPlatform.
@@ -83,6 +87,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     private final InternalCommandManager internalCommandManager;
     private final PermissionInjector permissionInjector;
     private final PlayerStatisticsService playerStatisticsService;
+    private final CurrencyManager currencyManager;
 
     private boolean online;
 
@@ -93,6 +98,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         this.serverCategoryType = serverCategoryType;
         this.internalCommandManager = new InternalCommandManager(this);
         this.permissionInjector = PermissionInjector.fromCurrentPlatform(this);
+        this.currencyManager = new CurrencyManager(this);
         this.playerStatisticsService = new PlayerStatisticsServiceImpl(getExecutorService());
 
         this.loadGroupPermissions();
@@ -122,6 +128,17 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
         log.info("Bukkit Platform is now online with ID: {}", this.getId());
         Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::updateServerInfo, 20, 20 * 10);
+
+        currencyManager.registerCurrency(new Currency(
+          "global_karma",
+          "§dKarma",
+          "§d§lK§r",
+          "§dKarma",
+          "karma",
+          List.of("karma"),
+          List.of(ServerCategoryType.values()),
+          false
+        ));
     }
 
     @Override
@@ -183,5 +200,23 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     public void tryConnectPlayerToServerCategory(@NotNull UUID player, @NotNull ServerCategoryType categoryType) {
         final var packet = new PlayerDirectPlayGameCategoryPacket(player, categoryType);
         networkClient.sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, packet);
+    }
+
+    public SubscriptionCategoryType getSubscriptionCategoryType() {
+        return switch (serverCategoryType) {
+            case LOBBY, BEDWARS -> SubscriptionCategoryType.MINIGAMES;
+            case FACTIONS -> SubscriptionCategoryType.FACTIONS;
+            default -> SubscriptionCategoryType.GLOBAL;
+        };
+    }
+
+    @NotNull
+    public CurrencyManager getCurrencyManager() {
+        return currencyManager;
+    }
+
+    @NotNull
+    public InternalCommandManager getInternalCommandManager() {
+        return internalCommandManager;
     }
 }

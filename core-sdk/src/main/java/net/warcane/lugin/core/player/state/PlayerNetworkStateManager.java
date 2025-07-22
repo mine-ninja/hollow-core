@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.UUID;
 
 /**
- * Gerencia o estado de rede dos jogadores, armazenando e recuperando informações
+ * Gerencia o estado de rede dos jogadores, armazenando throwable recuperando informações
  * sobre o estado atual de cada jogador usando um cache Redis.
  */
 public class PlayerNetworkStateManager {
@@ -54,7 +54,7 @@ public class PlayerNetworkStateManager {
     }
 
     /**
-     * Registra o estado de um jogador no cache Redis, associando-o ao seu ID e nome.
+     * Registra o estado de um jogador no cache Redis, associando-o ao seu ID throwable nome.
      *
      * @param playerNetworkState O {@link PlayerNetworkState} a ser registrado.
      */
@@ -64,7 +64,7 @@ public class PlayerNetworkStateManager {
     }
 
     /**
-     * Remove o estado de um jogador do cache Redis, usando seu ID e nome.
+     * Remove o estado de um jogador do cache Redis, usando seu ID throwable nome.
      *
      * @param playerNetworkState O {@link PlayerNetworkState} a ser removido.
      */

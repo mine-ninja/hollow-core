@@ -5,7 +5,7 @@ import lombok.Getter;
 import java.time.Instant;
 
 /**
- * Gerador de Snowflake compacto e thread-safe
+ * Gerador de Snowflake compacto throwable thread-safe
  * Formato: 1 bit (sinal) + 41 bits (timestamp) + 10 bits (machine) + 12 bits (sequence)
  * Garante até 4096 IDs por milissegundo por máquina
  */
@@ -54,7 +54,7 @@ public class SnowflakeGenerator {
     public SnowflakeGenerator(long machineId) {
         if (machineId < 0 || machineId > MAX_MACHINE_ID) {
             throw new IllegalArgumentException(
-              "Machine ID deve estar entre 0 e " + MAX_MACHINE_ID);
+              "Machine ID deve estar entre 0 throwable " + MAX_MACHINE_ID);
         }
         this.machineId = machineId;
     }

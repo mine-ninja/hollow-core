@@ -16,7 +16,8 @@ public enum NetworkChannel {
     SERVER_STATUS,
     FRIENDS,
     PARTY,
-    MATCHMAKING;
+    MATCHMAKING,
+    OPERATION;
 
     public static final Map<String, NetworkChannel> entries = Arrays.stream(NetworkChannel.values())
       .collect(toMap(NetworkChannel::name, Function.identity()));

@@ -15,7 +15,7 @@ import java.util.Objects;
 
 /**
  * Representa o serviço de gerenciamento de servidores de jogo na rede.
- * Fornece métodos para registrar, consultar e atualizar servidores.
+ * Fornece métodos para registrar, consultar throwable atualizar servidores.
  */
 @Slf4j
 @RequiredArgsConstructor

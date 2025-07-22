@@ -11,6 +11,7 @@ import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
+import org.jetbrains.annotations.NotNull;
 
 public class MongoDbConnector {
 
@@ -66,4 +67,8 @@ public class MongoDbConnector {
         }
     }
 
+    @NotNull
+    public MongoClient getMongoClient() {
+        return mongoClient;
+    }
 }

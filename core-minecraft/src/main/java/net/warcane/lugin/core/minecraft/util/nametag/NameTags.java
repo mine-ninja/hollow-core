@@ -60,8 +60,6 @@ public class NameTags {
             PacketEvents.getAPI().getPlayerManager().sendPacket(onlinePlayer, packet);
         }
 
-        updateAllTags();
-
         playerTeams.put(player.getName(), new NameTagTeam(teamName, prefix, suffix, priority));
     }
 

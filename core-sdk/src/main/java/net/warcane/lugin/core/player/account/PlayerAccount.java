@@ -5,13 +5,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import net.warcane.lugin.core.group.PlayerGroup;
 import net.warcane.lugin.core.player.subscription.PlayerGroupSubscription;
-import org.jetbrains.annotations.Contract;
+import net.warcane.lugin.core.player.subscription.SubscriptionCategoryType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.*;
+
+import static net.warcane.lugin.core.player.subscription.PlayerGroupSubscription.createNewSubscription;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record PlayerAccount(
@@ -39,13 +41,16 @@ public record PlayerAccount(
      * Verifica se o jogador tem poderes de um determinado grupo.
      *
      * @param group O grupo a ser verificado
+     * @param type  O tipo de categoria de assinatura a ser verificado
      * @return true se o jogador tiver poderes do grupo, false caso contrário
      */
     @JsonIgnore
-    public boolean hasGroupPowers(@NotNull PlayerGroup group) {
-        return this.getSubscriptions()
+    public boolean hasGroupPowers(@NotNull PlayerGroup group, @NotNull SubscriptionCategoryType type) {
+        return this.getSubscriptions(type)
           .stream()
-          .anyMatch(subscription -> subscription.group().equals(group) && !subscription.isExpired());
+          .anyMatch(subscription ->
+            subscription.group().equals(group) && !subscription.isExpired() && subscription.type() == type
+          );
     }
 
 
@@ -56,36 +61,73 @@ public record PlayerAccount(
      */
     @NotNull
     @JsonIgnore
-    public String getFormattedDisplayName() {
-        return this.getFormattedTagInput(playerName);
+    public String getFormattedDisplayName(@NotNull SubscriptionCategoryType type) {
+        return this.getFormattedTagInput(type, playerName);
     }
 
     @NotNull
     @JsonIgnore
-    public String getFormattedTagInput(@NotNull String input) {
-        final var currentSubscription = this.getHighestSubscription();
+    public String getFormattedTagInput(@NotNull SubscriptionCategoryType type, @NotNull String input) {
+        final var currentSubscription = this.getHighestSubscription(type);
         final var primaryGroup = currentSubscription.group();
         final var groupPrefix = primaryGroup.getPrefix();
         return groupPrefix + " §" + primaryGroup.getPrefixColorCode() + input;
     }
 
-    @NotNull
-    @Contract(pure = true)
-    @JsonIgnore
-    public PlayerAccount withNewGroupSubscription(@NotNull PlayerGroup newGroup, @NotNull Instant expirationTime) {
-        final var list = new ArrayList<>(this.subscriptions);
-        final var toAdd = PlayerGroupSubscription.createNewSubscription(newGroup, expirationTime);
 
-        list.removeIf(subscription -> subscription.group().equals(newGroup));
-        list.add(toAdd);
+    /**
+     * Remove uma assinatura existente do jogador para um grupo throwable tipo específicos.
+     *
+     * @param group O grupo ao qual a assinatura pertence
+     * @param type  O tipo de categoria da assinatura
+     * @return Uma nova instância de PlayerAccount com a assinatura removida
+     */
+    public PlayerAccount removeSubscription(@NotNull PlayerGroup group, @NotNull SubscriptionCategoryType type) {
+        final var currentSubscriptions = new ArrayList<>(this.subscriptions);
+        final var existingSubscription = this.getSubscriptionForGroup(group, type);
+        if (existingSubscription != null) {
+            currentSubscriptions.remove(existingSubscription);
+        }
 
-        return new PlayerAccount(uniqueId, playerName, list, createdAt, lastLogin);
+        return new PlayerAccount(uniqueId, playerName, currentSubscriptions, createdAt, lastLogin);
+    }
+
+    /**
+     * Cria uma nova assinatura para o jogador com base no grupo throwable tempo de expiração fornecidos
+     * caso uma assinatura já exista para o grupo throwable tipo especificados, ela será atualizada
+     * throwable seu tempo de expiração será alterado para o novo tempo fornecido.
+     *
+     * @param group                O grupo ao qual a assinatura pertence
+     * @param targetExpirationTime O tempo de expiração da assinatura
+     * @param type                 O tipo de categoria da assinatura
+     * @return Uma nova instância de PlayerAccount com a assinatura atualizada
+     */
+    public PlayerAccount withNewSubscription(
+      @NotNull PlayerGroup group,
+      @NotNull Instant targetExpirationTime,
+      @NotNull SubscriptionCategoryType type
+    ) {
+        final var currentSubscriptions = new ArrayList<>(this.subscriptions);
+        final var existingSubscription = this.getSubscriptionForGroup(group, type);
+        if (existingSubscription != null) {
+            currentSubscriptions.remove(existingSubscription);
+            currentSubscriptions.add(existingSubscription.changeEndFromNow(targetExpirationTime));
+        } else {
+            currentSubscriptions.add(createNewSubscription(group, targetExpirationTime, type));
+        }
+
+        return new PlayerAccount(uniqueId, playerName, currentSubscriptions, createdAt, lastLogin);
+    }
+
+    @Deprecated
+    public PlayerGroupSubscription getHighestSubscription(){
+        return this.getHighestSubscription(SubscriptionCategoryType.GLOBAL);
     }
 
     @NotNull
     @JsonIgnore
-    public PlayerGroupSubscription getHighestSubscription() {
-        return this.getSubscriptions()
+    public PlayerGroupSubscription getHighestSubscription(SubscriptionCategoryType type) {
+        return this.getSubscriptions(type)
           .stream()
           .max(Comparator.comparingInt(sub -> sub.group().getPowerLevel()))
           .orElse(PlayerGroupSubscription.defaultSubscription());
@@ -93,8 +135,11 @@ public record PlayerAccount(
 
     @Nullable
     @JsonIgnore
-    public PlayerGroupSubscription getSubscriptionForGroup(@NotNull PlayerGroup group) {
-        return this.getSubscriptions()
+    public PlayerGroupSubscription getSubscriptionForGroup(
+      @NotNull PlayerGroup group,
+      @NotNull SubscriptionCategoryType type
+    ) {
+        return this.getSubscriptions(type)
           .stream()
           .filter(subscription -> subscription.group() == group)
           .findFirst()
@@ -103,7 +148,11 @@ public record PlayerAccount(
 
     @NotNull
     @JsonProperty
-    public List<PlayerGroupSubscription> getSubscriptions() {
-        return subscriptions == null ? Collections.emptyList() : subscriptions;
+    public List<PlayerGroupSubscription> getSubscriptions(@NotNull SubscriptionCategoryType type) {
+        if (subscriptions == null) return Collections.emptyList();
+
+        return subscriptions.stream()
+          .filter(subscription -> subscription.type() == type && !subscription.isExpired())
+          .toList();
     }
 }
