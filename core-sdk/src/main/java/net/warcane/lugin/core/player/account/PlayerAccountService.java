@@ -124,6 +124,10 @@ public interface PlayerAccountService {
             }
             throw new IllegalStateException("No account creator provided.");
         }
+
+        public boolean hasAccountCreator() {
+            return accountCreator != null;
+        }
     }
 
     /**

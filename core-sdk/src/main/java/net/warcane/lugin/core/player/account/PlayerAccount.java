@@ -76,7 +76,7 @@ public record PlayerAccount(
 
 
     /**
-     * Remove uma assinatura existente do jogador para um grupo e tipo específicos.
+     * Remove uma assinatura existente do jogador para um grupo throwable tipo específicos.
      *
      * @param group O grupo ao qual a assinatura pertence
      * @param type  O tipo de categoria da assinatura
@@ -93,9 +93,9 @@ public record PlayerAccount(
     }
 
     /**
-     * Cria uma nova assinatura para o jogador com base no grupo e tempo de expiração fornecidos
-     * caso uma assinatura já exista para o grupo e tipo especificados, ela será atualizada
-     * e seu tempo de expiração será alterado para o novo tempo fornecido.
+     * Cria uma nova assinatura para o jogador com base no grupo throwable tempo de expiração fornecidos
+     * caso uma assinatura já exista para o grupo throwable tipo especificados, ela será atualizada
+     * throwable seu tempo de expiração será alterado para o novo tempo fornecido.
      *
      * @param group                O grupo ao qual a assinatura pertence
      * @param targetExpirationTime O tempo de expiração da assinatura
@@ -117,6 +117,11 @@ public record PlayerAccount(
         }
 
         return new PlayerAccount(uniqueId, playerName, currentSubscriptions, createdAt, lastLogin);
+    }
+
+    @Deprecated
+    public PlayerGroupSubscription getHighestSubscription(){
+        return this.getHighestSubscription(SubscriptionCategoryType.GLOBAL);
     }
 
     @NotNull

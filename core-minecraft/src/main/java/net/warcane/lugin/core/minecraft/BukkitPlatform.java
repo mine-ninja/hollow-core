@@ -4,6 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.AbstractPlatform;
 import net.warcane.lugin.core.MinecraftServerPlatform;
 import net.warcane.lugin.core.Platform;
+import net.warcane.lugin.core.minecraft.currency.Currency;
+import net.warcane.lugin.core.minecraft.currency.CurrencyManager;
 import net.warcane.lugin.core.minecraft.internal.command.InternalCommandManager;
 import net.warcane.lugin.core.minecraft.internal.listener.InternalPacketListeners;
 import net.warcane.lugin.core.minecraft.internal.listener.InternalPlayerListener;
@@ -25,6 +27,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -33,7 +36,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     @SuppressWarnings("UnstableApiUsage")
 
     /**
-     * Cria uma instância da plataforma Bukkit (Se não existir) e a registra no Bukkit ServicesManager.
+     * Cria uma instância da plataforma Bukkit (Se não existir) throwable a registra no Bukkit ServicesManager.
      *
      * @param plugin       o plugin Bukkit associado a esta plataforma.
      * @return a instância de BukkitPlatform.
@@ -83,7 +86,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     private final ServerCategoryType serverCategoryType;
     private final InternalCommandManager internalCommandManager;
     private final PermissionInjector permissionInjector;
-
+    private final CurrencyManager currencyManager;
 
     private boolean online;
 
@@ -94,6 +97,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         this.serverCategoryType = serverCategoryType;
         this.internalCommandManager = new InternalCommandManager(this);
         this.permissionInjector = PermissionInjector.fromCurrentPlatform(this);
+        this.currencyManager = new CurrencyManager(this);
 
         this.loadGroupPermissions();
 
@@ -122,6 +126,17 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
         log.info("Bukkit Platform is now online with ID: {}", this.getId());
         Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::updateServerInfo, 20, 20 * 10);
+
+        currencyManager.registerCurrency(new Currency(
+          "global_karma",
+          "§dKarma",
+          "§d§lK§r",
+          "§dKarma",
+          "karma",
+          List.of("karma"),
+          List.of(ServerCategoryType.values()),
+          false
+        ));
     }
 
     @Override
@@ -182,11 +197,19 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
     public SubscriptionCategoryType getSubscriptionCategoryType() {
         return switch (serverCategoryType) {
-            case LOBBY -> SubscriptionCategoryType.MINIGAMES;
+            case LOBBY, BEDWARS -> SubscriptionCategoryType.MINIGAMES;
             case FACTIONS -> SubscriptionCategoryType.FACTIONS;
             default -> SubscriptionCategoryType.GLOBAL;
         };
     }
 
+    @NotNull
+    public CurrencyManager getCurrencyManager() {
+        return currencyManager;
+    }
 
+    @NotNull
+    public InternalCommandManager getInternalCommandManager() {
+        return internalCommandManager;
+    }
 }

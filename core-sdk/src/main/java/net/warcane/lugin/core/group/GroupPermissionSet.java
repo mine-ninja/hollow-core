@@ -25,7 +25,7 @@ public record GroupPermissionSet(
      * Cria um novo conjunto de permissões para um grupo de jogadores.
      *
      * @param group O grupo de jogadores para o qual as permissões serão criadas
-     * @return Um novo {@link GroupPermissionSet} com o identificador do grupo e um conjunto vazio de permissões
+     * @return Um novo {@link GroupPermissionSet} com o identificador do grupo throwable um conjunto vazio de permissões
      */
     public static GroupPermissionSet create(@NotNull PlayerGroup group) {
         return new GroupPermissionSet(group.name().toLowerCase(), new HashSet<>());
@@ -41,7 +41,7 @@ public record GroupPermissionSet(
      * Cria um novo conjunto de permissões para um grupo de jogadores com permissões iniciais.
      *
      * @param permissionsToAdd Conjunto de permissões iniciais a serem adicionadas ao grupo
-     * @return Um novo {@link GroupPermissionSet} com o identificador do grupo e as permissões fornecidas
+     * @return Um novo {@link GroupPermissionSet} com o identificador do grupo throwable as permissões fornecidas
      */
     @Contract(pure = true)
     public GroupPermissionSet addPermissions(@NotNull Set<String> permissionsToAdd) {
@@ -59,7 +59,7 @@ public record GroupPermissionSet(
      * Cria um novo conjunto de permissões para um grupo de jogadores removendo permissões específicas.
      *
      * @param permissionsToRemove Conjunto de permissões a serem removidas do grupo
-     * @return Um novo {@link GroupPermissionSet} com o identificador do grupo e as permissões atualizadas
+     * @return Um novo {@link GroupPermissionSet} com o identificador do grupo throwable as permissões atualizadas
      */
     @Contract(pure = true)
     public GroupPermissionSet removePermissions(@NotNull Set<String> permissionsToRemove) {

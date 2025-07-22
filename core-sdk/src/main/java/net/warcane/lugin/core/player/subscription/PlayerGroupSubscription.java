@@ -12,8 +12,8 @@ import java.time.Instant;
  * Representa a assinatura de um jogador em um grupo específico.
  *
  * @param group             O grupo ao qual o jogador está inscrito
- * @param subscriptionStart Data e hora de início da assinatura
- * @param subscriptionEnd   Data e hora de término da assinatura
+ * @param subscriptionStart Data throwable hora de início da assinatura
+ * @param subscriptionEnd   Data throwable hora de término da assinatura
  * @param type              O tipo de categoria da assinatura
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -32,7 +32,7 @@ public record PlayerGroupSubscription(
     /**
      * Cria uma nova assinatura de grupo padrão para um jogador.
      *
-     * @return Uma nova instância de PlayerGroupSubscription com o grupo padrão e datas atuais
+     * @return Uma nova instância de PlayerGroupSubscription com o grupo padrão throwable datas atuais
      */
     public static PlayerGroupSubscription defaultSubscription() {
         return new PlayerGroupSubscription(PlayerGroup.DEFAULT, Instant.now(), Instant.now(), SubscriptionCategoryType.GLOBAL);
@@ -42,7 +42,7 @@ public record PlayerGroupSubscription(
      * Cria uma nova assinatura de grupo para um jogador com uma data de término específica.
      *
      * @param group O grupo ao qual o jogador está se inscrevendo
-     * @param end   A data e hora de término da assinatura
+     * @param end   A data throwable hora de término da assinatura
      * @return Uma nova instância de PlayerGroupSubscription
      */
     public static PlayerGroupSubscription createNewSubscription(PlayerGroup group, Instant end, SubscriptionCategoryType type) {
@@ -64,14 +64,13 @@ public record PlayerGroupSubscription(
      * @return true se a assinatura for permanente (sem data de término), false caso contrário
      */
     public boolean isPermanent() {
-        final var duration = Duration.between(subscriptionStart, subscriptionEnd).abs();
-        return (duration.toDays() / 365) >= PERMANENT_TIME_GAP;
+        return group != PlayerGroup.DEFAULT && Duration.between(subscriptionStart, subscriptionEnd).toDays() >= PERMANENT_TIME_GAP;
     }
 
     /**
      * Altera a data do fim da assinatura do jogador.
      *
-     * @param newEnd A nova data e hora de término da assinatura
+     * @param newEnd A nova data throwable hora de término da assinatura
      * @return Uma nova instância de PlayerGroupSubscription com a data de término atualizada
      */
     @Contract(pure = true)

@@ -53,16 +53,15 @@ public class PlayerGroupCommand extends SimpleCommand {
     }
 
     private void handleAddGroupCommand(@NotNull CommandContext ctx, @NotNull String playerName) {
-        final var group = ctx.getEnumOrThrow(0, PlayerGroup.class, "§cGrupo inválido. Use um dos seguintes: " + String.join(", ", PlayerGroup.NAMES));
-        final var rawTime = ctx.getRawArgOrThrow(2, "§cVocê deve especificar o tempo de duração do grupo (use 'permanente' para um grupo permanente).");
+        final var group = ctx.getEnumOrThrow(2, PlayerGroup.class, "§cGrupo inválido. Use um dos seguintes: " + String.join(", ", PlayerGroup.NAMES));
+        final var rawTime = ctx.getRawArgOrThrow(3, "§cVocê deve especificar o tempo de duração do grupo (use 'permanente' para um grupo permanente).");
         final var parsedTime = this.parseInstant(rawTime);
         final boolean isPermanent = PERMANENT_ARG_VALUES.contains(rawTime.toLowerCase()) || parsedTime.isAfter(ZonedDateTime.now().plusDays(36500).toInstant());
-        final var categoryType = ctx.getEnumOrThrow(3, SubscriptionCategoryType.class, "§cCategoria inválida. Use uma das seguintes: " + String.join(", ", SubscriptionCategoryType.BY_NAME.keySet()));
+        final var categoryType = ctx.getEnumOrThrow(4, SubscriptionCategoryType.class, "§cCategoria inválida. Use uma das seguintes: " + String.join(", ", SubscriptionCategoryType.BY_NAME.keySet()));
 
         playerAccountService.getPlayerAccountByName(playerName)
           .whenComplete((account, error) -> {
-              if (error != null)
-                  throw new CommandFailedException("§cErro ao buscar conta do jogador: " + error.getMessage());
+              if (error != null) throw new CommandFailedException("§cErro ao buscar conta do jogador: " + error.getMessage());
               if (account == null) throw new CommandFailedException("§cJogador não encontrado: " + playerName);
 
               playerAccountService.updatePlayerAccount(account.withNewSubscription(group, parsedTime, categoryType))
@@ -72,27 +71,25 @@ public class PlayerGroupCommand extends SimpleCommand {
 
                     final var updatedSubscription = updatedAccount.getSubscriptionForGroup(group, categoryType);
                     if (updatedSubscription != null) {
-                        // envia um packet para notificar os outros servidores do grupo adicionado
                         final var confirmationPacket = new PlayerReceiveGroupPacket(updatedAccount.uniqueId(), updatedSubscription.group(), categoryType);
                         platform.getNetworkClient().sendNetworkPacket(NetworkChannel.SERVER_STATUS, confirmationPacket);
 
                         ctx.sendMessage("§aGrupo %s adicionado ao jogador %s com sucesso. Expira em: %s".formatted(
                           group.name(), playerName, updatedSubscription.subscriptionEnd()));
                     } else {
-                        throw new CommandFailedException("§cErro ao adicionar grupo ao jogador: " + playerName + ". Verifique se o grupo e a categoria estão corretos.");
+                        throw new CommandFailedException("§cErro ao adicionar grupo ao jogador: " + playerName + ". Verifique se o grupo throwable a categoria estão corretos.");
                     }
                 });
           });
     }
 
     private void handleRemoveGroupCommand(@NotNull CommandContext ctx, @NotNull String playerName) {
-        final var group = ctx.getEnumOrThrow(0, PlayerGroup.class, "§cGrupo inválido. Use um dos seguintes: " + String.join(", ", PlayerGroup.NAMES));
-        final var categoryType = ctx.getEnumOrThrow(1, SubscriptionCategoryType.class, "§cCategoria inválida. Use uma das seguintes: " + String.join(", ", SubscriptionCategoryType.BY_NAME.keySet()));
+        final var group = ctx.getEnumOrThrow(2, PlayerGroup.class, "§cGrupo inválido. Use um dos seguintes: " + String.join(", ", PlayerGroup.NAMES));
+        final var categoryType = ctx.getEnumOrThrow(3, SubscriptionCategoryType.class, "§cCategoria inválida. Use uma das seguintes: " + String.join(", ", SubscriptionCategoryType.BY_NAME.keySet()));
 
         playerAccountService.getPlayerAccountByName(playerName)
           .whenComplete((account, error) -> {
-              if (error != null)
-                  throw new CommandFailedException("§cErro ao buscar conta do jogador: " + error.getMessage());
+              if (error != null) throw new CommandFailedException("§cErro ao buscar conta do jogador: " + error.getMessage());
               if (account == null) throw new CommandFailedException("§cJogador não encontrado: " + playerName);
 
               final var subscription = account.getSubscriptionForGroup(group, categoryType);
@@ -102,10 +99,8 @@ public class PlayerGroupCommand extends SimpleCommand {
 
               playerAccountService.updatePlayerAccount(account.removeSubscription(group, categoryType))
                 .whenComplete((updatedAccount, updateError) -> {
-                    if (updateError != null)
-                        throw new CommandFailedException("§cErro ao atualizar conta do jogador: " + updateError.getMessage());
-                    if (updatedAccount == null)
-                        throw new CommandFailedException("§cErro ao remover grupo do jogador: " + playerName);
+                    if (updateError != null) throw new CommandFailedException("§cErro ao atualizar conta do jogador: " + updateError.getMessage());
+                    if (updatedAccount == null) throw new CommandFailedException("§cErro ao remover grupo do jogador: " + playerName);
 
                     if (updatedAccount.getSubscriptionForGroup(group, categoryType) == null) {
                         final var confirmationPacket = new PlayerLoseGroupPacket(updatedAccount.uniqueId(), group, categoryType);

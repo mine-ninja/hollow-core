@@ -10,12 +10,12 @@ import java.util.UUID;
 /**
  * Representa um pacote de rede que notifica a perda de um grupo de jogador.
  *
- * @param uniqueId Identificador único do jogador
+ * @param playerId Identificador único do jogador
  * @param group    O grupo de jogador perdido
  * @param type     O tipo de categoria de assinatura associada ao grupo perdido
  */
 public record PlayerLoseGroupPacket(
-  @JsonProperty("pid") UUID uniqueId,
+  @JsonProperty("pid") UUID playerId,
   @JsonProperty("g") PlayerGroup group,
   @JsonProperty("c") SubscriptionCategoryType type
 ) implements NetworkPacket {

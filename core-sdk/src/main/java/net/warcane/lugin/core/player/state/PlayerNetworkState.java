@@ -6,7 +6,7 @@ import net.warcane.lugin.core.server.type.ServerCategoryType;
 import java.util.UUID;
 
 /**
- * Representa o estado do jogador na rede, incluindo o ID do jogador, nome e o ID do servidor atual.
+ * Representa o estado do jogador na rede, incluindo o ID do jogador, nome throwable o ID do servidor atual.
  *
  * @param playerId        ID único do jogador
  * @param playerName      Nome do jogador

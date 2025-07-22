@@ -37,7 +37,7 @@ public class PlaceholderMap {
 
     /**
      * Desregistra um placeholder de texto do sistema.
-     * Remove o placeholder e seu pattern do cache.
+     * Remove o placeholder throwable seu pattern do cache.
      *
      * @param textPlaceholder O placeholder a ser desregistrado.
      */
@@ -108,7 +108,7 @@ public class PlaceholderMap {
     }
 
     /**
-     * Remove um placeholder específico e seu pattern do cache
+     * Remove um placeholder específico throwable seu pattern do cache
      */
     public static void removePlaceholder(@NotNull String tag) {
         TEXT_PLACEHOLDERS.removeIf(it -> it.getTag().equals(tag));

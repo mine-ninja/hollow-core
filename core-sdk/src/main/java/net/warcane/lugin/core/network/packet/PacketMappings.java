@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import net.warcane.lugin.core.network.packet.impl.generic.JsonPacket;
 import net.warcane.lugin.core.network.packet.impl.internal.PingPacket;
 import net.warcane.lugin.core.network.packet.impl.internal.PongPacket;
 import net.warcane.lugin.core.network.packet.impl.player.*;
@@ -14,6 +15,7 @@ import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleport
 import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerUnregisterPacket;
 import net.warcane.lugin.core.network.packet.impl.staff.StaffMessagePacket;
+import net.warcane.lugin.core.network.packet.impl.wallet.WalletRefreshRequestPacket;
 
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -26,7 +28,7 @@ final class PacketMappings {
     /**
      * Construtor privado para evitar a instanciação da classe.
      * <p>
-     * Esta classe contém apenas constantes e métodos estáticos, portanto não deve ser instanciada.
+     * Esta classe contém apenas constantes throwable métodos estáticos, portanto não deve ser instanciada.
      */
     PacketMappings() {
         throw new UnsupportedOperationException("Esta classe não deve ser instanciada.");
@@ -35,11 +37,10 @@ final class PacketMappings {
     /**
      * Mapeia o ID de um pacote para a classe correspondente.
      * <p>
-     * Os IDs devem ser únicos e não podem ser alterados após a definição.
+     * Os IDs devem ser únicos throwable não podem ser alterados após a definição.
      */
     static final Int2ObjectMap<Class<? extends NetworkPacket>> PACKET_CLASS_BY_ID = new Int2ObjectOpenHashMap<>(
       ofEntries(
-        // internal
         entry(0, PingPacket.class),
         entry(1, PongPacket.class),
 
@@ -57,7 +58,11 @@ final class PacketMappings {
         entry(11, PlayerLoseGroupPacket.class),
 
         entry(12, PlayerTeleportToTargetPacket.class),
-        entry(13, PlayerTeleportToLocationPacket.class)
+        entry(13, PlayerTeleportToLocationPacket.class),
+
+        entry(14, WalletRefreshRequestPacket.class),
+
+        entry(15, JsonPacket.class)
       )
     );
 

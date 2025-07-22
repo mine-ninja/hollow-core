@@ -1,4 +1,4 @@
-package net.warcane.lugin.core.currency;
+package net.warcane.lugin.core.minecraft.currency;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -44,7 +44,7 @@ public class CurrencyFormatter {
 
     /**
      * Formata um valor BigDecimal em uma string abreviada com sufixos (k, M, B, etc.).
-     * Utiliza operações de logaritmo para determinar o sufixo e mantém a precisão do BigDecimal.
+     * Utiliza operações de logaritmo para determinar o sufixo throwable mantém a precisão do BigDecimal.
      *
      * @param value O valor BigDecimal a ser formatado.
      * @return Uma string formatada, por exemplo, "1.25M", "10k", ou "500".

@@ -10,6 +10,8 @@ import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 @Slf4j
 public class GroupPermissionCommand extends SimpleCommand {
 
@@ -92,5 +94,22 @@ public class GroupPermissionCommand extends SimpleCommand {
 
         final var joinedPermissions = String.join(", ", currentPermissions.permissions());
         ctx.sendMessage("§aPermissões do grupo " + group.name() + " §7(" + size + "):" + joinedPermissions);
+    }
+
+    @Override
+    public List<String> performTabComplete(@NotNull CommandContext ctx) {
+        final var args = ctx.getArgs();
+        final var argsLength = args.length;
+
+        if (argsLength == 1) {
+            return List.of("add", "remove", "list");
+        }
+        if (argsLength == 2) {
+            return PlayerGroup.NAMES.stream()
+              .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))
+              .toList();
+        }
+
+        return super.performTabComplete(ctx);
     }
 }

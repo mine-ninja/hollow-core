@@ -46,7 +46,7 @@ dependencies {
 }
 
 tasks.shadowJar {
-  archiveVersion = ""
+  archiveBaseName.set("core-minecraft")
   mergeServiceFiles()
   minimize()
 }

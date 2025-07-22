@@ -3,7 +3,7 @@ package net.warcane.lugin.core.network.packet.data;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Representa um pacote serializado, contendo o ID do pacote, o tamanho e o cabeçalho.
+ * Representa um pacote serializado, contendo o ID do pacote, o tamanho throwable o cabeçalho.
  *
  * @param packetTypeId         ID do tipo de pacote
  * @param originalPacketLength               Tamanho do pacote (descomprimido)

@@ -1,11 +1,11 @@
 package net.warcane.lugin.core;
 
-import net.warcane.lugin.core.currency.CurrencyService;
 import net.warcane.lugin.core.group.GroupPermissionService;
 import net.warcane.lugin.core.network.NetworkClient;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.SendMessageToPlayerPacket;
 import net.warcane.lugin.core.player.account.PlayerAccountService;
+import net.warcane.lugin.core.player.wallet.WalletService;
 import net.warcane.lugin.core.server.GameServerService;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +37,7 @@ public interface Platform {
 
     GroupPermissionService getGroupPermissionService();
 
-    CurrencyService getCurrencyService();
+    WalletService getWalletService();
 
     default void sendMessageToPlayer(@NotNull UUID playerId, @NotNull String message) {
         getNetworkClient().sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, new SendMessageToPlayerPacket(playerId , message));

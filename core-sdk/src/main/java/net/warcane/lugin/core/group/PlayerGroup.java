@@ -17,7 +17,7 @@ public enum PlayerGroup {
     MANAGER("manager", "§4[Gerente] ", "Gerente", 11),
     ADMIN("admin", "§c[Admin] ", "Admin", 10),
     MODERATOR("moderator", "§2[Moderador] ", "Moderador", 9),
-    HELPER("helper", "§e[Ajudante] ", "Ajudante", 8),
+    HELPER("helper", "§throwable[Ajudante] ", "Ajudante", 8),
     INFLUENCER("influencer", "§c[Influencer] ", "Influencer", 7),
     SUPREME("supreme", "§4[Supremo] ", "Supremo", 6),
     LEGENDARY("legendary", "§2[Lendário] ", "Lendário", 5),

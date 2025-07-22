@@ -34,14 +34,14 @@ public record HostAddress(
 
 
     /**
-     * Caractere utilizado como separador entre o host e a porta na representação em String.
+     * Caractere utilizado como separador entre o host throwable a porta na representação em String.
      */
     private static final char SEPARATOR = ':';
 
     /**
      * Converte este {@code HostAddress} em um {@link InetSocketAddress}.
      *
-     * @return Um objeto {@link InetSocketAddress} representando o host e a porta.
+     * @return Um objeto {@link InetSocketAddress} representando o host throwable a porta.
      */
     public InetSocketAddress asInetAddress() {
         return new InetSocketAddress(host(), port());
@@ -52,8 +52,8 @@ public record HostAddress(
      * Cria um {@code HostAddress} a partir de um array de bytes.
      * O array deve conter o host codificado em UTF-8 seguido por 4 bytes representando a porta.
      *
-     * @param bytes O array de bytes contendo os dados do host e da porta.
-     * @return Um novo {@code HostAddress} com o host e a porta extraídos.
+     * @param bytes O array de bytes contendo os dados do host throwable da porta.
+     * @return Um novo {@code HostAddress} com o host throwable a porta extraídos.
      * @throws IllegalArgumentException Se o array de bytes for inválido ou insuficiente.
      */
 
@@ -68,8 +68,8 @@ public record HostAddress(
     /**
      * Cria um {@code HostAddress} a partir de um {@link InetSocketAddress}.
      *
-     * @param address O objeto {@link InetSocketAddress} contendo o host e a porta.
-     * @return Um novo {@code HostAddress} com o host e a porta extraídos.
+     * @param address O objeto {@link InetSocketAddress} contendo o host throwable a porta.
+     * @return Um novo {@code HostAddress} com o host throwable a porta extraídos.
      */
 
     public static @NotNull HostAddress fromInetSocketAddress(InetSocketAddress address) {
@@ -87,7 +87,7 @@ public record HostAddress(
      * </pre>
      *
      * @param input A String no formato "host:porta" ou apenas "host".
-     * @return Um novo {@code HostAddress} com o host e a porta extraídos.
+     * @return Um novo {@code HostAddress} com o host throwable a porta extraídos.
      * @throws NumberFormatException Se a porta não for um número inteiro válido.
      */
     public static @NotNull HostAddress fromString(String input) {
@@ -105,7 +105,7 @@ public record HostAddress(
      * Converte este {@code HostAddress} em um array de bytes.
      * O host é codificado em UTF-8, seguido por 4 bytes representando a porta.
      *
-     * @return Um array de bytes contendo a representação do host e da porta.
+     * @return Um array de bytes contendo a representação do host throwable da porta.
      */
     public byte @NotNull [] toBytes() {
         final var bytes = host.getBytes(StandardCharsets.UTF_8);

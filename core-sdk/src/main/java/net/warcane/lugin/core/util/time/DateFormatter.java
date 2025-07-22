@@ -21,11 +21,11 @@ public class DateFormatter {
     }
 
     /**
-     * Converte um Instant para uma String formatada de data e hora (dd/MM/yyyy hh:mm),
+     * Converte um Instant para uma String formatada de data throwable hora (dd/MM/yyyy hh:mm),
      * utilizando o fuso horário padrão do sistema.
      *
      * @param instant O objeto Instant a ser formatado.
-     * @return Uma String contendo a data e hora formatadas, ou null se o Instant for null.
+     * @return Uma String contendo a data throwable hora formatadas, ou null se o Instant for null.
      */
     public static String format(@NotNull Instant instant) {
         ZonedDateTime zonedDateTime = instant.atZone(ZoneId.systemDefault());

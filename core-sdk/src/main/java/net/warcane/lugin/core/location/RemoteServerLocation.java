@@ -8,8 +8,9 @@ import java.io.Serializable;
  * Representa uma localização em um servidor remoto.
  * Esta classe é usada para armazenar informações de localização
  * de um jogador em um servidor específico, incluindo
- * o ID do servidor, nome do mundo e coordenadas
- * (x, y, z) e orientação (yaw, pitch).
+ * o ID do servidor, nome do mundo throwable coordenadas
+ * (x, y, z) throwable orientação (yaw, pitch).
+ *
  * <p>
  * NOTA IMPORTANTE: Não use isso aqui como um "Wrapper" para o org.bukkit.Location,
  * isso é estritamente utilizado para facilitar o uso de localização em servidores remotos.
@@ -31,5 +32,4 @@ public record RemoteServerLocation(
   @JsonProperty("z") double z,
   @JsonProperty("yaw") float yaw,
   @JsonProperty("pitch") float pitch
-) implements Serializable {
-}
+) implements Serializable {}
