@@ -1,7 +1,6 @@
 package net.warcane.lugin.core.util.data;
 
 import com.mongodb.Function;
-import com.mongodb.TransactionOptions;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.TransactionBody;
 import com.mongodb.client.model.*;
@@ -70,7 +69,7 @@ public class MongoRepository<ID, O> {
     }
 
     public O findFirstFromPropertyIgnoreCase(@NotNull String key, @NotNull String value) {
-        return collection.find(Filters.regex(key, value, "i")).first();
+        return collection.find(Filters.eq(key, value)).first();
     }
 
     public List<O> queryAll() {

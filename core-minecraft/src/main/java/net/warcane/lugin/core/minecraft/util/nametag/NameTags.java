@@ -49,15 +49,18 @@ public class NameTags {
           ? TeamMode.UPDATE
           : TeamMode.CREATE;
 
-        WrapperPlayServerTeams packet = new WrapperPlayServerTeams(
-          teamName,
-          mode,
-          teamInfo,
-          player.getName()
-        );
+        WrapperPlayServerTeams packet = new WrapperPlayServerTeams(teamName, mode, teamInfo, player.getName());
 
         for (Player onlinePlayer : player.getServer().getOnlinePlayers()) {
             PacketEvents.getAPI().getPlayerManager().sendPacket(onlinePlayer, packet);
+
+            final var onlinePlayerTeam = playerTeams.get(onlinePlayer.getName());
+            if (onlinePlayerTeam != null) {
+                final var othersPacket = createTeamPacket(onlinePlayer);
+                if (othersPacket != null) {
+                    PacketEvents.getAPI().getPlayerManager().sendPacket(player, othersPacket);
+                }
+            }
         }
 
         playerTeams.put(player.getName(), new NameTagTeam(teamName, prefix, suffix, priority));
@@ -94,6 +97,29 @@ public class NameTags {
             }
         }
         playerTeams.clear();
+    }
+
+    public static WrapperPlayServerTeams createTeamPacket(@NotNull Player player) {
+        final var team = playerTeams.get(player.getName());
+        if (team == null) return null;
+
+        final var info = new ScoreBoardTeamInfo(
+          Component.text(team.teamName),
+          Component.text(team.prefix),
+          Component.text(team.suffix),
+          NameTagVisibility.ALWAYS,
+          CollisionRule.ALWAYS,
+          null,
+          OptionData.NONE
+        );
+
+
+        return new WrapperPlayServerTeams(
+          team.teamName,
+          TeamMode.CREATE,
+          info,
+          player.getName()
+        );
     }
 
     record NameTagTeam(String teamName, String prefix, String suffix, int priority) {

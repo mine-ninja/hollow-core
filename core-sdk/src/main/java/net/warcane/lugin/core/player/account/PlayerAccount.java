@@ -3,6 +3,7 @@ package net.warcane.lugin.core.player.account;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.group.PlayerGroup;
 import net.warcane.lugin.core.player.subscription.PlayerGroupSubscription;
 import net.warcane.lugin.core.player.subscription.SubscriptionCategoryType;
@@ -15,6 +16,7 @@ import java.util.*;
 
 import static net.warcane.lugin.core.player.subscription.PlayerGroupSubscription.createNewSubscription;
 
+@Slf4j
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record PlayerAccount(
   @JsonProperty("i") UUID uniqueId,
@@ -23,6 +25,17 @@ public record PlayerAccount(
   @JsonProperty("c") Instant createdAt,
   @JsonProperty("l") Instant lastLogin
 ) implements Serializable {
+
+
+    /**
+     * Cria uma nova instância de PlayerAccount com um novo nome.
+     *
+     * @param newName O novo nome do jogador
+     * @return Uma nova instância de PlayerAccount com o novo nome
+     */
+    public PlayerAccount withNewName(@NotNull String newName) {
+        return new PlayerAccount(uniqueId, newName, subscriptions, createdAt, lastLogin);
+    }
 
     /**
      * Cria uma conta de jogador padrão com o grupo "MEMBER".
@@ -33,7 +46,7 @@ public record PlayerAccount(
      */
     @NotNull
     public static PlayerAccount createDefaultAccount(@NotNull UUID uniqueId, @NotNull String playerName) {
-        return new PlayerAccount(uniqueId, playerName, List.of(PlayerGroupSubscription.defaultSubscription()), Instant.now(), Instant.now());
+        return new PlayerAccount(uniqueId, playerName, new ArrayList<>(List.of(PlayerGroupSubscription.defaultSubscription())), Instant.now(), Instant.now());
     }
 
 
@@ -107,16 +120,26 @@ public record PlayerAccount(
       @NotNull Instant targetExpirationTime,
       @NotNull SubscriptionCategoryType type
     ) {
-        final var currentSubscriptions = new ArrayList<>(this.subscriptions);
-        final var existingSubscription = this.getSubscriptionForGroup(group, type);
-        if (existingSubscription != null) {
-            currentSubscriptions.remove(existingSubscription);
-            currentSubscriptions.add(existingSubscription.changeEndFromNow(targetExpirationTime));
-        } else {
-            currentSubscriptions.add(createNewSubscription(group, targetExpirationTime, type));
-        }
+        try {
+            final var currentSubscriptions = subscriptions == null
+              ? new ArrayList<PlayerGroupSubscription>()
+              : new ArrayList<>(subscriptions);
 
-        return new PlayerAccount(uniqueId, playerName, currentSubscriptions, createdAt, lastLogin);
+            currentSubscriptions.removeIf(subscription ->
+              subscription.group() == group && subscription.type() == type
+            );
+
+
+            log.info("Removing existing subscription for player {}: group={}, type={}",
+              playerName, group.name(), type);
+
+            final var newSubscription = createNewSubscription(group, targetExpirationTime, type);
+            currentSubscriptions.add(newSubscription);
+
+            return new PlayerAccount(uniqueId, playerName, currentSubscriptions, createdAt, lastLogin);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @Deprecated

@@ -68,6 +68,7 @@ public class VelocityPlatform extends AbstractPlatform implements ProxyPlatform 
 
         final var serverInfo = query.get();
         proxyServer.unregisterServer(serverInfo.getServerInfo());
+        gameServerService.unregister(serverId);
         log.info("Unregistered server: {}", serverId);
     }
 

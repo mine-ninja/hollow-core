@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class PlayerGroupCommand extends SimpleCommand {
@@ -59,25 +60,49 @@ public class PlayerGroupCommand extends SimpleCommand {
         final boolean isPermanent = PERMANENT_ARG_VALUES.contains(rawTime.toLowerCase()) || parsedTime.isAfter(ZonedDateTime.now().plusDays(36500).toInstant());
         final var categoryType = ctx.getEnumOrThrow(4, SubscriptionCategoryType.class, "§cCategoria inválida. Use uma das seguintes: " + String.join(", ", SubscriptionCategoryType.BY_NAME.keySet()));
 
+        ctx.sendMessage("§7§oProcurando jogador %s na base de dados...".formatted(playerName));
         playerAccountService.getPlayerAccountByName(playerName)
           .whenComplete((account, error) -> {
-              if (error != null) throw new CommandFailedException("§cErro ao buscar conta do jogador: " + error.getMessage());
-              if (account == null) throw new CommandFailedException("§cJogador não encontrado: " + playerName);
+              if (error != null) {
+                  error.printStackTrace();
+                  ctx.sendMessage("§cErro ao buscar conta do jogador: " + error.getMessage());
+                  return;
+              }
 
+
+              if (account == null) {
+                  ctx.sendMessage("§cJogador não encontrado: " + playerName);
+                  return;
+              }
+
+              log.info("Adicionando grupo {} ao jogador {} com tempo: {} e categoria: {}", group.name(), playerName, rawTime, categoryType.name());
+
+              ctx.sendMessage("§7§oAdicionando grupo %s ao jogador %s...".formatted(group.name(), playerName));
+
+              // código para aqui.
               playerAccountService.updatePlayerAccount(account.withNewSubscription(group, parsedTime, categoryType))
+                .orTimeout(5, TimeUnit.SECONDS)
                 .whenComplete((updatedAccount, updateError) -> {
-                    if (updateError != null) throw new CommandFailedException("§cErro ao atualizar conta do jogador: " + updateError.getMessage());
-                    if (updatedAccount == null) throw new CommandFailedException("§cErro ao adicionar grupo ao jogador: " + playerName);
+                    if (updateError != null){
+                        updateError.printStackTrace();
+                        ctx.sendMessage("§cErro ao atualizar conta do jogador: " + updateError.getMessage());
+                        return;
+                    }
+
+                    if (updatedAccount == null) {
+                        ctx.sendMessage("§cErro ao adicionar grupo ao jogador: " + playerName + ". Verifique se o grupo e a categoria estão corretos.");
+                        return;
+                    }
+
 
                     final var updatedSubscription = updatedAccount.getSubscriptionForGroup(group, categoryType);
                     if (updatedSubscription != null) {
                         final var confirmationPacket = new PlayerReceiveGroupPacket(updatedAccount.uniqueId(), updatedSubscription.group(), categoryType);
                         platform.getNetworkClient().sendNetworkPacket(NetworkChannel.SERVER_STATUS, confirmationPacket);
 
-                        ctx.sendMessage("§aGrupo %s adicionado ao jogador %s com sucesso. Expira em: %s".formatted(
-                          group.name(), playerName, updatedSubscription.subscriptionEnd()));
+                        ctx.sendMessage("§aGrupo %s adicionado ao jogador %s com sucesso. Expira em: %s".formatted(group.name(), playerName, updatedSubscription.subscriptionEnd()));
                     } else {
-                        throw new CommandFailedException("§cErro ao adicionar grupo ao jogador: " + playerName + ". Verifique se o grupo throwable a categoria estão corretos.");
+                        ctx.sendMessage("§cErro ao adicionar grupo ao jogador: %s. Verifique se o grupo e a categoria estão corretos.".formatted(playerName));
                     }
                 });
           });

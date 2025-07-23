@@ -115,6 +115,19 @@ public final class InternalPlayerListener implements Listener {
                 log.info("Player wallet loaded for {}: {}", player.getName(), playerWallet);
             });
 
+
+            if (!name.equals(playerAccount.playerName())) {
+                platform.getPlayerAccountService()
+                  .updatePlayerAccount(playerAccount.withNewName(name))
+                  .whenComplete((updatedAccount, updateError) -> {
+                      if (updateError != null) {
+                          log.error("Failed to update player account name for {}: {}", player.getName(), updateError.getMessage(), updateError);
+                          this.syncKick(player);
+                      } else {
+                          log.info("Player account name updated for {}: {}", player.getName(), updatedAccount);
+                      }
+                  });
+            }
         });
 
         platform.getPlayerStatisticsService().loadPlayerAccount(playerId).whenComplete((playerStatistics, error) -> {

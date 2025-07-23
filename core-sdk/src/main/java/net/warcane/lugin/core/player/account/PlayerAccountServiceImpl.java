@@ -67,25 +67,29 @@ public class PlayerAccountServiceImpl implements PlayerAccountService {
     @Override
     public CompletableFuture<@Nullable PlayerAccount> getPlayerAccountByName(@NotNull String playerName) {
         final var local = getCachedAccountByName(playerName);
-        if (local != null) return CompletableFuture.completedFuture(local);
+        if (local != null) {
+            log.info("Found player account for {} in local cache.", playerName);
+            return CompletableFuture.completedFuture(local);
+        }
+
+        final var playerId = PlayerUuidFetcher.getInstance().fetchPlayerUuid(playerName);
+        if (playerId != null) {
+            log.info("Fetched UUID for player {}: {}", playerName, playerId);
+            return getPlayerAccount(playerId);
+        }
 
         return supply(() -> {
-            final var uuid = PlayerUuidFetcher.getInstance().fetchPlayerUuid(playerName);
-            if (uuid != null) {
-                final var fromUniqueId = redisCache.hget(CACHE_KEY, uuid.toString(), () -> repository.findById(uuid));
-                if (fromUniqueId != null) {
-                    localCache.put(uuid, fromUniqueId);
-                    return fromUniqueId;
-                }
-            }
+
 
             final var fromMongo = repository.findFirstFromPropertyIgnoreCase("playerName", playerName);
             if (fromMongo != null) {
+                log.info("Found player account for {} in MongoDB: {}", playerName, fromMongo);
                 localCache.put(fromMongo.uniqueId(), fromMongo);
                 redisCache.hset(CACHE_KEY, fromMongo.uniqueId().toString(), fromMongo);
                 return fromMongo;
             }
 
+            log.info("Player account for {} not found in local cache or MongoDB, fetching UUID.", playerName);
             return null;
         });
     }
@@ -93,12 +97,16 @@ public class PlayerAccountServiceImpl implements PlayerAccountService {
     @Override
     public CompletableFuture<@NotNull PlayerAccount> updatePlayerAccount(@NotNull PlayerAccount toUpdate, @NotNull AccountUpdateOptions options) {
         return supply(() -> {
+            log.info("Updating player account for {}: {}", toUpdate.uniqueId(), toUpdate);
+
             final var updated = repository.save(toUpdate, PlayerAccount::uniqueId);
             if (updated == null) {
                 throw new IllegalStateException("Failed to update player account: " + toUpdate.uniqueId());
             }
 
+
             if (options.updateCaches()) {
+                log.info("Updating caches for player account: {}", toUpdate.uniqueId());
                 redisCache.hset(CACHE_KEY, toUpdate.uniqueId().toString(), updated);
                 localCache.put(toUpdate.uniqueId(), updated);
             }
