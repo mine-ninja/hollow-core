@@ -95,6 +95,7 @@ public record PlayerAccount(
      * @param type  O tipo de categoria da assinatura
      * @return Uma nova instância de PlayerAccount com a assinatura removida
      */
+    @JsonIgnore
     public PlayerAccount removeSubscription(@NotNull PlayerGroup group, @NotNull SubscriptionCategoryType type) {
         final var currentSubscriptions = new ArrayList<>(this.subscriptions);
         final var existingSubscription = this.getSubscriptionForGroup(group, type);
@@ -125,13 +126,8 @@ public record PlayerAccount(
               ? new ArrayList<PlayerGroupSubscription>()
               : new ArrayList<>(subscriptions);
 
-            currentSubscriptions.removeIf(subscription ->
-              subscription.group() == group && subscription.type() == type
-            );
-
-
-            log.info("Removing existing subscription for player {}: group={}, type={}",
-              playerName, group.name(), type);
+            currentSubscriptions.removeIf(subscription -> subscription.group() == group
+                                                          && subscription.type() == type);
 
             final var newSubscription = createNewSubscription(group, targetExpirationTime, type);
             currentSubscriptions.add(newSubscription);
@@ -143,6 +139,7 @@ public record PlayerAccount(
     }
 
     @Deprecated
+    @JsonIgnore
     public PlayerGroupSubscription getHighestSubscription(){
         return this.getHighestSubscription(SubscriptionCategoryType.GLOBAL);
     }
@@ -150,10 +147,12 @@ public record PlayerAccount(
     @NotNull
     @JsonIgnore
     public PlayerGroupSubscription getHighestSubscription(SubscriptionCategoryType type) {
-        return this.getSubscriptions(type)
+        final var highestSpecialSubscription = this.getHighestSpecialSubscription();
+        return Objects.requireNonNullElseGet(highestSpecialSubscription, () -> this.getSubscriptions(type)
           .stream()
           .max(Comparator.comparingInt(sub -> sub.group().getPowerLevel()))
-          .orElse(PlayerGroupSubscription.defaultSubscription());
+          .orElse(PlayerGroupSubscription.defaultSubscription())
+        );
     }
 
     @Nullable
@@ -169,6 +168,7 @@ public record PlayerAccount(
           .orElse(null);
     }
 
+
     @NotNull
     @JsonProperty
     public List<PlayerGroupSubscription> getSubscriptions(@NotNull SubscriptionCategoryType type) {
@@ -177,5 +177,15 @@ public record PlayerAccount(
         return subscriptions.stream()
           .filter(subscription -> subscription.type() == type && !subscription.isExpired())
           .toList();
+    }
+
+    @Nullable
+    @JsonProperty
+    public PlayerGroupSubscription getHighestSpecialSubscription() {
+        return this.getSubscriptions(SubscriptionCategoryType.GLOBAL)
+          .stream()
+          .filter(it -> it.group().isSpecialGroup())
+          .max(Comparator.comparingInt(sub -> sub.group().getPowerLevel()))
+          .orElse(null);
     }
 }

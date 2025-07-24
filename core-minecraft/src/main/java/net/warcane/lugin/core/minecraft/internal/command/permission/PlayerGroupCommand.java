@@ -57,8 +57,16 @@ public class PlayerGroupCommand extends SimpleCommand {
         final var group = ctx.getEnumOrThrow(2, PlayerGroup.class, "§cGrupo inválido. Use um dos seguintes: " + String.join(", ", PlayerGroup.NAMES));
         final var rawTime = ctx.getRawArgOrThrow(3, "§cVocê deve especificar o tempo de duração do grupo (use 'permanente' para um grupo permanente).");
         final var parsedTime = this.parseInstant(rawTime);
-        final boolean isPermanent = PERMANENT_ARG_VALUES.contains(rawTime.toLowerCase()) || parsedTime.isAfter(ZonedDateTime.now().plusDays(36500).toInstant());
         final var categoryType = ctx.getEnumOrThrow(4, SubscriptionCategoryType.class, "§cCategoria inválida. Use uma das seguintes: " + String.join(", ", SubscriptionCategoryType.BY_NAME.keySet()));
+
+        if (categoryType == SubscriptionCategoryType.GLOBAL && !group.isSpecialGroup()) {
+            final var specialGroupIds = String.join(",", PlayerGroup.SPECIAL_GROUPS.stream()
+              .map(PlayerGroup::getId)
+              .toList());
+
+            ctx.sendMessage("§cSomente grupos especiais podem ser adicionados no contexto GLOBAL: " + specialGroupIds);
+            return;
+        }
 
         ctx.sendMessage("§7§oProcurando jogador %s na base de dados...".formatted(playerName));
         playerAccountService.getPlayerAccountByName(playerName)
@@ -79,7 +87,6 @@ public class PlayerGroupCommand extends SimpleCommand {
 
               ctx.sendMessage("§7§oAdicionando grupo %s ao jogador %s...".formatted(group.name(), playerName));
 
-              // código para aqui.
               playerAccountService.updatePlayerAccount(account.withNewSubscription(group, parsedTime, categoryType))
                 .orTimeout(5, TimeUnit.SECONDS)
                 .whenComplete((updatedAccount, updateError) -> {

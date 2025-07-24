@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 @Slf4j
 public class CurrencyBasedCommand extends SimpleCommand {
 
-    private static final Pattern BIG_INTEGER_PATTERN = Pattern.compile("^-?\\d+$");
+    private static final Pattern BIG_DECIMAL_PATTERN = Pattern.compile("^-?\\d+(\\.\\d+)?$");
     private static final List<String> INVALID_AMOUNT_TOKENS = List.of("nan", "inf", "-inf", "null", "undefined");
 
     private final BukkitPlatform platform;
@@ -88,7 +88,7 @@ public class CurrencyBasedCommand extends SimpleCommand {
             throw new CommandFailedException("§cVocê não possui uma carteira para realizar pagamentos.");
 
         final var amountToPay = ctx.getRawArgOrThrow(2, "§cEspecifique uma quantia para pagar");
-        if (!BIG_INTEGER_PATTERN.matcher(amountToPay).matches() || amountToPay.startsWith("-") || INVALID_AMOUNT_TOKENS.contains(amountToPay.toLowerCase())) {
+        if (!BIG_DECIMAL_PATTERN.matcher(amountToPay).matches() || amountToPay.startsWith("-") || INVALID_AMOUNT_TOKENS.contains(amountToPay.toLowerCase())) {
             throw new CommandFailedException("§cQuantia inválida. Use um número válido.");
         }
 

@@ -33,6 +33,14 @@ public enum PlayerGroup {
       .map(PlayerGroup::getId)
       .toList();
 
+    public static final List<PlayerGroup> STAFF_GROUPS = Arrays.stream(values())
+      .filter(PlayerGroup::isStaffGroup)
+      .toList();
+
+    public static final List<PlayerGroup> SPECIAL_GROUPS = Arrays.stream(values())
+      .filter(PlayerGroup::isSpecialGroup)
+      .toList();
+
     private static final int MAX_PRIORITY_VALUE = 90;
 
 
@@ -63,5 +71,13 @@ public enum PlayerGroup {
 
     public String getColoredDisplayName() {
         return "§" + this.getPrefixColorCode() + this.displayName;
+    }
+
+    public boolean isStaffGroup(){
+        return isGreaterOrEqualTo(HELPER);
+    }
+
+    public boolean isSpecialGroup(){
+        return isGreaterOrEqualTo(INFLUENCER);
     }
 }

@@ -12,19 +12,24 @@ import java.util.List;
  * Este pacote pode ser usado para enviar dados estruturados entre o cliente e o servidor
  * de forma flexível e extensível.
  *
+ * @param type O tipo do pacote, que pode ser usado para identificar o tipo de dados que está sendo transmitido.
  * @param content O conteúdo do pacote, que é uma string JSON representando os dados a serem transmitidos.
  */
-public record JsonPacket(@JsonProperty("c") String content) implements NetworkPacket {
+public record JsonPacket(
+  @JsonProperty("t") String type,
+  @JsonProperty("c") String content
+) implements NetworkPacket {
 
     /**
      * Cria um novo pacote JSON a partir de um objeto genérico.
      *
+     * @param typeName O nome do tipo do pacote, que pode ser usado para identificar o tipo de dados.
      * @param content O conteúdo do pacote, que será convertido para uma string JSON.
      * @param <T>     O tipo do conteúdo do pacote.
      * @return Um novo JsonPacket contendo o conteúdo serializado como JSON.
      */
-    public static <T> JsonPacket createPacket(@NotNull T content) {
-        return new JsonPacket(JsonUtil.toJson(content));
+    public static <T> JsonPacket createPacket(@NotNull String typeName, @NotNull T content) {
+        return new JsonPacket(typeName, JsonUtil.toJson(content));
     }
 
     /**

@@ -42,7 +42,7 @@ dependencies {
 
   compileOnlyApi("com.github.retrooper:packetevents-spigot:2.9.1")
 
-  paperweight.paperDevBundle("1.21-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("1.21-R0.1-SNAPSHOT")
 }
 
 tasks.shadowJar {

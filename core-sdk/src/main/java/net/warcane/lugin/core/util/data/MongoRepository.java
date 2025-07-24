@@ -72,10 +72,17 @@ public class MongoRepository<ID, O> {
         return collection.find(Filters.eq(key, value)).first();
     }
 
+    public O deleteById(@NotNull ID id) {
+        return collection.findOneAndDelete(Filters.eq(idFieldName, id));
+    }
+
+    public O delete(@NotNull O toDelete, @NotNull Function<O, ID> idExtractor) {
+        return collection.findOneAndDelete(Filters.eq(idFieldName, idExtractor.apply(toDelete)));
+    }
+
     public List<O> queryAll() {
         return collection.find().into(new ArrayList<>());
     }
-
 
     public <T> T supplyFromCollection(@NotNull Function<MongoCollection<O>, T> function) {
         return function.apply(collection);
