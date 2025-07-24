@@ -21,8 +21,18 @@ public class BedwarsUtil {
         setStats(playerStatistics, bedwarsMode, statsType, getStats(playerStatistics, bedwarsMode, statsType) - value);
     }
 
-
     public static int getStats(@NotNull PlayerStatistics playerStatistics, @NotNull BedwarsMode bedwarsMode, @NotNull StatsType statsType) {
                 return playerStatistics.getTotalValue(bedwarsMode.getSmallName() + "_" + statsType.name());
+    }
+
+    public static int getStatsForToday(@NotNull PlayerStatistics playerStatistics, @NotNull BedwarsMode bedwarsMode, @NotNull StatsType statsType) {
+        long millisecondsPerDay = 1000L * 60 * 60 * 24;
+        int correspondingDay = (int) (System.currentTimeMillis() / millisecondsPerDay);
+
+        return getStatsForDays(playerStatistics, bedwarsMode, statsType, correspondingDay);
+    }
+
+    public static int getStatsForDays(@NotNull PlayerStatistics playerStatistics, @NotNull BedwarsMode bedwarsMode, @NotNull StatsType statsType, int... days) {
+        return playerStatistics.getValue(bedwarsMode.getSmallName() + "_" + statsType.name(), days);
     }
 }

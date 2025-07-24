@@ -2,17 +2,21 @@ package net.warcane.lugin.core.player.statistic;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Indexes;
+import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.database.MongoDbConnector;
 import net.warcane.lugin.core.database.RedisConnector;
 import org.bson.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.params.ScanParams;
+import redis.clients.jedis.resps.ScanResult;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -21,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 
+@Slf4j
 public class PlayerStatisticsServiceImpl implements PlayerStatisticsService {
 
     private final Jedis jedisPool;
@@ -58,60 +63,26 @@ public class PlayerStatisticsServiceImpl implements PlayerStatisticsService {
         return supply(() -> {
             PlayerStatistics playerStatistics = PlayerStatistics.createBlankCache(playerId);
 
-            if (jedisPool.exists(PlayerStatistics.REDIS_PREFIX + playerId)) {
-                Map<String, String> hashMap = jedisPool.hgetAll(PlayerStatistics.REDIS_PREFIX + playerId);
-
-                for (Map.Entry<String, String> entry : hashMap.entrySet()) {
-                    if (!entry.getKey().equalsIgnoreCase("key")) {
-                        String encoded = entry.getValue();
-
-                        try {
-                            byte[] bytes = java.util.Base64.getDecoder().decode(encoded);
-                            DataInputStream dataIn = new DataInputStream(new ByteArrayInputStream(bytes));
-
-                            int amount = dataIn.readInt();
-
-                            for (int i = 0; i < amount; i++) {
-                                int day = dataIn.readInt();
-                                int value = dataIn.readInt();
-
-                                playerStatistics.getCache().computeIfAbsent(entry.getKey(), k -> new HashMap<>()).put(day, value);
-                            }
-                        } catch (IOException exception) {
-                            throw new RuntimeException(exception);
-                        } catch (IllegalArgumentException exception) {
-                            System.err.println(exception.getMessage());
-                        }
-                    }
-                }
-
-                localCache.put(playerId, playerStatistics);
-                return playerStatistics;
-            }
-
-            Document searchQuery = new Document("key", playerId.toString());
+            Document searchQuery = new Document("key", playerId);
             Document document = collection.find(searchQuery).first();
 
             if (document != null) {
                 for (Map.Entry<String, Object> entry : document.entrySet()) {
-                    if (entry.getValue() instanceof String encoded && !entry.getKey().equalsIgnoreCase("key")) {
-                        byte[] bytes = java.util.Base64.getDecoder().decode(encoded);
-
-                        DataInputStream dataIn = new DataInputStream(new ByteArrayInputStream(bytes));
-
-                        jedisPool.hset(PlayerStatistics.REDIS_PREFIX + playerId, entry.getKey(), encoded);
+                    if (entry.getValue() instanceof ArrayList) {
+                        String statKey = entry.getKey();
 
                         try {
-                            int amount = dataIn.readInt();
+                            @SuppressWarnings("unchecked")
+                            ArrayList<Document> statsList = (ArrayList<Document>) entry.getValue();
 
-                            for (int i = 0; i < amount; i++) {
-                                int day = dataIn.readInt();
-                                int value = dataIn.readInt();
+                            for (Document dailyStat : statsList) {
+                                int day = dailyStat.getInteger("day");
+                                int value = dailyStat.getInteger("value");
 
-                                playerStatistics.getCache().computeIfAbsent(entry.getKey(), k -> new HashMap<>()).put(day, value);
+                                playerStatistics.getCache().computeIfAbsent(statKey, k -> new HashMap<>()).put(day, value);
                             }
-                        } catch (IOException exception) {
-                            throw new RuntimeException(exception);
+                        } catch (ClassCastException exception) {
+                            log.error("Data format error for key '{}'. Expected an array of documents. {}", statKey, exception.getMessage());
                         }
                     }
                 }
@@ -126,12 +97,22 @@ public class PlayerStatisticsServiceImpl implements PlayerStatisticsService {
     public CompletableFuture<@NotNull PlayerStatistics> unloadPlayerAccount(@NotNull UUID playerId) {
         final var removedFromLocalCache = localCache.remove(playerId);
 
-        if (removedFromLocalCache == null) {
+        if (removedFromLocalCache == null)
             return CompletableFuture.failedFuture(new IllegalStateException("Failed to unload player statistics: " + playerId));
-        }
 
         return supply(() -> {
-            jedisPool.del(PlayerStatistics.REDIS_PREFIX + playerId);
+            String cursor = ScanParams.SCAN_POINTER_START;
+            ScanParams scanParams = new ScanParams().match(PlayerStatistics.REDIS_PREFIX + playerId + ":*").count(100);
+
+            do {
+                ScanResult<String> scanResult = jedisPool.scan(cursor, scanParams);
+                cursor = scanResult.getCursor();
+
+                if (!scanResult.getResult().isEmpty()) {
+                    jedisPool.del(scanResult.getResult().toArray(new String[0]));
+                }
+            } while (!cursor.equals(ScanParams.SCAN_POINTER_START));
+
             return removedFromLocalCache;
         });
     }

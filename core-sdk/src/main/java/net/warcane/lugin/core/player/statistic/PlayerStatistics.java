@@ -1,11 +1,15 @@
 package net.warcane.lugin.core.player.statistic;
 
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.Updates;
+import com.mongodb.client.result.UpdateResult;
 import lombok.Getter;
 import net.warcane.lugin.core.database.MongoDbConnector;
 import net.warcane.lugin.core.database.RedisConnector;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.jetbrains.annotations.NotNull;
 import redis.clients.jedis.Jedis;
 
@@ -63,42 +67,26 @@ public class PlayerStatistics {
     public void setValue(int day, @NotNull String key, int value) {
         cache.computeIfAbsent(key, k -> new HashMap<>()).put(day, value);
 
-        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-        DataOutputStream dataOut = new DataOutputStream(byteStream);
+        String redisKey = REDIS_PREFIX + uuid + ":" + key;
+        jedisPool.hset(redisKey, String.valueOf(day), String.valueOf(value));
 
-        Set<Map.Entry<Integer, Integer>> entrySet = cache.get(key).entrySet();
+        Document dayValueDoc = new Document("day", day).append("value", value);
 
-        try {
-            dataOut.writeInt(entrySet.size());
+        Bson filter = Filters.and(
+                Filters.eq("key", uuid),
+                Filters.eq(key + ".day", day)
+        );
 
-            for (Map.Entry<Integer, Integer> entry : entrySet) {
-                dataOut.writeInt(entry.getKey());
-                dataOut.writeInt(entry.getValue());
-            }
-        } catch (IOException exception) {
-            System.err.println(exception.getMessage());
-        }
+        Bson update = Updates.set(key + ".$", dayValueDoc);
+        UpdateResult result = collection.updateOne(filter, update);
 
-        byte[] bytes = byteStream.toByteArray();
-        String encoded = java.util.Base64.getEncoder().encodeToString(bytes);
+        if (result.getModifiedCount() == 0) {
+            Bson removeOldEntry = Updates.pull(key, new Document("day", day));
+            collection.updateOne(Filters.eq("key", uuid), removeOldEntry);
 
-        if (jedisPool.exists(REDIS_PREFIX + uuid)) {
-            jedisPool.hset(REDIS_PREFIX + uuid, key, encoded);
-        }
+            Bson pushNewEntry = Updates.push(key, dayValueDoc);
 
-        Document searchQuery = new Document("key", uuid.toString());
-        Document document = collection.find(searchQuery).first();
-
-        if (document != null) {
-            if (document.getString(key) != null)
-                return;
-
-            document.put(key, encoded);
-
-            collection.updateOne(searchQuery, new Document("$set", document), new UpdateOptions().upsert(true));
-        } else {
-            Document newDocument = new Document("key", uuid.toString()).append(key, encoded);
-            collection.insertOne(newDocument);
+            collection.updateOne(Filters.eq("key", uuid), pushNewEntry, new UpdateOptions().upsert(true));
         }
     }
 
