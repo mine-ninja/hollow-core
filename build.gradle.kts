@@ -6,7 +6,7 @@ plugins {
 
 allprojects {
   group = "net.warcane.core"
-  version = "0.2.2-alpha"
+  version = "0.2.3-alpha"
 }
 
 subprojects {

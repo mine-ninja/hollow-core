@@ -10,7 +10,7 @@ public abstract class SimpleSubCommand {
 
     protected final String subCommandName;
 
-    protected final List<String> aliases = List.of();
+    protected List<String> aliases = List.of();
 
     protected String permission;
     protected String noPermissionMessage;
