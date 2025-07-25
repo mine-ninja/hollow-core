@@ -1,23 +1,21 @@
 package net.warcane.lugin.core.player.statistic;
 
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Indexes;
 import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.database.MongoDbConnector;
 import net.warcane.lugin.core.database.RedisConnector;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.params.ScanParams;
 import redis.clients.jedis.resps.ScanResult;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -61,28 +59,40 @@ public class PlayerStatisticsServiceImpl implements PlayerStatisticsService {
     @Override
     public CompletableFuture<@NotNull PlayerStatistics> loadPlayerAccount(@NotNull UUID playerId) {
         return supply(() -> {
-            PlayerStatistics playerStatistics = PlayerStatistics.createBlankCache(playerId);
+            PlayerStatistics playerStatistics = PlayerStatistics.createBlankCache(playerId, executorService);
 
-            Document searchQuery = new Document("key", playerId);
-            Document document = collection.find(searchQuery).first();
+            Document document = collection.find(new Document("key", playerId)).first();
 
             if (document != null) {
+                document.remove("_id");
+                document.remove("key");
+
                 for (Map.Entry<String, Object> entry : document.entrySet()) {
-                    if (entry.getValue() instanceof ArrayList) {
-                        String statKey = entry.getKey();
+                    String statKey = entry.getKey();
+                    Object value = entry.getValue();
 
+                    List<?> rawList = (List<?>) value;
+
+                    if (rawList.isEmpty() || !(rawList.getFirst() instanceof Document)) {
+                        log.warn("Skipping stat key '{}': expected a list of documents, but found a list of {}.", statKey, rawList.isEmpty() ? "nothing" : rawList.getFirst().getClass().getSimpleName());
+                        continue;
+                    }
+
+                    @SuppressWarnings("unchecked")
+                    List<Document> statsList = (List<Document>) rawList;
+
+                    for (Document dailyStat : statsList) {
                         try {
-                            @SuppressWarnings("unchecked")
-                            ArrayList<Document> statsList = (ArrayList<Document>) entry.getValue();
+                            Integer day = dailyStat.getInteger("day");
+                            Integer statValue = dailyStat.getInteger("value");
 
-                            for (Document dailyStat : statsList) {
-                                int day = dailyStat.getInteger("day");
-                                int value = dailyStat.getInteger("value");
-
-                                playerStatistics.getCache().computeIfAbsent(statKey, k -> new HashMap<>()).put(day, value);
+                            if (day != null && statValue != null) {
+                                playerStatistics.getCache().computeIfAbsent(statKey, k -> new HashMap<>()).put(day, statValue);
+                            } else {
+                                log.warn("Skipping daily stat for key '{}' due to missing 'day' or 'value'.", statKey);
                             }
-                        } catch (ClassCastException exception) {
-                            log.error("Data format error for key '{}'. Expected an array of documents. {}", statKey, exception.getMessage());
+                        } catch (Exception exception) {
+                            log.error("Failed to parse daily stat document for key '{}': {}", statKey, dailyStat.toJson(), exception);
                         }
                     }
                 }

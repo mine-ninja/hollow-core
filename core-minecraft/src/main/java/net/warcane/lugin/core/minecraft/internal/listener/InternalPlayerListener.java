@@ -121,6 +121,8 @@ public final class InternalPlayerListener implements Listener {
             if (error != null) {
                 log.error("Failed to load player statistics for {}: {}", player.getName(), error.getMessage(), error);
                 this.syncKick(player);
+            } else {
+                log.info("Player statistics loaded for {}: {}", player.getName(), playerStatistics);
             }
         });
     }

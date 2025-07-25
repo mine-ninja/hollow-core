@@ -13,10 +13,10 @@ import org.bson.conversions.Bson;
 import org.jetbrains.annotations.NotNull;
 import redis.clients.jedis.Jedis;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 
 public class PlayerStatistics {
 
@@ -28,12 +28,16 @@ public class PlayerStatistics {
     private final HashMap<String, HashMap<Integer, Integer>> cache;
     private final UUID uuid;
 
-    private PlayerStatistics(@NotNull UUID uuid) {
+    private final ExecutorService executorService;
+
+    private PlayerStatistics(@NotNull UUID uuid, ExecutorService executorService) {
         this.jedisPool = RedisConnector.getInstance().getJedisPool().getResource();
         this.collection = MongoDbConnector.getInstance().getCollection("stats", Document.class);
 
         this.cache = new HashMap<>();
         this.uuid = uuid;
+
+        this.executorService = executorService;
     }
 
     /**
@@ -43,8 +47,8 @@ public class PlayerStatistics {
      * @return Uma nova instância de PlayerStatistics sem elementos.
      */
     @NotNull
-    public static PlayerStatistics createBlankCache(@NotNull UUID uniqueId) {
-        return new PlayerStatistics(uniqueId);
+    public static PlayerStatistics createBlankCache(@NotNull UUID uniqueId, @NotNull ExecutorService executorService) {
+        return new PlayerStatistics(uniqueId, executorService);
     }
 
     /**
@@ -65,29 +69,31 @@ public class PlayerStatistics {
      * Define um valor à uma key das estatísticas.
      */
     public void setValue(int day, @NotNull String key, int value) {
-        cache.computeIfAbsent(key, k -> new HashMap<>()).put(day, value);
+        executorService.submit(() -> {
+            cache.computeIfAbsent(key, k -> new HashMap<>()).put(day, value);
 
-        String redisKey = REDIS_PREFIX + uuid + ":" + key;
-        jedisPool.hset(redisKey, String.valueOf(day), String.valueOf(value));
+            String redisKey = REDIS_PREFIX + uuid + ":" + key;
+            jedisPool.hset(redisKey, String.valueOf(day), String.valueOf(value));
 
-        Document dayValueDoc = new Document("day", day).append("value", value);
+            Document dayValueDoc = new Document("day", day).append("value", value);
 
-        Bson filter = Filters.and(
-                Filters.eq("key", uuid),
-                Filters.eq(key + ".day", day)
-        );
+            Bson filter = Filters.and(
+                    Filters.eq("key", uuid),
+                    Filters.eq(key + ".day", day)
+            );
 
-        Bson update = Updates.set(key + ".$", dayValueDoc);
-        UpdateResult result = collection.updateOne(filter, update);
+            Bson update = Updates.set(key + ".$", dayValueDoc);
+            UpdateResult result = collection.updateOne(filter, update);
 
-        if (result.getModifiedCount() == 0) {
-            Bson removeOldEntry = Updates.pull(key, new Document("day", day));
-            collection.updateOne(Filters.eq("key", uuid), removeOldEntry);
+            if (result.getModifiedCount() == 0) {
+                Bson removeOldEntry = Updates.pull(key, new Document("day", day));
+                collection.updateOne(Filters.eq("key", uuid), removeOldEntry);
 
-            Bson pushNewEntry = Updates.push(key, dayValueDoc);
+                Bson pushNewEntry = Updates.push(key, dayValueDoc);
 
-            collection.updateOne(Filters.eq("key", uuid), pushNewEntry, new UpdateOptions().upsert(true));
-        }
+                collection.updateOne(Filters.eq("key", uuid), pushNewEntry, new UpdateOptions().upsert(true));
+            }
+        });
     }
 
     /**
