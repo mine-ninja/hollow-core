@@ -1,18 +1,22 @@
 package net.warcane.lugin.core.player.statistic;
 
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.Updates;
+import com.mongodb.client.result.UpdateResult;
 import lombok.Getter;
 import net.warcane.lugin.core.database.MongoDbConnector;
 import net.warcane.lugin.core.database.RedisConnector;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.jetbrains.annotations.NotNull;
 import redis.clients.jedis.Jedis;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 
 public class PlayerStatistics {
 
@@ -24,12 +28,16 @@ public class PlayerStatistics {
     private final HashMap<String, HashMap<Integer, Integer>> cache;
     private final UUID uuid;
 
-    private PlayerStatistics(@NotNull UUID uuid) {
+    private final ExecutorService executorService;
+
+    private PlayerStatistics(@NotNull UUID uuid, ExecutorService executorService) {
         this.jedisPool = RedisConnector.getInstance().getJedisPool().getResource();
         this.collection = MongoDbConnector.getInstance().getCollection("stats", Document.class);
 
         this.cache = new HashMap<>();
         this.uuid = uuid;
+
+        this.executorService = executorService;
     }
 
     /**
@@ -39,8 +47,8 @@ public class PlayerStatistics {
      * @return Uma nova instância de PlayerStatistics sem elementos.
      */
     @NotNull
-    public static PlayerStatistics createBlankCache(@NotNull UUID uniqueId) {
-        return new PlayerStatistics(uniqueId);
+    public static PlayerStatistics createBlankCache(@NotNull UUID uniqueId, @NotNull ExecutorService executorService) {
+        return new PlayerStatistics(uniqueId, executorService);
     }
 
     /**
@@ -61,45 +69,31 @@ public class PlayerStatistics {
      * Define um valor à uma key das estatísticas.
      */
     public void setValue(int day, @NotNull String key, int value) {
-        cache.computeIfAbsent(key, k -> new HashMap<>()).put(day, value);
+        executorService.submit(() -> {
+            cache.computeIfAbsent(key, k -> new HashMap<>()).put(day, value);
 
-        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-        DataOutputStream dataOut = new DataOutputStream(byteStream);
+            String redisKey = REDIS_PREFIX + uuid + ":" + key;
+            jedisPool.hset(redisKey, String.valueOf(day), String.valueOf(value));
 
-        Set<Map.Entry<Integer, Integer>> entrySet = cache.get(key).entrySet();
+            Document dayValueDoc = new Document("day", day).append("value", value);
 
-        try {
-            dataOut.writeInt(entrySet.size());
+            Bson filter = Filters.and(
+                    Filters.eq("key", uuid),
+                    Filters.eq(key + ".day", day)
+            );
 
-            for (Map.Entry<Integer, Integer> entry : entrySet) {
-                dataOut.writeInt(entry.getKey());
-                dataOut.writeInt(entry.getValue());
+            Bson update = Updates.set(key + ".$", dayValueDoc);
+            UpdateResult result = collection.updateOne(filter, update);
+
+            if (result.getModifiedCount() == 0) {
+                Bson removeOldEntry = Updates.pull(key, new Document("day", day));
+                collection.updateOne(Filters.eq("key", uuid), removeOldEntry);
+
+                Bson pushNewEntry = Updates.push(key, dayValueDoc);
+
+                collection.updateOne(Filters.eq("key", uuid), pushNewEntry, new UpdateOptions().upsert(true));
             }
-        } catch (IOException exception) {
-            System.err.println(exception.getMessage());
-        }
-
-        byte[] bytes = byteStream.toByteArray();
-        String encoded = java.util.Base64.getEncoder().encodeToString(bytes);
-
-        if (jedisPool.exists(REDIS_PREFIX + uuid)) {
-            jedisPool.hset(REDIS_PREFIX + uuid, key, encoded);
-        }
-
-        Document searchQuery = new Document("key", uuid.toString());
-        Document document = collection.find(searchQuery).first();
-
-        if (document != null) {
-            if (document.getString(key) != null)
-                return;
-
-            document.put(key, encoded);
-
-            collection.updateOne(searchQuery, new Document("$set", document), new UpdateOptions().upsert(true));
-        } else {
-            Document newDocument = new Document("key", uuid.toString()).append(key, encoded);
-            collection.insertOne(newDocument);
-        }
+        });
     }
 
     /**
