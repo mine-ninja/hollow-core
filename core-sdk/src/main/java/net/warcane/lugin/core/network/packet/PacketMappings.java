@@ -12,6 +12,7 @@ import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerLoseGr
 import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerReceiveGroupPacket;
 import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleportToLocationPacket;
 import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleportToTargetPacket;
+import net.warcane.lugin.core.network.packet.impl.server.BroadcastMessagePacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerUnregisterPacket;
 import net.warcane.lugin.core.network.packet.impl.staff.StaffMessagePacket;
@@ -52,8 +53,10 @@ final class PacketMappings {
         entry(6, PlayerJoinRequestPacket.class),
         entry(7, PlayerDirectPlayGameCategoryPacket.class),
 
+        entry(88, SendModernMessageToPlayerPacket.class),
         entry(8, SendMessageToPlayerPacket.class),
         entry(9, StaffMessagePacket.class),
+        entry(99 , BroadcastMessagePacket.class),
         entry(10, PlayerReceiveGroupPacket.class),
         entry(11, PlayerLoseGroupPacket.class),
 

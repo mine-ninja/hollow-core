@@ -25,6 +25,9 @@ dependencies {
   api("org.mongodb:mongodb-driver-sync:5.5.0")
   api("redis.clients:jedis:6.0.0")
 
+  api("net.kyori:adventure-api:4.22.0")
+
+
   api("com.github.ben-manes.caffeine:caffeine:3.2.1")
 
   implementation("io.github.cdimascio:dotenv-java:3.2.0")
