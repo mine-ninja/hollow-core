@@ -19,6 +19,7 @@ public enum ServerCategoryType {
     LOGIN("Servidor de Login"),
     LOBBY("Lobby"),
     BEDWARS("BedWars"),
+    MINA("Mina"),
     FACTIONS("Factions");
 
     public static final Map<String, ServerCategoryType> entries = Arrays.stream(values())

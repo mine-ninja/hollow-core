@@ -205,7 +205,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     public SubscriptionCategoryType getSubscriptionCategoryType() {
         return switch (serverCategoryType) {
             case LOBBY, BEDWARS -> SubscriptionCategoryType.MINIGAMES;
-            case FACTIONS -> SubscriptionCategoryType.FACTIONS;
+            case FACTIONS, MINA -> SubscriptionCategoryType.FACTIONS;
             default -> SubscriptionCategoryType.GLOBAL;
         };
     }
