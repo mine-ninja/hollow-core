@@ -143,7 +143,9 @@ public final class InternalPlayerListener implements Listener {
             }
         });
 
-        platform.getPlayerStatisticsService().loadPlayerAccount(playerId).whenComplete((playerStatistics, error) -> {
+        platform.getPlayerStatisticsService()
+          .loadPlayerAccount(playerId)
+          .whenComplete((playerStatistics, error) -> {
             if (error != null) {
                 log.error("Failed to load player statistics for {}: {}", player.getName(), error.getMessage(), error);
                 this.syncKick(player);
