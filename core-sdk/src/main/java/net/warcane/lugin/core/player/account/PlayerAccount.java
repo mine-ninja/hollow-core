@@ -96,7 +96,7 @@ public record PlayerAccount(
     public Component getFormattedDisplayNameComponent(@NotNull SubscriptionCategoryType type) {
         final var currentSubscription = this.getHighestSubscription(type);
         final var primaryGroup = currentSubscription.group();
-        final Component groupPrefix = Component.text(primaryGroup.getModernTag()).style(Style.style().font(Key.key("lugin:tags")).color(TextColor.color(0xFFFFFF)).build());
+        final Component groupPrefix = Component.text(primaryGroup.getModernTag() == ' ' ? "" : primaryGroup.getModernTag() + "").style(Style.style().font(Key.key("lugin:tags")).color(TextColor.color(0xFFFFFF)).build());
         final int color = switch (primaryGroup.getPrefixColorCode()) {
             case '0' -> 0x000000;
             case '1' -> 0x0000AA;
