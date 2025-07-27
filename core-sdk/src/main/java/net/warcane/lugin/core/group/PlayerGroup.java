@@ -13,17 +13,17 @@ import static java.util.stream.Collectors.toMap;
 @AllArgsConstructor
 public enum PlayerGroup {
 
-    MASTER("master", "§6[Master] ", "Master", 11),
-    MANAGER("manager", "§4[Gerente] ", "Gerente", 11),
-    ADMIN("admin", "§c[Admin] ", "Admin", 10),
-    MODERATOR("moderator", "§2[Moderador] ", "Moderador", 9),
-    HELPER("helper", "§throwable[Ajudante] ", "Ajudante", 8),
-    INFLUENCER("influencer", "§c[Influencer] ", "Influencer", 7),
-    SUPREME("supreme", "§4[Supremo] ", "Supremo", 6),
-    LEGENDARY("legendary", "§2[Lendário] ", "Lendário", 5),
-    HERO("hero", "§5[Heroi] ", "Hero", 4),
-    CHAMPION("champion", "§3[Campeão] ", "Campeão", 3),
-    DEFAULT("member", "§7", "Membro", 1);
+    MASTER("master", "§6[Master] ",'\uE003', "Master", 11),
+    MANAGER("manager", "§4[Gerente] ", '\uE004',"Gerente", 11),
+    ADMIN("admin", "§c[Admin] ", '\uE005',"Admin", 10),
+    MODERATOR("moderator", "§2[Moderador] ", '\uE006',"Moderador", 9),
+    HELPER("helper", "§throwable[Ajudante] ",'\uE007', "Ajudante", 8),
+    INFLUENCER("influencer", "§c[Influencer] ", ' ', "Influencer", 7), // TODO: esperar a tag
+    SUPREME("supreme", "§4[Supremo] ", '\uE002',"Supremo", 6),
+    LEGENDARY("legendary", "§2[Lendário] ", '\uE001',"Lendário", 5),
+    HERO("hero", "§5[Heroi] ", ' ',"Hero", 4),
+    CHAMPION("champion", "§3[Campeão] ", '\uE000',"Campeão", 3),
+    DEFAULT("member", "§7", ' ', "Membro", 1); // TODO: esperar a tag
 
 
     public static final Map<String, PlayerGroup> BY_ID = Arrays.stream(values())
@@ -46,6 +46,7 @@ public enum PlayerGroup {
 
     private final String id;
     private final String prefix;
+    private final char modernTag;
     private final String displayName;
     private final int powerLevel;
 

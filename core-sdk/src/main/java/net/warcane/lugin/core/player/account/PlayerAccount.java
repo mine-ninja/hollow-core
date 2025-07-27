@@ -81,10 +81,12 @@ public record PlayerAccount(
     @NotNull
     @JsonIgnore
     public String getFormattedTagInput(@NotNull SubscriptionCategoryType type, @NotNull String input) {
+        final boolean isFactions = type.equals(SubscriptionCategoryType.FACTIONS);
         final var currentSubscription = this.getHighestSubscription(type);
         final var primaryGroup = currentSubscription.group();
-        final var groupPrefix = primaryGroup.getPrefix();
-        return groupPrefix + " §" + primaryGroup.getPrefixColorCode() + input;
+        final var groupPrefix = isFactions ? primaryGroup.getModernTag() : primaryGroup.getPrefix();
+        final char prefixColorCode = isFactions ? 'f' : primaryGroup.getPrefixColorCode();
+        return groupPrefix + " §" + prefixColorCode + input;
     }
 
 
