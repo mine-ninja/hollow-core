@@ -7,9 +7,11 @@ import net.warcane.lugin.core.AbstractPlatform;
 import net.warcane.lugin.core.ProxyPlatform;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDirectPlayGameCategoryPacket;
+import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleportToLocationPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerUnregisterPacket;
 import net.warcane.lugin.core.proxy.listener.PlayerDirectPlayGameCategoryListener;
+import net.warcane.lugin.core.proxy.listener.PlayerTeleportListener;
 import net.warcane.lugin.core.proxy.listener.ServerRegisterPacketListener;
 import net.warcane.lugin.core.proxy.listener.ServerUnregisterPacketListener;
 import net.warcane.lugin.core.server.GameServer;
@@ -35,6 +37,7 @@ public class VelocityPlatform extends AbstractPlatform implements ProxyPlatform 
     public void init(NetworkChannel... channels) {
         networkClient.subscribeToChannels(channels);
         networkClient.registerPacketListener(ServerRegisterPacket.class, new ServerRegisterPacketListener(this));
+        networkClient.registerPacketListener(PlayerTeleportToLocationPacket.class, new PlayerTeleportListener(this));
         networkClient.registerPacketListener(ServerUnregisterPacket.class, new ServerUnregisterPacketListener(this));
         networkClient.registerPacketListener(PlayerDirectPlayGameCategoryPacket.class, new PlayerDirectPlayGameCategoryListener(this));
 
