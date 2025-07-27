@@ -4,6 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.extern.slf4j.Slf4j;
+import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.Style;
+import net.kyori.adventure.text.format.TextColor;
 import net.warcane.lugin.core.group.PlayerGroup;
 import net.warcane.lugin.core.player.subscription.PlayerGroupSubscription;
 import net.warcane.lugin.core.player.subscription.SubscriptionCategoryType;
@@ -81,12 +85,37 @@ public record PlayerAccount(
     @NotNull
     @JsonIgnore
     public String getFormattedTagInput(@NotNull SubscriptionCategoryType type, @NotNull String input) {
-        final boolean isFactions = type.equals(SubscriptionCategoryType.FACTIONS);
         final var currentSubscription = this.getHighestSubscription(type);
         final var primaryGroup = currentSubscription.group();
-        final var groupPrefix = isFactions ? primaryGroup.getModernTag() : primaryGroup.getPrefix();
-        final char prefixColorCode = isFactions ? 'f' : primaryGroup.getPrefixColorCode();
-        return groupPrefix + " §" + prefixColorCode + input;
+        final var groupPrefix = primaryGroup.getPrefix();
+        return groupPrefix + " §" + primaryGroup.getPrefixColorCode() + input;
+    }
+
+    @NotNull
+    @JsonIgnore
+    public Component getFormattedDisplayNameComponent(@NotNull SubscriptionCategoryType type) {
+        final var currentSubscription = this.getHighestSubscription(type);
+        final var primaryGroup = currentSubscription.group();
+        final Component groupPrefix = Component.text(primaryGroup.getModernTag()).style(Style.style().font(Key.key("lugin:tags")).color(TextColor.color(0xFFFFFF)).build());
+        final int color = switch (primaryGroup.getPrefixColorCode()) {
+            case '0' -> 0x000000;
+            case '1' -> 0x0000AA;
+            case '2' -> 0x00AA00;
+            case '3' -> 0x00AAAA;
+            case '4' -> 0xAA0000;
+            case '5' -> 0xAA00AA;
+            case '6' -> 0xFFAA00;
+            case '7' -> 0xAAAAAA;
+            case '8' -> 0x555555;
+            case '9' -> 0x5555FF;
+            case 'a' -> 0x55FF55;
+            case 'b' -> 0x55FFFF;
+            case 'c' -> 0xFF5555;
+            case 'd' -> 0xFF55FF;
+            case 'e' -> 0xFFFF55;
+            default -> 0xFFFFFF;
+        };
+        return Component.empty().append(groupPrefix).append(Component.text(playerName).color(TextColor.color(color)));
     }
 
 
