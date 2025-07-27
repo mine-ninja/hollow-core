@@ -1,6 +1,7 @@
 package net.warcane.lugin.core.player.fetcher;
 
 import net.warcane.lugin.core.util.data.RedisCache;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
@@ -23,6 +24,7 @@ public class PlayerUuidFetcher {
     private PlayerUuidFetcher() {
         this.redisCache = new RedisCache<>(UUID.class);
     }
+
 
     @Nullable
     public UUID fetchPlayerUuid(String playerName) {

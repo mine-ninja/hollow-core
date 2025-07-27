@@ -4,6 +4,7 @@ import net.warcane.lugin.core.util.data.RedisCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -71,5 +72,10 @@ public class PlayerNetworkStateManager {
     public void unregister(@NotNull PlayerNetworkState playerNetworkState) {
         redisCache.hdel(PLAYER_STATE_ID_KEY, playerNetworkState.playerId().toString());
         redisCache.del(PLAYER_STATE_NAME_IDX_KEY + playerNetworkState.playerName().toLowerCase());
+    }
+
+
+    public List<PlayerNetworkState> getOnlinePlayers() {
+        return redisCache.hgetAll(PLAYER_STATE_ID_KEY);
     }
 }

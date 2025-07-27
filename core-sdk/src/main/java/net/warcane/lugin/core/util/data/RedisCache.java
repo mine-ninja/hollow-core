@@ -4,6 +4,7 @@ import net.warcane.lugin.core.database.RedisConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -101,6 +102,16 @@ public class RedisCache<O> {
 
     public void hdel(@NotNull String key, @NotNull String field) {
         connector.useJedis(jedis -> jedis.hdel(key, field));
+    }
+
+    public List<O> hgetAll(@NotNull String key) {
+        return connector.supplyFromJedis(jedis -> {
+            var rawData = jedis.hgetAll(key);
+            return rawData.values()
+              .stream()
+              .map(serializer::deserialize)
+              .toList();
+        });
     }
 
     @NotNull

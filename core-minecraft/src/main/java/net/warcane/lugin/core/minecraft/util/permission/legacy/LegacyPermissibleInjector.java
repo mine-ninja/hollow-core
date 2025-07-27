@@ -18,6 +18,7 @@ import static net.warcane.lugin.core.minecraft.util.permission.legacy.CraftBukki
  */
 public abstract class LegacyPermissibleInjector {
 
+
     public static void injectPlayer(@NotNull Player player, @NotNull Permissible userPermissible) {
         for (LegacyPermissibleInjector injector : INJECTORS) {
             if (injector.isApplicable(player)) {

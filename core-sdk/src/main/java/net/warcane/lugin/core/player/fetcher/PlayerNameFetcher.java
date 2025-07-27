@@ -1,0 +1,32 @@
+package net.warcane.lugin.core.player.fetcher;
+
+import net.warcane.lugin.core.util.data.RedisCache;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.UUID;
+
+/**
+ * Classe responsavel por buscar o nome de um jogador.
+ */
+public class PlayerNameFetcher {
+
+    private static final String IDX = "player_name";
+
+    private static final class PlayerNameFetcherHolder {
+        private static final PlayerNameFetcher INSTANCE = new PlayerNameFetcher();
+    }
+
+    public static PlayerNameFetcher getInstance() {
+        return PlayerNameFetcherHolder.INSTANCE;
+    }
+
+    private final RedisCache<String> playerNameCache = new RedisCache<>(String.class);
+
+    public String getPlayerName(@NotNull UUID playerId) {
+        return playerNameCache.get(IDX + ":" + playerId);
+    }
+
+    public void setPlayerName(@NotNull UUID playerId, @NotNull String playerName) {
+        playerNameCache.set(IDX + ":" + playerId, playerName);
+    }
+}

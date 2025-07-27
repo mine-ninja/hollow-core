@@ -6,15 +6,18 @@ import net.warcane.lugin.core.group.PlayerGroup;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.event.PlayerAccountUpdateEvent;
 import net.warcane.lugin.core.minecraft.task.Tasks;
+import net.warcane.lugin.core.minecraft.util.LocationUtil;
 import net.warcane.lugin.core.minecraft.util.Tab;
 import net.warcane.lugin.core.minecraft.util.nametag.NameTags;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerConnectedToServerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDisconnectedFromServerPacket;
 import net.warcane.lugin.core.player.account.PlayerAccountService.AccountUnloadOptions;
+import net.warcane.lugin.core.player.fetcher.PlayerNameFetcher;
 import net.warcane.lugin.core.player.fetcher.PlayerUuidFetcher;
 import net.warcane.lugin.core.player.state.PlayerNetworkState;
 import net.warcane.lugin.core.player.state.PlayerNetworkStateManager;
+import net.warcane.lugin.core.player.teleport.PlayerJoinDataManager;
 import net.warcane.lugin.core.player.wallet.Wallet;
 import net.warcane.lugin.core.player.wallet.WalletService.LoadWalletOptions;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
@@ -95,8 +98,9 @@ public final class InternalPlayerListener implements Listener {
             }
 
             PlayerUuidFetcher.getInstance().cachePlayerUuid(name, playerId);
-            PlayerNetworkStateManager.getInstance()
-              .register(new PlayerNetworkState(
+            PlayerNameFetcher.getInstance().setPlayerName(playerId, name);
+
+            PlayerNetworkStateManager.getInstance().register(new PlayerNetworkState(
                 player.getUniqueId(),
                 player.getName(),
                 currentServerId, platform.getServerCategoryType()
@@ -127,6 +131,15 @@ public final class InternalPlayerListener implements Listener {
                           log.info("Player account name updated for {}: {}", player.getName(), updatedAccount);
                       }
                   });
+            }
+
+
+            final var joinData = PlayerJoinDataManager.getInstance().getPlayerJoinData(playerId);
+            if (joinData != null && currentServerId.equalsIgnoreCase(joinData.remoteServerLocation().targetServerId())) {
+                Tasks.runSyncLater(() -> {
+                    final var location = LocationUtil.transformLocation(joinData.remoteServerLocation());
+                    player.teleport(location);
+                }, 10);
             }
         });
 
@@ -183,7 +196,6 @@ public final class InternalPlayerListener implements Listener {
         Player localPlayer = event.getLocalPlayer();
         if (localPlayer == null) return;
 
-
         final var categoryType = platform.getSubscriptionCategoryType();
         PlayerGroup group = event.getPlayerAccount().getHighestSubscription(categoryType).group();
         final var priority = group.getPriorityValue();
@@ -204,4 +216,6 @@ public final class InternalPlayerListener implements Listener {
             }
         });
     }
+
+
 }

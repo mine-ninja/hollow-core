@@ -1,7 +1,9 @@
 package net.warcane.lugin.core.location;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jetbrains.annotations.NotNull;
 
+import javax.xml.stream.Location;
 import java.io.Serializable;
 
 /**
@@ -32,4 +34,4 @@ public record RemoteServerLocation(
   @JsonProperty("z") double z,
   @JsonProperty("yaw") float yaw,
   @JsonProperty("pitch") float pitch
-) implements Serializable {}
+) implements Serializable { }
