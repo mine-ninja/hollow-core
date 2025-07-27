@@ -1,5 +1,6 @@
 package net.warcane.lugin.core.network.packet.impl.server;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import net.kyori.adventure.text.Component;
 import net.warcane.lugin.core.network.packet.NetworkPacket;
@@ -13,6 +14,7 @@ public record BroadcastMessagePacket(
         return new BroadcastMessagePacket(BinaryComponentSerializer.serializeUnchecked(message));
     }
 
+    @JsonIgnore
     public Component getMessage() {
         return BinaryComponentSerializer.deserializeUnchecked(serializedComponentMessage);
     }
