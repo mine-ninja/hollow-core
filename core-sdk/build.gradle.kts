@@ -27,6 +27,7 @@ dependencies {
 
   api("net.kyori:adventure-api:4.22.0")
 
+  api("net.kyori:adventure-text-serializer-gson:4.22.0")
 
   api("com.github.ben-manes.caffeine:caffeine:3.2.1")
 
