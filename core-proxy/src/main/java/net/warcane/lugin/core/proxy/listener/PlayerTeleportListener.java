@@ -21,7 +21,7 @@ public class PlayerTeleportListener implements PacketListener<PlayerTeleportToLo
     public void onReceivePacket(@NotNull PlayerTeleportToLocationPacket packet, @NotNull Headers headers) {
 
         final var playerId = packet.playerId();
-        final var serverId = packet.originLocation().targetServerId();
+        final var serverId = packet.targetLocation().targetServerId();
         final var targetLocation = packet.targetLocation();
 
 
