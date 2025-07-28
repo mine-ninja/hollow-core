@@ -143,16 +143,16 @@ public final class InternalPlayerListener implements Listener {
             }
         });
 
-        platform.getPlayerStatisticsService()
-          .loadPlayerAccount(playerId)
-          .whenComplete((playerStatistics, error) -> {
-            if (error != null) {
-                log.error("Failed to load player statistics for {}: {}", player.getName(), error.getMessage(), error);
-                this.syncKick(player);
-            } else {
-                log.info("Player statistics loaded for {}: {}", player.getName(), playerStatistics);
-            }
-        });
+//        platform.getPlayerStatisticsService()
+//          .loadPlayerAccount(playerId)
+//          .whenComplete((playerStatistics, error) -> {
+//            if (error != null) {
+//                log.error("Failed to load player statistics for {}: {}", player.getName(), error.getMessage(), error);
+//                this.syncKick(player);
+//            } else {
+//                log.info("Player statistics loaded for {}: {}", player.getName(), playerStatistics);
+//            }
+//        });
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -166,15 +166,15 @@ public final class InternalPlayerListener implements Listener {
 
         NameTags.removeNameTag(player);
 
-        platform.getPlayerStatisticsService().unloadPlayerAccount(player.getUniqueId()).whenComplete((unloaded, error) -> {
-            if (error != null) {
-                log.error("Failed to unload player statistics for {}: {}", player.getName(), error.getMessage(), error);
-            } else if (unloaded == null) {
-                log.info("Player statistics not found for {} during unload", player.getName());
-            } else {
-                log.info("Player statistics unloaded for {}: {}", player.getName(), unloaded);
-            }
-        });
+//        platform.getPlayerStatisticsService().unloadPlayerAccount(player.getUniqueId()).whenComplete((unloaded, error) -> {
+//            if (error != null) {
+//                log.error("Failed to unload player statistics for {}: {}", player.getName(), error.getMessage(), error);
+//            } else if (unloaded == null) {
+//                log.info("Player statistics not found for {} during unload", player.getName());
+//            } else {
+//                log.info("Player statistics unloaded for {}: {}", player.getName(), unloaded);
+//            }
+//        });
 
         final var unloadOptions = new AccountUnloadOptions(false, true);
 

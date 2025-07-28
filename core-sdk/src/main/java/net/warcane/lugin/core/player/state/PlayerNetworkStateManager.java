@@ -1,5 +1,6 @@
 package net.warcane.lugin.core.player.state;
 
+import net.warcane.lugin.core.server.type.ServerCategoryType;
 import net.warcane.lugin.core.util.data.RedisCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +16,8 @@ public class PlayerNetworkStateManager {
 
     private static final String PLAYER_STATE_ID_KEY = "playerStateId";
     private static final String PLAYER_STATE_NAME_IDX_KEY = "playerStateNameIdX";
+    private static final String PLAYER_STATE_CATEGORY_IDX_KEY = "playerStateCategoryIdX:";
+
 
     private static final class PlayerStateManagerHolder {
         private static final PlayerNetworkStateManager INSTANCE = new PlayerNetworkStateManager();
@@ -62,6 +65,13 @@ public class PlayerNetworkStateManager {
     public void register(@NotNull PlayerNetworkState playerNetworkState) {
         redisCache.hset(PLAYER_STATE_ID_KEY, playerNetworkState.playerId().toString(), playerNetworkState);
         redisCache.set(PLAYER_STATE_NAME_IDX_KEY + playerNetworkState.playerName().toLowerCase(), playerNetworkState);
+
+        final var currentCategoryName = playerNetworkState.gameType().name();
+        redisCache.hset(
+          PLAYER_STATE_CATEGORY_IDX_KEY + currentCategoryName,
+          playerNetworkState.playerId().toString(),
+          playerNetworkState
+        );
     }
 
     /**
@@ -72,6 +82,20 @@ public class PlayerNetworkStateManager {
     public void unregister(@NotNull PlayerNetworkState playerNetworkState) {
         redisCache.hdel(PLAYER_STATE_ID_KEY, playerNetworkState.playerId().toString());
         redisCache.del(PLAYER_STATE_NAME_IDX_KEY + playerNetworkState.playerName().toLowerCase());
+        redisCache.hdel(
+          PLAYER_STATE_CATEGORY_IDX_KEY + playerNetworkState.gameType().name(),
+          playerNetworkState.playerId().toString()
+        );
+    }
+
+    /**
+     * Obtém uma lista de jogadores online em um servidor específico, filtrando por categoria.
+     *
+     * @param type O tipo de categoria do servidor.
+     * @return Uma lista de {@link PlayerNetworkState} representando os jogadores online nessa categoria.
+     */
+    public List<PlayerNetworkState> getOnlinePlayersInServerCategory(@NotNull ServerCategoryType type) {
+        return redisCache.hgetAll(PLAYER_STATE_CATEGORY_IDX_KEY + type.name());
     }
 
 

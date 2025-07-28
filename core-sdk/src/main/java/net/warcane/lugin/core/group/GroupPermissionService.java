@@ -1,6 +1,7 @@
 package net.warcane.lugin.core.group;
 
 import com.mongodb.client.model.Indexes;
+import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.util.data.MongoRepository;
 import net.warcane.lugin.core.util.data.RedisCache;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +18,7 @@ import java.util.function.Supplier;
 import static java.util.concurrent.CompletableFuture.allOf;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 
+@Slf4j
 public class GroupPermissionService {
 
     private static final String CACHE_KEY = "groupperms";
@@ -71,14 +73,17 @@ public class GroupPermissionService {
     public CompletableFuture<@NotNull GroupPermissionSet> getGroupPermissionSet(@NotNull PlayerGroup group) {
         final var locallyCached = this.getCachedPermissionsForGroup(group);
         if (locallyCached != null) {
+            log.info("Returning locally cached permissions for group: {}", group.getId());
             return CompletableFuture.completedFuture(locallyCached);
         }
 
         return supplyAsync(() -> {
             final Supplier<GroupPermissionSet> supplier = () -> permissionsRepository.findById(group.getId());
+
             final var fromDb = redisCache.hget(CACHE_KEY, group.getId(), supplier);
             if (fromDb != null) {
                 localCache.put(group.getId(), fromDb);
+                log.info("Loaded permissions for group: {}", group.getId());
                 return fromDb;
             }
 
@@ -96,18 +101,34 @@ public class GroupPermissionService {
      */
     public CompletableFuture<@NotNull GroupPermissionSet> loadPermissions(@NotNull PlayerGroup group, boolean createIfNotExists) {
         return supplyAsync(() -> {
-            final Supplier<GroupPermissionSet> supplier = () -> permissionsRepository.findById(group.getId());
-            final var fromDb = redisCache.hget(CACHE_KEY, group.getId(), supplier);
+            var fromDb = redisCache.hget(CACHE_KEY, group.getId());
+            if (fromDb == null){
+                log.info("Permissions for group {} not found in Redis cache, checking MongoDB...", group.getId());
+                fromDb = permissionsRepository.findById(group.getId());
+                if(fromDb != null){
+                    log.info("Loaded permissions for group {} from MongoDB: {}", group.getId(), fromDb.permissions());
+                    redisCache.hset(CACHE_KEY, group.getId(), fromDb);
+                } else {
+                    log.info("No permissions found for group {} in MongoDB.", group.getId());
+                }
+            }
+
             if (fromDb != null) {
+                log.info("Loaded permissions for group: {}", group.getId());
                 localCache.put(group.getId(), fromDb);
+                log.info("Permissions for group {}: {}", group.getId(), fromDb.permissions());
                 return fromDb;
             }
 
             if (createIfNotExists) {
+                log.info("Creating new permissions for group: {}", group.getId());
+
                 final var newPermissions = GroupPermissionSet.create(group);
                 permissionsRepository.save(newPermissions, GroupPermissionSet::groupId);
                 redisCache.hset(CACHE_KEY, group.getId(), newPermissions);
                 localCache.put(group.getId(), newPermissions);
+
+                log.info("Created new permissions for group {} and permissions {}", group.getId(), newPermissions.permissions());
                 return newPermissions;
             }
 
@@ -141,8 +162,12 @@ public class GroupPermissionService {
                 throw new IllegalStateException("Failed to update group permissions: " + permissionSet.groupId());
             }
 
+            log.info("Updated group permissions for group: {}", permissionSet.groupId());
+
             redisCache.hset(CACHE_KEY, permissionSet.groupId(), updated);
             localCache.put(permissionSet.groupId(), updated);
+
+            log.info("Updated local cache for group: {} with permissions: {}", permissionSet.groupId(), updated.permissions());
             return updated;
         }, executorService);
     }

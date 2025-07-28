@@ -44,7 +44,7 @@ public class CurrencyFormatter {
 
     /**
      * Formata um valor BigDecimal em uma string abreviada com sufixos (k, M, B, etc.).
-     * Utiliza operações de logaritmo para determinar o sufixo throwable mantém a precisão do BigDecimal.
+     * Utiliza operações para determinar o sufixo apropriado mantendo a precisão do BigDecimal.
      *
      * @param value O valor BigDecimal a ser formatado.
      * @return Uma string formatada, por exemplo, "1.25M", "10k", ou "500".
@@ -56,13 +56,19 @@ public class CurrencyFormatter {
 
         boolean isNegative = value.compareTo(BigDecimal.ZERO) < 0;
         BigDecimal absoluteValue = value.abs();
-        if (absoluteValue.compareTo(BigDecimal.valueOf(1000)) < 0) {
-            return (isNegative ? "-" : "") + DECIMAL_FORMAT_DEFAULT.format(value.stripTrailingZeros());
+
+        if (absoluteValue.compareTo(BASE_VALUE) < 0) {
+            return (isNegative ? "-" : "") + DECIMAL_FORMAT_DEFAULT.format(absoluteValue.stripTrailingZeros());
         }
 
-        int suffixIndex = (int) (Math.log10(absoluteValue.doubleValue()) / 3);
+        int suffixIndex = (int) (Math.log10(absoluteValue.doubleValue()) / 3) - 1;
+
         if (suffixIndex >= SUFFIXES.length) {
             suffixIndex = SUFFIXES.length - 1;
+        }
+
+        if (suffixIndex < 0) {
+            suffixIndex = 0;
         }
 
         BigDecimal divisor = BASE_VALUE.pow(suffixIndex + 1);

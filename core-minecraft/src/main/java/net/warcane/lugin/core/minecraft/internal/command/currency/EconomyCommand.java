@@ -44,9 +44,8 @@ public class EconomyCommand extends SimpleCommand {
         final var playerName = ctx.getRawArgOrThrow(1, PLAYER_NAME_ERROR);
         final var currencyId = ctx.getRawArgOrThrow(2, CURRENCY_ID_ERROR);
         final var currency = platform.getCurrencyManager().getCurrency(currencyId);
-        if (currency == null) {
-            throw new CommandFailedException(INVALID_CURRENCY_ERROR.formatted(currencyId, String.join(", ", platform.getCurrencyManager().getAllCurrencyIds())));
-        }
+        if (currency == null) throw new CommandFailedException(INVALID_CURRENCY_ERROR.formatted(currencyId, String.join(", ", platform.getCurrencyManager().getAllCurrencyIds())));
+
 
         final var commandCtx = new EconomyCommandContext(ctx, playerName, currency);
         switch (subCommand.toLowerCase()) {

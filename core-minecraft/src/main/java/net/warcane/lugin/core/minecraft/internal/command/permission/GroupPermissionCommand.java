@@ -35,7 +35,8 @@ public class GroupPermissionCommand extends SimpleCommand {
         final var subCommand = ctx.getRawArgOrThrow(0, "§cVocê deve especificar um subcomando: add, remove ou list.");
         final var group = ctx.getEnumOrThrow(1, PlayerGroup.class, "§cGrupo inválido. Use um dos seguintes: " + String.join(", ", PlayerGroup.NAMES));
 
-        service.loadPermissions(group, true).whenComplete((found, error) -> {
+        service.getGroupPermissionSet(group)
+          .whenComplete((found, error) -> {
             if (error != null) {
                 log.error("Erro ao carregar permissões do grupo {}: {}", group.name(), error.getMessage());
             } else if (found == null) {
@@ -57,7 +58,8 @@ public class GroupPermissionCommand extends SimpleCommand {
             throw new CommandFailedException("§cA permissão " + permissionToAdd + " já está presente no grupo " + group.name() + ".");
         }
 
-        service.updateGroupPermissionSet(currentPermissions.addPermission(permissionToAdd)).whenComplete((updated, error) -> {
+        service.updateGroupPermissionSet(currentPermissions.addPermission(permissionToAdd))
+          .whenComplete((updated, error) -> {
             if (error != null) {
                 ctx.sendMessage("§cErro ao adicionar permissão: " + error.getMessage());
             } else if (updated != null) {
@@ -74,7 +76,8 @@ public class GroupPermissionCommand extends SimpleCommand {
             throw new CommandFailedException("§cA permissão " + permission + " não está presente no grupo " + group.name() + ".");
         }
 
-        service.updateGroupPermissionSet(currentPermissions.removePermission(permission)).whenComplete((updated, error) -> {
+        service.updateGroupPermissionSet(currentPermissions.removePermission(permission))
+          .whenComplete((updated, error) -> {
             if (error != null) {
                 ctx.sendMessage("§cErro ao remover permissão: " + error.getMessage());
             } else if (updated != null) {
@@ -86,6 +89,8 @@ public class GroupPermissionCommand extends SimpleCommand {
     }
 
     private void handleListCommand(@NotNull CommandContext ctx, @NotNull PlayerGroup group, @NotNull GroupPermissionSet currentPermissions) throws CommandFailedException {
+        log.info("Listando permissões do grupo: {} {}", group.name(), currentPermissions);
+
         int size = currentPermissions.permissions().size();
         if (size == 0) {
             ctx.sendMessage("§cO grupo " + group.name() + " não possui permissões definidas.");

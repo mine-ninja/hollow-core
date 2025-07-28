@@ -14,10 +14,13 @@ public record SendModernMessageToPlayerPacket(
 ) implements NetworkPacket {
 
     public static SendModernMessageToPlayerPacket create(UUID playerId, Component component) {
-        return new SendModernMessageToPlayerPacket(playerId, BinaryComponentSerializer.serializeUnchecked(component));
+        return new SendModernMessageToPlayerPacket(
+          playerId,
+          BinaryComponentSerializer.binary().serialize(component)
+        );
     }
 
     public Component getMessage() {
-        return BinaryComponentSerializer.deserializeUnchecked(serializedMessageComponent);
+        return BinaryComponentSerializer.binary().deserialize(serializedMessageComponent);
     }
 }

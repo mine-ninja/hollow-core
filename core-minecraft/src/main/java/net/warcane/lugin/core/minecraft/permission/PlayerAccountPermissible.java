@@ -2,6 +2,8 @@ package net.warcane.lugin.core.minecraft.permission;
 
 import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.group.GroupPermissionService;
+import net.warcane.lugin.core.group.GroupPermissionSet;
+import net.warcane.lugin.core.group.PlayerGroup;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.util.permission.PermissionGraph;
 import net.warcane.lugin.core.player.account.PlayerAccount;
@@ -36,35 +38,31 @@ final class PlayerAccountPermissible extends PermissibleBase {
       @NotNull String inName,
       @NotNull SubscriptionCategoryType subscriptionCategory
     ) {
-        log.info("Checking permission '{}' for player '{}' in category '{}'",
-          inName, player.getName(), subscriptionCategory.name());
-
-
         for (PlayerGroupSubscription subscription : account.getSubscriptions(SubscriptionCategoryType.GLOBAL)) {
             final var group = subscription.group();
 
             final var permissionSet = groupPermissionService.getCachedPermissionsForGroupOrThrow(group);
-            if (permissionSet.hasPermission(inName) || permissionSet.hasPermission("*")) {
-                log.info("Permission '{}' granted by group '{}'", inName, group.name());
-                return true;
-            }
+            if (permissionSet.hasPermission(inName) || permissionSet.hasPermission("*")) return true;
+
 
             final PermissionGraph graph = PermissionGraph.getInstance();
             final var highest = graph.findHighestPermissionNode(inName);
             if (highest != null && permissionSet.hasPermission(highest)) {
-                log.info("Permission '{}' granted by highest permission '{}'", inName, highest);
                 return true;
             }
 
             for (var subPermission : graph.getHigherPermissions(inName)) {
                 if (permissionSet.hasPermission(subPermission)) {
-                    log.info("Permission '{}' granted by sub-permission '{}'", inName, subPermission);
                     return true;
                 }
             }
         }
 
-        log.info("Permission '{}' not granted for player '{}'", inName, player.getName());
+        GroupPermissionSet defaultGroupPerms = groupPermissionService.getCachedPermissionsForGroup(PlayerGroup.DEFAULT);
+        if (defaultGroupPerms != null) {
+            return defaultGroupPerms.hasPermission(inName) || defaultGroupPerms.hasPermission("*");
+        }
+
         return false;
     }
 

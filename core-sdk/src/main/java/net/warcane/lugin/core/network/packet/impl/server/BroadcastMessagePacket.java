@@ -11,11 +11,11 @@ public record BroadcastMessagePacket(
 ) implements NetworkPacket {
 
     public static BroadcastMessagePacket create(Component message) {
-        return new BroadcastMessagePacket(BinaryComponentSerializer.serializeUnchecked(message));
+        return new BroadcastMessagePacket(BinaryComponentSerializer.binary().serialize(message));
     }
 
     @JsonIgnore
     public Component getMessage() {
-        return BinaryComponentSerializer.deserializeUnchecked(serializedComponentMessage);
+        return BinaryComponentSerializer.binary().deserialize(serializedComponentMessage);
     }
 }

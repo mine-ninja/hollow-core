@@ -23,7 +23,7 @@ public enum PlayerGroup {
     LEGENDARY("legendary", "§2[Lendário] ", '\uE001',"Lendário", 5),
     HERO("hero", "§5[Heroi] ", ' ',"Hero", 4),
     CHAMPION("champion", "§3[Campeão] ", '\uE000',"Campeão", 3),
-    DEFAULT("member", "§7", ' ', "Membro", 1); // TODO: esperar a tag
+    DEFAULT("default", "§7", ' ', "Membro", 1); // TODO: esperar a tag
 
 
     public static final Map<String, PlayerGroup> BY_ID = Arrays.stream(values())

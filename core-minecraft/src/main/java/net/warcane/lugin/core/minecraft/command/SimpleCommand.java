@@ -71,6 +71,7 @@ public abstract class SimpleCommand extends Command {
             subCommand.handleSubCommand(new CommandContext(commandSender, newArguments));
             return true;
         } catch (CommandFailedException e) {
+
             commandSender.sendMessage(e.getMessage());
             return false;
         } catch (Exception e) {
