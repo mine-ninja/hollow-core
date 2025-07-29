@@ -3,9 +3,13 @@ package net.warcane.lugin.core.minecraft.util.nametag;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerTeams;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,6 +30,10 @@ public class NameTags {
     }
 
     public static void setNameTag(@NotNull Player player, String prefix, String suffix, int priority) {
+        setNameTag(player, prefix, suffix, priority , null);
+    }
+
+    public static void setNameTag(@NotNull Player player, String prefix, String suffix, int priority , @Nullable NamedTextColor color) {
         String teamName = "LG_" + priority + "_" + player.getEntityId();
         prefix = prefix != null ? prefix.substring(0, Math.min(prefix.length(), 16)) : "";
         suffix = suffix != null ? suffix.substring(0, Math.min(suffix.length(), 16)) : "";
@@ -35,13 +43,14 @@ public class NameTags {
             removeNameTag(player);
         }
 
+
         ScoreBoardTeamInfo teamInfo = new ScoreBoardTeamInfo(
           Component.text(teamName),
           Component.text(prefix),
           Component.text(suffix),
           NameTagVisibility.ALWAYS,
           CollisionRule.ALWAYS,
-          null,
+          color,
           OptionData.NONE
         );
 
@@ -63,7 +72,7 @@ public class NameTags {
             }
         }
 
-        playerTeams.put(player.getName(), new NameTagTeam(teamName, prefix, suffix, priority));
+        playerTeams.put(player.getName(), new NameTagTeam(teamName, prefix, suffix, priority, color));
     }
 
     public static void removeNameTag(@NotNull Player player) {
@@ -109,7 +118,7 @@ public class NameTags {
           Component.text(team.suffix),
           NameTagVisibility.ALWAYS,
           CollisionRule.ALWAYS,
-          null,
+          team.color,
           OptionData.NONE
         );
 
@@ -122,6 +131,6 @@ public class NameTags {
         );
     }
 
-    record NameTagTeam(String teamName, String prefix, String suffix, int priority) {
+    record NameTagTeam(String teamName, String prefix, String suffix, int priority , @Nullable NamedTextColor color) {
     }
 }

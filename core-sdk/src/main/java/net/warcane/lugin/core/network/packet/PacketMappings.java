@@ -35,6 +35,7 @@ final class PacketMappings {
         throw new UnsupportedOperationException("Esta classe não deve ser instanciada.");
     }
 
+
     /**
      * Mapeia o ID de um pacote para a classe correspondente.
      * <p>

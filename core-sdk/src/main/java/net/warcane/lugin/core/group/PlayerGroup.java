@@ -17,7 +17,7 @@ public enum PlayerGroup {
     MANAGER("manager", "§4[Gerente] ", '\uE004',"Gerente", 11),
     ADMIN("admin", "§c[Admin] ", '\uE005',"Admin", 10),
     MODERATOR("moderator", "§2[Moderador] ", '\uE006',"Moderador", 9),
-    HELPER("helper", "§throwable[Ajudante] ",'\uE007', "Ajudante", 8),
+    HELPER("helper", "§e[Ajudante] ",'\uE007', "Ajudante", 8),
     INFLUENCER("influencer", "§c[Influencer] ", ' ', "Influencer", 7), // TODO: esperar a tag
     SUPREME("supreme", "§4[Supremo] ", '\uE002',"Supremo", 6),
     LEGENDARY("legendary", "§2[Lendário] ", '\uE001',"Lendário", 5),

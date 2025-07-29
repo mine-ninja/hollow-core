@@ -57,6 +57,9 @@ public class VelocityPlatform extends AbstractPlatform implements ProxyPlatform 
 
     @Override
     public void registerServer(@NotNull String serverId, @NotNull HostAddress address) {
+
+
+
         proxyServer.registerServer(new ServerInfo(serverId, address.asInetAddress()));
         log.info("Registered server: {} at address: {}", serverId, address);
     }
