@@ -47,6 +47,7 @@ public record Wallet(
         return this;
     }
 
+    @SuppressWarnings("all") // pq o intellij reclama que isso aqui tá sempre invertido se isso aq é api tlg?
     public boolean hasAmount(@NotNull String currencyId, @NotNull BigDecimal amount) {
         return getCurrencyAmount(currencyId).compareTo(amount) >= 0;
     }

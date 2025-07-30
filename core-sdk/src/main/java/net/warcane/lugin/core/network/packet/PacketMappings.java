@@ -57,6 +57,7 @@ final class PacketMappings {
         entry(88, SendModernMessageToPlayerPacket.class),
         entry(8, SendMessageToPlayerPacket.class),
         entry(9, StaffMessagePacket.class),
+        entry(77, SendSoundToPlayerPacket.class),
         entry(99 , BroadcastMessagePacket.class),
         entry(10, PlayerReceiveGroupPacket.class),
         entry(11, PlayerLoseGroupPacket.class),

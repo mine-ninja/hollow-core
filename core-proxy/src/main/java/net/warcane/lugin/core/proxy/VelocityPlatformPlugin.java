@@ -65,6 +65,8 @@ public class VelocityPlatformPlugin {
         final var playerState = playerStateManager.getPlayerState(event.getPlayer().getUniqueId());
         if (playerState != null) {
             playerStateManager.unregister(playerState);
+        } else {
+            log.warn("Player state for {} was null on disconnect.", event.getPlayer().getUsername());
         }
     }
 

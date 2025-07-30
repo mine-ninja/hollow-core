@@ -2,6 +2,7 @@ package net.warcane.lugin.core.group;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.util.Arrays;
 import java.util.List;
@@ -13,17 +14,17 @@ import static java.util.stream.Collectors.toMap;
 @AllArgsConstructor
 public enum PlayerGroup {
 
-    MASTER("master", "§6[Master] ",'\uE003', "Master", 11),
-    MANAGER("manager", "§4[Gerente] ", '\uE004',"Gerente", 11),
-    ADMIN("admin", "§c[Admin] ", '\uE005',"Admin", 10),
-    MODERATOR("moderator", "§2[Moderador] ", '\uE006',"Moderador", 9),
-    HELPER("helper", "§e[Ajudante] ",'\uE007', "Ajudante", 8),
-    INFLUENCER("influencer", "§c[Influencer] ", ' ', "Influencer", 7), // TODO: esperar a tag
-    SUPREME("supreme", "§4[Supremo] ", '\uE002',"Supremo", 6),
-    LEGENDARY("legendary", "§2[Lendário] ", '\uE001',"Lendário", 5),
-    HERO("hero", "§5[Heroi] ", ' ',"Hero", 4),
-    CHAMPION("champion", "§3[Campeão] ", '\uE000',"Campeão", 3),
-    DEFAULT("default", "§7", ' ', "Membro", 1); // TODO: esperar a tag
+    MASTER("master", "§6[Master] ", '\uE003', "Master", NamedTextColor.GOLD, 11),
+    MANAGER("manager", "§4[Gerente] ", '\uE004', "Gerente", NamedTextColor.DARK_RED, 11),
+    ADMIN("admin", "§c[Admin] ", '\uE005', "Admin", NamedTextColor.RED, 10),
+    MODERATOR("moderator", "§2[Moderador] ", '\uE006', "Moderador", NamedTextColor.DARK_GREEN, 9),
+    HELPER("helper", "§e[Ajudante] ", '\uE007', "Ajudante", NamedTextColor.YELLOW, 8),
+    INFLUENCER("influencer", "§c[Influencer] ", ' ', "Influencer", NamedTextColor.RED, 7), // TODO: esperar a tag
+    SUPREME("supreme", "§4[Supremo] ", '\uE002', "Supremo", NamedTextColor.DARK_RED, 6),
+    LEGENDARY("legendary", "§2[Lendário] ", '\uE001', "Lendário", NamedTextColor.DARK_GREEN, 5),
+    HERO("hero", "§5[Heroi] ", ' ', "Hero", NamedTextColor.DARK_PURPLE, 4),
+    CHAMPION("champion", "§3[Campeão] ", '\uE000', "Campeão", NamedTextColor.DARK_AQUA, 3),
+    DEFAULT("default", "§7", ' ', "Membro", NamedTextColor.GRAY, 1); // TODO: esperar a tag
 
 
     public static final Map<String, PlayerGroup> BY_ID = Arrays.stream(values())
@@ -48,6 +49,7 @@ public enum PlayerGroup {
     private final String prefix;
     private final char modernTag;
     private final String displayName;
+    private final NamedTextColor namedTextColor;
     private final int powerLevel;
 
 

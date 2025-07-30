@@ -38,7 +38,7 @@ public class InternalCommandManager {
         commandMap.register("lugin", new TestPermission());
         commandMap.register("lugin", new PlayerGroupCommand(platform));
 
-        final var lobbyEnabled = Property.get("LOBBY_ENABLED", "false").equalsIgnoreCase("true");
+        final var lobbyEnabled = Property.get("LOBBY_ENABLED", "true").equalsIgnoreCase("true");
         if (lobbyEnabled) {
             commandMap.register("lugin", new LobbyCommand(platform));
         }

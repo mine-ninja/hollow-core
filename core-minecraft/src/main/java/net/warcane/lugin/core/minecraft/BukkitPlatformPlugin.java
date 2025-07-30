@@ -43,6 +43,13 @@ public class BukkitPlatformPlugin extends SimplePlugin {
         }
     }
 
+    @Override
+    public void onDisable() {
+        if (bukkitPlatform != null) {
+            bukkitPlatform.close();
+        }
+    }
+
     final class ListServersCommand extends SimpleCommand {
         public ListServersCommand() {
             super("listservers");

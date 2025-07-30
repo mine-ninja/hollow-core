@@ -11,6 +11,7 @@ import org.bson.Document;
  * @author Rok, Pedro Lucas nmm. Created on 02/07/2025
  * @project lugin-core
  */
+@Deprecated(forRemoval = true)
 public class MongoCounterService {
 
     private static MongoCounterService instance;

@@ -15,8 +15,9 @@ import java.util.UUID;
 public class PlayerNetworkStateManager {
 
     private static final String PLAYER_STATE_ID_KEY = "playerStateId";
-    private static final String PLAYER_STATE_NAME_IDX_KEY = "playerStateNameIdX";
-    private static final String PLAYER_STATE_CATEGORY_IDX_KEY = "playerStateCategoryIdX:";
+    private static final String PLAYER_STATE_NAME_IDX_KEY = "playerStateNameIndex";
+    private static final String PLAYER_STATE_CATEGORY_IDX_KEY = "playerStateCategoryIndex";
+    private static final String PLAYER_STATE_SERVER_IDX_KEY = "playerStateServerIndex";
 
 
     private static final class PlayerStateManagerHolder {
@@ -63,15 +64,15 @@ public class PlayerNetworkStateManager {
      * @param playerNetworkState O {@link PlayerNetworkState} a ser registrado.
      */
     public void register(@NotNull PlayerNetworkState playerNetworkState) {
-        redisCache.hset(PLAYER_STATE_ID_KEY, playerNetworkState.playerId().toString(), playerNetworkState);
-        redisCache.set(PLAYER_STATE_NAME_IDX_KEY + playerNetworkState.playerName().toLowerCase(), playerNetworkState);
-
+        final var playerId = playerNetworkState.playerId().toString();
         final var currentCategoryName = playerNetworkState.gameType().name();
-        redisCache.hset(
-          PLAYER_STATE_CATEGORY_IDX_KEY + currentCategoryName,
-          playerNetworkState.playerId().toString(),
-          playerNetworkState
-        );
+        final var lowerCase = playerNetworkState.playerName().toLowerCase();
+        final var currentServerId = playerNetworkState.currentServerId().toLowerCase();
+
+        redisCache.hset(PLAYER_STATE_ID_KEY, playerId, playerNetworkState);
+        redisCache.set(PLAYER_STATE_NAME_IDX_KEY + lowerCase, playerNetworkState);
+        redisCache.hset(PLAYER_STATE_CATEGORY_IDX_KEY + currentCategoryName, playerId, playerNetworkState);
+        redisCache.hset(PLAYER_STATE_SERVER_IDX_KEY + currentServerId, playerId, playerNetworkState);
     }
 
     /**
@@ -80,12 +81,15 @@ public class PlayerNetworkStateManager {
      * @param playerNetworkState O {@link PlayerNetworkState} a ser removido.
      */
     public void unregister(@NotNull PlayerNetworkState playerNetworkState) {
-        redisCache.hdel(PLAYER_STATE_ID_KEY, playerNetworkState.playerId().toString());
-        redisCache.del(PLAYER_STATE_NAME_IDX_KEY + playerNetworkState.playerName().toLowerCase());
-        redisCache.hdel(
-          PLAYER_STATE_CATEGORY_IDX_KEY + playerNetworkState.gameType().name(),
-          playerNetworkState.playerId().toString()
-        );
+        final var uuid = playerNetworkState.playerId().toString();
+        final var playerName = playerNetworkState.playerName().toLowerCase();
+        final var gameTypeName = playerNetworkState.gameType().name();
+        final var currentServerId = playerNetworkState.currentServerId().toLowerCase();
+
+        redisCache.hdel(PLAYER_STATE_ID_KEY, uuid);
+        redisCache.del(PLAYER_STATE_NAME_IDX_KEY + playerName);
+        redisCache.hdel(PLAYER_STATE_CATEGORY_IDX_KEY + gameTypeName, uuid);
+        redisCache.hdel(PLAYER_STATE_SERVER_IDX_KEY + currentServerId, uuid);
     }
 
     /**
@@ -96,6 +100,16 @@ public class PlayerNetworkStateManager {
      */
     public List<PlayerNetworkState> getOnlinePlayersInServerCategory(@NotNull ServerCategoryType type) {
         return redisCache.hgetAll(PLAYER_STATE_CATEGORY_IDX_KEY + type.name());
+    }
+
+    /**
+     * Obtém uma lista de jogadores online em um servidor específico, filtrando pelo id do servidor.
+     *
+     * @param serverId O nome do servidor (case-insensitive).
+     * @return Uma lista de {@link PlayerNetworkState} representando os jogadores online nesse servidor.
+     */
+    public List<PlayerNetworkState> getOnlinePlayersInServer(@NotNull String serverId) {
+        return redisCache.hgetAll(PLAYER_STATE_SERVER_IDX_KEY + serverId.toLowerCase());
     }
 
 

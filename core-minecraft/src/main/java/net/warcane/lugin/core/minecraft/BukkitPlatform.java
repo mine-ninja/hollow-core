@@ -4,19 +4,20 @@ import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.AbstractPlatform;
 import net.warcane.lugin.core.MinecraftServerPlatform;
 import net.warcane.lugin.core.Platform;
-import net.warcane.lugin.core.location.RemoteServerLocation;
 import net.warcane.lugin.core.minecraft.currency.Currency;
 import net.warcane.lugin.core.minecraft.currency.CurrencyManager;
 import net.warcane.lugin.core.minecraft.internal.command.InternalCommandManager;
 import net.warcane.lugin.core.minecraft.internal.listener.InternalPacketListeners;
 import net.warcane.lugin.core.minecraft.internal.listener.InternalPlayerListener;
 import net.warcane.lugin.core.minecraft.permission.PermissionInjector;
-import net.warcane.lugin.core.player.statistic.PlayerStatisticsService;
-import net.warcane.lugin.core.player.statistic.PlayerStatisticsServiceImpl;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDirectPlayGameCategoryPacket;
+import net.warcane.lugin.core.network.packet.impl.player.SendSoundToPlayerPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerUnregisterPacket;
+import net.warcane.lugin.core.player.state.PlayerNetworkStateManager;
+import net.warcane.lugin.core.player.statistic.PlayerStatisticsService;
+import net.warcane.lugin.core.player.statistic.PlayerStatisticsServiceImpl;
 import net.warcane.lugin.core.player.subscription.SubscriptionCategoryType;
 import net.warcane.lugin.core.server.GameServer;
 import net.warcane.lugin.core.server.ServerPlayerCount;
@@ -24,7 +25,7 @@ import net.warcane.lugin.core.server.type.ServerCategoryType;
 import net.warcane.lugin.core.util.address.HostAddress;
 import net.warcane.lugin.core.util.property.Property;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
+import org.bukkit.Sound;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
 import org.jetbrains.annotations.Contract;
@@ -147,6 +148,9 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     public void close() {
         log.info("Closing Bukkit Platform with category: {}", serverCategoryType.getDisplayName());
         networkClient.sendNetworkPacket(NetworkChannel.SERVER_STATUS, new ServerUnregisterPacket(this.getId()));
+
+        PlayerNetworkStateManager stateManager = PlayerNetworkStateManager.getInstance();
+        stateManager.getOnlinePlayersInServer(this.getId()).forEach(stateManager::unregister);
     }
 
     @Override
@@ -204,8 +208,14 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         networkClient.sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, packet);
     }
 
-    public void teleportPlayer(@NotNull UUID playeId, @NotNull RemoteServerLocation location){
+    public void tryToPlaySoundToPlayer(@NotNull UUID playerId, @NotNull String soundKey, float volume, float pitch) {
+        final var sendSoundPacket = new SendSoundToPlayerPacket(playerId, soundKey, volume, pitch);
+        networkClient.sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, sendSoundPacket);
+    }
 
+    public void tryToPlaySoundToPlayer(@NotNull UUID playerId, @NotNull Sound sound, float volume, float pitch) {
+        final var sendSoundPacket = new SendSoundToPlayerPacket(playerId, sound.getKey().toString(), volume, pitch);
+        networkClient.sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, sendSoundPacket);
     }
 
     public SubscriptionCategoryType getSubscriptionCategoryType() {

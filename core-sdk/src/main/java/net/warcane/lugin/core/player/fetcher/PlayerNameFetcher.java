@@ -10,6 +10,8 @@ import java.util.UUID;
  */
 public class PlayerNameFetcher {
 
+    private static final long ONE_WEEK_IN_SECONDS = 604_800L; // 7 dias em segundos
+
     private static final String IDX = "player_name";
 
     private static final class PlayerNameFetcherHolder {
@@ -27,6 +29,6 @@ public class PlayerNameFetcher {
     }
 
     public void setPlayerName(@NotNull UUID playerId, @NotNull String playerName) {
-        playerNameCache.set(IDX + ":" + playerId, playerName);
+        playerNameCache.set(IDX + ":" + playerId, playerName, ONE_WEEK_IN_SECONDS);
     }
 }

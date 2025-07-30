@@ -1,11 +1,24 @@
 package net.warcane.lugin.core.minecraft.util;
 
 import net.warcane.lugin.core.location.RemoteServerLocation;
+import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.jetbrains.annotations.NotNull;
 
 public class LocationUtil {
+
+    public static RemoteServerLocation convertToRemoteLocation(@NotNull Location location) {
+        final var serverId = BukkitPlatform.getInstance().getId();
+        final var worldName = location.getWorld().getName();
+        final var x = location.getX();
+        final var y = location.getY();
+        final var z = location.getZ();
+        final var yaw = location.getYaw();
+        final var pitch = location.getPitch();
+
+        return new RemoteServerLocation(serverId, worldName, x, y, z, yaw, pitch);
+    }
 
     public static Location transformLocation(@NotNull RemoteServerLocation location) {
         final var world = Bukkit.getWorld(location.worldName());

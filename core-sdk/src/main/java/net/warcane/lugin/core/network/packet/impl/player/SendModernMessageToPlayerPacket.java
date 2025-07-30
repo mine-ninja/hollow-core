@@ -1,11 +1,11 @@
 package net.warcane.lugin.core.network.packet.impl.player;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.json.JSONComponentSerializer;
 import net.warcane.lugin.core.network.packet.NetworkPacket;
-import net.warcane.lugin.core.util.codec.BinaryComponentSerializer;
 
 import java.util.UUID;
 
@@ -21,6 +21,7 @@ public record SendModernMessageToPlayerPacket(
         );
     }
 
+    @JsonIgnore
     public Component getMessage() {
         return JSONComponentSerializer.json().deserialize(serializedMessageComponent);
     }

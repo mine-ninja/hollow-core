@@ -19,7 +19,6 @@ import net.warcane.lugin.core.player.state.PlayerNetworkState;
 import net.warcane.lugin.core.player.state.PlayerNetworkStateManager;
 import net.warcane.lugin.core.player.teleport.PlayerJoinDataManager;
 import net.warcane.lugin.core.player.wallet.Wallet;
-import net.warcane.lugin.core.player.wallet.WalletService.LoadWalletOptions;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
 import net.warcane.lugin.core.util.property.Property;
 import org.bukkit.GameMode;
@@ -36,6 +35,7 @@ import java.util.List;
 import static net.warcane.lugin.core.minecraft.task.Tasks.runAsyncLater;
 import static net.warcane.lugin.core.player.account.PlayerAccount.createDefaultAccount;
 import static net.warcane.lugin.core.player.account.PlayerAccountService.AccountLoadOptions.withDefaultAccount;
+import static net.warcane.lugin.core.player.wallet.WalletService.LoadWalletOptions.withDefaultWallet;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -106,19 +106,6 @@ public final class InternalPlayerListener implements Listener {
                 currentServerId, platform.getServerCategoryType()
               ));
 
-            platform.getWalletService().loadPlayerWallet(
-              playerId,
-              LoadWalletOptions.withDefaultWallet(Wallet.createDefaultWallet(playerId, name), true)
-            ).whenComplete((playerWallet, walletError) -> {
-                if (walletError != null) {
-                    log.error("Failed to load player wallet for {}: {}", player.getName(), walletError.getMessage(), walletError);
-                    this.syncKick(player);
-                    return;
-                }
-
-                log.info("Player wallet loaded for {}: {}", player.getName(), playerWallet);
-            });
-
 
             if (!name.equals(playerAccount.playerName())) {
                 platform.getPlayerAccountService()
@@ -136,12 +123,28 @@ public final class InternalPlayerListener implements Listener {
 
             final var joinData = PlayerJoinDataManager.getInstance().getPlayerJoinData(playerId);
             if (joinData != null && currentServerId.equalsIgnoreCase(joinData.remoteServerLocation().targetServerId())) {
-                Tasks.runSyncLater(() -> {
+                Tasks.runAsyncLater(() -> {
                     final var location = LocationUtil.transformLocation(joinData.remoteServerLocation());
-                    player.teleport(location);
-                }, 10);
+                    player.teleportAsync(location);
+                    PlayerJoinDataManager.getInstance().removeJoinData(playerId);
+                }, 1);
             }
         });
+
+
+        platform.getWalletService().loadPlayerWallet(
+          playerId,
+          withDefaultWallet(Wallet.createDefaultWallet(playerId, name), true)
+        ).whenComplete((playerWallet, walletError) -> {
+            if (walletError != null) {
+                log.error("Failed to load player wallet for {}: {}", player.getName(), walletError.getMessage(), walletError);
+                this.syncKick(player);
+                return;
+            }
+
+            log.info("Player wallet loaded for {}: {}", player.getName(), playerWallet);
+        });
+
 
 //        platform.getPlayerStatisticsService()
 //          .loadPlayerAccount(playerId)

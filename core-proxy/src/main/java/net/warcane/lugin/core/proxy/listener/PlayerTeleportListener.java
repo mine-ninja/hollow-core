@@ -19,17 +19,16 @@ public class PlayerTeleportListener implements PacketListener<PlayerTeleportToLo
 
     @Override
     public void onReceivePacket(@NotNull PlayerTeleportToLocationPacket packet, @NotNull Headers headers) {
-
         final var playerId = packet.playerId();
         final var serverId = packet.targetLocation().targetServerId();
         final var targetLocation = packet.targetLocation();
-
 
         platform.getProxyServer().getServer(serverId)
                 .ifPresent(serverToSend -> {
                     platform.getProxyServer()
                             .getPlayer(packet.playerId())
                             .ifPresent(player -> player.createConnectionRequest(serverToSend).fireAndForget());
+
 
                     PlayerJoinDataManager.getInstance().setJoinData(new PlayerJoinData(playerId, targetLocation));
                 });

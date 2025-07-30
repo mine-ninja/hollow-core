@@ -1,4 +1,4 @@
-package net.warcane.lugin.core.util.codec;
+package net.warcane.lugin.core.util.codec.kyori;
 
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.nbt.api.BinaryTagHolder;

@@ -49,7 +49,7 @@ public class NetworkClient {
           .toArray(byte[][]::new);
 
         this.subscriptionThread = new Thread(() -> redisConnector.useJedis(jedis -> {
-            final var pubSub = new InternalPubSub(redisConnector, packetListenerMap, List.of(channels));
+            final var pubSub = new InternalPubSub(executorService, redisConnector, packetListenerMap, List.of(channels));
             jedis.subscribe(pubSub, networkChannelNames);
         }), "NetworkClient-SubscriptionThread");
 
