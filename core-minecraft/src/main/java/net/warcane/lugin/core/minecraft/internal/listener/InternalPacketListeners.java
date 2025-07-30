@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.util.nametag.NameTags;
 import net.warcane.lugin.core.network.packet.impl.player.SendMessageToPlayerPacket;
+import net.warcane.lugin.core.network.packet.impl.player.SendModernMessageToPlayerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerReceiveGroupPacket;
 import net.warcane.lugin.core.network.packet.impl.staff.StaffMessagePacket;
 import net.warcane.lugin.core.network.packet.listener.PacketListener;
@@ -21,6 +22,9 @@ public class InternalPacketListeners {
         platform.getNetworkClient().registerPacketListener(SendMessageToPlayerPacket.class, new SendMessagePacketListener());
         platform.getNetworkClient().registerPacketListener(StaffMessagePacket.class, new StaffMessagePacketListener());
         platform.getNetworkClient().registerPacketListener(PlayerReceiveGroupPacket.class, new PlayerGroupReceivePacketListener(platform));
+        platform.getNetworkClient().registerPacketListener(SendMessageToPlayerPacket.class, new MessageToPlayerPacketListener());
+        platform.getNetworkClient().registerPacketListener(SendModernMessageToPlayerPacket.class, new ModernMessageToPlayerPacketListener());
+
     }
 
     public static class StaffMessagePacketListener implements PacketListener<StaffMessagePacket> {
@@ -67,6 +71,29 @@ public class InternalPacketListeners {
             if (loadTagsOnJoin) {
                 NameTags.setNameTag(player, groupPrefix, "", priority);
                 NameTags.updateAllTags();
+            }
+        }
+    }
+
+    public static class MessageToPlayerPacketListener implements PacketListener<SendMessageToPlayerPacket> {
+
+
+        @Override
+        public void onReceivePacket(@NotNull SendMessageToPlayerPacket packet, @NotNull Headers headers) {
+            Player player = Bukkit.getPlayer(packet.playerId());
+            if (player != null) {
+                player.sendMessage(packet.message());
+            }
+        }
+    }
+
+    public static class ModernMessageToPlayerPacketListener implements PacketListener<SendModernMessageToPlayerPacket> {
+
+        @Override
+        public void onReceivePacket(@NotNull SendModernMessageToPlayerPacket packet, @NotNull Headers headers) {
+            Player player = Bukkit.getPlayer(packet.playerId());
+            if (player != null) {
+                player.sendMessage(packet.getMessage());
             }
         }
     }
