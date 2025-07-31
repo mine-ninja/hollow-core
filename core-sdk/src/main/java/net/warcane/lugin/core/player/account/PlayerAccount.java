@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.Style;
 import net.kyori.adventure.text.format.TextColor;
 import net.warcane.lugin.core.group.PlayerGroup;
@@ -94,6 +95,13 @@ public record PlayerAccount(
     @NotNull
     @JsonIgnore
     public Component getFormattedDisplayNameComponent(@NotNull SubscriptionCategoryType type) {
+        return this.getFormattedDisplayNameComponent(type, null);
+    }
+
+
+    @NotNull
+    @JsonIgnore
+    public Component getFormattedDisplayNameComponent(@NotNull SubscriptionCategoryType type, @Nullable Component betweenComp) {
         final var currentSubscription = this.getHighestSubscription(type);
         final var primaryGroup = currentSubscription.group();
         final Component groupPrefix = Component.text(primaryGroup.getModernTag() == ' ' ? "" : primaryGroup.getModernTag() + " ").style(Style.style().font(Key.key("lugin:tags")).color(TextColor.color(0xFFFFFF)).build());
@@ -115,9 +123,12 @@ public record PlayerAccount(
             case 'e' -> 0xFFFF55;
             default -> 0xFFFFFF;
         };
-        return Component.empty().append(groupPrefix).append(Component.text(playerName).color(TextColor.color(color)));
+        TextComponent group = Component.empty().append(groupPrefix);
+        if (betweenComp != null) {
+            group = group.append(betweenComp).append(Component.text(" "));
+        }
+        return group.append(Component.text(playerName).color(TextColor.color(color)));
     }
-
 
     /**
      * Remove uma assinatura existente do jogador para um grupo throwable tipo específicos.
