@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+import static net.warcane.lugin.core.minecraft.task.Tasks.runAsync;
 import static net.warcane.lugin.core.minecraft.task.Tasks.runAsyncLater;
 import static net.warcane.lugin.core.player.account.PlayerAccount.createDefaultAccount;
 import static net.warcane.lugin.core.player.account.PlayerAccountService.AccountLoadOptions.withDefaultAccount;
@@ -178,6 +179,15 @@ public final class InternalPlayerListener implements Listener {
 //                log.info("Player statistics unloaded for {}: {}", player.getName(), unloaded);
 //            }
 //        });
+
+
+
+        runAsync(() -> {
+            final var state = PlayerNetworkStateManager.getInstance().getPlayerState(player.getUniqueId());
+            if (state != null) {
+                PlayerNetworkStateManager.getInstance().unregister(state);
+            }
+        });
 
         final var unloadOptions = new AccountUnloadOptions(false, true);
 

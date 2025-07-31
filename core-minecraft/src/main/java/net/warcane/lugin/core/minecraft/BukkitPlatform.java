@@ -111,6 +111,8 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
     @Override
     public void init(@NotNull NetworkChannel... channels) {
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "timings on");
+
         internalCommandManager.registerInternalCommands();
 
         log.info("Initializing Bukkit Platform with category: {}", serverCategoryType.getDisplayName());
