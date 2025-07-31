@@ -49,7 +49,7 @@ public class NameTags {
           Component.text(prefix),
           Component.text(suffix),
           NameTagVisibility.ALWAYS,
-          CollisionRule.ALWAYS,
+          CollisionRule.NEVER,
           color,
           OptionData.NONE
         );
