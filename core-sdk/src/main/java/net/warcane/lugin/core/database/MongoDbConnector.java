@@ -6,6 +6,7 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import net.warcane.lugin.core.util.codec.mongo.CustomObjectCodecProvider;
 import net.warcane.lugin.core.util.property.Property;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistries;
@@ -37,8 +38,8 @@ public class MongoDbConnector {
 
     private static final CodecRegistry CODEC_REGISTRY = CodecRegistries.fromRegistries(
       MongoClientSettings.getDefaultCodecRegistry(),
-      CodecRegistries.fromProviders(PojoCodecProvider.builder()
-        .automatic(true).build())
+      CodecRegistries.fromProviders(new CustomObjectCodecProvider()),
+      CodecRegistries.fromProviders(PojoCodecProvider.builder().automatic(true).build())
     );
 
     private final MongoClient mongoClient;

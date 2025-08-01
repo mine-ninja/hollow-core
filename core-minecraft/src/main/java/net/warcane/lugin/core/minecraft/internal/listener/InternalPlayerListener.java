@@ -43,7 +43,7 @@ import static net.warcane.lugin.core.player.wallet.WalletService.LoadWalletOptio
 public final class InternalPlayerListener implements Listener {
 
     private static final List<String> HEADER = List.of("§b§lLUGIN.COM.BR");
-    private static final List<String> FOOTER = List.of("§aRanks, cosméticos throwable caixas em §c§lLUGIN.COM.BR");
+    private static final List<String> FOOTER = List.of("§aRanks, cosméticos e caixas em §c§lLUGIN.COM.BR");
 
     private static final Tab TAB = new Tab(HEADER, FOOTER);
 
@@ -65,70 +65,83 @@ public final class InternalPlayerListener implements Listener {
           withDefaultAccount(createDefaultAccount(playerId, name), true)
         ).whenComplete((playerAccount, error) -> {
             if (error != null) {
+                error.printStackTrace();
                 log.error("Failed to load player account for {}: {}", player.getName(), error.getMessage(), error);
                 this.syncKick(player);
                 return;
             }
 
-            final var categoryType = platform.getSubscriptionCategoryType();
-            PlayerGroup group = playerAccount.getHighestSubscription(categoryType).group();
-            final var priority = group.getPriorityValue();
-            final var groupPrefix = group.getPrefix();
+            try {
+
+                final var categoryType = platform.getSubscriptionCategoryType();
+                PlayerGroup group = playerAccount.getHighestSubscription(categoryType).group();
+                final var priority = group.getPriorityValue();
+                final var groupPrefix = group.getPrefix();
 
 
-            final var loadTagsOnJoin = Property.getBoolean("LOAD_TAGS_ON_JOIN", true);
-            if (loadTagsOnJoin) {
-                NameTags.setNameTag(player, groupPrefix, "", priority);
-                NameTags.updateAllTags();
-            }
+                // Só envia o pacote de connect caso realmente carregue as informações do jogador.
+                // caso o contrario ele vai ser kickado (como mostra no código acima).
+                final var packet = new PlayerConnectedToServerPacket(playerId, currentServerId);
+                platform.getNetworkClient().sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, packet);
 
-            // Só envia o pacote de connect caso realmente carregue as informações do jogador.
-            // caso o contrario ele vai ser kickado (como mostra no código acima).
-            final var packet = new PlayerConnectedToServerPacket(playerId, currentServerId);
-            platform.getNetworkClient().sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, packet);
+                log.debug("Player account loaded for {}: {}", player.getName(), playerAccount);
+                platform.getGameServerService().update(platform.getGameServer());
+                platform.getPermissionInjector().injectPermissions(player);
 
-            log.debug("Player account loaded for {}: {}", player.getName(), playerAccount);
+                TAB.tick(player);
+                if (platform.getServerCategoryType() == ServerCategoryType.LOGIN) {
+                    Tasks.runSync(() -> player.setGameMode(GameMode.ADVENTURE));
+                }
 
-            platform.getGameServerService().update(platform.getGameServer());
-            platform.getPermissionInjector().injectPermissions(player);
+                PlayerUuidFetcher.getInstance().cachePlayerUuid(name, playerId);
+                PlayerNameFetcher.getInstance().setPlayerName(playerId, name);
 
-            TAB.tick(player);
-
-            if (platform.getServerCategoryType() == ServerCategoryType.LOGIN) {
-                Tasks.runSync(() -> player.setGameMode(GameMode.ADVENTURE));
-            }
-
-            PlayerUuidFetcher.getInstance().cachePlayerUuid(name, playerId);
-            PlayerNameFetcher.getInstance().setPlayerName(playerId, name);
-
-            PlayerNetworkStateManager.getInstance().register(new PlayerNetworkState(
-                player.getUniqueId(),
-                player.getName(),
-                currentServerId, platform.getServerCategoryType()
-              ));
+                PlayerNetworkStateManager.getInstance().register(new PlayerNetworkState(
+                  player.getUniqueId(),
+                  player.getName(),
+                  currentServerId,
+                  platform.getServerCategoryType()
+                ));
 
 
-            if (!name.equals(playerAccount.playerName())) {
-                platform.getPlayerAccountService()
-                  .updatePlayerAccount(playerAccount.withNewName(name))
-                  .whenComplete((updatedAccount, updateError) -> {
-                      if (updateError != null) {
-                          log.error("Failed to update player account name for {}: {}", player.getName(), updateError.getMessage(), updateError);
-                          this.syncKick(player);
-                      } else {
-                          log.info("Player account name updated for {}: {}", player.getName(), updatedAccount);
-                      }
-                  });
-            }
+                if (!name.equals(playerAccount.playerName())) {
+                    platform.getPlayerAccountService()
+                      .updatePlayerAccount(playerAccount.withNewName(name))
+                      .whenComplete((updatedAccount, updateError) -> {
+                          if (updateError != null) {
+                              log.error("Failed to update player account name for {}: {}", player.getName(), updateError.getMessage(), updateError);
+                              this.syncKick(player);
+                          } else {
+                              log.info("Player account name updated for {}: {}", player.getName(), updatedAccount);
+                          }
+                      });
+                }
 
 
-            final var joinData = PlayerJoinDataManager.getInstance().getPlayerJoinData(playerId);
-            if (joinData != null && currentServerId.equalsIgnoreCase(joinData.remoteServerLocation().targetServerId())) {
+                final var joinData = PlayerJoinDataManager.getInstance().getPlayerJoinData(playerId);
+                if (joinData != null && currentServerId.equalsIgnoreCase(joinData.remoteServerLocation().targetServerId())) {
+                    Tasks.runAsyncLater(() -> {
+                        final var location = LocationUtil.transformLocation(joinData.remoteServerLocation());
+                        player.teleportAsync(location);
+                        PlayerJoinDataManager.getInstance().removeJoinData(playerId);
+                    }, 1);
+                }
+
+
                 Tasks.runAsyncLater(() -> {
-                    final var location = LocationUtil.transformLocation(joinData.remoteServerLocation());
-                    player.teleportAsync(location);
-                    PlayerJoinDataManager.getInstance().removeJoinData(playerId);
+
+                    final var loadTagsOnJoin = Property.getBoolean("LOAD_TAGS_ON_JOIN", true);
+                    if (loadTagsOnJoin) {
+                        log.info("[Step 1.1] Setting name tag for player {} with group prefix: {}", player.getName(), groupPrefix);
+                        NameTags.setNameTag(player, groupPrefix, "", priority, group.getNamedTextColor());
+//                    NameTags.updateAllTags();
+                    }
                 }, 1);
+            } catch (Exception e) {
+                e.printStackTrace();
+                log.error("Error while processing player join for {}: {}", player.getName(), e.getMessage(), e);
+                this.syncKick(player);
+                return;
             }
         });
 
@@ -218,7 +231,7 @@ public final class InternalPlayerListener implements Listener {
 
         final var loadTagsOnJoin = Property.get("LOAD_TAGS_ON_JOIN", "true").equalsIgnoreCase("true");
         if (loadTagsOnJoin) {
-            NameTags.setNameTag(localPlayer, groupPrefix, "", priority);
+            NameTags.setNameTag(localPlayer, groupPrefix, "", priority, group.getNamedTextColor());
             NameTags.updateAllTags();
         }
     }

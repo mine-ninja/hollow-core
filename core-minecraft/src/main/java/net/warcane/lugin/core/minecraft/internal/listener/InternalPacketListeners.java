@@ -3,7 +3,6 @@ package net.warcane.lugin.core.minecraft.internal.listener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
-import net.warcane.lugin.core.minecraft.util.LocationUtil;
 import net.warcane.lugin.core.minecraft.util.nametag.NameTags;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.SendMessageToPlayerPacket;
@@ -103,7 +102,6 @@ public class InternalPacketListeners {
             final var loadTagsOnJoin = Property.get("LOAD_TAGS_ON_JOIN", "true").equalsIgnoreCase("true");
             if (loadTagsOnJoin) {
                 NameTags.setNameTag(player, groupPrefix, "", priority, groupColor);
-                NameTags.updateAllTags();
             }
         }
     }

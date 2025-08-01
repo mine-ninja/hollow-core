@@ -3,9 +3,7 @@ package net.warcane.lugin.core.minecraft.util.nametag;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerTeams;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +22,7 @@ public class NameTags {
         for (Player player : Bukkit.getOnlinePlayers()) {
             NameTagTeam team = playerTeams.get(player.getName());
             if (team != null) {
-                setNameTag(player, team.prefix(), team.suffix(), team.priority());
+                setNameTag(player, team.prefix(), team.suffix(), team.priority(), team.color());
             }
         }
     }
@@ -34,45 +32,48 @@ public class NameTags {
     }
 
     public static void setNameTag(@NotNull Player player, String prefix, String suffix, int priority , @Nullable NamedTextColor color) {
-        String teamName = "LG_" + priority + "_" + player.getEntityId();
-        prefix = prefix != null ? prefix.substring(0, Math.min(prefix.length(), 16)) : "";
-        suffix = suffix != null ? suffix.substring(0, Math.min(suffix.length(), 16)) : "";
+        try {
+            String teamName = "LG_" + priority + "_" + player.getEntityId();
+            prefix = prefix != null ? prefix.substring(0, Math.min(prefix.length(), 16)) : "";
+            suffix = suffix != null ? suffix.substring(0, Math.min(suffix.length(), 16)) : "";
 
-        NameTagTeam existingTeam = playerTeams.get(player.getName());
-        if (existingTeam != null && !existingTeam.teamName().equals(teamName)) {
-            removeNameTag(player);
-        }
+            NameTagTeam existingTeam = playerTeams.get(player.getName());
+            if (existingTeam != null && !existingTeam.teamName().equals(teamName)) {
+                removeNameTag(player);
+            }
 
+            ScoreBoardTeamInfo teamInfo = new ScoreBoardTeamInfo(
+              Component.text(teamName),
+              Component.text(prefix),
+              Component.text(suffix),
+              NameTagVisibility.ALWAYS,
+              CollisionRule.NEVER,
+              color,
+              OptionData.NONE
+            );
 
-        ScoreBoardTeamInfo teamInfo = new ScoreBoardTeamInfo(
-          Component.text(teamName),
-          Component.text(prefix),
-          Component.text(suffix),
-          NameTagVisibility.ALWAYS,
-          CollisionRule.NEVER,
-          color,
-          OptionData.NONE
-        );
+            TeamMode mode = existingTeam != null && existingTeam.teamName().equals(teamName)
+              ? TeamMode.UPDATE
+              : TeamMode.CREATE;
 
-        TeamMode mode = existingTeam != null && existingTeam.teamName().equals(teamName)
-          ? TeamMode.UPDATE
-          : TeamMode.CREATE;
+            WrapperPlayServerTeams packet = new WrapperPlayServerTeams(teamName, mode, teamInfo, player.getName());
 
-        WrapperPlayServerTeams packet = new WrapperPlayServerTeams(teamName, mode, teamInfo, player.getName());
+            for (Player onlinePlayer : player.getServer().getOnlinePlayers()) {
+                PacketEvents.getAPI().getPlayerManager().sendPacket(onlinePlayer, packet);
 
-        for (Player onlinePlayer : player.getServer().getOnlinePlayers()) {
-            PacketEvents.getAPI().getPlayerManager().sendPacket(onlinePlayer, packet);
-
-            final var onlinePlayerTeam = playerTeams.get(onlinePlayer.getName());
-            if (onlinePlayerTeam != null) {
-                final var othersPacket = createTeamPacket(onlinePlayer);
-                if (othersPacket != null) {
-                    PacketEvents.getAPI().getPlayerManager().sendPacket(player, othersPacket);
+                final var onlinePlayerTeam = playerTeams.get(onlinePlayer.getName());
+                if (onlinePlayerTeam != null) {
+                    final var othersPacket = createTeamPacket(onlinePlayer);
+                    if (othersPacket != null) {
+                        PacketEvents.getAPI().getPlayerManager().sendPacket(player, othersPacket);
+                    }
                 }
             }
-        }
 
-        playerTeams.put(player.getName(), new NameTagTeam(teamName, prefix, suffix, priority, color));
+            playerTeams.put(player.getName(), new NameTagTeam(teamName, prefix, suffix, priority, color));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static void removeNameTag(@NotNull Player player) {
@@ -123,12 +124,7 @@ public class NameTags {
         );
 
 
-        return new WrapperPlayServerTeams(
-          team.teamName,
-          TeamMode.CREATE,
-          info,
-          player.getName()
-        );
+        return new WrapperPlayServerTeams(team.teamName, TeamMode.CREATE, info, player.getName());
     }
 
     record NameTagTeam(String teamName, String prefix, String suffix, int priority , @Nullable NamedTextColor color) {
