@@ -112,8 +112,6 @@ public class InternalPacketListeners {
             Player player = Bukkit.getPlayer(packet.playerId());
             if (player != null) {
                 player.sendMessage(packet.message());
-            } else {
-                log.warn("Player is null for MessageToPlayer packet {}", packet);
             }
         }
     }
@@ -125,8 +123,7 @@ public class InternalPacketListeners {
             Player player = Bukkit.getPlayer(packet.playerId());
             if (player != null) {
                 player.sendMessage(packet.getMessage());
-//            } else {
-                log.warn("Player is null for ModernMessageToPlayer packet {}", packet);
+//
             }
         }
     }
@@ -137,8 +134,6 @@ public class InternalPacketListeners {
             final var player = Bukkit.getPlayer(packet.playerId());
             if (player != null) {
                 player.playSound(player.getLocation(), packet.soundName(), packet.volume(), packet.pitch());
-            } else {
-                log.warn("Player is null for SendSoundToPlayer packet {}", packet);
             }
         }
     }

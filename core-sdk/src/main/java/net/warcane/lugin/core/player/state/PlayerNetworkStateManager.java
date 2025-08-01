@@ -14,10 +14,10 @@ import java.util.UUID;
  */
 public class PlayerNetworkStateManager {
 
-    private static final String PLAYER_STATE_ID_KEY = "playerStateId";
-    private static final String PLAYER_STATE_NAME_IDX_KEY = "playerStateNameIndex";
-    private static final String PLAYER_STATE_CATEGORY_IDX_KEY = "playerStateCategoryIndex";
-    private static final String PLAYER_STATE_SERVER_IDX_KEY = "playerStateServerIndex";
+    private static final String PLAYER_STATE_ID_KEY = "playerStateId:";
+    private static final String PLAYER_STATE_NAME_IDX_KEY = "playerStateNameIndex:";
+    private static final String PLAYER_STATE_CATEGORY_IDX_KEY = "playerStateCategoryIndex:";
+    private static final String PLAYER_STATE_SERVER_IDX_KEY = "playerStateServerIndex:";
 
 
     private static final class PlayerStateManagerHolder {
