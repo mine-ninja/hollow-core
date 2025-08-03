@@ -21,9 +21,9 @@ import java.util.concurrent.ExecutorService;
 public class PlayerStatistics {
 
     public static final String REDIS_PREFIX = "playerstat:";
+    private static final Jedis jedisPool = RedisConnector.getInstance().getJedisPool().getResource();
+    private static final MongoCollection<Document> collection = MongoDbConnector.getInstance().getCollection("stats", Document.class);
 
-    private final Jedis jedisPool;
-    private final MongoCollection<Document> collection;
     @Getter
     private final HashMap<String, HashMap<Integer, Integer>> cache;
     private final UUID uuid;
@@ -31,9 +31,6 @@ public class PlayerStatistics {
     private final ExecutorService executorService;
 
     private PlayerStatistics(@NotNull UUID uuid, ExecutorService executorService) {
-        this.jedisPool = RedisConnector.getInstance().getJedisPool().getResource();
-        this.collection = MongoDbConnector.getInstance().getCollection("stats", Document.class);
-
         this.cache = new HashMap<>();
         this.uuid = uuid;
 
