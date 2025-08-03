@@ -14,15 +14,15 @@ public class BedwarsUtil {
     }
 
     public static void addStats(@NotNull PlayerStatistics playerStatistics, @NotNull BedwarsMode bedwarsMode, @NotNull StatsType statsType, int value) {
-        setStats(playerStatistics, bedwarsMode, statsType, getStats(playerStatistics, bedwarsMode, statsType) + value);
+        setStats(playerStatistics, bedwarsMode, statsType, getStatsForToday(playerStatistics, bedwarsMode, statsType) + value);
     }
 
     public static void removeStats(@NotNull PlayerStatistics playerStatistics, @NotNull BedwarsMode bedwarsMode, @NotNull StatsType statsType, int value) {
-        setStats(playerStatistics, bedwarsMode, statsType, getStats(playerStatistics, bedwarsMode, statsType) - value);
+        setStats(playerStatistics, bedwarsMode, statsType, getStatsForToday(playerStatistics, bedwarsMode, statsType) - value);
     }
 
     public static int getStats(@NotNull PlayerStatistics playerStatistics, @NotNull BedwarsMode bedwarsMode, @NotNull StatsType statsType) {
-                return playerStatistics.getTotalValue(bedwarsMode.getSmallName() + "_" + statsType.name());
+        return playerStatistics.getTotalValue(bedwarsMode.getSmallName() + "_" + statsType.name());
     }
 
     public static int getStatsForToday(@NotNull PlayerStatistics playerStatistics, @NotNull BedwarsMode bedwarsMode, @NotNull StatsType statsType) {
