@@ -57,7 +57,7 @@ public class CurrencyBasedCommand extends SimpleCommand {
                     ctx.sendMessage("§cEste comando não está disponível para pagamentos de jogadores.");
                     return;
                 }
-                handlePayCommand(ctx, ctx.getRawArgOrThrow(1, "§cVocê deve especificar o nome do jogador."));
+                ctx.sendMessage("§cComando desabilitado no momento!");
             }
             case "top" -> handleTopCommand(ctx);
             default -> throw new CommandFailedException("§cSubcomando inválido. Use: ver, pagar ou top.");
@@ -134,7 +134,27 @@ public class CurrencyBasedCommand extends SimpleCommand {
     }
 
     private void handleTopCommand(@NotNull CommandContext ctx) {
-        ctx.sendMessage("§cComando 'top' ainda não implementado.");
+        platform.getWalletService()
+          .getTopWalletsByCurrencyBalance(currency.id(), 10)
+          .whenCompleteAsync((list, error) -> {
+              if (error != null) {
+                  error.printStackTrace();
+                  log.error("Erro ao buscar o top de carteiras: ", error);
+                  ctx.sendMessage("§cUm erro interno ocorreu ao obter o top, tente novamente mais tarde.");
+                  return;
+              }
+
+              if (list.isEmpty()) {
+                  ctx.sendMessage("§cNenhum jogador encontrado com saldo na moeda " + currency.id() + ".");
+                  return;
+              }
+
+              ctx.sendMessage("§aJogadores mais ricos em " + currency.pluralDisplayName() + ":");
+              for (int i = 0; i < list.size(); i++) {
+                  final var wallet = list.get(i);
+                  ctx.sendMessage("§e" + (i + 1) + ". §b" + wallet.playerName() + "§a - " + currency.formatAmount(wallet.balance()));
+              }
+          });
     }
 
     @Override

@@ -7,22 +7,23 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import net.warcane.lugin.core.util.codec.mongo.CustomObjectCodecProvider;
+import net.warcane.lugin.core.util.data.MongoRepository;
 import net.warcane.lugin.core.util.property.Property;
 import org.bson.UuidRepresentation;
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MongoDbConnector {
 
     private static MongoDbConnector instance;
 
-    /**
-     * Retorna uma instância singleton do MongoDbConnector.
-     *
-     * @return Instância do MongoDbConnector.
-     */
     public static MongoDbConnector getInstance() {
         if (instance == null) {
             instance = fromLocalProperty();
@@ -36,31 +37,60 @@ public class MongoDbConnector {
         return new MongoDbConnector(mongoUrl, databaseName);
     }
 
-    private static final CodecRegistry CODEC_REGISTRY = CodecRegistries.fromRegistries(
-      MongoClientSettings.getDefaultCodecRegistry(),
-      CodecRegistries.fromProviders(new CustomObjectCodecProvider()),
-      CodecRegistries.fromProviders(PojoCodecProvider.builder().automatic(true).build())
-    );
 
     private final MongoClient mongoClient;
     private final MongoDatabase database;
 
     public MongoDbConnector(String connectionString, String databaseName) {
+        this(connectionString, databaseName, List.of(), List.of(), List.of());
+    }
+
+    private MongoDbConnector(
+      @NotNull String connectionString,
+      @NotNull String databaseName,
+      @NotNull List<CodecProvider> additionalProviders,
+      @NotNull List<Codec<?>> additionalCodecs,
+      @NotNull List<CodecRegistry> additionalRegistries
+    ) {
+
+        CodecRegistry codecRegistry = buildCodecRegistry(additionalProviders, additionalCodecs, additionalRegistries);
+
         mongoClient = MongoClients.create(
           MongoClientSettings.builder()
             .applyConnectionString(new ConnectionString(connectionString))
             .uuidRepresentation(UuidRepresentation.STANDARD)
-            .codecRegistry(CODEC_REGISTRY)
+            .codecRegistry(codecRegistry)
             .build()
         );
 
         database = mongoClient.getDatabase(databaseName);
     }
 
+    private CodecRegistry buildCodecRegistry(
+      @NotNull List<CodecProvider> additionalProviders,
+      @NotNull List<Codec<?>> additionalCodecs,
+      @NotNull List<CodecRegistry> additionalRegistries
+    ) {
+
+        List<CodecRegistry> registries = new ArrayList<>();
+        registries.add(MongoClientSettings.getDefaultCodecRegistry());
+        registries.add(CodecRegistries.fromProviders(new CustomObjectCodecProvider()));
+        if (!additionalCodecs.isEmpty()) {
+            registries.add(CodecRegistries.fromCodecs(additionalCodecs));
+        }
+        if (!additionalProviders.isEmpty()) {
+            registries.add(CodecRegistries.fromProviders(additionalProviders));
+        }
+
+        registries.addAll(additionalRegistries);
+        registries.add(CodecRegistries.fromProviders(PojoCodecProvider.builder().automatic(true).build()));
+
+        return CodecRegistries.fromRegistries(registries);
+    }
+
     public <T> MongoCollection<T> getCollection(String collectionName, Class<T> documentClass) {
         return database.getCollection(collectionName, documentClass);
     }
-
 
     public void close() {
         if (mongoClient != null) {
@@ -71,5 +101,60 @@ public class MongoDbConnector {
     @NotNull
     public MongoClient getMongoClient() {
         return mongoClient;
+    }
+
+    public <ID, T> MongoRepository<ID, T> createNewRepository(@NotNull Class<T> clazz, @NotNull String idFieldName) {
+        return new MongoRepository<>(this, clazz, idFieldName);
+    }
+
+    public <ID, T> MongoRepository<ID, T> createNewRepository(
+      @NotNull Class<T> clazz,
+      @NotNull String idFieldName,
+      @NotNull String collectionName
+    ) {
+        return new MongoRepository<>(this, clazz, idFieldName, collectionName);
+    }
+
+    public static Builder builderFromLocalProperty() {
+        final var mongoUrl = Property.getOrThrow("MONGO_URL");
+        final var databaseName = Property.get("MONGO_DATABASE", "warcane");
+        return new Builder(mongoUrl, databaseName);
+    }
+
+    public static Builder builder(String connectionString, String databaseName) {
+        return new Builder(connectionString, databaseName);
+    }
+
+    public static class Builder {
+        private final String connectionString;
+        private final String databaseName;
+        private final List<CodecProvider> additionalProviders = new ArrayList<>();
+        private final List<Codec<?>> additionalCodecs = new ArrayList<>();
+        private final List<CodecRegistry> additionalRegistries = new ArrayList<>();
+
+        public Builder(String connectionString, String databaseName) {
+            this.connectionString = connectionString;
+            this.databaseName = databaseName;
+        }
+
+        public Builder addCodecProvider(CodecProvider provider) {
+            this.additionalProviders.add(provider);
+            return this;
+        }
+
+        public Builder addCodec(Codec<?> codec) {
+            this.additionalCodecs.add(codec);
+            return this;
+        }
+
+        public Builder addCodecRegistry(CodecRegistry registry) {
+            this.additionalRegistries.add(registry);
+            return this;
+        }
+
+        public MongoDbConnector build() {
+            return new MongoDbConnector(connectionString, databaseName,
+              additionalProviders, additionalCodecs, additionalRegistries);
+        }
     }
 }

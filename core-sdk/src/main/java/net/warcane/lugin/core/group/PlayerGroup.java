@@ -24,6 +24,7 @@ public enum PlayerGroup {
     LEGENDARY("legendary", "§2[Lendário] ", '\uE001', "Lendário", NamedTextColor.DARK_GREEN, 5),
     HERO("hero", "§5[Heroi] ", ' ', "Hero", NamedTextColor.DARK_PURPLE, 4),
     CHAMPION("champion", "§3[Campeão] ", '\uE000', "Campeão", NamedTextColor.DARK_AQUA, 3),
+    ALPHA("alpha", "§b[Alpha] ", ' ', "Alpha", NamedTextColor.AQUA, 2),
     DEFAULT("default", "§7", ' ', "Membro", NamedTextColor.GRAY, 1); // TODO: esperar a tag
 
 

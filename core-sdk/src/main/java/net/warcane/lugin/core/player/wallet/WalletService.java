@@ -1,22 +1,19 @@
 package net.warcane.lugin.core.player.wallet;
 
-import com.mongodb.client.model.Aggregates;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.Indexes;
-import com.mongodb.client.model.Sorts;
+import com.mongodb.client.model.*;
 import net.warcane.lugin.core.player.wallet.transaction.TransactionResult;
 import net.warcane.lugin.core.util.data.MongoRepository;
 import net.warcane.lugin.core.util.data.RedisCache;
 import org.bson.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Range;
 
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 public class WalletService {
@@ -259,18 +256,54 @@ public class WalletService {
 
 
     /**
+     * Computa um valor somado de todas as carteiras de jogadores com base em uma lista de identificadores únicos e uma moeda específica.
+     *
+     * @param playerIdList Lista de identificadores únicos dos jogadores (não nula).
+     * @param currencyId   Identificador da moeda para a qual se deseja calcular o saldo total (não nulo).
+     * @return CompletableFuture contendo o saldo total de todas as carteiras dos jogadores na moeda especificada.
+     */
+    public CompletableFuture<BigDecimal> getTotalBalanceFromIdList(@NotNull List<UUID> playerIdList, @NotNull String currencyId) {
+        final var collection = walletRepository.getRawCollection();
+
+        return CompletableFuture.supplyAsync(() -> {
+            if (playerIdList.isEmpty()) {
+                return BigDecimal.ZERO;
+            }
+
+            var result = collection.aggregate(Arrays.asList(
+              Aggregates.match(Filters.and(
+                Filters.in("uniqueId", playerIdList),
+                Filters.exists("currencies." + currencyId)
+              )),
+              Aggregates.group(null, Accumulators.sum("total", "$currencies." + currencyId))
+            )).first();
+
+            if (result == null) return BigDecimal.ZERO;
+
+            Object total = result.get("total");
+            if (total == null) return BigDecimal.ZERO;
+
+            return total instanceof org.bson.types.Decimal128
+              ? ((org.bson.types.Decimal128) total).bigDecimalValue()
+              : new BigDecimal(total.toString());
+        }, executorService);
+    }
+
+
+    /**
      * Obtém os jogadores com as maiores quantidades de uma moeda específica.
      *
      * @param currencyId Identificador da moeda para a qual se deseja obter o ranking.
      * @param limit      Limite de jogadores a serem retornados.
      * @return CompletableFuture contendo uma lista de WalletCurrencyEntry representando os jogadores throwable seus saldos na moeda.
      */
-    public CompletableFuture<@NotNull List<WalletCurrencyEntry>> getTopWalletsByCurrencyBalance(
-      @NotNull String currencyId,
-      @Range(from = 0 , to = 100) int limit
-    ) {
+    public CompletableFuture<@NotNull List<WalletCurrencyEntry>> getTopWalletsByCurrencyBalance(@NotNull String currencyId, int limit) {
         final var collection = walletRepository.getRawCollection();
-        return CompletableFuture.supplyAsync(() -> collection.aggregate(Arrays.asList(
+        return CompletableFuture.supplyAsync(() -> {
+            List<WalletCurrencyEntry> result = new ArrayList<>();
+            AtomicLong position = new AtomicLong(1);
+
+            collection.aggregate(Arrays.asList(
               Aggregates.match(Filters.and(
                 Filters.exists("currencies." + currencyId),
                 Filters.gt("currencies." + currencyId, 0)
@@ -278,17 +311,30 @@ public class WalletService {
               Aggregates.sort(Sorts.descending("currencies." + currencyId)),
               Aggregates.limit(limit),
               Aggregates.project(new Document()
-                .append("playerId", "$playerId")
+                .append("uniqueId", "$uniqueId")
                 .append("playerName", "$playerName")
-                .append("currencyId", currencyId)
                 .append("balance", "$currencies." + currencyId)
-                .append("position", new Document("$add", Arrays.asList("$index", 1)))
               )
-            ))
-            .map(WalletCurrencyEntry::fromMongoDocument)
-            .into(new ArrayList<>()),
-          executorService
-        );
+            )).forEach(doc -> {
+                UUID playerId = doc.get("uniqueId", UUID.class);
+                String playerName = doc.getString("playerName");
+                Object balanceObj = doc.get("balance");
+
+                BigDecimal balance = balanceObj instanceof org.bson.types.Decimal128
+                  ? ((org.bson.types.Decimal128) balanceObj).bigDecimalValue()
+                  : new BigDecimal(balanceObj.toString());
+
+                result.add(new WalletCurrencyEntry(
+                  position.getAndIncrement(),
+                  playerId,
+                  playerName,
+                  currencyId,
+                  balance
+                ));
+            });
+
+            return result;
+        }, executorService);
     }
 
 
@@ -329,7 +375,7 @@ public class WalletService {
       @NotNull String currencyId,
       @NotNull BigDecimal amount
     ) {
-        return walletRepository.executeTransaction(() -> {
+        return CompletableFuture.supplyAsync(() -> {
             try {
                 final var senderWallet = this.getOrLoadWallet(senderId).join();
                 if (senderWallet == null) {
@@ -419,24 +465,5 @@ public class WalletService {
       @NotNull String playerName,
       @NotNull String currencyId,
       @NotNull BigDecimal balance
-    ) {
-
-        /**
-         * Cria uma nova instância de WalletCurrencyEntry a partir de um documento MongoDB.
-         *
-         * @param document O documento MongoDB contendo os dados da entrada.
-         * @return Uma nova instância de WalletCurrencyEntry.
-         */
-        private static WalletCurrencyEntry fromMongoDocument(@NotNull Document document) {
-            return new WalletCurrencyEntry(
-              document.getLong("position"),
-              document.get("playerId", UUID.class),
-              document.getString("playerName"),
-              document.getString("currencyId"),
-              document.get("balance", BigDecimal.class)
-            );
-        }
-    }
-
-
+    ) { }
 }

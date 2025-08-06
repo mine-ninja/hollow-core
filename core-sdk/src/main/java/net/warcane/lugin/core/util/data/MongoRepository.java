@@ -31,16 +31,38 @@ public class MongoRepository<ID, O> {
     private final String idFieldName;
 
 
-    public MongoRepository(Class<O> clazz, String idFieldName) {
-        this.collection = MongoDbConnector.getInstance().getCollection(clazz.getSimpleName(), clazz);
-        this.rawCollection = MongoDbConnector.getInstance().getCollection(clazz.getSimpleName(), Document.class);
+    public MongoRepository(@NotNull Class<O> clazz, @NotNull String idFieldName) {
+        this(MongoDbConnector.getInstance(), MongoDbConnector.getInstance().getCollection(clazz.getSimpleName(), clazz), idFieldName);
+    }
+
+    public MongoRepository(@NotNull Class<O> clazz, @NotNull String idFieldName, @NotNull String collectionName) {
+        this(MongoDbConnector.getInstance(), MongoDbConnector.getInstance().getCollection(collectionName, clazz), idFieldName);
+    }
+
+    public MongoRepository(@NotNull MongoDbConnector connector, @NotNull Class<O> clazz, @NotNull String idFieldName) {
+        this(connector, connector.getCollection(clazz.getSimpleName(), clazz), idFieldName);
+    }
+
+    public MongoRepository(@NotNull MongoDbConnector connector, @NotNull Class<O> clazz, @NotNull String idFieldName, @NotNull String collectionName) {
+        this(connector, connector.getCollection(collectionName, clazz), idFieldName);
+    }
+
+    public MongoRepository(@NotNull MongoDbConnector connector, @NotNull MongoCollection<O> collection, @NotNull String idFieldName) {
+        this.collection = collection;
+        this.rawCollection = connector.getCollection(collection.getNamespace().getCollectionName(), Document.class);
         this.idFieldName = idFieldName;
     }
 
-    public MongoRepository(@NotNull MongoCollection<O> collection, @NotNull String idFieldName) {
-        this.collection = collection;
-        this.rawCollection = MongoDbConnector.getInstance().getCollection(collection.getNamespace().getCollectionName(), Document.class);
-        this.idFieldName = idFieldName;
+    public MongoRepository(@NotNull MongoDbConnector.Builder builder, @NotNull Class<O> clazz, @NotNull String idFieldName) {
+        this(
+          builder.build(),
+          clazz,
+          idFieldName
+        );
+    }
+
+    public MongoRepository(@NotNull MongoDbConnector.Builder builder, @NotNull Class<O> clazz, @NotNull String idFieldName, @NotNull String collectionName) {
+        this(builder.build(), clazz, idFieldName, collectionName);
     }
 
     public O findById(ID id) {

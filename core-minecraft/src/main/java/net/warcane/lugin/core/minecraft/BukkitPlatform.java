@@ -144,6 +144,9 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
           List.of(ServerCategoryType.values()),
           false
         ));
+
+
+        Bukkit.getConsoleSender().sendMessage("§aCarregando nomes de jogadores para o redis (para acesso rápido)");
     }
 
     @Override

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.group.PlayerGroup;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
+import net.warcane.lugin.core.minecraft.event.PlayerAccountLoadEvent;
 import net.warcane.lugin.core.minecraft.event.PlayerAccountUpdateEvent;
 import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.util.LocationUtil;
@@ -21,6 +22,7 @@ import net.warcane.lugin.core.player.teleport.PlayerJoinDataManager;
 import net.warcane.lugin.core.player.wallet.Wallet;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
 import net.warcane.lugin.core.util.property.Property;
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -72,7 +74,6 @@ public final class InternalPlayerListener implements Listener {
             }
 
             try {
-
                 final var categoryType = platform.getSubscriptionCategoryType();
                 PlayerGroup group = playerAccount.getHighestSubscription(categoryType).group();
                 final var priority = group.getPriorityValue();
@@ -129,14 +130,15 @@ public final class InternalPlayerListener implements Listener {
 
 
                 Tasks.runAsyncLater(() -> {
-
                     final var loadTagsOnJoin = Property.getBoolean("LOAD_TAGS_ON_JOIN", true);
                     if (loadTagsOnJoin) {
-                        log.info("[Step 1.1] Setting name tag for player {} with group prefix: {}", player.getName(), groupPrefix);
                         NameTags.setNameTag(player, groupPrefix, "", priority, group.getNamedTextColor());
-//                    NameTags.updateAllTags();
+                        NameTags.updateAllTags();
                     }
                 }, 1);
+
+
+                Bukkit.getPluginManager().callEvent(new PlayerAccountLoadEvent(playerAccount));
             } catch (Exception e) {
                 e.printStackTrace();
                 log.error("Error while processing player join for {}: {}", player.getName(), e.getMessage(), e);
@@ -234,6 +236,8 @@ public final class InternalPlayerListener implements Listener {
             NameTags.setNameTag(localPlayer, groupPrefix, "", priority, group.getNamedTextColor());
             NameTags.updateAllTags();
         }
+
+        platform.getPermissionInjector().injectPermissions(localPlayer);
     }
 
 

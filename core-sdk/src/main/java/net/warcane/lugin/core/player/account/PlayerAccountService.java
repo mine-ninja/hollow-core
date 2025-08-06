@@ -13,6 +13,7 @@ import java.util.function.Supplier;
  */
 public interface PlayerAccountService {
 
+
     /**
      * Cria uma nova instância do serviço de contas de jogadores.
      *
@@ -93,6 +94,7 @@ public interface PlayerAccountService {
     default CompletableFuture<@NotNull PlayerAccount> unloadPlayerAccount(@NotNull UUID playerId) {
         return unloadPlayerAccount(playerId, AccountUnloadOptions.DEFAULT);
     }
+
 
     /**
      * Opções para atualizar uma conta de jogador.
