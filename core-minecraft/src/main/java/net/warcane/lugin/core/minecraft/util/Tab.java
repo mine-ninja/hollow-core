@@ -11,12 +11,18 @@ import java.util.List;
 
 public class Tab {
 
-    private final String tabHeader;
-    private final String tabFooter;
+    private final Component tabHeader;
+    private final Component tabFooter;
 
     public Tab(List<String> tabHeader, List<String> tabFooter) {
-        this.tabHeader = String.join("\n", tabHeader);
-        this.tabFooter = String.join("\n", tabFooter);
+        this.tabHeader = Component.text(String.join("\n", tabHeader));
+        this.tabFooter = Component.text(String.join("\n", tabFooter));
+    }
+
+    @SuppressWarnings("UnstableApiUsage")
+    public Tab(List<Component> tabHeader, List<Component> tabFooter, boolean useNewline /* true */) {
+        this.tabHeader = Component.join(useNewline ? Component.newline() : Component.empty(), tabHeader);
+        this.tabFooter = Component.join(useNewline ? Component.newline() : Component.empty(), tabFooter);
     }
 
     public void tick(Player p) {
@@ -25,8 +31,8 @@ public class Tab {
 
     private PacketWrapper<?> getCreateHeaderFooterPacket() {
         return new WrapperPlayServerPlayerListHeaderAndFooter(
-          Component.text(tabHeader),
-          Component.text(tabFooter)
+          tabHeader,
+          tabFooter
         );
     }
 }
