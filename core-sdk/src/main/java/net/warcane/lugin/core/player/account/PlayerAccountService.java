@@ -3,6 +3,7 @@ package net.warcane.lugin.core.player.account;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -23,6 +24,8 @@ public interface PlayerAccountService {
     static @NotNull PlayerAccountService of(@NotNull ExecutorService executorService) {
         return new PlayerAccountServiceImpl(executorService);
     }
+
+    Collection<@NotNull PlayerAccount> getCachedAccounts();
 
     /**
      * Obtém uma conta de jogador do cache local, se disponível.

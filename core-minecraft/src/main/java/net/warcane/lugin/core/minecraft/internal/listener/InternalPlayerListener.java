@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.group.PlayerGroup;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
-import net.warcane.lugin.core.minecraft.event.PlayerAccountLoadEvent;
-import net.warcane.lugin.core.minecraft.event.PlayerAccountUpdateEvent;
+import net.warcane.lugin.core.minecraft.event.account.PlayerAccountLoadEvent;
+import net.warcane.lugin.core.minecraft.event.account.PlayerAccountUpdateEvent;
 import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.util.LocationUtil;
 import net.warcane.lugin.core.minecraft.util.Tab;
@@ -135,10 +135,10 @@ public final class InternalPlayerListener implements Listener {
                         NameTags.setNameTag(player, groupPrefix, "", priority, group.getNamedTextColor());
                         NameTags.updateAllTags();
                     }
+
+                    Bukkit.getPluginManager().callEvent(new PlayerAccountLoadEvent(playerAccount));
                 }, 1);
 
-
-                Bukkit.getPluginManager().callEvent(new PlayerAccountLoadEvent(playerAccount));
             } catch (Exception e) {
                 e.printStackTrace();
                 log.error("Error while processing player join for {}: {}", player.getName(), e.getMessage(), e);
@@ -161,17 +161,6 @@ public final class InternalPlayerListener implements Listener {
             log.info("Player wallet loaded for {}: {}", player.getName(), playerWallet);
         });
 
-
-//        platform.getPlayerStatisticsService()
-//          .loadPlayerAccount(playerId)
-//          .whenComplete((playerStatistics, error) -> {
-//            if (error != null) {
-//                log.error("Failed to load player statistics for {}: {}", player.getName(), error.getMessage(), error);
-//                this.syncKick(player);
-//            } else {
-//                log.info("Player statistics loaded for {}: {}", player.getName(), playerStatistics);
-//            }
-//        });
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

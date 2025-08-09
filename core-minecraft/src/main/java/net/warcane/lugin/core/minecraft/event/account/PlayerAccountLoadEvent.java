@@ -1,4 +1,4 @@
-package net.warcane.lugin.core.minecraft.event;
+package net.warcane.lugin.core.minecraft.event.account;
 
 import lombok.Getter;
 import net.warcane.lugin.core.player.account.PlayerAccount;

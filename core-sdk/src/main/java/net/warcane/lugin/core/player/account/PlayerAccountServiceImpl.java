@@ -8,6 +8,7 @@ import net.warcane.lugin.core.util.data.RedisCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -34,6 +35,11 @@ public class PlayerAccountServiceImpl implements PlayerAccountService {
             collection.createIndex(Indexes.hashed("uniqueId"));
             collection.createIndex(Indexes.hashed("playerName"));
         });
+    }
+
+    @Override
+    public Collection<@NotNull PlayerAccount> getCachedAccounts() {
+        return localCache.values();
     }
 
     @Override

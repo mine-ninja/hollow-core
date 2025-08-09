@@ -96,7 +96,6 @@ public class EconomyCommand extends SimpleCommand {
                   case SET -> found.updateCurrencyAmount(ctx.currency().id(), amount);
               };
 
-
               walletService.saveWallet(changed)
                 .whenComplete((updated, updateError) -> {
                     if (updateError != null) {

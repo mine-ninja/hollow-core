@@ -6,9 +6,11 @@ import net.warcane.lugin.core.MinecraftServerPlatform;
 import net.warcane.lugin.core.Platform;
 import net.warcane.lugin.core.minecraft.currency.Currency;
 import net.warcane.lugin.core.minecraft.currency.CurrencyManager;
+import net.warcane.lugin.core.minecraft.event.tick.AsyncServerTickEvent;
 import net.warcane.lugin.core.minecraft.internal.command.InternalCommandManager;
 import net.warcane.lugin.core.minecraft.internal.listener.InternalPacketListeners;
 import net.warcane.lugin.core.minecraft.internal.listener.InternalPlayerListener;
+import net.warcane.lugin.core.minecraft.menu.SimpleMenuManager;
 import net.warcane.lugin.core.minecraft.permission.PermissionInjector;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDirectPlayGameCategoryPacket;
@@ -34,9 +36,17 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class BukkitPlatform extends AbstractPlatform implements MinecraftServerPlatform {
+
+
+    private static final ScheduledExecutorService SINGLE_EXECUTOR_SERVICE = Executors.newSingleThreadScheduledExecutor(
+      runnable -> new Thread(runnable, "BukkitPlatform-SingleExecutor")
+    );
 
     /**
      * Cria uma instância da plataforma Bukkit (Se não existir) throwable a registra no Bukkit ServicesManager.
@@ -91,6 +101,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     private final PermissionInjector permissionInjector;
     private final PlayerStatisticsService playerStatisticsService;
     private final CurrencyManager currencyManager;
+    private final SimpleMenuManager simpleMenuManager;
 
     private boolean online;
 
@@ -103,6 +114,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         this.permissionInjector = PermissionInjector.fromCurrentPlatform(this);
         this.currencyManager = new CurrencyManager(this);
         this.playerStatisticsService = new PlayerStatisticsServiceImpl(getExecutorService());
+        this.simpleMenuManager = new SimpleMenuManager(this);
 
         this.loadGroupPermissions();
 
@@ -111,7 +123,10 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
     @Override
     public void init(@NotNull NetworkChannel... channels) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "timings on");
+        SINGLE_EXECUTOR_SERVICE.scheduleAtFixedRate(
+          AsyncServerTickEvent::call,
+          0, 50, TimeUnit.MILLISECONDS
+        );
 
         internalCommandManager.registerInternalCommands();
 

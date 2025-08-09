@@ -15,12 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class LobbyCommand extends SimpleCommand implements Listener {
-
-    private static final ThreadLocalRandom RANDOM = ThreadLocalRandom.current();
-
     private final BukkitPlatform platform;
     private final List<UUID> queuedPlayers = new ArrayList<>();
 
