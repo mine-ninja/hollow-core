@@ -10,7 +10,6 @@ import net.warcane.lugin.core.minecraft.event.tick.AsyncServerTickEvent;
 import net.warcane.lugin.core.minecraft.internal.command.InternalCommandManager;
 import net.warcane.lugin.core.minecraft.internal.listener.InternalPacketListeners;
 import net.warcane.lugin.core.minecraft.internal.listener.InternalPlayerListener;
-import net.warcane.lugin.core.minecraft.menu.SimpleMenuManager;
 import net.warcane.lugin.core.minecraft.permission.PermissionInjector;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDirectPlayGameCategoryPacket;
@@ -101,7 +100,6 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     private final PermissionInjector permissionInjector;
     private final PlayerStatisticsService playerStatisticsService;
     private final CurrencyManager currencyManager;
-    private final SimpleMenuManager simpleMenuManager;
 
     private boolean online;
 
@@ -114,7 +112,6 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         this.permissionInjector = PermissionInjector.fromCurrentPlatform(this);
         this.currencyManager = new CurrencyManager(this);
         this.playerStatisticsService = new PlayerStatisticsServiceImpl(getExecutorService());
-        this.simpleMenuManager = new SimpleMenuManager(this);
 
         this.loadGroupPermissions();
 
@@ -159,7 +156,6 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
           List.of(ServerCategoryType.values()),
           false
         ));
-
 
         Bukkit.getConsoleSender().sendMessage("§aCarregando nomes de jogadores para o redis (para acesso rápido)");
     }
