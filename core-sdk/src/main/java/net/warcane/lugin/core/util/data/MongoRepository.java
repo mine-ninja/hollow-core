@@ -2,7 +2,6 @@ package net.warcane.lugin.core.util.data;
 
 import com.mongodb.Function;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.TransactionBody;
 import com.mongodb.client.model.*;
 import net.warcane.lugin.core.database.MongoDbConnector;
 import org.bson.Document;
@@ -11,8 +10,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -102,6 +99,10 @@ public class MongoRepository<ID, O> {
         return collection.findOneAndDelete(Filters.eq(idFieldName, idExtractor.apply(toDelete)));
     }
 
+    public List<O> queryMany(@NotNull List<ID> ids) {
+        return collection.find(Filters.in(idFieldName, ids)).into(new ArrayList<>());
+    }
+
     public List<O> queryAll() {
         return collection.find().into(new ArrayList<>());
     }
@@ -114,22 +115,10 @@ public class MongoRepository<ID, O> {
         consumer.accept(collection);
     }
 
-
-    public <T> CompletableFuture<T> executeTransaction(@NotNull TransactionBody<T> transactionBody, @NotNull ExecutorService executorService) {
-        return CompletableFuture.supplyAsync(() -> {
-            try (var session = MongoDbConnector.getInstance().getMongoClient().startSession()) {
-                return session.withTransaction(transactionBody);
-            } catch (Exception e) {
-                throw new RuntimeException("Erro ao executar transação: " + e.getMessage(), e);
-            }
-        }, executorService);
-    }
-
     @NotNull
     public MongoCollection<O> getCollection() {
         return collection;
     }
-
 
     @NotNull
     public MongoCollection<Document> getRawCollection() {

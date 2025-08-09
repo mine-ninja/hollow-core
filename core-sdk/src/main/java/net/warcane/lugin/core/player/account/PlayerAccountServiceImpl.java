@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -98,6 +99,11 @@ public class PlayerAccountServiceImpl implements PlayerAccountService {
             log.info("Player account for {} not found in local cache or MongoDB, fetching UUID.", playerName);
             return null;
         });
+    }
+
+    @Override
+    public CompletableFuture<@NotNull List<PlayerAccount>> fetchPlayerAccountList(@NotNull List<UUID> playerIds) {
+        return supply(() -> repository.queryMany(playerIds));
     }
 
     @Override

@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -58,6 +59,15 @@ public interface PlayerAccountService {
      * @return CompletableFuture contendo a conta do jogador ou null se não encontrada.
      */
     CompletableFuture<@Nullable PlayerAccount> getPlayerAccountByName(@NotNull String playerName);
+
+    /**
+     * Busca uma lista de contas de jogadores pelos seus identificadores únicos.
+     * É uma busca mais otimizada para múltiplos IDs. (Ex: Buscar por contas de membros de uma facção)
+     *
+     * @param playerIds Lista de identificadores únicos dos jogadores (não nula).
+     * @return CompletableFuture contendo a lista de contas dos jogadores encontrados.
+     */
+    CompletableFuture<@NotNull List<PlayerAccount>> fetchPlayerAccountList(@NotNull List<UUID> playerIds);
 
     /**
      * Atualiza a conta de um jogador.
