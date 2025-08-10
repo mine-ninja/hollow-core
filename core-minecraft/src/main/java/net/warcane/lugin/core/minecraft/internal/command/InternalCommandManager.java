@@ -12,6 +12,7 @@ import net.warcane.lugin.core.minecraft.internal.command.permission.TestPermissi
 import net.warcane.lugin.core.minecraft.internal.command.server.ServerCommand;
 import net.warcane.lugin.core.minecraft.internal.command.staff.PlayerInfoCommand;
 import net.warcane.lugin.core.minecraft.internal.command.staff.StaffMessageCommand;
+import net.warcane.lugin.core.minecraft.internal.command.test.TestMenuCommand;
 import net.warcane.lugin.core.util.property.Property;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandMap;
@@ -47,6 +48,9 @@ public class InternalCommandManager {
         commandMap.register("lugin" , new ServerCommand());
 
         commandMap.register("lugin", new EconomyCommand(platform));
+
+        commandMap.register("lugin", new TestMenuCommand(platform));
+
     }
 
     public void registerCurrencyCommand(@NotNull Currency currency) {

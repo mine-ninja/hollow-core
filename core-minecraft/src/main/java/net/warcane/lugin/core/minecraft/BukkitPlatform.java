@@ -10,6 +10,7 @@ import net.warcane.lugin.core.minecraft.event.tick.AsyncServerTickEvent;
 import net.warcane.lugin.core.minecraft.internal.command.InternalCommandManager;
 import net.warcane.lugin.core.minecraft.internal.listener.InternalPacketListeners;
 import net.warcane.lugin.core.minecraft.internal.listener.InternalPlayerListener;
+import net.warcane.lugin.core.minecraft.menu.SimpleMenuManager;
 import net.warcane.lugin.core.minecraft.permission.PermissionInjector;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDirectPlayGameCategoryPacket;
@@ -100,6 +101,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     private final PermissionInjector permissionInjector;
     private final PlayerStatisticsService playerStatisticsService;
     private final CurrencyManager currencyManager;
+    private final SimpleMenuManager menuManager;
 
     private boolean online;
 
@@ -112,6 +114,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         this.permissionInjector = PermissionInjector.fromCurrentPlatform(this);
         this.currencyManager = new CurrencyManager(this);
         this.playerStatisticsService = new PlayerStatisticsServiceImpl(getExecutorService());
+        this.menuManager = new SimpleMenuManager(this);
 
         this.loadGroupPermissions();
 
@@ -124,6 +127,8 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
           AsyncServerTickEvent::call,
           0, 50, TimeUnit.MILLISECONDS
         );
+
+        menuManager.initialize();
 
         internalCommandManager.registerInternalCommands();
 
@@ -250,5 +255,10 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     @NotNull
     public InternalCommandManager getInternalCommandManager() {
         return internalCommandManager;
+    }
+
+    @NotNull
+    public SimpleMenuManager getMenuManager() {
+        return menuManager;
     }
 }

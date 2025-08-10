@@ -1,7 +1,6 @@
 plugins {
   java
   id("maven-publish")
-
 }
 
 allprojects {
