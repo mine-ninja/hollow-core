@@ -32,10 +32,15 @@ public class NameTags {
     }
 
     public static void setNameTag(@NotNull Player player, String prefix, String suffix, int priority , @Nullable NamedTextColor color) {
+        prefix = prefix != null ? prefix.substring(0, Math.min(prefix.length(), 16)) : "";
+        suffix = suffix != null ? suffix.substring(0, Math.min(suffix.length(), 16)) : "";
+
+        setNameTag(player, Component.text(prefix), Component.text(suffix), priority, color);
+    }
+
+    public static void setNameTag(@NotNull Player player, Component prefix, Component suffix, int priority, @Nullable NamedTextColor color) {
         try {
             String teamName = "LG_" + priority + "_" + player.getEntityId();
-            prefix = prefix != null ? prefix.substring(0, Math.min(prefix.length(), 16)) : "";
-            suffix = suffix != null ? suffix.substring(0, Math.min(suffix.length(), 16)) : "";
 
             NameTagTeam existingTeam = playerTeams.get(player.getName());
             if (existingTeam != null && !existingTeam.teamName().equals(teamName)) {
@@ -44,8 +49,8 @@ public class NameTags {
 
             ScoreBoardTeamInfo teamInfo = new ScoreBoardTeamInfo(
               Component.text(teamName),
-              Component.text(prefix),
-              Component.text(suffix),
+              prefix,
+              suffix,
               NameTagVisibility.ALWAYS,
               CollisionRule.NEVER,
               color,
@@ -115,8 +120,8 @@ public class NameTags {
 
         final var info = new ScoreBoardTeamInfo(
           Component.text(team.teamName),
-          Component.text(team.prefix),
-          Component.text(team.suffix),
+          team.prefix,
+          team.suffix,
           NameTagVisibility.ALWAYS,
           CollisionRule.ALWAYS,
           team.color,
@@ -127,6 +132,7 @@ public class NameTags {
         return new WrapperPlayServerTeams(team.teamName, TeamMode.CREATE, info, player.getName());
     }
 
-    record NameTagTeam(String teamName, String prefix, String suffix, int priority , @Nullable NamedTextColor color) {
+    record NameTagTeam(String teamName, Component prefix, Component suffix, int priority,
+                       @Nullable NamedTextColor color) {
     }
 }

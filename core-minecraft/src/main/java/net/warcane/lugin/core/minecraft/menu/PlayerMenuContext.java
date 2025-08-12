@@ -8,6 +8,7 @@ import net.warcane.lugin.core.minecraft.menu.item.SimpleMenuItem;
 import net.warcane.lugin.core.minecraft.util.inventory.InventoryUpdate;
 import net.warcane.lugin.core.minecraft.util.stopwatch.Stopwatch;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
@@ -19,9 +20,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 public class PlayerMenuContext implements InventoryHolder {
+
+    private static final ItemStack AIR = new ItemStack(Material.AIR);
 
     private final Player player;
     private final Map<String, Object> rawData;
@@ -58,6 +62,13 @@ public class PlayerMenuContext implements InventoryHolder {
     public <T> T get(@NotNull String key) {
         final var raw = rawData.get(key);
         return raw == null ? null : (T) raw;
+    }
+
+    @NotNull
+    @SuppressWarnings("unchecked")
+    public <T> T getOrDefault(@NotNull String key, @NotNull T defaultValue) {
+        final var raw = rawData.get(key);
+        return raw == null ? defaultValue : (T) raw;
     }
 
     public void put(@NotNull String key, @NotNull Object value) {
@@ -127,6 +138,10 @@ public class PlayerMenuContext implements InventoryHolder {
         items.put(slot, new SimpleMenuItem(itemRenderer, clickHandler));
     }
 
+    public void setItem(int slot, @NotNull Supplier<ItemStack> itemSupplier, @NotNull Consumer<InventoryClickEvent> clickHandler) {
+        this.setItem(slot, player -> itemSupplier.get(), clickHandler);
+    }
+
     public void setItem(int slot, @NotNull ItemStack itemStack, @NotNull Consumer<InventoryClickEvent> clickHandler) {
         items.put(slot, new SimpleMenuItem(itemStack, clickHandler));
     }
@@ -139,6 +154,11 @@ public class PlayerMenuContext implements InventoryHolder {
         items.put(slot, new SimpleMenuItem(itemRenderer));
     }
 
+    public void removeItem(int slot) {
+        items.remove(slot);
+        inventory.setItem(slot, AIR);
+    }
+
     public void clearItems() {
         items.clear();
     }
@@ -148,7 +168,6 @@ public class PlayerMenuContext implements InventoryHolder {
      * com os renderizadores associados a cada item.
      */
     public void update() {
-        player.sendMessage("§aAtualizando o menu...");
         for (var entry : items.int2ObjectEntrySet()) {
             var slot = entry.getIntKey();
             var item = entry.getValue();
