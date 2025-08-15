@@ -16,7 +16,12 @@ public enum GameType {
     BEDWARS_DOUBLES(1, "Bedwars Duplas", ServerCategoryType.BEDWARS),
     BEDWARS_QUARTER(2, "Bedwars Quarteto", ServerCategoryType.BEDWARS),
 
-    FACTIONS_ICE(3, "Factions Ice", ServerCategoryType.FACTIONS);
+    FACTIONS_ICE(3, "Factions Ice", ServerCategoryType.FACTIONS),
+
+    SKYWARS_SOLO(2, "Skywars Solo", ServerCategoryType.SKYWARS),
+    SKYWARS_DOUBLES(2, "Skywars Duplas", ServerCategoryType.SKYWARS)
+
+    ;
 
     public static final Int2ObjectMap<GameType> ID_MAP = Arrays.stream(values())
       .collect(Collectors.toMap(

@@ -19,6 +19,7 @@ public enum ServerCategoryType {
     LOGIN("Servidor de Login"),
     LOBBY("Lobby"),
     BEDWARS("BedWars"),
+    SKYWARS("SkyWars"),
     MINA("Mina"),
     FACTIONS("Factions");
 
