@@ -1,0 +1,47 @@
+# EditorConfig para Java baseado no Google Java Style Guide
+# https://google.github.io/styleguide/javaguide.html
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Configurações específicas para Java
+[*.java]
+indent_style = space
+indent_size = 4
+continuation_indent_size = 8
+max_line_length = 100
+
+# Configurações para arquivos XML (Maven, Android, etc.)
+[*.xml]
+indent_style = space
+indent_size = 2
+
+# Configurações para arquivos de propriedades
+[*.properties]
+indent_style = space
+indent_size = 2
+
+# Configurações para arquivos Gradle
+[*.gradle]
+indent_style = space
+indent_size = 2
+
+# Configurações para arquivos JSON
+[*.json]
+indent_style = space
+indent_size = 2
+
+# Configurações para arquivos YAML
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# Configurações para arquivos Markdown
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = 80
