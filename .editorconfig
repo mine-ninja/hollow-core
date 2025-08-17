@@ -1,6 +1,3 @@
-# EditorConfig para Java baseado no Google Java Style Guide
-# https://google.github.io/styleguide/javaguide.html
-
 root = true
 
 [*]
@@ -9,39 +6,46 @@ end_of_line = lf
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-# Configurações específicas para Java
 [*.java]
 indent_style = space
 indent_size = 4
-continuation_indent_size = 8
+ij_continuation_indent_size = 2
 max_line_length = 100
 
-# Configurações para arquivos XML (Maven, Android, etc.)
-[*.xml]
+[*.{xml,fxml}]
 indent_style = space
-indent_size = 2
+indent_size = 4
+ij_continuation_indent_size = 2
 
-# Configurações para arquivos de propriedades
 [*.properties]
 indent_style = space
-indent_size = 2
+indent_size = 4
 
-# Configurações para arquivos Gradle
-[*.gradle]
+[*.{gradle,gradle.kts}]
 indent_style = space
-indent_size = 2
+indent_size = 4
 
-# Configurações para arquivos JSON
 [*.json]
 indent_style = space
 indent_size = 2
 
-# Configurações para arquivos YAML
 [*.{yml,yaml}]
 indent_style = space
 indent_size = 2
 
-# Configurações para arquivos Markdown
 [*.md]
+indent_style = space
+indent_size = 4
 trim_trailing_whitespace = false
-max_line_length = 80
+
+[*.{sh,bash,zsh}]
+indent_style = space
+indent_size = 4
+
+[Dockerfile*]
+indent_style = space
+indent_size = 4
+
+[{Makefile,makefile,*.mk}]
+indent_style = tab
+indent_size = 4
