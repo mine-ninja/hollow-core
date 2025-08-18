@@ -13,6 +13,13 @@ import java.util.List;
 
 public abstract class SimpleCommand extends Command {
 
+    /**
+     * @deprecated Use {@link #setPermission(String)} instead.
+     */
+    @Deprecated(
+      forRemoval = true,
+      since = "1.0.0"
+    )
     protected String requiredPermission;
     protected String noPermissionMessage;
 
@@ -28,6 +35,12 @@ public abstract class SimpleCommand extends Command {
         this.noPermissionMessage = "§cVocê não tem permissão para executar este comando.";
         this.playersOnly = false;
         this.playersOnlyMessage = "§cEste comando só pode ser executado por jogadores.";
+    }
+
+    protected void setRequiredPermission(String requiredPermission)
+    {
+        this.requiredPermission = requiredPermission;
+        super.setPermission(requiredPermission);
     }
 
     @Override
