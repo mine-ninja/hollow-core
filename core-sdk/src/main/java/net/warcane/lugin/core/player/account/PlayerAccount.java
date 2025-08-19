@@ -19,6 +19,7 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.*;
 
+import static net.warcane.lugin.core.player.subscription.PlayerGroupSubscription.createNewPermanentSubscription;
 import static net.warcane.lugin.core.player.subscription.PlayerGroupSubscription.createNewSubscription;
 
 @Slf4j
@@ -31,6 +32,12 @@ public record PlayerAccount(
   @JsonProperty("l") Instant lastLogin
 ) implements Serializable {
 
+
+    public PlayerAccount {
+        subscriptions = subscriptions == null ? new ArrayList<>() : new ArrayList<>(subscriptions);
+        createdAt = createdAt == null ? Instant.now() : createdAt;
+        lastLogin = lastLogin == null ? Instant.now() : lastLogin;
+    }
 
     /**
      * Cria uma nova instância de PlayerAccount com um novo nome.
@@ -89,7 +96,7 @@ public record PlayerAccount(
         final var currentSubscription = this.getHighestSubscription(type);
         final var primaryGroup = currentSubscription.group();
         final var groupPrefix = primaryGroup.getPrefix();
-        return groupPrefix + " §" + primaryGroup.getPrefixColorCode() + input;
+        return groupPrefix + "§" + primaryGroup.getPrefixColorCode() + input;
     }
 
     @NotNull
@@ -123,11 +130,19 @@ public record PlayerAccount(
             case 'e' -> 0xFFFF55;
             default -> 0xFFFFFF;
         };
+
         TextComponent group = Component.empty().append(groupPrefix);
         if (betweenComp != null) {
             group = group.append(betweenComp).append(Component.text(" "));
         }
         return group.append(Component.text(playerName).color(TextColor.color(color)));
+    }
+
+    public PlayerAccount removeSubscription(@NotNull PlayerGroupSubscription subscription) {
+        final var currentSubscriptions = new ArrayList<>(this.subscriptions);
+        currentSubscriptions.removeIf(existingSubscription -> existingSubscription.equals(subscription));
+
+        return new PlayerAccount(uniqueId, playerName, currentSubscriptions, createdAt, lastLogin);
     }
 
     /**
@@ -137,7 +152,6 @@ public record PlayerAccount(
      * @param type  O tipo de categoria da assinatura
      * @return Uma nova instância de PlayerAccount com a assinatura removida
      */
-    @JsonIgnore
     public PlayerAccount removeSubscription(@NotNull PlayerGroup group, @NotNull SubscriptionCategoryType type) {
         final var currentSubscriptions = new ArrayList<>(this.subscriptions);
         final var existingSubscription = this.getSubscriptionForGroup(group, type);
@@ -148,16 +162,24 @@ public record PlayerAccount(
         return new PlayerAccount(uniqueId, playerName, currentSubscriptions, createdAt, lastLogin);
     }
 
-    /**
-     * Cria uma nova assinatura para o jogador com base no grupo throwable tempo de expiração fornecidos
-     * caso uma assinatura já exista para o grupo throwable tipo especificados, ela será atualizada
-     * throwable seu tempo de expiração será alterado para o novo tempo fornecido.
-     *
-     * @param group                O grupo ao qual a assinatura pertence
-     * @param targetExpirationTime O tempo de expiração da assinatura
-     * @param type                 O tipo de categoria da assinatura
-     * @return Uma nova instância de PlayerAccount com a assinatura atualizada
-     */
+    public PlayerAccount withNewPermanentSubscription(@NotNull PlayerGroup group, @NotNull SubscriptionCategoryType type) {
+        try {
+            final var currentSubscriptions = subscriptions == null
+              ? new ArrayList<PlayerGroupSubscription>()
+              : new ArrayList<>(subscriptions);
+
+            currentSubscriptions.removeIf(
+              subscription -> Objects.equals(subscription.group(), group) && Objects.equals(subscription.type(), type));
+
+            final var newSubscription = createNewPermanentSubscription(group, type);
+            currentSubscriptions.add(newSubscription);
+
+            return new PlayerAccount(uniqueId, playerName, currentSubscriptions, createdAt, lastLogin);
+        } catch (Exception e) {
+            throw new IllegalStateException("Erro ao criar assinatura permanente: " + e.getMessage(), e);
+        }
+    }
+
     public PlayerAccount withNewSubscription(
       @NotNull PlayerGroup group,
       @NotNull Instant targetExpirationTime,
@@ -168,15 +190,15 @@ public record PlayerAccount(
               ? new ArrayList<PlayerGroupSubscription>()
               : new ArrayList<>(subscriptions);
 
-            currentSubscriptions.removeIf(subscription -> subscription.group() == group
-                                                          && subscription.type() == type);
+            currentSubscriptions.removeIf(
+              subscription -> Objects.equals(subscription.group(), group) && Objects.equals(subscription.type(), type));
 
             final var newSubscription = createNewSubscription(group, targetExpirationTime, type);
             currentSubscriptions.add(newSubscription);
 
             return new PlayerAccount(uniqueId, playerName, currentSubscriptions, createdAt, lastLogin);
         } catch (Exception e) {
-            throw new IllegalStateException(e);
+            throw new IllegalStateException("Erro ao criar assinatura: " + e.getMessage(), e);
         }
     }
 
@@ -205,24 +227,24 @@ public record PlayerAccount(
     ) {
         return this.getSubscriptions(type)
           .stream()
-          .filter(subscription -> subscription.group() == group)
+          .filter(subscription -> subscription.group().equals(group))
           .findFirst()
           .orElse(null);
     }
 
 
     @NotNull
-    @JsonProperty
+    @JsonIgnore
     public List<PlayerGroupSubscription> getSubscriptions(@NotNull SubscriptionCategoryType type) {
         if (subscriptions == null) return Collections.emptyList();
 
         return subscriptions.stream()
-          .filter(subscription -> subscription.type() == type && !subscription.isExpired())
+          .filter(subscription -> subscription.type() == type)
           .toList();
     }
 
     @Nullable
-    @JsonProperty
+    @JsonIgnore
     public PlayerGroupSubscription getHighestSpecialSubscription() {
         return this.getSubscriptions(SubscriptionCategoryType.GLOBAL)
           .stream()
@@ -230,4 +252,6 @@ public record PlayerAccount(
           .max(Comparator.comparingInt(sub -> sub.group().getPowerLevel()))
           .orElse(null);
     }
+
+
 }

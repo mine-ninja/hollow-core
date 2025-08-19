@@ -18,5 +18,4 @@ public record PlayerLoseGroupPacket(
   @JsonProperty("pid") UUID playerId,
   @JsonProperty("g") PlayerGroup group,
   @JsonProperty("c") SubscriptionCategoryType type
-) implements NetworkPacket {
-}
+) implements NetworkPacket { }

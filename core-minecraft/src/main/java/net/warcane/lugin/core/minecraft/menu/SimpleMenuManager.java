@@ -24,7 +24,6 @@ public class SimpleMenuManager implements Listener {
 
     public SimpleMenuManager(@NotNull BukkitPlatform platform) {
         this.platform = platform;
-        Bukkit.getPluginManager().registerEvents(this, platform.getPlugin());
     }
 
     public void initialize() {

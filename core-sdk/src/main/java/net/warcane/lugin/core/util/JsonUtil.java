@@ -1,6 +1,8 @@
 package net.warcane.lugin.core.util;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,6 +29,9 @@ public class JsonUtil {
       .serializationInclusion(JsonInclude.Include.NON_NULL)
       .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
       .addModules(new RecordNamingStrategyPatchModule(), new JavaTimeModule(), new ParameterNamesModule())
+      // Adicione essas duas linhas para usar apenas fields
+      .visibility(PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE)
+      .visibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
       .build();
 
 

@@ -15,9 +15,7 @@ import net.warcane.lugin.core.util.time.Time;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class PlayerGroupCommand extends SimpleCommand {
@@ -56,7 +54,9 @@ public class PlayerGroupCommand extends SimpleCommand {
     private void handleAddGroupCommand(@NotNull CommandContext ctx, @NotNull String playerName) {
         final var group = ctx.getEnumOrThrow(2, PlayerGroup.class, "§cGrupo inválido. Use um dos seguintes: " + String.join(", ", PlayerGroup.NAMES));
         final var rawTime = ctx.getRawArgOrThrow(3, "§cVocê deve especificar o tempo de duração do grupo (use 'permanente' para um grupo permanente).");
-        final var parsedTime = this.parseInstant(rawTime);
+        final var isPermanent = PERMANENT_ARG_VALUES.contains(rawTime.toLowerCase());
+
+        final var parsedTime = isPermanent ? null : this.parseInstant(rawTime);
         final var categoryType = ctx.getEnumOrThrow(4, SubscriptionCategoryType.class, "§cCategoria inválida. Use uma das seguintes: " + String.join(", ", SubscriptionCategoryType.BY_NAME.keySet()));
 
         if (categoryType == SubscriptionCategoryType.GLOBAL && !group.isSpecialGroup()) {
@@ -87,20 +87,16 @@ public class PlayerGroupCommand extends SimpleCommand {
 
               ctx.sendMessage("§7§oAdicionando grupo %s ao jogador %s...".formatted(group.name(), playerName));
 
-              playerAccountService.updatePlayerAccount(account.withNewSubscription(group, parsedTime, categoryType))
-                .orTimeout(5, TimeUnit.SECONDS)
-                .whenComplete((updatedAccount, updateError) -> {
+              playerAccountService.updatePlayerAccount(
+                (isPermanent || parsedTime == null)
+                  ? account.withNewPermanentSubscription(group, categoryType)
+                  : account.withNewSubscription(group, parsedTime, categoryType)
+              ).whenComplete((updatedAccount, updateError) -> {
                     if (updateError != null){
-                        updateError.printStackTrace();
+                        log.error("Erro ao atualizar conta do jogador {}: {}", playerName, updateError.getMessage());
                         ctx.sendMessage("§cErro ao atualizar conta do jogador: " + updateError.getMessage());
                         return;
                     }
-
-                    if (updatedAccount == null) {
-                        ctx.sendMessage("§cErro ao adicionar grupo ao jogador: " + playerName + ". Verifique se o grupo e a categoria estão corretos.");
-                        return;
-                    }
-
 
                     final var updatedSubscription = updatedAccount.getSubscriptionForGroup(group, categoryType);
                     if (updatedSubscription != null) {
@@ -110,6 +106,12 @@ public class PlayerGroupCommand extends SimpleCommand {
                         ctx.sendMessage("§aGrupo %s adicionado ao jogador %s com sucesso. Expira em: %s".formatted(group.name(), playerName, updatedSubscription.subscriptionEnd()));
                     } else {
                         ctx.sendMessage("§cErro ao adicionar grupo ao jogador: %s. Verifique se o grupo e a categoria estão corretos.".formatted(playerName));
+                        ctx.sendMessage(
+                          "§cGrupos do Jogador: " + updatedAccount.getSubscriptions(categoryType)
+                            .stream()
+                            .map(subscription -> subscription.group().getColoredDisplayName())
+                            .reduce((a, b) -> a + ", " + b)
+                            .orElse("Nenhum."));
                     }
                 });
           });
@@ -149,31 +151,39 @@ public class PlayerGroupCommand extends SimpleCommand {
           .whenComplete((account, error) -> {
               if (error != null)
                   throw new CommandFailedException("§cErro ao buscar conta do jogador: " + error.getMessage());
-              if (account == null) throw new CommandFailedException("§cJogador não encontrado: " + playerName);
+              if (account == null)
+                  throw new CommandFailedException("§cJogador não encontrado: " + playerName);
 
-              final var subscriptions = account.getSubscriptions(SubscriptionCategoryType.GLOBAL);
+              var subscriptions = account.getSubscriptions(SubscriptionCategoryType.GLOBAL);
               if (subscriptions.isEmpty()) {
-                  ctx.sendMessage("§cO jogador %s não possui grupos definidos.".formatted(playerName));
-              } else {
-                  int size = subscriptions.size();
-                  ctx.sendMessage("§aGrupos do jogador %s (%d):".formatted(playerName, size));
+                  ctx.sendMessage("§7O jogador §f%s §7não possui grupos.".formatted(playerName));
+                  return;
+              }
 
-                  for (SubscriptionCategoryType value : SubscriptionCategoryType.BY_NAME.values()) {
-                      final var categorySubscriptions = account.getSubscriptions(value);
-                      if (categorySubscriptions.isEmpty()) {
-                          ctx.sendMessage(" §cNenhum grupo encontrado na categoria %s.".formatted(value.name()));
+              ctx.sendMessage("§f%s §8• §7%d grupos".formatted(playerName, subscriptions.size()));
+              ctx.sendMessage("");
+
+              for (var category : SubscriptionCategoryType.BY_NAME.values()) {
+                  var categorySubscriptions = account.getSubscriptions(category);
+
+                  if (categorySubscriptions.isEmpty()) continue;
+                  var categoryName = category.getDisplayName();
+
+                  ctx.sendMessage("§e%s §8(%d)".formatted(categoryName, categorySubscriptions.size()));
+
+                  for (var subscription : categorySubscriptions) {
+                      var group = subscription.group();
+                      var isPermanent = subscription.isPermanent();
+
+                      if (isPermanent) {
+                          ctx.sendMessage("  §8• %s §7permanente".formatted(group.getColoredDisplayName()));
                       } else {
-                          int categorySize = categorySubscriptions.size();
-                          ctx.sendMessage("  §eCategoria %s (%s):".formatted(value.name(), categorySize));
-                          for (var subscription : categorySubscriptions) {
-                              final var group = subscription.group();
-                              final var endTime = subscription.subscriptionEnd();
-                              final var isPermanent = subscription.isPermanent();
-                              ctx.sendMessage("   - %s §7(Expira em: %s, Permanente: %s)".formatted(group.getColoredDisplayName(), endTime, isPermanent));
-                          }
-                          ctx.sendMessage("");
+                          var endTime = subscription.subscriptionEnd();
+                          ctx.sendMessage("  §8• %s §7até %s".formatted(group.getColoredDisplayName(), endTime));
                       }
                   }
+
+                  ctx.sendMessage("");
               }
           });
     }
@@ -184,11 +194,8 @@ public class PlayerGroupCommand extends SimpleCommand {
     }
 
     private Instant parseInstant(@NotNull String rawTime) {
-        if (PERMANENT_ARG_VALUES.contains(rawTime.toLowerCase())) {
-            return ZonedDateTime.now().plusDays(36500).toInstant();
-        }
         try {
-            return Time.parseString(rawTime).toInstant();
+            return Time.parseString(rawTime).toInstantFromNow();
         } catch (Exception e) {
             throw new CommandFailedException("§cFormato de tempo inválido: " + rawTime);
         }

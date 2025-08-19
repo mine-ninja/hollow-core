@@ -3,21 +3,23 @@ package net.warcane.lugin.core.minecraft.internal.listener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
-import net.warcane.lugin.core.minecraft.util.nametag.NameTags;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.SendMessageToPlayerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.SendModernMessageToPlayerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.SendSoundToPlayerPacket;
+import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerLoseGroupPacket;
 import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerReceiveGroupPacket;
 import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleportToLocationPacket;
 import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleportToTargetPacket;
 import net.warcane.lugin.core.network.packet.impl.staff.StaffMessagePacket;
 import net.warcane.lugin.core.network.packet.listener.PacketListener;
-import net.warcane.lugin.core.util.property.Property;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.UUID;
+
+import static net.warcane.lugin.core.minecraft.task.Tasks.runSync;
 import static net.warcane.lugin.core.minecraft.util.LocationUtil.convertToRemoteLocation;
 
 @RequiredArgsConstructor
@@ -27,13 +29,26 @@ public class InternalPacketListeners {
     private final BukkitPlatform platform;
 
     public void setup() {
-        platform.getNetworkClient().registerPacketListener(SendMessageToPlayerPacket.class, new SendMessagePacketListener());
-        platform.getNetworkClient().registerPacketListener(StaffMessagePacket.class, new StaffMessagePacketListener());
-        platform.getNetworkClient().registerPacketListener(PlayerReceiveGroupPacket.class, new PlayerGroupReceivePacketListener(platform));
-        platform.getNetworkClient().registerPacketListener(SendMessageToPlayerPacket.class, new MessageToPlayerPacketListener());
-        platform.getNetworkClient().registerPacketListener(SendModernMessageToPlayerPacket.class, new ModernMessageToPlayerPacketListener());
-        platform.getNetworkClient().registerPacketListener(SendSoundToPlayerPacket.class, new SendSoundToPlayerPacketListener());
-        platform.getNetworkClient().registerPacketListener(PlayerTeleportToTargetPacket.class, new TargetedTeleportListener());
+        final var networkClient = platform.getNetworkClient();
+        networkClient.registerPacketListener(SendMessageToPlayerPacket.class, new SendMessagePacketListener());
+        networkClient.registerPacketListener(StaffMessagePacket.class, new StaffMessagePacketListener());
+        networkClient.registerPacketListener(PlayerReceiveGroupPacket.class, new PlayerGroupReceivePacketListener(platform));
+        networkClient.registerPacketListener(PlayerLoseGroupPacket.class, new PlayerLoseGroupPacketListener(platform));
+        networkClient.registerPacketListener(SendMessageToPlayerPacket.class, new MessageToPlayerPacketListener());
+        networkClient.registerPacketListener(SendModernMessageToPlayerPacket.class, new ModernMessageToPlayerPacketListener());
+        networkClient.registerPacketListener(SendSoundToPlayerPacket.class, new SendSoundToPlayerPacketListener());
+        networkClient.registerPacketListener(PlayerTeleportToTargetPacket.class, new TargetedTeleportListener());
+    }
+
+    private static void updatePlayerPerms(BukkitPlatform platform, UUID uuid) {
+        final var account = platform.getPlayerAccountService().getCachedAccount(uuid);
+        if (account == null) return;
+
+        final var player = Bukkit.getPlayer(uuid);
+        if (player == null) return;
+
+        platform.getNameTagProvider().applyNameTag(account);
+        platform.getPermissionInjector().injectPermissions(player);
     }
 
     public static class TargetedTeleportListener implements PacketListener<PlayerTeleportToTargetPacket> {
@@ -42,9 +57,8 @@ public class InternalPacketListeners {
             final var playerToTeleport = Bukkit.getPlayer(packet.playerId());
             final var targetPlayer = Bukkit.getPlayer(packet.targetId());
             if (playerToTeleport != null && targetPlayer != null) { // se ambos os jogadores existirem, teleporta o jogador localmente...
-                playerToTeleport.teleportAsync(targetPlayer.getLocation());
+                runSync(() -> playerToTeleport.teleport(targetPlayer.getLocation()));
             } else if (targetPlayer != null) { // se só o alvo existir, teleporta o jogador remotamente...
-
                 final var destination = convertToRemoteLocation(targetPlayer.getLocation());
                 final var teleportToLocationPacket = new PlayerTeleportToLocationPacket(packet.playerId(), destination);
 
@@ -87,22 +101,19 @@ public class InternalPacketListeners {
 
         @Override
         public void onReceivePacket(@NotNull PlayerReceiveGroupPacket packet, @NotNull Headers headers) {
-            final var player = Bukkit.getPlayer(packet.playerId());
-            if (player == null) return;
-
-            final var category = packet.categoryType();
-            final var expectedCategory = platform.getSubscriptionCategoryType();
-            if (category != expectedCategory) return;
+            updatePlayerPerms(platform, packet.playerId());
+        }
+    }
 
 
-            final var groupPrefix = packet.receivedGroup().getPrefix();
-            final var priority = packet.receivedGroup().getPriorityValue();
-            final var groupColor = packet.receivedGroup().getNamedTextColor();
+    @RequiredArgsConstructor
+    public static class PlayerLoseGroupPacketListener implements PacketListener<PlayerLoseGroupPacket> {
 
-            final var loadTagsOnJoin = Property.get("LOAD_TAGS_ON_JOIN", "true").equalsIgnoreCase("true");
-            if (loadTagsOnJoin) {
-                NameTags.setNameTag(player, groupPrefix, "", priority, groupColor);
-            }
+        private final BukkitPlatform platform;
+
+        @Override
+        public void onReceivePacket(@NotNull PlayerLoseGroupPacket packet, @NotNull Headers headers) {
+            updatePlayerPerms(platform, packet.playerId());
         }
     }
 
@@ -123,7 +134,6 @@ public class InternalPacketListeners {
             Player player = Bukkit.getPlayer(packet.playerId());
             if (player != null) {
                 player.sendMessage(packet.getMessage());
-//
             }
         }
     }

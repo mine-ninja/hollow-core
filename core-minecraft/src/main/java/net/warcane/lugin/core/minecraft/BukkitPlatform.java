@@ -1,5 +1,7 @@
 package net.warcane.lugin.core.minecraft;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.AbstractPlatform;
 import net.warcane.lugin.core.MinecraftServerPlatform;
@@ -10,7 +12,10 @@ import net.warcane.lugin.core.minecraft.event.tick.AsyncServerTickEvent;
 import net.warcane.lugin.core.minecraft.internal.command.InternalCommandManager;
 import net.warcane.lugin.core.minecraft.internal.listener.InternalPacketListeners;
 import net.warcane.lugin.core.minecraft.internal.listener.InternalPlayerListener;
+import net.warcane.lugin.core.minecraft.internal.listener.PlayerGroupUpdatingListener;
 import net.warcane.lugin.core.minecraft.menu.SimpleMenuManager;
+import net.warcane.lugin.core.minecraft.nametag.LegacyNameTagResolver;
+import net.warcane.lugin.core.minecraft.nametag.NameTagResolver;
 import net.warcane.lugin.core.minecraft.permission.PermissionInjector;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDirectPlayGameCategoryPacket;
@@ -103,6 +108,8 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     private final CurrencyManager currencyManager;
     private final SimpleMenuManager menuManager;
 
+    private NameTagResolver nameTagResolver;
+
     private boolean online;
 
     private BukkitPlatform(Plugin plugin, @NotNull ServerCategoryType serverCategoryType) {
@@ -115,6 +122,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         this.currencyManager = new CurrencyManager(this);
         this.playerStatisticsService = new PlayerStatisticsServiceImpl(getExecutorService());
         this.menuManager = new SimpleMenuManager(this);
+        this.nameTagResolver = new LegacyNameTagResolver(this);
 
         this.loadGroupPermissions();
 
@@ -141,9 +149,12 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         networkClient.sendNetworkPacket(NetworkChannel.SERVER_STATUS, serverRegisterPacket);
 
         Bukkit.getPluginManager().registerEvents(new InternalPlayerListener(this), plugin);
+        Bukkit.getPluginManager().registerEvents(new PlayerGroupUpdatingListener(this), plugin);
+
 
         final var internalPackets = new InternalPacketListeners(this);
         internalPackets.setup();
+
 
         this.online = true;
         gameServerService.update(this.getGameServer().withOnlineStatus(true));
@@ -218,6 +229,15 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         return playerStatisticsService;
     }
 
+    @NotNull
+    public NameTagResolver getNameTagProvider() {
+        return nameTagResolver;
+    }
+
+    public void setNameTagProvider(@NotNull NameTagResolver nameTagResolver) {
+        this.nameTagResolver = nameTagResolver;
+    }
+
     public void updateServerInfo() {
         if (!online) return;
 
@@ -245,6 +265,13 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
             case FACTIONS, MINA -> SubscriptionCategoryType.FACTIONS;
             default -> SubscriptionCategoryType.GLOBAL;
         };
+    }
+
+    public boolean isRunningOnNewVersions() {
+        return PacketEvents.getAPI()
+          .getServerManager()
+          .getVersion()
+          .isNewerThanOrEquals(ServerVersion.V_1_8_8);
     }
 
     @NotNull

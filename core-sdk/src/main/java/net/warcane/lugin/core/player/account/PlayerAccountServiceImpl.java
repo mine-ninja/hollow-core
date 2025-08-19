@@ -109,21 +109,24 @@ public class PlayerAccountServiceImpl implements PlayerAccountService {
     @Override
     public CompletableFuture<@NotNull PlayerAccount> updatePlayerAccount(@NotNull PlayerAccount toUpdate, @NotNull AccountUpdateOptions options) {
         return supply(() -> {
-            log.info("Updating player account for {}: {}", toUpdate.uniqueId(), toUpdate);
+            try {
+                log.info("Updating player account for {}: {}", toUpdate.uniqueId(), toUpdate);
 
-            final var updated = repository.save(toUpdate, PlayerAccount::uniqueId);
-            if (updated == null) {
-                throw new IllegalStateException("Failed to update player account: " + toUpdate.uniqueId());
+                final var updated = repository.save(toUpdate, PlayerAccount::uniqueId);
+                if (updated == null) {
+                    throw new IllegalStateException("Failed to update player account: " + toUpdate.uniqueId());
+                }
+
+                if (options.updateCaches()) {
+                    log.info("Updating caches for player account: {}", updated);
+                    localCache.put(updated.uniqueId(), updated);
+                    redisCache.hset(CACHE_KEY, updated.uniqueId().toString(), updated);
+                }
+
+                return updated;
+            } catch (Exception e) {
+                throw new IllegalStateException("Failed to update player account: " + toUpdate.uniqueId(), e);
             }
-
-
-            if (options.updateCaches()) {
-                log.info("Updating caches for player account: {}", toUpdate.uniqueId());
-                redisCache.hset(CACHE_KEY, toUpdate.uniqueId().toString(), updated);
-                localCache.put(toUpdate.uniqueId(), updated);
-            }
-
-            return updated;
         });
     }
 
