@@ -6,14 +6,12 @@ import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.AbstractPlatform;
 import net.warcane.lugin.core.ProxyPlatform;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
+import net.warcane.lugin.core.network.packet.impl.player.PlayerConnectToServerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDirectPlayGameCategoryPacket;
 import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleportToLocationPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerUnregisterPacket;
-import net.warcane.lugin.core.proxy.listener.PlayerDirectPlayGameCategoryListener;
-import net.warcane.lugin.core.proxy.listener.PlayerTeleportListener;
-import net.warcane.lugin.core.proxy.listener.ServerRegisterPacketListener;
-import net.warcane.lugin.core.proxy.listener.ServerUnregisterPacketListener;
+import net.warcane.lugin.core.proxy.listener.*;
 import net.warcane.lugin.core.server.GameServer;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
 import net.warcane.lugin.core.util.address.HostAddress;
@@ -40,6 +38,7 @@ public class VelocityPlatform extends AbstractPlatform implements ProxyPlatform 
         networkClient.registerPacketListener(PlayerTeleportToLocationPacket.class, new PlayerTeleportListener(this));
         networkClient.registerPacketListener(ServerUnregisterPacket.class, new ServerUnregisterPacketListener(this));
         networkClient.registerPacketListener(PlayerDirectPlayGameCategoryPacket.class, new PlayerDirectPlayGameCategoryListener(this));
+        networkClient.registerPacketListener(PlayerConnectToServerPacket.class, new PlayerConnectToServerListener(this));
 
         int serverCount = 0;
         for (GameServer gameServer : gameServerService.queryAllServersInNetwork()) {
