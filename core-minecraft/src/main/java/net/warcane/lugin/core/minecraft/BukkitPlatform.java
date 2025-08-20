@@ -18,6 +18,7 @@ import net.warcane.lugin.core.minecraft.nametag.LegacyNameTagResolver;
 import net.warcane.lugin.core.minecraft.nametag.NameTagResolver;
 import net.warcane.lugin.core.minecraft.permission.PermissionInjector;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
+import net.warcane.lugin.core.network.packet.impl.player.PlayerConnectedToServerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDirectPlayGameCategoryPacket;
 import net.warcane.lugin.core.network.packet.impl.player.SendSoundToPlayerPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
@@ -246,6 +247,11 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
     public void tryConnectPlayerToServerCategory(@NotNull UUID player, @NotNull ServerCategoryType categoryType) {
         final var packet = new PlayerDirectPlayGameCategoryPacket(player, categoryType);
+        networkClient.sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, packet);
+    }
+
+    public void tryConnectPlayerToServer(@NotNull UUID player, @NotNull String serverId) {
+        final var packet = new PlayerConnectedToServerPacket(player, serverId);
         networkClient.sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, packet);
     }
 
