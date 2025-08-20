@@ -53,6 +53,7 @@ final class PacketMappings {
         entry(5, PlayerDisconnectedFromServerPacket.class),
         entry(6, PlayerJoinRequestPacket.class),
         entry(7, PlayerDirectPlayGameCategoryPacket.class),
+        entry(16, PlayerConnectToServerPacket.class),
 
         entry(88, SendModernMessageToPlayerPacket.class),
         entry(8, SendMessageToPlayerPacket.class),
