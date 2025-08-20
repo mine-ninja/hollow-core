@@ -17,6 +17,7 @@ import net.warcane.lugin.core.minecraft.menu.SimpleMenuManager;
 import net.warcane.lugin.core.minecraft.nametag.LegacyNameTagResolver;
 import net.warcane.lugin.core.minecraft.nametag.NameTagResolver;
 import net.warcane.lugin.core.minecraft.permission.PermissionInjector;
+import net.warcane.lugin.core.minecraft.vanish.VanishManager;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDirectPlayGameCategoryPacket;
 import net.warcane.lugin.core.network.packet.impl.player.SendSoundToPlayerPacket;
@@ -106,6 +107,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     private final PermissionInjector permissionInjector;
     private final PlayerStatisticsService playerStatisticsService;
     private final CurrencyManager currencyManager;
+    private final VanishManager vanishManager;
     private final SimpleMenuManager menuManager;
 
     private NameTagResolver nameTagResolver;
@@ -120,6 +122,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         this.internalCommandManager = new InternalCommandManager(this);
         this.permissionInjector = PermissionInjector.fromCurrentPlatform(this);
         this.currencyManager = new CurrencyManager(this);
+        this.vanishManager = new VanishManager(this);
         this.playerStatisticsService = new PlayerStatisticsServiceImpl(getExecutorService());
         this.menuManager = new SimpleMenuManager(this);
         this.nameTagResolver = new LegacyNameTagResolver(this);
@@ -150,7 +153,6 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
         Bukkit.getPluginManager().registerEvents(new InternalPlayerListener(this), plugin);
         Bukkit.getPluginManager().registerEvents(new PlayerGroupUpdatingListener(this), plugin);
-
 
         final var internalPackets = new InternalPacketListeners(this);
         internalPackets.setup();
@@ -277,6 +279,11 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     @NotNull
     public CurrencyManager getCurrencyManager() {
         return currencyManager;
+    }
+
+    @NotNull
+    public VanishManager getVanishManager() {
+        return vanishManager;
     }
 
     @NotNull

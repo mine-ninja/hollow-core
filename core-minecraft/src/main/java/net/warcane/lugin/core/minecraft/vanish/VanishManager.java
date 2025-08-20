@@ -1,0 +1,79 @@
+package net.warcane.lugin.core.minecraft.vanish;
+
+import net.warcane.lugin.core.group.PlayerGroup;
+import net.warcane.lugin.core.minecraft.BukkitPlatform;
+import net.warcane.lugin.core.player.account.PlayerAccount;
+import net.warcane.lugin.core.player.subscription.SubscriptionCategoryType;
+import net.warcane.lugin.core.util.data.RedisCache;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.*;
+
+public class VanishManager {
+
+    private static final RedisCache<String> vanishCache = new RedisCache<>(String.class);
+    private static final String IDX = "vanish";
+
+    private final Plugin plugin;
+
+    public VanishManager(BukkitPlatform bukkitPlatform) {
+        plugin = bukkitPlatform.getPlugin();
+    }
+
+    public void vanish(Player player) {
+        PlayerAccount playerAccount = BukkitPlatform.getInstance().getPlayerAccountService().getCachedAccount(player.getUniqueId());
+
+        if (playerAccount != null) {
+            setVanish(player.getUniqueId(), true);
+
+            for (Player target : Bukkit.getOnlinePlayers())
+                if (!canSeeIfVanished(target, player))
+                    target.hidePlayer(player);
+        }
+    }
+
+    public void unvanish(Player player) {
+        PlayerAccount playerAccount = BukkitPlatform.getInstance().getPlayerAccountService().getCachedAccount(player.getUniqueId());
+
+        if (playerAccount != null) {
+            setVanish(player.getUniqueId(), false);
+
+            for (Player target : Bukkit.getOnlinePlayers())
+                target.showPlayer(player);
+        }
+    }
+
+    public boolean isVanished(Player player) {
+        String value = vanishCache.get(IDX + ":" + player.getUniqueId());
+        return value != null && value.equalsIgnoreCase("true");
+    }
+
+    private void setVanish(@NotNull UUID playerId, @NotNull Boolean value) {
+        vanishCache.set(IDX + ":" + playerId, value.toString());
+    }
+
+    public boolean canSeeIfVanished(Player player, Player target) {
+        PlayerAccount playerAccount = BukkitPlatform.getInstance().getPlayerAccountService().getCachedAccount(player.getUniqueId());
+        PlayerAccount targetAccount = BukkitPlatform.getInstance().getPlayerAccountService().getCachedAccount(target.getUniqueId());
+
+        SubscriptionCategoryType categoryType = BukkitPlatform.getInstance().getSubscriptionCategoryType();
+
+        if (playerAccount != null && targetAccount != null) {
+            PlayerGroup playerGroup = playerAccount.getHighestSubscription(categoryType).group();
+            PlayerGroup targetGroup = targetAccount.getHighestSubscription(categoryType).group();
+
+            if (playerGroup != null && targetGroup != null) {
+                return playerGroup.getPowerLevel() >= targetGroup.getPowerLevel();
+            }
+        }
+
+        return false;
+    }
+}
