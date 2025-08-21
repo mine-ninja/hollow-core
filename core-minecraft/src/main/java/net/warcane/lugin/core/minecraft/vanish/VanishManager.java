@@ -55,7 +55,7 @@ public class VanishManager {
         return value != null && value.equalsIgnoreCase("true");
     }
 
-    private void setVanish(@NotNull UUID playerId, @NotNull Boolean value) {
+    public void setVanish(@NotNull UUID playerId, @NotNull Boolean value) {
         vanishCache.set(IDX + ":" + playerId, value.toString());
     }
 
