@@ -3,6 +3,9 @@ package net.warcane.lugin.core.minecraft.internal.listener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
+import net.warcane.lugin.core.minecraft.event.account.PlayerAccountLoadEvent;
+import net.warcane.lugin.core.minecraft.task.Tasks;
+import net.warcane.lugin.core.minecraft.vanish.VanishManager;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.SendMessageToPlayerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.SendModernMessageToPlayerPacket;
@@ -46,6 +49,7 @@ public class InternalPacketListeners {
         networkClient.registerPacketListener(SendModernMessageToPlayerPacket.class, new ModernMessageToPlayerPacketListener());
         networkClient.registerPacketListener(SendSoundToPlayerPacket.class, new SendSoundToPlayerPacketListener());
         networkClient.registerPacketListener(PlayerTeleportToTargetPacket.class, new TargetedTeleportListener());
+        networkClient.registerPacketListener(GoCachePacket.class, new GoCacheListener());
 
         final var listener = new GoCacheListener();
 
@@ -86,23 +90,29 @@ public class InternalPacketListeners {
 
         private static final HashMap<UUID, UUID> goCache = new HashMap<>();
 
-        @EventHandler(priority = EventPriority.HIGHEST)
-        public void onJoin(PlayerJoinEvent event) {
-            Player player = event.getPlayer();
+        @EventHandler(priority = EventPriority.LOWEST)
+        public void onJoin(PlayerAccountLoadEvent event) {
+            UUID uuid = event.getLoadedAccount().uniqueId();
+            Player player = Bukkit.getPlayer(uuid);
 
-            UUID uuid = player.getUniqueId();
-            UUID uuidTarget = goCache.get(uuid);
+            if (player != null) {
+                UUID uuidTarget = goCache.get(uuid);
 
-            if (uuidTarget != null) {
-                goCache.remove(uuid);
+                if (uuidTarget != null) {
+                    goCache.remove(uuid);
 
-                Bukkit.getScheduler().runTaskLater(BukkitPlatform.getInstance().getPlugin(), () -> {
-                    Player target = Bukkit.getPlayer(uuidTarget);
+                    Tasks.runSync(() -> {
+                        VanishManager vanishManager = BukkitPlatform.getInstance().getVanishManager();
 
-                    if (target != null) {
-                        player.teleport(target);
-                    }
-                }, 1L);
+                        vanishManager.vanish(player);
+
+                        Player target = Bukkit.getPlayer(uuidTarget);
+
+                        if (target != null) {
+                            player.teleport(target);
+                        }
+                    });
+                }
             }
         }
 

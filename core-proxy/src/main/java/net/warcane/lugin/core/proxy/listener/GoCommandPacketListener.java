@@ -1,6 +1,7 @@
 package net.warcane.lugin.core.proxy.listener;
 
 import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.ServerConnection;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
@@ -35,19 +36,22 @@ public class GoCommandPacketListener implements PacketListener<GoCommandPacket> 
 
             if (targetOptional.isPresent()) {
                 Player target = targetOptional.get();
+                Optional<ServerConnection> serverConnectionOptional = target.getCurrentServer();
 
-                target.getCurrentServer().ifPresentOrElse(serverConnection -> {
-                    platform.sendMessageToPlayer(packet.uniqueId(), COMMAND_SUCCESS.formatted(target.getUsername()));
+                if (serverConnectionOptional.isPresent()) {
+                    ServerConnection serverConnection = serverConnectionOptional.get();
+
+                    player.sendMessage(Component.text(COMMAND_SUCCESS.formatted(target.getUsername())));
 
                     GoCachePacket goCachePacket = new GoCachePacket(packet.uniqueId(), target.getUniqueId());
                     platform.getNetworkClient().sendNetworkPacket(NetworkChannel.GO, goCachePacket);
 
                     player.createConnectionRequest(serverConnection.getServer()).fireAndForget();
-                }, () -> {
-                    platform.sendMessageToPlayer(packet.uniqueId(), SERVER_NOT_FOUND);
-                });
+                } else {
+                    player.sendMessage(Component.text(SERVER_NOT_FOUND));
+                }
             } else {
-                platform.sendMessageToPlayer(packet.uniqueId(), PLAYER_NOT_FOUND);
+                player.sendMessage(Component.text(PLAYER_NOT_FOUND));
             }
         });
     }

@@ -129,16 +129,6 @@ public final class InternalPlayerListener implements Listener {
                     }, 1);
                 }
 
-                Tasks.runAsyncLater(() -> {
-                    final var loadTagsOnJoin = Property.getBoolean("LOAD_TAGS_ON_JOIN", true);
-                    if (loadTagsOnJoin) {
-                        NameTags.setNameTag(player, groupPrefix, "", priority, group.getNamedTextColor());
-                        NameTags.updateAllTags();
-                    }
-
-                    Bukkit.getPluginManager().callEvent(new PlayerAccountLoadEvent(playerAccount));
-                }, 1);
-
                 Tasks.runSync(() -> {
                     // TODO: favor não me crucificar isso é temporário
 
@@ -154,6 +144,16 @@ public final class InternalPlayerListener implements Listener {
                         }
                     }
                 });
+
+                Tasks.runAsyncLater(() -> {
+                    final var loadTagsOnJoin = Property.getBoolean("LOAD_TAGS_ON_JOIN", true);
+                    if (loadTagsOnJoin) {
+                        NameTags.setNameTag(player, groupPrefix, "", priority, group.getNamedTextColor());
+                        NameTags.updateAllTags();
+                    }
+
+                    Bukkit.getPluginManager().callEvent(new PlayerAccountLoadEvent(playerAccount));
+                }, 1);
             } catch (Exception e) {
                 e.printStackTrace();
                 log.error("Error while processing player join for {}: {}", player.getName(), e.getMessage(), e);

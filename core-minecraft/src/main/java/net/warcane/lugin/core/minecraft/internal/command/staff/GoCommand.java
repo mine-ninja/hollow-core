@@ -4,6 +4,7 @@ import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.command.SimpleCommand;
 import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
+import net.warcane.lugin.core.minecraft.vanish.VanishManager;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.staff.GoCommandPacket;
 import net.warcane.lugin.core.network.packet.impl.staff.StaffMessagePacket;
@@ -17,6 +18,7 @@ import java.util.List;
 public class GoCommand extends SimpleCommand {
 
     private static final String COMMAND_SUCCESS = "§aEnviando você à %s...";
+    private static final String NAME_NOT_INSERTED = "§cVocê precisa inserir o nome do jogador.";
 
     @SuppressWarnings("unused")
     private final BukkitPlatform platform;
@@ -35,11 +37,15 @@ public class GoCommand extends SimpleCommand {
         final var player = ctx.getSenderAsPlayer();
 
         String name = ctx.getRawArgOrNull(0);
+
+        if (name == null)
+            throw new CommandFailedException(NAME_NOT_INSERTED);
+
         Player target = Bukkit.getPlayer(name);
 
-        player.performCommand("/vanish");
-
         if (target != null) {
+            BukkitPlatform.getInstance().getVanishManager().setVanish(player.getUniqueId(), true);
+
             player.sendMessage(COMMAND_SUCCESS.formatted(target.getName()));
             player.teleport(target);
             return;
