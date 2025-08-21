@@ -14,7 +14,7 @@ import static java.util.stream.Collectors.toMap;
 @AllArgsConstructor
 public enum PlayerGroup {
 
-    MASTER("master", "§6[Master] ", '\uE003', "Master", NamedTextColor.GOLD, 11),
+    MASTER("master", "§6[Master] ", '\uE003', "Master", NamedTextColor.GOLD, 12),
     MANAGER("manager", "§4[Gerente] ", '\uE004', "Gerente", NamedTextColor.DARK_RED, 11),
     ADMIN("admin", "§c[Admin] ", '\uE005', "Admin", NamedTextColor.RED, 10),
     MODERATOR("moderator", "§2[Moderador] ", '\uE006', "Moderador", NamedTextColor.DARK_GREEN, 9),
