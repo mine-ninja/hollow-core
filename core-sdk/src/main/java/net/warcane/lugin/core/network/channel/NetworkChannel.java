@@ -16,6 +16,7 @@ public enum NetworkChannel {
     SERVER_STATUS,
     FRIENDS,
     PARTY,
+    GO,
     MATCHMAKING,
     OPERATION;
 

@@ -11,12 +11,19 @@ import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerLoseGr
 import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerReceiveGroupPacket;
 import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleportToLocationPacket;
 import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleportToTargetPacket;
+import net.warcane.lugin.core.network.packet.impl.staff.GoCachePacket;
+import net.warcane.lugin.core.network.packet.impl.staff.GoCommandPacket;
 import net.warcane.lugin.core.network.packet.impl.staff.StaffMessagePacket;
 import net.warcane.lugin.core.network.packet.listener.PacketListener;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.UUID;
 
 import static net.warcane.lugin.core.minecraft.task.Tasks.runSync;
@@ -30,6 +37,7 @@ public class InternalPacketListeners {
 
     public void setup() {
         final var networkClient = platform.getNetworkClient();
+
         networkClient.registerPacketListener(SendMessageToPlayerPacket.class, new SendMessagePacketListener());
         networkClient.registerPacketListener(StaffMessagePacket.class, new StaffMessagePacketListener());
         networkClient.registerPacketListener(PlayerReceiveGroupPacket.class, new PlayerGroupReceivePacketListener(platform));
@@ -38,6 +46,11 @@ public class InternalPacketListeners {
         networkClient.registerPacketListener(SendModernMessageToPlayerPacket.class, new ModernMessageToPlayerPacketListener());
         networkClient.registerPacketListener(SendSoundToPlayerPacket.class, new SendSoundToPlayerPacketListener());
         networkClient.registerPacketListener(PlayerTeleportToTargetPacket.class, new TargetedTeleportListener());
+
+        final var listener = new GoCacheListener();
+
+        networkClient.registerPacketListener(GoCachePacket.class, listener);
+        Bukkit.getPluginManager().registerEvents(listener, platform.getPlugin());
     }
 
     private static void updatePlayerPerms(BukkitPlatform platform, UUID uuid) {
@@ -65,6 +78,49 @@ public class InternalPacketListeners {
                 BukkitPlatform.getInstance()
                   .getNetworkClient()
                   .sendNetworkPacket(NetworkChannel.OPERATION, teleportToLocationPacket);
+            }
+        }
+    }
+
+    public static class GoCacheListener implements PacketListener<GoCachePacket>, Listener {
+
+        private static final HashMap<UUID, UUID> goCache = new HashMap<>();
+
+        @EventHandler(priority = EventPriority.HIGHEST)
+        public void onJoin(PlayerJoinEvent event) {
+            Player player = event.getPlayer();
+
+            UUID uuid = player.getUniqueId();
+            UUID uuidTarget = goCache.get(uuid);
+
+            if (uuidTarget != null) {
+                goCache.remove(uuid);
+
+                Bukkit.getScheduler().runTaskLater(BukkitPlatform.getInstance().getPlugin(), () -> {
+                    Player target = Bukkit.getPlayer(uuidTarget);
+
+                    if (target != null) {
+                        player.teleport(target);
+                    }
+                }, 1L);
+            }
+        }
+
+        @Override
+        public void onReceivePacket(@NotNull GoCachePacket packet, @NotNull Headers headers) {
+            UUID playerUUID = packet.uniqueId();
+            UUID targetUUID = packet.targetId();
+
+            Player player = Bukkit.getPlayer(playerUUID);
+
+            if (player != null) {
+                Player target = Bukkit.getPlayer(targetUUID);
+
+                if (target != null) {
+                    player.teleport(target);
+                }
+            } else {
+                goCache.put(playerUUID, targetUUID);
             }
         }
     }

@@ -10,6 +10,7 @@ import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.util.LocationUtil;
 import net.warcane.lugin.core.minecraft.util.Tab;
 import net.warcane.lugin.core.minecraft.util.nametag.NameTags;
+import net.warcane.lugin.core.minecraft.vanish.VanishManager;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerConnectedToServerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDisconnectedFromServerPacket;
@@ -128,7 +129,6 @@ public final class InternalPlayerListener implements Listener {
                     }, 1);
                 }
 
-
                 Tasks.runAsyncLater(() -> {
                     final var loadTagsOnJoin = Property.getBoolean("LOAD_TAGS_ON_JOIN", true);
                     if (loadTagsOnJoin) {
@@ -139,6 +139,21 @@ public final class InternalPlayerListener implements Listener {
                     Bukkit.getPluginManager().callEvent(new PlayerAccountLoadEvent(playerAccount));
                 }, 1);
 
+                Tasks.runSync(() -> {
+                    // TODO: favor não me crucificar isso é temporário
+
+                    if (BukkitPlatform.getInstance().getVanishManager().isVanished(player)) {
+                        BukkitPlatform.getInstance().getVanishManager().vanish(player);
+                    }
+
+                    for (Player target : Bukkit.getOnlinePlayers()) {
+                        VanishManager vanishManager = BukkitPlatform.getInstance().getVanishManager();
+
+                        if (vanishManager.isVanished(target) && !vanishManager.canSeeIfVanished(player, target)) {
+                            player.hidePlayer(target);
+                        }
+                    }
+                });
             } catch (Exception e) {
                 e.printStackTrace();
                 log.error("Error while processing player join for {}: {}", player.getName(), e.getMessage(), e);

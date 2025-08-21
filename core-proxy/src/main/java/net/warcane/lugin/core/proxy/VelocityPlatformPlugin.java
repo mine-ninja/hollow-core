@@ -17,6 +17,7 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
+import net.warcane.lugin.core.player.account.PlayerAccount;
 import net.warcane.lugin.core.player.state.PlayerNetworkStateManager;
 import net.warcane.lugin.core.server.GameServer;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
@@ -63,6 +64,7 @@ public class VelocityPlatformPlugin {
     public void onPlayerDisconnect(DisconnectEvent event) {
         final var playerStateManager = PlayerNetworkStateManager.getInstance();
         final var playerState = playerStateManager.getPlayerState(event.getPlayer().getUniqueId());
+
         if (playerState != null) {
             playerStateManager.unregister(playerState);
         } else {

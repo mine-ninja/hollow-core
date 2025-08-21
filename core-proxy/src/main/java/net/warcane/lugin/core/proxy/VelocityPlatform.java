@@ -11,6 +11,7 @@ import net.warcane.lugin.core.network.packet.impl.player.PlayerDirectPlayGameCat
 import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleportToLocationPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerUnregisterPacket;
+import net.warcane.lugin.core.network.packet.impl.staff.GoCommandPacket;
 import net.warcane.lugin.core.proxy.listener.*;
 import net.warcane.lugin.core.server.GameServer;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
@@ -34,10 +35,12 @@ public class VelocityPlatform extends AbstractPlatform implements ProxyPlatform 
     @Override
     public void init(NetworkChannel... channels) {
         networkClient.subscribeToChannels(channels);
+
         networkClient.registerPacketListener(ServerRegisterPacket.class, new ServerRegisterPacketListener(this));
         networkClient.registerPacketListener(PlayerTeleportToLocationPacket.class, new PlayerTeleportListener(this));
         networkClient.registerPacketListener(ServerUnregisterPacket.class, new ServerUnregisterPacketListener(this));
         networkClient.registerPacketListener(PlayerDirectPlayGameCategoryPacket.class, new PlayerDirectPlayGameCategoryListener(this));
+        networkClient.registerPacketListener(GoCommandPacket.class, new GoCommandPacketListener(this));
         networkClient.registerPacketListener(PlayerConnectToServerPacket.class, new PlayerConnectToServerListener(this));
 
         int serverCount = 0;
@@ -56,9 +59,6 @@ public class VelocityPlatform extends AbstractPlatform implements ProxyPlatform 
 
     @Override
     public void registerServer(@NotNull String serverId, @NotNull HostAddress address) {
-
-
-
         proxyServer.registerServer(new ServerInfo(serverId, address.asInetAddress()));
         log.info("Registered server: {} at address: {}", serverId, address);
     }

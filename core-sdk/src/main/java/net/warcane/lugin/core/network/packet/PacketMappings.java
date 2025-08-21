@@ -15,6 +15,8 @@ import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleport
 import net.warcane.lugin.core.network.packet.impl.server.BroadcastMessagePacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerUnregisterPacket;
+import net.warcane.lugin.core.network.packet.impl.staff.GoCachePacket;
+import net.warcane.lugin.core.network.packet.impl.staff.GoCommandPacket;
 import net.warcane.lugin.core.network.packet.impl.staff.StaffMessagePacket;
 import net.warcane.lugin.core.network.packet.impl.wallet.WalletRefreshRequestPacket;
 
@@ -68,7 +70,9 @@ final class PacketMappings {
 
         entry(14, WalletRefreshRequestPacket.class),
 
-        entry(15, JsonPacket.class)
+        entry(15, JsonPacket.class),
+        entry(16, GoCommandPacket.class),
+        entry(17, GoCachePacket.class)
       )
     );
 
