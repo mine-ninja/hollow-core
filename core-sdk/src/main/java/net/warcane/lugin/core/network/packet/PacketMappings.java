@@ -71,8 +71,8 @@ final class PacketMappings {
         entry(14, WalletRefreshRequestPacket.class),
 
         entry(15, JsonPacket.class),
-        entry(16, GoCommandPacket.class),
-        entry(17, GoCachePacket.class)
+        entry(17, GoCommandPacket.class),
+        entry(18, GoCachePacket.class)
       )
     );
 
