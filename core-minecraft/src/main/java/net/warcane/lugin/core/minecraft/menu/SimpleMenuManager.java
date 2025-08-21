@@ -53,10 +53,10 @@ public class SimpleMenuManager implements Listener {
         menu.openToPlayer(this, player, initialData);
     }
 
+
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerClickMenu(InventoryClickEvent event) {
-        final var inventory = event.getClickedInventory();
-        if (inventory == null) return;
+        final var inventory = event.getInventory();
 
         final var context = getContextFromInventory(inventory);
         if (context == null) return;
@@ -111,11 +111,6 @@ public class SimpleMenuManager implements Listener {
         }
     }
 
-
-    private PlayerMenuContext getContextFromPlayer(@NotNull Player player) {
-        final var inventory = player.getOpenInventory().getTopInventory();
-        return getContextFromInventory(inventory);
-    }
 
     private PlayerMenuContext getContextFromInventory(@NotNull Inventory inventory) {
         if (!(inventory.getHolder() instanceof PlayerMenuContext context)) {
