@@ -162,6 +162,15 @@ public final class InternalPlayerListener implements Listener {
             }
         });
 
+        platform.getPlayerStatisticsService().loadPlayerAccount(playerId).whenComplete((playerStatistics, statisticsError) -> {
+            if (statisticsError != null) {
+                log.error("Failed to load player statistics for {}: {}", player.getName(), statisticsError.getMessage(), statisticsError);
+                this.syncKick(player);
+                return;
+            }
+
+            log.info("Player statistics loaded for {}: {}", player.getName(), playerStatistics);
+        });
 
         platform.getWalletService().loadPlayerWallet(
           playerId,
@@ -209,6 +218,18 @@ public final class InternalPlayerListener implements Listener {
         });
 
         final var unloadOptions = new AccountUnloadOptions(false, true);
+
+        platform.getPlayerStatisticsService()
+          .unloadPlayerAccount(player.getUniqueId())
+          .whenComplete((unloaded, error) -> {
+              if (error != null) {
+                  log.error("Failed to unload player statistics for {}: {}", player.getName(), error.getMessage(), error);
+              } else if (unloaded == null) {
+                  log.info("Player statistics not found for {} during unload", player.getName());
+              } else {
+                  log.info("Player statistics unloaded for {}: {}", player.getName(), unloaded);
+              }
+          });
 
         platform.getPlayerAccountService()
           .unloadPlayerAccount(player.getUniqueId(), unloadOptions)
