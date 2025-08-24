@@ -8,6 +8,8 @@ import net.warcane.lugin.core.minecraft.currency.Currency;
 import net.warcane.lugin.core.player.wallet.WalletService;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class EconomyCommand extends SimpleCommand {
 
     private static final String SUBCOMMAND_ERROR = "§cVocê deve especificar um subcomando: ver, pagar, adicionar, remover ou listar.";
@@ -22,12 +24,12 @@ public class EconomyCommand extends SimpleCommand {
     private static final String VIEW_BALANCE_MESSAGE = "§aO saldo de §b%s§a é §b%s§a.";
     private static final String OPERATION_SUCCESS_MESSAGE = "§aOperação %s realizada com sucesso na carteira de §b%s§a. Novo saldo: §b%s§a.";
 
-
     private final BukkitPlatform platform;
     private final WalletService walletService;
 
     public EconomyCommand(BukkitPlatform platform) {
         super("economy");
+        this.setAliases(List.of("eco"));
         this.requiredPermission = "lugin.master";
         this.platform = platform;
         this.walletService = platform.getWalletService();

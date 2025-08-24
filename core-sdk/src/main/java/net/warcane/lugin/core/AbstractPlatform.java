@@ -27,8 +27,15 @@ public abstract class AbstractPlatform implements Platform {
           .load();
     }
 
-    // Simple executor service for async tasks (with 1 threads)
-    private static final ExecutorService ASYNC_EXECUTOR = Executors.newSingleThreadExecutor();
+    private static final ExecutorService ASYNC_EXECUTOR = Executors.newFixedThreadPool(
+      Math.max(4, Runtime.getRuntime().availableProcessors()),
+      r -> {
+          Thread t = new Thread(r);
+          t.setName("wallet-async-" + t.getId());
+          t.setDaemon(true);
+          return t;
+      }
+    );
 
     protected final HostAddress hostAddress;
 

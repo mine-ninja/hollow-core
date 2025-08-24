@@ -17,7 +17,6 @@ public abstract class SimpleCommand extends Command {
      * @deprecated Use {@link #setPermission(String)} instead.
      */
     @Deprecated(
-      forRemoval = true,
       since = "1.0.0"
     )
     protected String requiredPermission;

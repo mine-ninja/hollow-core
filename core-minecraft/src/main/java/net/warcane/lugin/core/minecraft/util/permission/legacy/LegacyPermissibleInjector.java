@@ -95,12 +95,10 @@ public abstract class LegacyPermissibleInjector {
         try {
             humanEntity = Class.forName(clazzName);
         } catch (ClassNotFoundException e) {
-            Logger.getLogger("PermissionsEx").warning("[PermissionsEx] Unknown server implementation being used!");
             return null;
         }
 
         if (!humanEntity.isAssignableFrom(player.getClass())) {
-            Logger.getLogger("PermissionsEx").warning("[PermissionsEx] Strange error while injecting permissible!");
             return null;
         }
 

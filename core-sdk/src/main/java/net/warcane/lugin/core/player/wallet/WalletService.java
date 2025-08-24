@@ -15,6 +15,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
@@ -101,31 +102,38 @@ public class WalletService {
      * @return CompletableFuture contendo a carteira do jogador, que pode ser nula se não encontrada.
      */
     public CompletableFuture<@Nullable Wallet> getOrLoadWallet(@NotNull UUID playerId) {
-
-        executorService.execute(() -> {
-            Wallet wallet = this.loadPlayerWallet(playerId).join();
-
-        });
+        log.info("=== INICIO DA BUSCA OU CARREGAMENTO DA CARTEIRA ===");
 
         return CompletableFuture.supplyAsync(() -> {
-
-            log.info("Fetching wallet for player: {}", playerId);
+            log.info("Getting cached or loading wallet for player: {}", playerId);
             final var cached = this.getCachedWallet(playerId);
             if (cached != null) {
                 return cached;
             }
 
+            log.info("Wallet not found in local cache for player: {}", playerId);
+
+            log.info("Fetching wallet from Redis for player: {}", playerId);
             final var fromRedis = redisCachedWallet.hget("wallets", playerId.toString());
-            log.info("Wallet from Redis for player {}: {}", playerId, fromRedis);
             if (fromRedis != null) {
-                log.info("Adding wallet to local cache for player: {}", playerId);
+                log.info("Found wallet in Redis cache for player: {}", playerId);
                 localCachedWallets.put(playerId, fromRedis);
                 return fromRedis;
             }
 
-            // CompletableFuture<CompletableFuture<?>> x;
 
-            return this.loadPlayerWallet(playerId).join();
+            log.info("Wallet not found in Redis cache for player: {}", playerId);
+            log.info("Fetching wallet from MongoDB for player: {}", playerId);
+            final var fromMongo = walletRepository.findById(playerId);
+            if (fromMongo != null) {
+                log.info("Found wallet in MongoDB for player: {}", playerId);
+                redisCachedWallet.hset("wallets", playerId.toString(), fromMongo);
+                localCachedWallets.put(playerId, fromMongo);
+                log.info("Wallet loaded and cached for player: {}", playerId);
+                return fromMongo;
+            }
+
+            return null;
         }, executorService);
     }
 
@@ -142,16 +150,17 @@ public class WalletService {
                 return cached;
             }
 
-            final var fromRedis = redisCachedWallet.hget("wallets", playerName);
+            final var idFromName = PlayerUuidFetcher.getInstance().fetchPlayerUuid(playerName);
+            if (idFromName == null) {
+                return null;
+            }
+
+            final var fromRedis = redisCachedWallet.hget("wallets", idFromName.toString());
             if (fromRedis != null) {
                 localCachedWallets.put(fromRedis.uniqueId(), fromRedis);
                 return fromRedis;
             }
 
-            final var idFromName = PlayerUuidFetcher.getInstance().fetchPlayerUuid(playerName);
-            if (idFromName == null) {
-                return null;
-            }
 
             final var fromMongo = walletRepository.findById(idFromName);
             if (fromMongo != null) {
@@ -395,36 +404,103 @@ public class WalletService {
     }
 
 
-    public CompletableFuture<TransactionResult> transferCurrency(
+    public TransactionResult transferCurrency(
       @NotNull UUID senderId,
       @NotNull UUID receiverId,
       @NotNull String currencyId,
       @NotNull BigDecimal amount
     ) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                final var senderWallet = this.getOrLoadWallet(senderId).join();
-                if (senderWallet == null) {
-                    return TransactionResult.walletNotFound(senderId);
-                }
+        try {
+            log.info("=== INICIO DA TRANSFERENCIA ===");
+            log.info("Transferring {} {} from {} to {}", amount, currencyId, senderId, receiverId);
 
-                if (!senderWallet.hasAmount(currencyId, amount)) {
-                    return TransactionResult.insufficientFunds(currencyId, amount, senderWallet.getCurrencyAmount(currencyId));
-                }
+            log.info("Fetching wallets for transfer: senderId={}, receiverId={}, currencyId={}, amount={}",
+              senderId, receiverId, currencyId, amount);
 
-                final var receiverWallet = this.getOrLoadWallet(receiverId).join();
-                if (receiverWallet == null) {
-                    return TransactionResult.walletNotFound(receiverId);
-                }
+            // DEBUG: Busca da carteira do remetente
+            log.info("STEP 1: Iniciando busca da carteira do remetente ({})", senderId);
+            long startTime = System.currentTimeMillis();
 
-                final var updatedSenderWallet = saveWallet(senderWallet.subtractCurrencyAmount(currencyId, amount)).join();
-                final var updatedReceiverWallet = saveWallet(receiverWallet.addCurrencyAmount(currencyId, amount)).join();
+            final var senderWalletFuture = this.getOrLoadWallet(senderId).orTimeout(1, TimeUnit.SECONDS);
+            log.info("STEP 1.1: CompletableFuture criado para remetente, aguardando join()...");
 
-                return TransactionResult.success(updatedSenderWallet.uniqueId(), updatedReceiverWallet.uniqueId(), currencyId, amount);
-            } catch (Exception e) {
-                return TransactionResult.failure(e);
+            final var senderWallet = senderWalletFuture.join();
+            long senderWalletTime = System.currentTimeMillis() - startTime;
+            log.info("STEP 1.2: Carteira do remetente obtida em {}ms: {}", senderWalletTime, senderWallet != null ? "ENCONTRADA" : "NULL");
+
+            if (senderWallet == null) {
+                log.warn("STEP 1.3: Carteira do remetente não encontrada, retornando erro");
+                return TransactionResult.walletNotFound(senderId);
             }
-        }, executorService);
+
+            // DEBUG: Verificação de fundos
+            log.info("STEP 2: Verificando fundos do remetente");
+            log.info("STEP 2.1: Saldo atual de {} na moeda {}: {}", senderId, currencyId, senderWallet.getCurrencyAmount(currencyId));
+
+            if (!senderWallet.hasAmount(currencyId, amount)) {
+                log.warn("STEP 2.2: Fundos insuficientes - Necessário: {}, Disponível: {}", amount, senderWallet.getCurrencyAmount(currencyId));
+                return TransactionResult.insufficientFunds(currencyId, amount, senderWallet.getCurrencyAmount(currencyId));
+            }
+            log.info("STEP 2.3: Fundos suficientes confirmados");
+
+            // DEBUG: Busca da carteira do destinatário
+            log.info("STEP 3: Iniciando busca da carteira do destinatário ({})", receiverId);
+            startTime = System.currentTimeMillis();
+
+            final var receiverWalletFuture = this.getOrLoadWallet(receiverId);
+            log.info("STEP 3.1: CompletableFuture criado para destinatário, aguardando join()...");
+
+            final var receiverWallet = receiverWalletFuture.join();
+            long receiverWalletTime = System.currentTimeMillis() - startTime;
+            log.info("STEP 3.2: Carteira do destinatário obtida em {}ms: {}", receiverWalletTime, receiverWallet != null ? "ENCONTRADA" : "NULL");
+
+            if (receiverWallet == null) {
+                log.warn("STEP 3.3: Carteira do destinatário não encontrada, retornando erro");
+                return TransactionResult.walletNotFound(receiverId);
+            }
+
+            // DEBUG: Atualização da carteira do remetente
+            log.info("STEP 4: Atualizando carteira do remetente");
+            log.info("STEP 4.1: Subtraindo {} de {} da carteira do remetente", amount, currencyId);
+            startTime = System.currentTimeMillis();
+
+            final var updatedSenderWallet = senderWallet.subtractCurrencyAmount(currencyId, amount);
+            log.info("STEP 4.2: Carteira do remetente atualizada localmente, iniciando saveWallet()...");
+
+            final var savedSenderWalletFuture = saveWallet(updatedSenderWallet);
+            log.info("STEP 4.3: CompletableFuture criado para salvar remetente, aguardando join()...");
+
+            final var savedSenderWallet = savedSenderWalletFuture.join();
+            long saveSenderTime = System.currentTimeMillis() - startTime;
+            log.info("STEP 4.4: Carteira do remetente salva em {}ms", saveSenderTime);
+
+            // DEBUG: Atualização da carteira do destinatário
+            log.info("STEP 5: Atualizando carteira do destinatário");
+            log.info("STEP 5.1: Adicionando {} de {} à carteira do destinatário", amount, currencyId);
+            startTime = System.currentTimeMillis();
+
+            final var updatedReceiverWallet = receiverWallet.addCurrencyAmount(currencyId, amount);
+            log.info("STEP 5.2: Carteira do destinatário atualizada localmente, iniciando saveWallet()...");
+
+            final var savedReceiverWalletFuture = saveWallet(updatedReceiverWallet);
+            log.info("STEP 5.3: CompletableFuture criado para salvar destinatário, aguardando join()...");
+
+            final var savedReceiverWallet = savedReceiverWalletFuture.join();
+            long saveReceiverTime = System.currentTimeMillis() - startTime;
+            log.info("STEP 5.4: Carteira do destinatário salva em {}ms", saveReceiverTime);
+
+            // DEBUG: Sucesso
+            log.info("STEP 6: Transferência completada com sucesso");
+            log.info("=== FIM DA TRANSFERENCIA ===");
+
+            return TransactionResult.success(savedSenderWallet.uniqueId(), savedReceiverWallet.uniqueId(), currencyId, amount);
+
+        } catch (Exception e) {
+            log.error("ERRO DURANTE TRANSFERÊNCIA: ", e);
+            log.error("Detalhes do erro: senderId={}, receiverId={}, currencyId={}, amount={}",
+              senderId, receiverId, currencyId, amount);
+            return TransactionResult.failure(e);
+        }
     }
 
     /**

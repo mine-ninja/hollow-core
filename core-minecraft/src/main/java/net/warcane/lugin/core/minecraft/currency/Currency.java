@@ -4,7 +4,10 @@ import net.warcane.lugin.core.server.type.ServerCategoryType;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Representa uma moeda no sistema.
@@ -26,6 +29,16 @@ public record Currency(
   @NotNull List<ServerCategoryType> allowedCategories,
   boolean allowPlayerPayments
 ) {
+
+
+    private static final DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.getDefault());
+    private static final DecimalFormat formatter = new DecimalFormat("#,###", symbols);
+
+
+    static {
+        symbols.setGroupingSeparator('.');
+        symbols.setDecimalSeparator(',');
+    }
 
     /**
      * Formata o valor da moeda para exibição.
@@ -50,5 +63,11 @@ public record Currency(
     public String formatAmount(@NotNull BigDecimal bigDecimal) {
         final var name = bigDecimal.compareTo(BigDecimal.ONE) == 0 ? displayName : pluralDisplayName;
         return symbol + CurrencyFormatter.formatValue(bigDecimal) + " " + name;
+    }
+
+    // 10000 -> "10.000"
+    // 1000000 -> "1.000.000"
+    public String formatAmountSimple(@NotNull BigDecimal bigDecimal) {
+        return formatter.format(bigDecimal);
     }
 }

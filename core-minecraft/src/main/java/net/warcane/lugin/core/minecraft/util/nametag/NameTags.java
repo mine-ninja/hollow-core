@@ -123,7 +123,7 @@ public class NameTags {
           team.prefix,
           team.suffix,
           NameTagVisibility.ALWAYS,
-          CollisionRule.ALWAYS,
+          CollisionRule.NEVER,
           team.color,
           OptionData.NONE
         );

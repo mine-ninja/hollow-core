@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 @Slf4j
@@ -45,7 +46,7 @@ public class CurrencyBasedCommand extends SimpleCommand {
                 return;
             }
             final var balance = platform.getWalletService().getCachedWalletOrThrow(player.getUniqueId()).getCurrencyAmount(currency.id());
-            ctx.sendMessage("§aVocê tem §b" + currency.formatAmount(balance) + "§a.");
+            ctx.sendMessage("§aVocê tem §b" + currency.formatAmountSimple(balance) + "§a.");
             return;
         }
 
@@ -57,7 +58,8 @@ public class CurrencyBasedCommand extends SimpleCommand {
                     ctx.sendMessage("§cEste comando não está disponível para pagamentos de jogadores.");
                     return;
                 }
-                ctx.sendMessage("§cComando desabilitado no momento!");
+
+                this.handlePayCommand(ctx, ctx.getRawArgOrThrow(1, "§cVocê deve especificar o nome do jogador para pagar."));
             }
             case "top" -> handleTopCommand(ctx);
             default -> throw new CommandFailedException("§cSubcomando inválido. Use: ver, pagar ou top.");
@@ -65,16 +67,31 @@ public class CurrencyBasedCommand extends SimpleCommand {
     }
 
     private void handleViewBalanceCommand(@NotNull CommandContext ctx, @NotNull String playerName) {
-        platform.getWalletService().getOrLoadWallet(playerName).whenComplete((found, error) -> {
-            if (error != null || found == null) {
-                ctx.sendMessage(error != null ? "§cErro ao buscar o saldo do jogador: " + error.getMessage() : "§cJogador não encontrado ou não possui uma carteira.");
+        ctx.sendMessage("§7§oCarregando informações...");
+
+        platform.getWalletService()
+          .getOrLoadWallet(playerName)
+          .orTimeout(3, TimeUnit.SECONDS)
+          .whenComplete((found, error) -> {
+              if (error != null) {
+                  log.error("Erro ao buscar o saldo do jogador {}: {}", playerName, error.getMessage());
+                  return;
+              }
+
+              if (found == null) {
+                  ctx.sendMessage("§cUm erro ocorreu ao buscar o saldo do jogador " + playerName + ". O jogador pode não ter uma carteira.");
                 return;
-            }
-            ctx.sendMessage("§aO saldo de §b" + playerName + "§a é §b" + currency.formatAmount(found.getCurrencyAmount(currency.id())) + "§a.");
-        });
+              }
+
+              ctx.sendMessage("§aO saldo de §b" + playerName + "§a é §b" + currency.formatAmount(found.getCurrencyAmount(currency.id())) + "§a.");
+          });
     }
 
     private void handlePayCommand(@NotNull CommandContext ctx, @NotNull String playerName) {
+        if (ctx.getSenderAsPlayer().getName().equalsIgnoreCase(playerName)) {
+            throw new CommandFailedException("§cVocê não pode pagar a si mesmo.");
+        }
+
         final var targetWallet = platform.getWalletService().getCachedWallet(playerName);
         if (targetWallet == null)
             throw new CommandFailedException("§cJogador não encontrado ou não possui uma carteira.");
@@ -93,21 +110,18 @@ public class CurrencyBasedCommand extends SimpleCommand {
         }
 
         final var amount = new BigDecimal(amountToPay);
+        // checkar se é zero ou menor antes...
+        if (amount.equals(BigDecimal.ZERO) || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new CommandFailedException("§cVocê não pode pagar uma quantia menor ou igual a zero.");
+        }
+
         if (!sourceWallet.hasAmount(currency.id(), amount)) {
             throw new CommandFailedException("§cVocê não possui saldo suficiente para pagar " + currency.formatAmount(amount) + ".");
         }
 
-        platform.getWalletService().transferCurrency(
-          sourceWallet.uniqueId(),
-          targetWallet.uniqueId(),
-          currency.id(),
-          amount
-        ).whenComplete((result, error) -> {
-            if (error != null) {
-                log.error("Erro ao transferir moeda: ", error);
-                ctx.sendMessage("§cErro ao realizar o pagamento: " + error.getMessage());
-                return;
-            }
+        platform.getExecutorService().execute(() -> {
+            TransactionResult result = platform.getWalletService()
+              .transferCurrency(sourceWallet.uniqueId(), targetWallet.uniqueId(), currency.id(), amount);
 
             switch (result) {
                 case TransactionResult.Success ignored -> {
@@ -131,6 +145,7 @@ public class CurrencyBasedCommand extends SimpleCommand {
                 case null, default -> throw new CommandFailedException("§cErro desconhecido ao realizar o pagamento.");
             }
         });
+
     }
 
     private void handleTopCommand(@NotNull CommandContext ctx) {

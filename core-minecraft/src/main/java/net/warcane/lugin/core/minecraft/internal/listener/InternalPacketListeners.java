@@ -45,7 +45,6 @@ public class InternalPacketListeners {
         networkClient.registerPacketListener(StaffMessagePacket.class, new StaffMessagePacketListener());
         networkClient.registerPacketListener(PlayerReceiveGroupPacket.class, new PlayerGroupReceivePacketListener(platform));
         networkClient.registerPacketListener(PlayerLoseGroupPacket.class, new PlayerLoseGroupPacketListener(platform));
-        networkClient.registerPacketListener(SendMessageToPlayerPacket.class, new MessageToPlayerPacketListener());
         networkClient.registerPacketListener(SendModernMessageToPlayerPacket.class, new ModernMessageToPlayerPacketListener());
         networkClient.registerPacketListener(SendSoundToPlayerPacket.class, new SendSoundToPlayerPacketListener());
         networkClient.registerPacketListener(PlayerTeleportToTargetPacket.class, new TargetedTeleportListener());

@@ -24,8 +24,7 @@ public class PlayerDirectPlayGameCategoryListener implements PacketListener<Play
           .toList();
 
         if (servers.isEmpty()) {
-            platform.sendMessageToPlayer(packet.playerId(),
-              "§cNão há servidores disponíveis para o jogo selecionado. Aguarde ou tente novamente mais tarde.");
+            platform.sendMessageToPlayer(packet.playerId(), "§cNão há servidores disponíveis para o jogo selecionado. Aguarde ou tente novamente mais tarde.");
             return;
         }
 
