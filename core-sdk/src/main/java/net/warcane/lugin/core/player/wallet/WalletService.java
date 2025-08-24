@@ -1,6 +1,8 @@
 package net.warcane.lugin.core.player.wallet;
 
 import com.mongodb.client.model.*;
+import lombok.extern.slf4j.Slf4j;
+import net.warcane.lugin.core.player.fetcher.PlayerUuidFetcher;
 import net.warcane.lugin.core.player.wallet.transaction.TransactionResult;
 import net.warcane.lugin.core.util.data.MongoRepository;
 import net.warcane.lugin.core.util.data.RedisCache;
@@ -16,6 +18,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
+@Slf4j
 public class WalletService {
 
     private final ExecutorService executorService;
@@ -98,17 +101,29 @@ public class WalletService {
      * @return CompletableFuture contendo a carteira do jogador, que pode ser nula se não encontrada.
      */
     public CompletableFuture<@Nullable Wallet> getOrLoadWallet(@NotNull UUID playerId) {
+
+        executorService.execute(() -> {
+            Wallet wallet = this.loadPlayerWallet(playerId).join();
+
+        });
+
         return CompletableFuture.supplyAsync(() -> {
+
+            log.info("Fetching wallet for player: {}", playerId);
             final var cached = this.getCachedWallet(playerId);
             if (cached != null) {
                 return cached;
             }
 
             final var fromRedis = redisCachedWallet.hget("wallets", playerId.toString());
+            log.info("Wallet from Redis for player {}: {}", playerId, fromRedis);
             if (fromRedis != null) {
+                log.info("Adding wallet to local cache for player: {}", playerId);
                 localCachedWallets.put(playerId, fromRedis);
                 return fromRedis;
             }
+
+            // CompletableFuture<CompletableFuture<?>> x;
 
             return this.loadPlayerWallet(playerId).join();
         }, executorService);
@@ -133,7 +148,18 @@ public class WalletService {
                 return fromRedis;
             }
 
-            return this.loadPlayerWallet(playerName).join();
+            final var idFromName = PlayerUuidFetcher.getInstance().fetchPlayerUuid(playerName);
+            if (idFromName == null) {
+                return null;
+            }
+
+            final var fromMongo = walletRepository.findById(idFromName);
+            if (fromMongo != null) {
+                redisCachedWallet.hset("wallets", idFromName.toString(), fromMongo);
+                return fromMongo;
+            }
+
+            return null;
         }, executorService);
     }
 
