@@ -15,15 +15,15 @@ import static java.util.stream.Collectors.toMap;
 public enum PlayerGroup {
 
     MASTER("master", "§6[Master] ", '\uE003', "Master", NamedTextColor.GOLD, 12),
-    MANAGER("manager", "§4[Gerente] ", '\uE004', "Gerente", NamedTextColor.DARK_RED, 11),
+    MANAGER("gerente", "§4[Gerente] ", '\uE004', "Gerente", NamedTextColor.DARK_RED, 11),
     ADMIN("admin", "§c[Admin] ", '\uE005', "Admin", NamedTextColor.RED, 10),
-    MODERATOR("moderator", "§2[Moderador] ", '\uE006', "Moderador", NamedTextColor.DARK_GREEN, 9),
-    HELPER("helper", "§2[Ajudante] ", '\uE007', "Ajudante", NamedTextColor.DARK_GREEN, 8),
+    MODERATOR("moderador", "§2[Moderador] ", '\uE006', "Moderador", NamedTextColor.DARK_GREEN, 9),
+    HELPER("ajudante", "§2[Ajudante] ", '\uE007', "Ajudante", NamedTextColor.DARK_GREEN, 8),
     INFLUENCER("influencer", "§5[Influencer] ", '\uE00B', "Influencer", NamedTextColor.DARK_PURPLE, 7), // TODO: esperar a tag
-    SUPREME("supreme", "§1[Supremo] ", '\uE002', "Supremo", NamedTextColor.DARK_BLUE, 6),
-    LEGENDARY("legendary", "§2[Lendário] ", '\uE001', "Lendário", NamedTextColor.DARK_GREEN, 5),
-    HERO("hero", "§5[Heroi] ", ' ', "Hero", NamedTextColor.DARK_PURPLE, 4),
-    CHAMPION("champion", "§3[Campeão] ", '\uE000', "Campeão", NamedTextColor.DARK_AQUA, 3),
+    SUPREME("supremo", "§1[Supremo] ", '\uE002', "Supremo", NamedTextColor.DARK_BLUE, 6),
+    LEGENDARY("legendario", "§2[Lendário] ", '\uE001', "Lendário", NamedTextColor.DARK_GREEN, 5),
+    HERO("heroi", "§5[Heroi] ", ' ', "Hero", NamedTextColor.DARK_PURPLE, 4),
+    CHAMPION("campeao", "§3[Campeão] ", '\uE000', "Campeão", NamedTextColor.DARK_AQUA, 3),
     ALPHA("alpha", "§b[Alpha] ", '\uE00E', "Alpha", NamedTextColor.AQUA, 2),
     DEFAULT("default", "§7", ' ', "Membro", NamedTextColor.GRAY, 1); // TODO: esperar a tag
 
