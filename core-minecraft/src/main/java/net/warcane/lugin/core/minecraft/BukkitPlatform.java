@@ -165,16 +165,6 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         log.info("Bukkit Platform is now online with ID: {}", this.getId());
         Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::updateServerInfo, 20, 20 * 10);
 
-        currencyManager.registerCurrency(new Currency(
-          "global_karma",
-          "§dKarma",
-          "§d§lK§r",
-          "§dKarma",
-          "karma",
-          List.of("karma"),
-          List.of(ServerCategoryType.values()),
-          false
-        ));
 
         Bukkit.getConsoleSender().sendMessage("§aCarregando nomes de jogadores para o redis (para acesso rápido)");
     }
