@@ -102,34 +102,23 @@ public class WalletService {
      * @return CompletableFuture contendo a carteira do jogador, que pode ser nula se não encontrada.
      */
     public CompletableFuture<@Nullable Wallet> getOrLoadWallet(@NotNull UUID playerId) {
-        log.info("=== INICIO DA BUSCA OU CARREGAMENTO DA CARTEIRA ===");
-
         return CompletableFuture.supplyAsync(() -> {
-            log.info("Getting cached or loading wallet for player: {}", playerId);
             final var cached = this.getCachedWallet(playerId);
             if (cached != null) {
                 return cached;
             }
 
-            log.info("Wallet not found in local cache for player: {}", playerId);
-
-            log.info("Fetching wallet from Redis for player: {}", playerId);
             final var fromRedis = redisCachedWallet.hget("wallets", playerId.toString());
             if (fromRedis != null) {
-                log.info("Found wallet in Redis cache for player: {}", playerId);
                 localCachedWallets.put(playerId, fromRedis);
                 return fromRedis;
             }
 
 
-            log.info("Wallet not found in Redis cache for player: {}", playerId);
-            log.info("Fetching wallet from MongoDB for player: {}", playerId);
             final var fromMongo = walletRepository.findById(playerId);
             if (fromMongo != null) {
-                log.info("Found wallet in MongoDB for player: {}", playerId);
                 redisCachedWallet.hset("wallets", playerId.toString(), fromMongo);
                 localCachedWallets.put(playerId, fromMongo);
-                log.info("Wallet loaded and cached for player: {}", playerId);
                 return fromMongo;
             }
 

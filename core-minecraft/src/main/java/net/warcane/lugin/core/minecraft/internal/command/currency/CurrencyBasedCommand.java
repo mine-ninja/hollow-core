@@ -12,6 +12,7 @@ import net.warcane.lugin.core.player.wallet.transaction.TransactionResult.Failur
 import net.warcane.lugin.core.player.wallet.transaction.TransactionResult.InsufficientFunds;
 import net.warcane.lugin.core.player.wallet.transaction.TransactionResult.InvalidCurrency;
 import net.warcane.lugin.core.player.wallet.transaction.TransactionResult.WalletNotFound;
+import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -96,6 +97,11 @@ public class CurrencyBasedCommand extends SimpleCommand {
         if (targetWallet == null)
             throw new CommandFailedException("§cJogador não encontrado ou não possui uma carteira.");
 
+        final var localTargetPlayer = Bukkit.getPlayer(playerName);
+        if (localTargetPlayer == null || !localTargetPlayer.isOnline()) {
+            throw new CommandFailedException("§cO jogador " + playerName + " não está online no mesmo servidor que você.");
+        }
+
         final var sender = ctx.getSender();
         if (!(sender instanceof Player player))
             throw new CommandFailedException("§cEste comando só pode ser usado por jogadores.");
@@ -174,6 +180,76 @@ public class CurrencyBasedCommand extends SimpleCommand {
 
     @Override
     public List<String> performTabComplete(@NotNull CommandContext ctx) {
-        return ctx.isArgsLength(0) || ctx.isArgsLength(1) ? List.of() : super.performTabComplete(ctx);
+        if (ctx.isArgsLength(0) || ctx.isArgsLength(1)) {
+            final var input = ctx.getRawArgOrNull(0);
+            final var subcommands = List.of("ver", "pagar", "pay", "top");
+
+            if (input == null) {
+                return subcommands;
+            }
+
+            return subcommands.stream()
+              .filter(cmd -> cmd.toLowerCase().startsWith(input.toLowerCase()))
+              .toList();
+        }
+
+        final var subCommand = ctx.getRawArgOrNull(0);
+        if (subCommand == null) {
+            return List.of();
+        }
+
+        switch (subCommand.toLowerCase()) {
+            case "ver" -> {
+                if (ctx.isArgsLength(2)) {
+                    final var input = ctx.getRawArgOrNull(1);
+                    return Bukkit.getOnlinePlayers().stream()
+                      .map(Player::getName)
+                      .filter(name -> input == null || name.toLowerCase().startsWith(input.toLowerCase()))
+                      .sorted()
+                      .toList();
+                }
+            }
+
+            case "pagar", "pay" -> {
+                if (!currency.allowPlayerPayments()) {
+                    return List.of();
+                }
+
+                if (ctx.isArgsLength(2)) {
+                    final var input = ctx.getRawArgOrNull(1);
+                    final var sender = ctx.getSender();
+                    final var senderName = sender instanceof Player player ? player.getName() : null;
+
+                    return Bukkit.getOnlinePlayers().stream()
+                      .map(Player::getName)
+                      .filter(name -> !name.equals(senderName)) // Excluir o próprio jogador
+                      .filter(name -> input == null || name.toLowerCase().startsWith(input.toLowerCase()))
+                      .sorted()
+                      .toList();
+                } else if (ctx.isArgsLength(3)) {
+                    // Terceiro argumento: sugerir algumas quantias comuns
+                    final var input = ctx.getRawArgOrNull(2);
+                    final var suggestions = List.of("1", "5", "10", "50", "100", "500", "1000");
+
+                    if (input == null || input.isEmpty()) {
+                        return suggestions;
+                    }
+
+                    if (BIG_DECIMAL_PATTERN.matcher(input).matches()) {
+                        return List.of();
+                    }
+
+                    return suggestions.stream()
+                      .filter(suggestion -> suggestion.startsWith(input))
+                      .toList();
+                }
+            }
+
+            case "top" -> {
+                return List.of();
+            }
+        }
+
+        return List.of();
     }
 }
