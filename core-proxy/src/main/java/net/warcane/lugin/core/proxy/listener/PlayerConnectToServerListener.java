@@ -7,8 +7,6 @@ import net.warcane.lugin.core.proxy.VelocityPlatform;
 import net.warcane.lugin.core.server.GameServer;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Optional;
-
 @RequiredArgsConstructor
 public class PlayerConnectToServerListener implements PacketListener<PlayerConnectToServerPacket> {
     private final VelocityPlatform platform;
@@ -18,7 +16,7 @@ public class PlayerConnectToServerListener implements PacketListener<PlayerConne
         final var serverId = packet.serverId();
         GameServer server = platform.getGameServerService().getById(packet.serverId());
 
-        if (server == null || server.serverPlayerCount().isFull()) {
+        if (server == null || server.serverPlayers().isFull()) {
             platform.sendMessageToPlayer(packet.playerId(), "§cO servidor não está disponível. Aguarde ou tente novamente mais tarde.");
             return;
         }

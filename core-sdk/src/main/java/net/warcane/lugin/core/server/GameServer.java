@@ -9,25 +9,25 @@ import net.warcane.lugin.core.util.address.HostAddress;
  *
  * @param serverId     ID do servidor
  * @param categoryType Categoria do servidor
- * @param serverPlayerCount  Contagem de jogadores no servidor
+ * @param serverPlayers  Contagem de jogadores no servidor
  * @param online       Indica se o servidor está online
  */
 public record GameServer(
   @JsonProperty("i") String serverId,
   @JsonProperty("c") ServerCategoryType categoryType,
   @JsonProperty("a") HostAddress hostAddress,
-  @JsonProperty("p") ServerPlayerCount serverPlayerCount,
+  @JsonProperty("p") ServerPlayers serverPlayers,
   @JsonProperty("o") boolean online
 ) {
 
 
-    public GameServer withPlayerCount(ServerPlayerCount newServerPlayerCount) {
+    public GameServer withPlayerCount(ServerPlayers newServerPlayers) {
         return new GameServer(serverId, categoryType, hostAddress,
-          newServerPlayerCount, online);
+          newServerPlayers, online);
     }
 
     public GameServer withOnlineStatus(boolean newOnlineStatus) {
         return new GameServer(serverId, categoryType, hostAddress,
-          serverPlayerCount, newOnlineStatus);
+          serverPlayers, newOnlineStatus);
     }
 }

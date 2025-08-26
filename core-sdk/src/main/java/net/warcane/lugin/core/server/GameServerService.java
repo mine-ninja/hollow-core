@@ -34,8 +34,8 @@ public class GameServerService {
     public int getTotalPlayerCount() {
         return queryAllServersInNetwork()
           .stream()
-          .map(GameServer::serverPlayerCount)
-          .mapToInt(ServerPlayerCount::online)
+          .map(GameServer::serverPlayers)
+          .mapToInt(ServerPlayers::online)
           .sum();
     }
 
@@ -44,8 +44,8 @@ public class GameServerService {
         for (GameServer gameServer : queryAllServersInNetwork()) {
             if (gameServer.categoryType() != categoryType) continue;
 
-            ServerPlayerCount serverPlayerCount = gameServer.serverPlayerCount();
-            int online = serverPlayerCount.online();
+            ServerPlayers serverPlayers = gameServer.serverPlayers();
+            int online = serverPlayers.online();
             sum += online;
         }
         return sum;
