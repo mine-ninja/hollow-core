@@ -20,7 +20,7 @@ public class PlayerDirectPlayGameCategoryListener implements PacketListener<Play
         final var categoryToSendPlayer = packet.categoryType();
         List<GameServer> servers = platform.getGameServerService().queryServersByCategoryType(categoryToSendPlayer)
           .stream()
-          .filter(gameServer -> !gameServer.serverPlayerCount().isFull())
+          .filter(gameServer -> !gameServer.serverPlayers().isFull())
           .toList();
 
         if (servers.isEmpty()) {

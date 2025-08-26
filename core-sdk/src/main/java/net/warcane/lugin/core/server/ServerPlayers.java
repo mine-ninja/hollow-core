@@ -4,19 +4,26 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jetbrains.annotations.NotNull;
 
-public record ServerPlayerCount(
-  @JsonProperty("o") int online,
+import java.util.Map;
+import java.util.UUID;
+
+public record ServerPlayers(
+  @JsonProperty("o") Map<UUID, String> players,
   @JsonProperty("m") int max
 ) {
+    @JsonIgnore
+    public int online() {
+        return players.size();
+    }
 
     @JsonIgnore
     public boolean isFull() {
-        return online >= max;
+        return players.size() >= max;
     }
 
     @NotNull
     @JsonIgnore
     public String toFormattedString() {
-        return String.format("%d/%d", online, max);
+        return String.format("%d/%d", players.size(), max);
     }
 }

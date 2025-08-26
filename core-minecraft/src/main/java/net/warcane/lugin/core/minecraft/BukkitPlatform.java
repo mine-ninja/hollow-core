@@ -2,11 +2,9 @@ package net.warcane.lugin.core.minecraft;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
-import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.AbstractPlatform;
 import net.warcane.lugin.core.MinecraftServerPlatform;
 import net.warcane.lugin.core.Platform;
-import net.warcane.lugin.core.minecraft.currency.Currency;
 import net.warcane.lugin.core.minecraft.currency.CurrencyManager;
 import net.warcane.lugin.core.minecraft.event.tick.AsyncServerTickEvent;
 import net.warcane.lugin.core.minecraft.internal.command.InternalCommandManager;
@@ -29,7 +27,7 @@ import net.warcane.lugin.core.player.statistic.PlayerStatisticsService;
 import net.warcane.lugin.core.player.statistic.PlayerStatisticsServiceImpl;
 import net.warcane.lugin.core.player.subscription.SubscriptionCategoryType;
 import net.warcane.lugin.core.server.GameServer;
-import net.warcane.lugin.core.server.ServerPlayerCount;
+import net.warcane.lugin.core.server.ServerPlayers;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
 import net.warcane.lugin.core.util.address.HostAddress;
 import net.warcane.lugin.core.util.property.Property;
@@ -37,15 +35,17 @@ import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
+
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-
 import java.util.Arrays;
-import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class BukkitPlatform extends AbstractPlatform implements MinecraftServerPlatform {
@@ -185,8 +185,12 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
     @Override
     @Contract(pure = true)
-    public @NotNull ServerPlayerCount getPlayerCount() {
-        return new ServerPlayerCount(Bukkit.getOnlinePlayers().size(), Bukkit.getMaxPlayers());
+    public @NotNull ServerPlayers getPlayerCount() {
+        return new ServerPlayers(
+          Bukkit.getOnlinePlayers().stream()
+            .map(player -> Map.entry(player.getUniqueId(), player.getName()))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)),
+          Bukkit.getMaxPlayers());
     }
 
     @Override
