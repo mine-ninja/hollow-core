@@ -12,16 +12,14 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public enum GameType {
 
-    BEDWARS_SOLO(0, "Bedwars Solo", ServerCategoryType.BEDWARS),
-    BEDWARS_DOUBLES(1, "Bedwars Duplas", ServerCategoryType.BEDWARS),
-    BEDWARS_QUARTER(2, "Bedwars Quarteto", ServerCategoryType.BEDWARS),
-
-    FACTIONS_ICE(3, "Factions Ice", ServerCategoryType.FACTIONS),
-
-    SKYWARS_SOLO(2, "Skywars Solo", ServerCategoryType.SKYWARS),
-    SKYWARS_DOUBLES(2, "Skywars Duplas", ServerCategoryType.SKYWARS)
-
-    ;
+    BEDWARS(0, "Bed Wars", ServerCategoryType.BEDWARS),
+    BEDWARS_SOLO(1, "Bed Wars Solo", ServerCategoryType.BEDWARS),
+    BEDWARS_DOUBLES(2, "Bed Wars Duplas", ServerCategoryType.BEDWARS),
+    BEDWARS_QUARTER(3, "Bed Wars Quarteto", ServerCategoryType.BEDWARS),
+    FACTIONS_ICE(4, "Factions Ice", ServerCategoryType.FACTIONS),
+    SKYWARS(5, "Sky Wars", ServerCategoryType.SKYWARS),
+    SKYWARS_SOLO(6, "Sky Wars Solo", ServerCategoryType.SKYWARS),
+    SKYWARS_DOUBLES(7, "Sky Wars Duplas", ServerCategoryType.SKYWARS);
 
     public static final Int2ObjectMap<GameType> ID_MAP = Arrays.stream(values())
       .collect(Collectors.toMap(
