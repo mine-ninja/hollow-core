@@ -3,10 +3,12 @@ package net.warcane.lugin.core.group;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import static java.util.stream.Collectors.toMap;
 
@@ -29,7 +31,7 @@ public enum PlayerGroup {
 
 
     public static final Map<String, PlayerGroup> BY_ID = Arrays.stream(values())
-      .collect(toMap(PlayerGroup::getId, group -> group));
+      .collect(toMap(PlayerGroup::getId, Function.identity()));
 
     public static final List<String> NAMES = Arrays.stream(values())
       .map(PlayerGroup::getId)
@@ -55,6 +57,14 @@ public enum PlayerGroup {
     private final NamedTextColor namedTextColor;
     private final int powerLevel;
 
+    public static PlayerGroup fromId(@NotNull String id) {
+        for (PlayerGroup value : values()) {
+            if (value.id.equalsIgnoreCase(id)) {
+                return value;
+            }
+        }
+        return null;
+    }
 
     public boolean isGreaterOrEqualTo(PlayerGroup other) {
         return this.powerLevel >= other.powerLevel;
@@ -70,6 +80,7 @@ public enum PlayerGroup {
         }
         return prefix.charAt(1);
     }
+
 
     public int getPriorityValue() {
         return MAX_PRIORITY_VALUE - this.powerLevel;

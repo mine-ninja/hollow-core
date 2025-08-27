@@ -1,6 +1,5 @@
 package net.warcane.lugin.core.player.account;
 
-import com.mongodb.client.model.Indexes;
 import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.player.fetcher.PlayerUuidFetcher;
 import net.warcane.lugin.core.util.data.MongoRepository;
@@ -8,10 +7,7 @@ import net.warcane.lugin.core.util.data.RedisCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -49,7 +45,8 @@ public class PlayerAccountServiceImpl implements PlayerAccountService {
     public @Nullable PlayerAccount getCachedAccountByName(@NotNull String playerName) {
         return localCache.values()
           .stream()
-          .filter(account -> account.playerName().equalsIgnoreCase(playerName))
+          .filter(Objects::nonNull)
+          .filter(account -> account.playerName() != null && account.playerName().equalsIgnoreCase(playerName))
           .findFirst()
           .orElse(null);
     }

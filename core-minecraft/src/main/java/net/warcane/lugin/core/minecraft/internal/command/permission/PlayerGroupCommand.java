@@ -120,7 +120,7 @@ public class PlayerGroupCommand extends SimpleCommand {
     }
 
     private void handleRemoveGroupCommand(@NotNull CommandContext ctx, @NotNull String playerName) {
-        final var group = ctx.getEnumOrThrow(2, PlayerGroup.class, "§cGrupo inválido. Use um dos seguintes: " + String.join(", ", PlayerGroup.NAMES));
+        final var group = ctx.getArgOrThrow(2, PlayerGroup::fromId, "§cGrupo inválido. Use um dos seguintes: " + String.join(", ", PlayerGroup.NAMES));
         final var categoryType = ctx.getEnumOrThrow(3, SubscriptionCategoryType.class, "§cCategoria inválida. Use uma das seguintes: " + String.join(", ", SubscriptionCategoryType.BY_NAME.keySet()));
 
         playerAccountService.getPlayerAccountByName(playerName)
@@ -166,6 +166,8 @@ public class PlayerGroupCommand extends SimpleCommand {
               ctx.sendMessage("");
 
               for (var category : SubscriptionCategoryType.BY_NAME.values()) {
+                  if (category != SubscriptionCategoryType.GLOBAL) continue;
+
                   var categorySubscriptions = account.getSubscriptions(category);
 
                   if (categorySubscriptions.isEmpty()) continue;

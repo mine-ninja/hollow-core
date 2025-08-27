@@ -15,12 +15,12 @@ import net.warcane.lugin.core.minecraft.vanish.VanishManager;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerConnectedToServerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDisconnectedFromServerPacket;
+import net.warcane.lugin.core.player.account.PlayerAccountService;
 import net.warcane.lugin.core.player.account.PlayerAccountService.AccountUnloadOptions;
 import net.warcane.lugin.core.player.fetcher.PlayerNameFetcher;
 import net.warcane.lugin.core.player.fetcher.PlayerUuidFetcher;
 import net.warcane.lugin.core.player.state.PlayerNetworkState;
 import net.warcane.lugin.core.player.state.PlayerNetworkStateManager;
-import net.warcane.lugin.core.player.subscription.SubscriptionCategoryType;
 import net.warcane.lugin.core.player.teleport.PlayerJoinDataManager;
 import net.warcane.lugin.core.player.wallet.Wallet;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
@@ -66,16 +66,18 @@ public final class InternalPlayerListener implements Listener {
         }
 
         log.info("Player with UUID {} is attempting to join the server.", uniqueId);
-        final var account = platform.getPlayerAccountService().getPlayerAccount(uniqueId).join();
+        final var account = platform.getPlayerAccountService().loadPlayerAccount(uniqueId,
+          new PlayerAccountService.AccountLoadOptions(null, false)
+        ).join();
         if (account == null) {
             log.error("Failed to load player account for UUID {} during pre-login.", uniqueId);
             event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text(platform.getDisallowJoinMessage()));
             return;
         }
 
-        final var highestGroup = account.getHighestSubscription(SubscriptionCategoryType.GLOBAL);
-        log.info("Player with UUID {} has highest special group: {}", uniqueId, highestGroup.group().name());
-        if (!platform.isGroupAllowedToJoin(highestGroup.group())) {
+        final var subscriptions = account.subscriptions();
+        final boolean isAbleToJoin = subscriptions.stream().anyMatch(sub -> platform.isGroupAllowedToJoin(sub.group()));
+        if (!isAbleToJoin) {
             event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text(platform.getDisallowJoinMessage()));
             return;
         }
