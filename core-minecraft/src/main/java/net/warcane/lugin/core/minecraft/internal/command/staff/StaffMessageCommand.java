@@ -32,7 +32,6 @@ public class StaffMessageCommand extends SimpleCommand {
             throw new CommandFailedException("§cOcorreu um erro ao executar o comando. Tente novamente mais tarde.");
         }
 
-
         final var tagFormat = account.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL);
         final var msg = ctx.isArgsLength(0) ? "" : ctx.joinArgs(0);
         if (msg.isEmpty()) {

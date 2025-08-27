@@ -2,9 +2,11 @@ package net.warcane.lugin.core.minecraft;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
+import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.AbstractPlatform;
 import net.warcane.lugin.core.MinecraftServerPlatform;
 import net.warcane.lugin.core.Platform;
+import net.warcane.lugin.core.group.PlayerGroup;
 import net.warcane.lugin.core.minecraft.currency.CurrencyManager;
 import net.warcane.lugin.core.minecraft.event.tick.AsyncServerTickEvent;
 import net.warcane.lugin.core.minecraft.internal.command.InternalCommandManager;
@@ -35,10 +37,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
-
-import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+
 import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
@@ -187,10 +188,9 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     @Contract(pure = true)
     public @NotNull ServerPlayers getPlayerCount() {
         return new ServerPlayers(
-          Bukkit.getOnlinePlayers().stream()
-            .map(player -> Map.entry(player.getUniqueId(), player.getName()))
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)),
-          Bukkit.getMaxPlayers());
+          Bukkit.getOnlinePlayers().size(),
+          Bukkit.getMaxPlayers()
+        );
     }
 
     @Override
@@ -209,6 +209,17 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
     public GameServer getGameServer() {
         return new GameServer(this.getId(), this.getServerCategoryType(), this.getServerHostAddress(), this.getPlayerCount(), this.online);
+    }
+
+    public boolean isGroupAllowedToJoin(@NotNull PlayerGroup playerGroup) {
+        final var allowedGroups = Property.get("ALLOWED_GROUPS"); // "ADMIN,MOD,TRIAL,DEFAULT"
+        if (allowedGroups == null) return true;
+
+        return allowedGroups.contains(playerGroup.name());
+    }
+
+    public String getDisallowJoinMessage() {
+        return Property.get("DISALLOW_JOIN_MESSAGE", "§cVocê não tem permissão para entrar neste servidor.");
     }
 
     @NotNull

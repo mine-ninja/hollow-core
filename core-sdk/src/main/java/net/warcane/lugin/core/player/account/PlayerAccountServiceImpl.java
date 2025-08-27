@@ -31,11 +31,8 @@ public class PlayerAccountServiceImpl implements PlayerAccountService {
 
     public PlayerAccountServiceImpl(@NotNull ExecutorService executorService) {
         this.executorService = executorService;
-
-        repository.useCollection(collection -> {
-            collection.createIndex(Indexes.hashed("uniqueId"));
-            collection.createIndex(Indexes.hashed("playerName"));
-        });
+        repository.removeDuplicates("uniqueId");
+        repository.removeDuplicates("playerName");
     }
 
     @Override

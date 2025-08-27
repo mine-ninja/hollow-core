@@ -101,12 +101,10 @@ public class BukkitPlatformPlugin extends SimplePlugin {
 
             final var playerCount = server.serverPlayers().toFormattedString();
             ctx.sendMessage("§aServidor: §b" + server.serverId() + " §7[" + playerCount + "|" + server.categoryType().name() + "] §b" + server.hostAddress().toString());
-            final var players = server.serverPlayers().players();
+            final var players = server.serverPlayers();
             if (players.isEmpty()) {
-                ctx.sendMessage("§cNenhum jogador online.");
                 return;
             }
-            ctx.sendMessage("§aJogadores: §7" + String.join(", ", players.values()));
         }
 
         @Override

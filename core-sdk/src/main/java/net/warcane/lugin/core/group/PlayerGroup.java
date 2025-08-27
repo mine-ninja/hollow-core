@@ -21,7 +21,7 @@ public enum PlayerGroup {
     HELPER("ajudante", "§2[Ajudante] ", '\uE007', "Ajudante", NamedTextColor.DARK_GREEN, 8),
     INFLUENCER("influencer", "§5[Influencer] ", '\uE00B', "Influencer", NamedTextColor.DARK_PURPLE, 7), // TODO: esperar a tag
     SUPREME("supremo", "§1[Supremo] ", '\uE002', "Supremo", NamedTextColor.DARK_BLUE, 6),
-    LEGENDARY("legendario", "§2[Lendário] ", '\uE001', "Lendário", NamedTextColor.DARK_GREEN, 5),
+    LEGENDARY("lendario", "§2[Lendário] ", '\uE001', "Lendário", NamedTextColor.DARK_GREEN, 5),
     HERO("heroi", "§5[Heroi] ", ' ', "Hero", NamedTextColor.DARK_PURPLE, 4),
     CHAMPION("campeao", "§3[Campeão] ", '\uE000', "Campeão", NamedTextColor.DARK_AQUA, 3),
     ALPHA("alpha", "§b[Alpha] ", '\uE00E', "Alpha", NamedTextColor.AQUA, 2),
@@ -34,6 +34,8 @@ public enum PlayerGroup {
     public static final List<String> NAMES = Arrays.stream(values())
       .map(PlayerGroup::getId)
       .toList();
+
+    public static final List<PlayerGroup> entries = List.of(values());
 
     public static final List<PlayerGroup> STAFF_GROUPS = Arrays.stream(values())
       .filter(PlayerGroup::isStaffGroup)
@@ -83,5 +85,9 @@ public enum PlayerGroup {
 
     public boolean isSpecialGroup(){
         return isGreaterOrEqualTo(INFLUENCER);
+    }
+
+    public boolean isVipGroup() {
+        return this == CHAMPION || this == HERO || this == LEGENDARY || this == SUPREME;
     }
 }

@@ -3,6 +3,7 @@ package net.warcane.lugin.core.util.data;
 import com.mongodb.Function;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.*;
+import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.database.MongoDbConnector;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+@Slf4j
 public class MongoRepository<ID, O> {
 
     private static final FindOneAndReplaceOptions FIND_ONE_AND_REPLACE_OPTIONS = new FindOneAndReplaceOptions()
@@ -60,6 +62,24 @@ public class MongoRepository<ID, O> {
 
     public MongoRepository(@NotNull MongoDbConnector.Builder builder, @NotNull Class<O> clazz, @NotNull String idFieldName, @NotNull String collectionName) {
         this(builder.build(), clazz, idFieldName, collectionName);
+    }
+
+    public void removeDuplicates(@NotNull String key) {
+        final var documents = rawCollection.aggregate(List.of(
+          Aggregates.group("$" + key, Accumulators.push("ids", "$_id"), Accumulators.sum("count", 1)),
+          Aggregates.match(Filters.gt("count", 1))
+        )).into(new ArrayList<>());
+
+        for (Document document : documents) {
+            final var ids = (List<Object>) document.get("ids");
+            if (ids.size() <= 1) continue;
+
+            final var idsToRemove = ids.subList(1, ids.size());
+            rawCollection.deleteMany(Filters.in("_id", idsToRemove));
+        }
+
+        log.info("Removed {} duplicate documents based on key '{}'", documents.size(), key);
+        rawCollection.createIndex(Indexes.ascending(key), new IndexOptions().unique(true));
     }
 
     public O findById(ID id) {

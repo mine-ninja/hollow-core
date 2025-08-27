@@ -33,7 +33,7 @@ public class GroupPermissionCommand extends SimpleCommand {
     @Override
     public void performCommand(@NotNull CommandContext ctx) throws CommandFailedException {
         final var subCommand = ctx.getRawArgOrThrow(0, "§cVocê deve especificar um subcomando: add, remove ou list.");
-        final var group = ctx.getEnumOrThrow(1, PlayerGroup.class, "§cGrupo inválido. Use um dos seguintes: " + String.join(", ", PlayerGroup.NAMES));
+        final var group = ctx.getArgOrThrow(1, PlayerGroup.BY_ID::get, "§cGrupo inválido. Use um dos seguintes: " + String.join(", ", PlayerGroup.NAMES));
 
         service.getGroupPermissionSet(group)
           .whenComplete((found, error) -> {

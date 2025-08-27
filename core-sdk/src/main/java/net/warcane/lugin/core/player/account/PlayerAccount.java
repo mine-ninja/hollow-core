@@ -239,7 +239,7 @@ public record PlayerAccount(
         if (subscriptions == null) return Collections.emptyList();
 
         return subscriptions.stream()
-          .filter(subscription -> subscription.type() == type)
+          .filter(subscription -> subscription.type() == SubscriptionCategoryType.GLOBAL) // hotfix for global fallback.
           .toList();
     }
 

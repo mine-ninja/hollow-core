@@ -19,7 +19,6 @@ import java.util.List;
 
 @Slf4j
 public class PlayerGroupCommand extends SimpleCommand {
-
     /**
      * Aliases para indicar que o grupo é permanente (a prova de burros).
      */
@@ -52,23 +51,27 @@ public class PlayerGroupCommand extends SimpleCommand {
     }
 
     private void handleAddGroupCommand(@NotNull CommandContext ctx, @NotNull String playerName) {
-        final var group = ctx.getEnumOrThrow(2, PlayerGroup.class, "§cGrupo inválido. Use um dos seguintes: " + String.join(", ", PlayerGroup.NAMES));
+        var group = ctx.getArgOrThrow(2, PlayerGroup.BY_ID::get,
+          "§cGrupo inválido. Use um dos seguintes: " + String.join(", ", PlayerGroup.NAMES));
+
         final var rawTime = ctx.getRawArgOrThrow(3, "§cVocê deve especificar o tempo de duração do grupo (use 'permanente' para um grupo permanente).");
         final var isPermanent = PERMANENT_ARG_VALUES.contains(rawTime.toLowerCase());
 
         final var parsedTime = isPermanent ? null : this.parseInstant(rawTime);
-        final var categoryType = ctx.getEnumOrThrow(4, SubscriptionCategoryType.class, "§cCategoria inválida. Use uma das seguintes: " + String.join(", ", SubscriptionCategoryType.BY_NAME.keySet()));
 
-        if (categoryType == SubscriptionCategoryType.GLOBAL && !group.isSpecialGroup()) {
-            final var specialGroupIds = String.join(",", PlayerGroup.SPECIAL_GROUPS.stream()
-              .map(PlayerGroup::getId)
-              .toList());
-
-            ctx.sendMessage("§cSomente grupos especiais podem ser adicionados no contexto GLOBAL: " + specialGroupIds);
-            return;
+        /*
+          Forçamos aqui uma categoria GLOBAL, visto que as outras categorias não são mais suportadas.
+         */
+        var providedCategoryType = ctx.getEnumOrThrow(4, SubscriptionCategoryType.class, "§cCategoria inválida. Use uma das seguintes: " + String.join(", ", SubscriptionCategoryType.BY_NAME.keySet()));
+        if (providedCategoryType != SubscriptionCategoryType.GLOBAL) {
+            ctx.sendMessage("§cEsta categoria não é mais suportada. Usando GLOBAL no lugar.");
+            providedCategoryType = SubscriptionCategoryType.GLOBAL;
         }
 
         ctx.sendMessage("§7§oProcurando jogador %s na base de dados...".formatted(playerName));
+
+
+        final var categoryType = providedCategoryType;
         playerAccountService.getPlayerAccountByName(playerName)
           .whenComplete((account, error) -> {
               if (error != null) {
@@ -76,7 +79,6 @@ public class PlayerGroupCommand extends SimpleCommand {
                   ctx.sendMessage("§cErro ao buscar conta do jogador: " + error.getMessage());
                   return;
               }
-
 
               if (account == null) {
                   ctx.sendMessage("§cJogador não encontrado: " + playerName);
@@ -98,7 +100,7 @@ public class PlayerGroupCommand extends SimpleCommand {
                         return;
                     }
 
-                    final var updatedSubscription = updatedAccount.getSubscriptionForGroup(group, categoryType);
+                  final var updatedSubscription = updatedAccount.getSubscriptionForGroup(group, categoryType);
                     if (updatedSubscription != null) {
                         final var confirmationPacket = new PlayerReceiveGroupPacket(updatedAccount.uniqueId(), updatedSubscription.group(), categoryType);
                         platform.getNetworkClient().sendNetworkPacket(NetworkChannel.SERVER_STATUS, confirmationPacket);

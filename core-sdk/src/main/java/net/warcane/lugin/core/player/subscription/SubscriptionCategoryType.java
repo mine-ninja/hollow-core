@@ -19,7 +19,13 @@ import static java.util.stream.Collectors.toMap;
 @AllArgsConstructor
 public enum SubscriptionCategoryType {
 
-    GLOBAL("Global");
+    GLOBAL("Global"),
+
+    @Deprecated
+    FACTIONS("Factions"),
+
+    @Deprecated
+    MINIGAMES("Minigames");
 
     public static final Map<String, SubscriptionCategoryType> BY_NAME = Arrays.stream(values())
       .collect(toMap(SubscriptionCategoryType::getDisplayName, Function.identity()));

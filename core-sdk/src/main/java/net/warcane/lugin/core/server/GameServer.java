@@ -1,5 +1,6 @@
 package net.warcane.lugin.core.server;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
 import net.warcane.lugin.core.util.address.HostAddress;
@@ -12,6 +13,7 @@ import net.warcane.lugin.core.util.address.HostAddress;
  * @param serverPlayers  Contagem de jogadores no servidor
  * @param online       Indica se o servidor está online
  */
+@JsonIgnoreProperties
 public record GameServer(
   @JsonProperty("i") String serverId,
   @JsonProperty("c") ServerCategoryType categoryType,
