@@ -3,7 +3,6 @@ package net.warcane.lugin.core.group;
 import com.mongodb.client.model.Indexes;
 import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.util.data.MongoRepository;
-import net.warcane.lugin.core.util.data.RedisCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,7 +12,6 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Supplier;
 
 import static java.util.concurrent.CompletableFuture.allOf;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
@@ -24,7 +22,6 @@ public class GroupPermissionService {
     private static final String CACHE_KEY = "groupperms";
 
     private final Map<String, GroupPermissionSet> localCache = new ConcurrentHashMap<>();
-    private final RedisCache<GroupPermissionSet> redisCache = new RedisCache<>(GroupPermissionSet.class);
     private final MongoRepository<String, GroupPermissionSet> permissionsRepository = new MongoRepository<>(GroupPermissionSet.class, "groupId");
 
     /**
@@ -78,13 +75,12 @@ public class GroupPermissionService {
         }
 
         return supplyAsync(() -> {
-            final Supplier<GroupPermissionSet> supplier = () -> permissionsRepository.findById(group.getId());
-
-            final var fromDb = redisCache.hget(CACHE_KEY, group.getId(), supplier);
-            if (fromDb != null) {
-                localCache.put(group.getId(), fromDb);
-                log.info("Loaded permissions for group: {}", group.getId());
-                return fromDb;
+            log.info("Permissions for group {} not found in Redis, checking MongoDB...", group.getId());
+            var fromMongo = permissionsRepository.findById(group.getId());
+            if (fromMongo != null) {
+                localCache.put(group.getId(), fromMongo);
+                log.info("Loaded permissions for group {} from MongoDB and updated caches: {}", group.getId(), fromMongo.permissions());
+                return fromMongo;
             }
 
             throw new IllegalStateException("Group permissions not found for group: " + group.getId());
@@ -101,17 +97,14 @@ public class GroupPermissionService {
      */
     public CompletableFuture<@NotNull GroupPermissionSet> loadPermissions(@NotNull PlayerGroup group, boolean createIfNotExists) {
         return supplyAsync(() -> {
-            var fromDb = redisCache.hget(CACHE_KEY, group.getId());
-            if (fromDb == null){
-                log.info("Permissions for group {} not found in Redis cache, checking MongoDB...", group.getId());
-                fromDb = permissionsRepository.findById(group.getId());
+
+            var fromDb = permissionsRepository.findById(group.getId());
                 if(fromDb != null){
                     log.info("Loaded permissions for group {} from MongoDB: {}", group.getId(), fromDb.permissions());
-                    redisCache.hset(CACHE_KEY, group.getId(), fromDb);
                 } else {
                     log.info("No permissions found for group {} in MongoDB.", group.getId());
                 }
-            }
+
 
             if (fromDb != null) {
                 log.info("Loaded permissions for group: {}", group.getId());
@@ -125,7 +118,6 @@ public class GroupPermissionService {
 
                 final var newPermissions = GroupPermissionSet.create(group);
                 permissionsRepository.save(newPermissions, GroupPermissionSet::groupId);
-                redisCache.hset(CACHE_KEY, group.getId(), newPermissions);
                 localCache.put(group.getId(), newPermissions);
 
                 log.info("Created new permissions for group {} and permissions {}", group.getId(), newPermissions.permissions());
@@ -163,8 +155,6 @@ public class GroupPermissionService {
             }
 
             log.info("Updated group permissions for group: {}", permissionSet.groupId());
-
-            redisCache.hset(CACHE_KEY, permissionSet.groupId(), updated);
             localCache.put(permissionSet.groupId(), updated);
 
             log.info("Updated local cache for group: {} with permissions: {}", permissionSet.groupId(), updated.permissions());

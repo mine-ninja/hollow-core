@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -23,7 +24,7 @@ public enum PlayerGroup {
     HELPER("ajudante", "§2[Ajudante] ", '\uE007', "Ajudante", NamedTextColor.DARK_GREEN, 8),
     INFLUENCER("influencer", "§5[Influencer] ", '\uE00B', "Influencer", NamedTextColor.DARK_PURPLE, 7), // TODO: esperar a tag
     SUPREME("supremo", "§1[Supremo] ", '\uE002', "Supremo", NamedTextColor.DARK_BLUE, 6),
-    LEGENDARY("lendario", "§2[Lendário] ", '\uE001', "Lendário", NamedTextColor.DARK_GREEN, 5),
+    LEGENDARY("lendario", "§9[Lendário] ", '\uE001', "Lendário", NamedTextColor.BLUE, 5),
     HERO("heroi", "§5[Heroi] ", ' ', "Hero", NamedTextColor.DARK_PURPLE, 4),
     CHAMPION("campeao", "§3[Campeão] ", '\uE000', "Campeão", NamedTextColor.DARK_AQUA, 3),
     ALPHA("alpha", "§b[Alpha] ", '\uE00E', "Alpha", NamedTextColor.AQUA, 2),
@@ -57,13 +58,9 @@ public enum PlayerGroup {
     private final NamedTextColor namedTextColor;
     private final int powerLevel;
 
+    @Nullable
     public static PlayerGroup fromId(@NotNull String id) {
-        for (PlayerGroup value : values()) {
-            if (value.id.equalsIgnoreCase(id)) {
-                return value;
-            }
-        }
-        return null;
+        return BY_ID.get(id.toLowerCase());
     }
 
     public boolean isGreaterOrEqualTo(PlayerGroup other) {

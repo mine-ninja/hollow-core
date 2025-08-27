@@ -165,8 +165,6 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
         log.info("Bukkit Platform is now online with ID: {}", this.getId());
         Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::updateServerInfo, 20, 20 * 10);
-
-
         Bukkit.getConsoleSender().sendMessage("§aCarregando nomes de jogadores para o redis (para acesso rápido)");
     }
 

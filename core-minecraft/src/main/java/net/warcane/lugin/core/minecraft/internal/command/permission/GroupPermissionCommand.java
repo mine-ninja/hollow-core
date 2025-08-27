@@ -57,6 +57,12 @@ public class GroupPermissionCommand extends SimpleCommand {
     }
 
     private void handleAddCommand(@NotNull CommandContext ctx, @NotNull PlayerGroup group, @NotNull GroupPermissionSet currentPermissions) throws CommandFailedException {
+
+        GroupPermissionSet cachedPermissionsForGroup = service.getCachedPermissionsForGroup(group);
+        if(cachedPermissionsForGroup != null){
+            log.info("Permissões em cache para o grupo {}: {}", group.name(), cachedPermissionsForGroup);
+        }
+
         final var permissionToAdd = ctx.getRawArgOrThrow(2, "§cVocê deve especificar uma permissão para adicionar.");
         if (currentPermissions.hasPermission(permissionToAdd)) {
             throw new CommandFailedException("§cA permissão " + permissionToAdd + " já está presente no grupo " + group.name() + ".");
@@ -66,10 +72,8 @@ public class GroupPermissionCommand extends SimpleCommand {
           .whenComplete((updated, error) -> {
             if (error != null) {
                 ctx.sendMessage("§cErro ao adicionar permissão: " + error.getMessage());
-            } else if (updated != null) {
-                ctx.sendMessage("§aPermissão " + permissionToAdd + " adicionada ao grupo " + group.name() + ".");
             } else {
-                ctx.sendMessage("§cErro incomum ao adicionar permissão ao grupo " + group.name() + ".");
+                ctx.sendMessage("§aPermissão " + permissionToAdd + " adicionada ao grupo " + group.name() + ".");
             }
         });
     }
@@ -97,6 +101,8 @@ public class GroupPermissionCommand extends SimpleCommand {
 
         int size = currentPermissions.permissions().size();
         if (size == 0) {
+            log.info("Grupo {} não possui permissões definidas.", group.name());
+            log.info("GroupPermissionSet: {}", currentPermissions);
             ctx.sendMessage("§cO grupo " + group.name() + " não possui permissões definidas.");
             return;
         }

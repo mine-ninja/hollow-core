@@ -28,7 +28,7 @@ public record GroupPermissionSet(
      * @return Um novo {@link GroupPermissionSet} com o identificador do grupo throwable um conjunto vazio de permissões
      */
     public static GroupPermissionSet create(@NotNull PlayerGroup group) {
-        return new GroupPermissionSet(group.name().toLowerCase(), new HashSet<>());
+        return new GroupPermissionSet(group.getId().toLowerCase(), new HashSet<>());
     }
 
 
