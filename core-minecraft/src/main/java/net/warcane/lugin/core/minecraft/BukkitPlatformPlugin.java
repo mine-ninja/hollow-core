@@ -66,7 +66,7 @@ public class BukkitPlatformPlugin extends SimplePlugin {
             }
 
             final int size = gameServers.size();
-            var message = Component.text("§aServidores (§7" + size + "): ");
+            var message = Component.text("§aServidores (§7" + size + "§a): ");
             for (int i = 0; i < gameServers.size(); i++) {
                 GameServer server = gameServers.get(i);
 
