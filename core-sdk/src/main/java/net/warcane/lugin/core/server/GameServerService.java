@@ -10,6 +10,7 @@ import net.warcane.lugin.core.util.JsonUtil;
 import net.warcane.lugin.core.util.address.HostAddress;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import redis.clients.jedis.Jedis;
 
 import java.util.*;
 
@@ -32,31 +33,12 @@ public class GameServerService {
     private final RedisConnector connector;
 
     public int getTotalPlayerCount() {
-        int total = 0;
+        return connector.supplyFromJedis(jedis -> {
+            int total = 0;
 
-        for (String value : connector.getJedisPool().getResource().hgetAll(KEY).values()){
-            JsonObject jsonObject = new Gson().fromJson(value, JsonObject.class);
+            for (String value : jedis.hgetAll(KEY).values()){
+                JsonObject jsonObject = new Gson().fromJson(value, JsonObject.class);
 
-            int count = jsonObject.getAsJsonObject("p").get("o").getAsInt();
-            boolean online = jsonObject.get("o").getAsBoolean();
-
-            if (online) {
-                total += count;
-            }
-        }
-
-        return total;
-    }
-
-    public int getPlayerCountForServerCategory(@NotNull ServerCategoryType categoryType) {
-        int total = 0;
-
-        for (String value : connector.getJedisPool().getResource().hgetAll(KEY).values()){
-            JsonObject jsonObject = new Gson().fromJson(value, JsonObject.class);
-
-            String category = jsonObject.get("c").getAsString();
-
-            if (category.equalsIgnoreCase(categoryType.name())) {
                 int count = jsonObject.getAsJsonObject("p").get("o").getAsInt();
                 boolean online = jsonObject.get("o").getAsBoolean();
 
@@ -64,9 +46,32 @@ public class GameServerService {
                     total += count;
                 }
             }
-        }
 
-        return total;
+            return total;
+        });
+    }
+
+    public int getPlayerCountForServerCategory(@NotNull ServerCategoryType categoryType) {
+        return connector.supplyFromJedis(jedis -> {
+            int total = 0;
+
+            for (String value : jedis.hgetAll(KEY).values()){
+                JsonObject jsonObject = new Gson().fromJson(value, JsonObject.class);
+
+                String category = jsonObject.get("c").getAsString();
+
+                if (category.equalsIgnoreCase(categoryType.name())) {
+                    int count = jsonObject.getAsJsonObject("p").get("o").getAsInt();
+                    boolean online = jsonObject.get("o").getAsBoolean();
+
+                    if (online) {
+                        total += count;
+                    }
+                }
+            }
+
+            return total;
+        });
     }
 
     @Nullable
