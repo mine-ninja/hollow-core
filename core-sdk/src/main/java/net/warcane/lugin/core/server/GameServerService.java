@@ -1,5 +1,7 @@
 package net.warcane.lugin.core.server;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.database.RedisConnector;
@@ -9,9 +11,7 @@ import net.warcane.lugin.core.util.address.HostAddress;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Representa o serviço de gerenciamento de servidores de jogo na rede.
@@ -32,23 +32,41 @@ public class GameServerService {
     private final RedisConnector connector;
 
     public int getTotalPlayerCount() {
-        return queryAllServersInNetwork()
-          .stream()
-          .map(GameServer::serverPlayers)
-          .mapToInt(ServerPlayers::online)
-          .sum();
+        int total = 0;
+
+        for (String value : connector.getJedisPool().getResource().hgetAll(KEY).values()){
+            JsonObject jsonObject = new Gson().fromJson(value, JsonObject.class);
+
+            int count = jsonObject.getAsJsonObject("p").get("o").getAsInt();
+            boolean online = jsonObject.get("o").getAsBoolean();
+
+            if (online) {
+                total += count;
+            }
+        }
+
+        return total;
     }
 
     public int getPlayerCountForServerCategory(@NotNull ServerCategoryType categoryType) {
-        int sum = 0;
-        for (GameServer gameServer : queryAllServersInNetwork()) {
-            if (gameServer.categoryType() != categoryType) continue;
+        int total = 0;
 
-            ServerPlayers serverPlayers = gameServer.serverPlayers();
-            int online = serverPlayers.online();
-            sum += online;
+        for (String value : connector.getJedisPool().getResource().hgetAll(KEY).values()){
+            JsonObject jsonObject = new Gson().fromJson(value, JsonObject.class);
+
+            String category = jsonObject.get("c").getAsString();
+
+            if (category.equalsIgnoreCase(categoryType.name())) {
+                int count = jsonObject.getAsJsonObject("p").get("o").getAsInt();
+                boolean online = jsonObject.get("o").getAsBoolean();
+
+                if (online) {
+                    total += count;
+                }
+            }
         }
-        return sum;
+
+        return total;
     }
 
     @Nullable

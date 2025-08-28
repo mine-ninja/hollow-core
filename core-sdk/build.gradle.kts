@@ -31,6 +31,7 @@ dependencies {
 
   api("com.github.ben-manes.caffeine:caffeine:3.2.1")
 
+  implementation("com.google.code.gson:gson:2.11.0")
   implementation("io.github.cdimascio:dotenv-java:3.2.0")
   implementation("it.unimi.dsi:fastutil:8.5.8")
 }

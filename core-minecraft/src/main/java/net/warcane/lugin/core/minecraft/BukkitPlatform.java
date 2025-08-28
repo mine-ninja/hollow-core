@@ -159,8 +159,8 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         final var internalPackets = new InternalPacketListeners(this);
         internalPackets.setup();
 
-
         this.online = true;
+
         gameServerService.update(this.getGameServer().withOnlineStatus(true));
 
         log.info("Bukkit Platform is now online with ID: {}", this.getId());
