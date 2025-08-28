@@ -66,22 +66,22 @@ public class BukkitPlatformPlugin extends SimplePlugin {
             }
 
             final int size = gameServers.size();
-            final var message = new StringBuilder("§aServidores (§7").append(size).append("): ");
+            var message = Component.text("§aServidores (§7" + size + "): ");
             for (int i = 0; i < gameServers.size(); i++) {
                 GameServer server = gameServers.get(i);
 
                 final var playerCount = server.serverPlayers().toFormattedString();
                 final var serverCategory = server.categoryType().name();
 
-                message.append("§a").append(server.serverId())
-                  .append(" §7[").append(playerCount).append("|").append(serverCategory).append("] §b")
-                  .append(server.hostAddress().toString());
+                message = message.append(Component.text("§a" + server.serverId()))
+                  .append(Component.text(" §7[" + playerCount + " | " + serverCategory + "]"))
+                  .append(Component.text(" §b" + server.hostAddress().toString()));
                 if (i < gameServers.size() - 1) {
-                    message.append(Component.newline());
+                    message = message.append(Component.newline());
                 }
             }
 
-            ctx.sendMessage(message.toString());
+            ctx.sendMessage(message);
         }
     }
 
