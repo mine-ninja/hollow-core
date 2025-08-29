@@ -59,27 +59,32 @@ public final class InternalPlayerListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void handlePreLogin(@NotNull AsyncPlayerPreLoginEvent event) {
-        final var uniqueId = event.getUniqueId();
-        if (Property.get("ALLOWED_GROUPS") == null) {
-            log.info("Server has no group restrictions, allowing all players to join.");
-            return;
-        }
+        try {
+            final var uniqueId = event.getUniqueId();
+            if (Property.get("ALLOWED_GROUPS") == null) {
+                log.info("Server has no group restrictions, allowing all players to join.");
+                return;
+            }
 
-        log.info("Player with UUID {} is attempting to join the server.", uniqueId);
-        final var account = platform.getPlayerAccountService().loadPlayerAccount(uniqueId,
-          new PlayerAccountService.AccountLoadOptions(null, false)
-        ).join();
-        if (account == null) {
-            log.error("Failed to load player account for UUID {} during pre-login.", uniqueId);
-            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text(platform.getDisallowJoinMessage()));
-            return;
-        }
+            log.info("Player with UUID {} is attempting to join the server.", uniqueId);
+            final var account = platform.getPlayerAccountService().loadPlayerAccount(uniqueId,
+              new PlayerAccountService.AccountLoadOptions(null, false)
+            ).join();
+            if (account == null) {
+                log.error("Failed to load player account for UUID {} during pre-login.", uniqueId);
+                event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text(platform.getDisallowJoinMessage()));
+                return;
+            }
 
-        final var subscriptions = account.subscriptions();
-        final boolean isAbleToJoin = subscriptions.stream().anyMatch(sub -> platform.isGroupAllowedToJoin(sub.group()));
-        if (!isAbleToJoin) {
-            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text(platform.getDisallowJoinMessage()));
-            return;
+            final var subscriptions = account.subscriptions();
+            final boolean isAbleToJoin = subscriptions.stream().anyMatch(sub -> platform.isGroupAllowedToJoin(sub.group()));
+            if (!isAbleToJoin) {
+                event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text(platform.getDisallowJoinMessage()));
+                return;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text(FAILED_TO_LOAD_ERR_MSG));
         }
     }
 

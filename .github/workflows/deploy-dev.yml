@@ -1,0 +1,61 @@
+name: Deploy plugins
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    name: Build and Deploy to Pterodactyl
+    environment: dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build with Gradle shadowJar
+        run: ./gradlew shadowJar
+
+      - name: Find JAR files
+        id: find-jars
+        run: |
+          # Encontra todos os arquivos JAR que terminam com -all.jar
+          JAR_FILES=$(find . -name "*-all.jar" -type f)
+          echo "Found JAR files:"
+          echo "$JAR_FILES"
+          
+          # Cria uma lista separada por espaços para usar na action
+          JAR_LIST=""
+          for jar in $JAR_FILES; do
+            if [ -z "$JAR_LIST" ]; then
+              JAR_LIST="$jar"
+            else
+              JAR_LIST="$JAR_LIST $jar"
+            fi
+          done
+          
+          echo "jar-files=$JAR_LIST" >> $GITHUB_OUTPUT
+
+      - name: Upload to Pterodactyl
+        uses: rexlmanu/pterodactyl-upload-action@v2.5
+        with:
+          panel-host: ${{ secrets.PANEL_HOST }}
+          api-key: ${{ secrets.API_KEY }}
+          sources: ${{ steps.find-jars.outputs.jar-files }}
+          server-ids: |
+            dffdf5a9
+          target: "./plugins/"
+          # Se você quiser reiniciar os servidores após upload bem-sucedido
+          # restart: true
+          # Se você quiser descomprimir os arquivos após upload bem-sucedido
+          # decompress-target: true
