@@ -30,8 +30,6 @@ jobs:
           cache-write-only: false
           # Cache das dependências baixadas
           dependency-graph: generate-and-submit
-          # Cache do build cache do Gradle
-          gradle-home-cache-cleanup: true
 
       - name: Cache Gradle dependencies
         uses: actions/cache@v4
@@ -58,6 +56,19 @@ jobs:
           api-key: ${{ secrets.API_KEY }}
           source: "core-minecraft/build/libs/core-minecraft-0.6.1-alpha-dev-all.jar"
           server-id: dffdf5a9
+          target: "./plugins/"
+          # Se você quiser reiniciar os servidores após upload bem-sucedido
+          # restart: true
+          # Se você quiser descomprimir os arquivos após upload bem-sucedido
+          # decompress-target: true
+
+      - name: Upload to Pterodactyl Proxy
+        uses: rexlmanu/pterodactyl-upload-action@v2.5
+        with:
+          panel-host: ${{ secrets.PANEL_HOST }}
+          api-key: ${{ secrets.API_KEY }}
+          source: "core-proxy/build/libs/core-proxy-0.6.1-alpha-dev-all.jar"
+          server-id: c3a84b4b
           target: "./plugins/"
           # Se você quiser reiniciar os servidores após upload bem-sucedido
           # restart: true
