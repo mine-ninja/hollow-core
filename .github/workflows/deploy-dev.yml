@@ -70,8 +70,7 @@ jobs:
           panel-host: ${{ secrets.PANEL_HOST }}
           api-key: ${{ secrets.API_KEY }}
           source: "core-minecraft/build/libs/core-minecraft-0.6-alpha-dev-all.jar"
-          server-ids:
-            dffdf5a9
+          server-id: dffdf5a9
           target: "./plugins/"
           # Se você quiser reiniciar os servidores após upload bem-sucedido
           # restart: true
