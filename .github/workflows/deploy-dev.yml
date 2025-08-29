@@ -10,21 +10,59 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Cache do checkout para repositórios grandes
+          fetch-depth: 1
 
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
+          # Cache automático do JDK
+          cache: 'gradle'
 
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
+        with:
+          # Cache automático do Gradle (wrapper, dependencies, build cache)
+          cache-read-only: false
+          cache-write-only: false
+          # Cache das dependências baixadas
+          dependency-graph: generate-and-submit
+          # Cache do build cache do Gradle
+          gradle-home-cache-cleanup: true
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            .gradle/caches
+            .gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Build with Gradle shadowJar
-        run: ./gradlew shadowJar
+        run: ./gradlew shadowJar --build-cache --parallel --daemon
+
+      - name: Cache build output
+        uses: actions/cache@v4
+        with:
+          path: |
+            core-minecraft/build/libs/
+            **/build/libs/
+          key: build-output-${{ github.sha }}
+          restore-keys: |
+            build-output-
+
+      - name: Verify build output
+        run: ls -la /home/runner/work/lugin-core/lugin-core/core-minecraft/build/libs/core-minecraft-0.6-alpha-dev-all.jar
 
       - name: Upload to Pterodactyl
         uses: rexlmanu/pterodactyl-upload-action@v2.5
