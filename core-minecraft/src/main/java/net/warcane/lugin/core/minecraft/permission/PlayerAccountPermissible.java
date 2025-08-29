@@ -11,7 +11,11 @@ import net.warcane.lugin.core.player.subscription.PlayerGroupSubscription;
 import net.warcane.lugin.core.player.subscription.SubscriptionCategoryType;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissibleBase;
+import org.bukkit.permissions.Permission;
+import org.bukkit.permissions.PermissionAttachmentInfo;
+
 import org.jetbrains.annotations.NotNull;
+import java.util.Set;
 
 @Slf4j
 final class PlayerAccountPermissible extends PermissibleBase {
@@ -26,14 +30,33 @@ final class PlayerAccountPermissible extends PermissibleBase {
         this.account = account;
         this.groupPermissionService = groupPermissionService;
     }
-
+    
+    @Override
+    public boolean hasPermission(@NotNull Permission perm) {
+        return hasPermission(perm.getName().toLowerCase());
+    }
+    
     @Override
     public boolean hasPermission(@NotNull String inName) {
         final var subscriptionCategory = BukkitPlatform.getInstance().getSubscriptionCategoryType();
         return checkPlayerPermission(inName, subscriptionCategory);
     }
-
-
+    
+    @Override
+    public synchronized @NotNull Set<PermissionAttachmentInfo> getEffectivePermissions() {
+        Set<PermissionAttachmentInfo> effectivePermissions = super.getEffectivePermissions();
+        
+        for (PlayerGroupSubscription subscription : account.getSubscriptions(SubscriptionCategoryType.GLOBAL)) {
+            final var group = subscription.group();
+            final var permissionSet = groupPermissionService.getCachedPermissionsForGroupOrThrow(group);
+            for (String permission : permissionSet.permissions()) {
+                effectivePermissions.add(new PermissionAttachmentInfo(player, permission, null, true));
+            }
+        }
+        
+        return effectivePermissions;
+    }
+    
     private boolean checkPlayerPermission(
       @NotNull String inName,
       @NotNull SubscriptionCategoryType subscriptionCategory
