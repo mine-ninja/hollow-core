@@ -51,11 +51,6 @@ jobs:
       - name: Build with Gradle shadowJar
         run: ./gradlew shadowJar --build-cache --parallel --daemon
 
-      - name: Verify build output
-        run: |
-          ls -la /home/runner/work/lugin-core/lugin-core/core-minecraft/build/libs/core-minecraft-0.6-alpha-dev-all.jar
-          ls -la /home/runner/work/lugin-core/core-minecraft/build/libs/core-minecraft-0.6-alpha-dev-all.jar
-
       - name: Upload to Pterodactyl
         uses: rexlmanu/pterodactyl-upload-action@v2.5
         with:
