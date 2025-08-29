@@ -67,7 +67,7 @@ jobs:
         with:
           panel-host: ${{ secrets.PANEL_HOST }}
           api-key: ${{ secrets.API_KEY }}
-          source: "core-proxy/build/libs/core-proxy-0.6.1-alpha-dev-all.jar"
+          source: "core-proxy/build/libs/core-proxy-0.6.1-alpha-all.jar"
           server-id: c3a84b4b
           target: "./plugins/"
           # Se você quiser reiniciar os servidores após upload bem-sucedido
