@@ -26,33 +26,13 @@ jobs:
       - name: Build with Gradle shadowJar
         run: ./gradlew shadowJar
 
-      - name: Find JAR files
-        id: find-jars
-        run: |
-          # Encontra todos os arquivos JAR que terminam com -all.jar
-          JAR_FILES=$(find . -name "*-all.jar" -type f)
-          echo "Found JAR files:"
-          echo "$JAR_FILES"
-          
-          # Cria uma lista separada por espaços para usar na action
-          JAR_LIST=""
-          for jar in $JAR_FILES; do
-            if [ -z "$JAR_LIST" ]; then
-              JAR_LIST="$jar"
-            else
-              JAR_LIST="$JAR_LIST $jar"
-            fi
-          done
-          
-          echo "jar-files=$JAR_LIST" >> $GITHUB_OUTPUT
-
       - name: Upload to Pterodactyl
         uses: rexlmanu/pterodactyl-upload-action@v2.5
         with:
           panel-host: ${{ secrets.PANEL_HOST }}
           api-key: ${{ secrets.API_KEY }}
-          sources: ${{ steps.find-jars.outputs.jar-files }}
-          server-ids: |
+          source: "core-minecraft/build/libs/core-minecraft-0.6-alpha-dev-all.jar"
+          server-ids:
             dffdf5a9
           target: "./plugins/"
           # Se você quiser reiniciar os servidores após upload bem-sucedido
