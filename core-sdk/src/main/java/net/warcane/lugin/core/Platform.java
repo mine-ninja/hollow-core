@@ -55,5 +55,14 @@ public interface Platform {
         getNetworkClient().sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, packet);
     }
 
+    default void sendMessageToPlayer(@NotNull UUID playerId, @NotNull String message, String key) {
+        getNetworkClient().sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, new SendMessageToPlayerPacket(playerId , message, key));
+    }
+
+    default void sendMessageToPlayer(@NotNull UUID playerId, @NotNull Component component, String key) {
+        final var packet = SendModernMessageToPlayerPacket.create(playerId, component, key);
+        getNetworkClient().sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, packet);
+    }
+
 
 }
