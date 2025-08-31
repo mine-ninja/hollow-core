@@ -19,6 +19,10 @@ public record BroadcastMessagePacket(
         return new BroadcastMessagePacket(JSONComponentSerializer.json().serialize(message), "unknown");
     }
 
+    public static BroadcastMessagePacket create(Component message, String key) {
+        return new BroadcastMessagePacket(JSONComponentSerializer.json().serialize(message), key);
+    }
+
     @JsonIgnore
     public Component getMessage() {
         return JSONComponentSerializer.json().deserialize(serializedComponentMessage);
