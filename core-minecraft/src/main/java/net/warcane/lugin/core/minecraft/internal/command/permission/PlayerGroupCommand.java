@@ -1,6 +1,8 @@
 package net.warcane.lugin.core.minecraft.internal.command.permission;
 
 import lombok.extern.slf4j.Slf4j;
+
+import com.google.common.collect.Lists;
 import net.warcane.lugin.core.group.PlayerGroup;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.command.SimpleCommand;
@@ -9,13 +11,19 @@ import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerLoseGroupPacket;
 import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerReceiveGroupPacket;
+import net.warcane.lugin.core.player.account.PlayerAccount;
 import net.warcane.lugin.core.player.account.PlayerAccountService;
+import net.warcane.lugin.core.player.subscription.PlayerGroupSubscription;
 import net.warcane.lugin.core.player.subscription.SubscriptionCategoryType;
 import net.warcane.lugin.core.util.time.Time;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Slf4j
 public class PlayerGroupCommand extends SimpleCommand {
@@ -194,6 +202,38 @@ public class PlayerGroupCommand extends SimpleCommand {
 
     @Override
     public List<String> performTabComplete(@NotNull CommandContext ctx) {
+        final String[] args = ctx.getArgs();
+        final int argsLength = args.length;
+        
+        // <add|remove|list>
+        if (argsLength == 1) {
+            return filterStartingWith(List.of("add", "remove", "list"), args[0]);
+        }
+        // <player>
+        if (argsLength == 2) {
+            return filterStartingWith(
+                Bukkit.getOnlinePlayers().stream().map(Player::getName).toList(),
+                args[1]
+            );
+        }
+        // <group>
+        if (argsLength == 3) {
+            if (args[0].equalsIgnoreCase("list")) { return NONE_ARGS; }
+            return filterStartingWith(PlayerGroup.NAMES, args[2]);
+        }
+        // [time]/[category]
+        if (argsLength == 4) {
+            if (args[0].equalsIgnoreCase("list")) { return NONE_ARGS; }
+            if (args[0].equalsIgnoreCase("remove")) {
+                return List.of(SubscriptionCategoryType.GLOBAL.getDisplayName());
+            }
+            return filterStartingWith(PERMANENT_ARG_VALUES, args[3]);
+        }
+        if (argsLength == 5) {
+            if (args[0].equalsIgnoreCase("list") || args[0].equalsIgnoreCase("remove")) { return NONE_ARGS; }
+            return List.of(SubscriptionCategoryType.GLOBAL.getDisplayName());
+        }
+        
         return super.performTabComplete(ctx);
     }
 

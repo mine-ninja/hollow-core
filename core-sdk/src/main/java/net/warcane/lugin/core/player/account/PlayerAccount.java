@@ -104,8 +104,7 @@ public record PlayerAccount(
     public Component getFormattedDisplayNameComponent(@NotNull SubscriptionCategoryType type) {
         return this.getFormattedDisplayNameComponent(type, null);
     }
-
-
+    
     @NotNull
     @JsonIgnore
     public Component getFormattedDisplayNameComponent(@NotNull SubscriptionCategoryType type, @Nullable Component betweenComp) {
@@ -201,10 +200,9 @@ public record PlayerAccount(
             throw new IllegalStateException("Erro ao criar assinatura: " + e.getMessage(), e);
         }
     }
-
-    @Deprecated
+    
     @JsonIgnore
-    public PlayerGroupSubscription getHighestSubscription(){
+    public PlayerGroupSubscription getHighestSubscription() {
         return this.getHighestSubscription(SubscriptionCategoryType.GLOBAL);
     }
 

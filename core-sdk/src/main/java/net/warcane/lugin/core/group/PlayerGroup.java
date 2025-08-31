@@ -77,8 +77,7 @@ public enum PlayerGroup {
         }
         return prefix.charAt(1);
     }
-
-
+    
     public int getPriorityValue() {
         return MAX_PRIORITY_VALUE - this.powerLevel;
     }

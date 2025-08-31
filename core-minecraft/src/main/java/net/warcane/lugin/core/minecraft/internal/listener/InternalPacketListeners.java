@@ -1,7 +1,5 @@
 package net.warcane.lugin.core.minecraft.internal.listener;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.event.account.PlayerAccountLoadEvent;
 import net.warcane.lugin.core.minecraft.task.Tasks;
@@ -15,7 +13,6 @@ import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerReceiv
 import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleportToLocationPacket;
 import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleportToTargetPacket;
 import net.warcane.lugin.core.network.packet.impl.staff.GoCachePacket;
-import net.warcane.lugin.core.network.packet.impl.staff.GoCommandPacket;
 import net.warcane.lugin.core.network.packet.impl.staff.StaffMessagePacket;
 import net.warcane.lugin.core.network.packet.listener.PacketListener;
 import org.bukkit.Bukkit;
@@ -23,9 +20,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.jetbrains.annotations.NotNull;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -63,7 +61,7 @@ public class InternalPacketListeners {
         final var player = Bukkit.getPlayer(uuid);
         if (player == null) return;
 
-        platform.getNameTagProvider().applyNameTag(account);
+        platform.getNameTagResolver().applyNameTag(account);
         platform.getPermissionInjector().injectPermissions(player);
     }
 
