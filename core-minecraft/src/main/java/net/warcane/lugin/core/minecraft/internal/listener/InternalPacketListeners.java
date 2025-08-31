@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.event.account.PlayerAccountLoadEvent;
+import net.warcane.lugin.core.minecraft.internal.events.PlayerReceiveMessageEvent;
 import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.vanish.VanishManager;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
@@ -15,7 +16,6 @@ import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerReceiv
 import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleportToLocationPacket;
 import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleportToTargetPacket;
 import net.warcane.lugin.core.network.packet.impl.staff.GoCachePacket;
-import net.warcane.lugin.core.network.packet.impl.staff.GoCommandPacket;
 import net.warcane.lugin.core.network.packet.impl.staff.StaffMessagePacket;
 import net.warcane.lugin.core.network.packet.listener.PacketListener;
 import org.bukkit.Bukkit;
@@ -23,7 +23,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -150,11 +149,15 @@ public class InternalPacketListeners {
         public void onReceivePacket(@NotNull SendMessageToPlayerPacket packet, @NotNull Headers headers) {
 
             Player player = Bukkit.getPlayer(packet.playerId());
-            if (player != null) {
-                player.sendMessage(packet.message());
-            } else {
+
+            if (player == null) {
                 log.info("Player is null for received simple message packet {}", packet);
+                return;
             }
+            if (!new PlayerReceiveMessageEvent(player, null, packet.message(), packet.key()).callEvent()) {
+                return;
+            }
+            player.sendMessage(packet.message());
         }
     }
 
@@ -197,9 +200,11 @@ public class InternalPacketListeners {
         @Override
         public void onReceivePacket(@NotNull SendModernMessageToPlayerPacket packet, @NotNull Headers headers) {
             Player player = Bukkit.getPlayer(packet.playerId());
-            if (player != null) {
-                player.sendMessage(packet.getMessage());
+            if (player == null) return;
+            if (!new PlayerReceiveMessageEvent(player, packet.getMessage(), null, packet.key()).callEvent()) {
+                return;
             }
+            player.sendMessage(packet.getMessage());
         }
     }
 
@@ -207,9 +212,9 @@ public class InternalPacketListeners {
         @Override
         public void onReceivePacket(@NotNull SendSoundToPlayerPacket packet, @NotNull Headers headers) {
             final var player = Bukkit.getPlayer(packet.playerId());
-            if (player != null) {
-                player.playSound(player.getLocation(), packet.soundName(), packet.volume(), packet.pitch());
-            }
+            if (player == null) return;
+            player.playSound(player.getLocation(), packet.soundName(), packet.volume(), packet.pitch());
+
         }
     }
 }
