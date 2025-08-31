@@ -17,7 +17,6 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
-import net.warcane.lugin.core.player.account.PlayerAccount;
 import net.warcane.lugin.core.player.state.PlayerNetworkStateManager;
 import net.warcane.lugin.core.server.GameServer;
 import net.warcane.lugin.core.server.type.ServerCategoryType;

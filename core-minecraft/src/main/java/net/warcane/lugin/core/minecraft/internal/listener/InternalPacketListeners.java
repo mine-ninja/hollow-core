@@ -2,6 +2,7 @@ package net.warcane.lugin.core.minecraft.internal.listener;
 
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.event.account.PlayerAccountLoadEvent;
+import net.warcane.lugin.core.minecraft.internal.events.PlayerReceiveMessageEvent;
 import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.vanish.VanishManager;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
@@ -148,11 +149,15 @@ public class InternalPacketListeners {
         public void onReceivePacket(@NotNull SendMessageToPlayerPacket packet, @NotNull Headers headers) {
 
             Player player = Bukkit.getPlayer(packet.playerId());
-            if (player != null) {
-                player.sendMessage(packet.message());
-            } else {
+
+            if (player == null) {
                 log.info("Player is null for received simple message packet {}", packet);
+                return;
             }
+            if (!new PlayerReceiveMessageEvent(player, null, packet.message(), packet.key()).callEvent()) {
+                return;
+            }
+            player.sendMessage(packet.message());
         }
     }
 
@@ -195,9 +200,11 @@ public class InternalPacketListeners {
         @Override
         public void onReceivePacket(@NotNull SendModernMessageToPlayerPacket packet, @NotNull Headers headers) {
             Player player = Bukkit.getPlayer(packet.playerId());
-            if (player != null) {
-                player.sendMessage(packet.getMessage());
+            if (player == null) return;
+            if (!new PlayerReceiveMessageEvent(player, packet.getMessage(), null, packet.key()).callEvent()) {
+                return;
             }
+            player.sendMessage(packet.getMessage());
         }
     }
 
@@ -205,9 +212,9 @@ public class InternalPacketListeners {
         @Override
         public void onReceivePacket(@NotNull SendSoundToPlayerPacket packet, @NotNull Headers headers) {
             final var player = Bukkit.getPlayer(packet.playerId());
-            if (player != null) {
-                player.playSound(player.getLocation(), packet.soundName(), packet.volume(), packet.pitch());
-            }
+            if (player == null) return;
+            player.playSound(player.getLocation(), packet.soundName(), packet.volume(), packet.pitch());
+
         }
     }
 }

@@ -11,13 +11,23 @@ import java.util.UUID;
 
 public record SendModernMessageToPlayerPacket(
   @JsonProperty("pid") @JsonFormat(shape = JsonFormat.Shape.BINARY) UUID playerId,
-  @JsonProperty("msg") String serializedMessageComponent
+  @JsonProperty("msg") String serializedMessageComponent,
+  @JsonProperty("key") String key
 ) implements NetworkPacket {
+
+    public static SendModernMessageToPlayerPacket create(UUID playerId, Component component, String key) {
+        return new SendModernMessageToPlayerPacket(
+          playerId,
+          JSONComponentSerializer.json().serialize(component),
+          key
+        );
+    }
 
     public static SendModernMessageToPlayerPacket create(UUID playerId, Component component) {
         return new SendModernMessageToPlayerPacket(
           playerId,
-          JSONComponentSerializer.json().serialize(component)
+          JSONComponentSerializer.json().serialize(component),
+          "unknown"
         );
     }
 
