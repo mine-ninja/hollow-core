@@ -131,9 +131,9 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         
         final var usesModernTags = Property.getBoolean("USE_MODERN_TAGS", false);
         if (usesModernTags) {
-            this.nameTagResolver = new ModernNameTagResolver();
+            this.nameTagResolver = new ModernNameTagResolver(this);
         } else {
-            this.nameTagResolver = new LegacyNameTagResolver();
+            this.nameTagResolver = new LegacyNameTagResolver(this);
         }
 
         this.loadGroupPermissions();

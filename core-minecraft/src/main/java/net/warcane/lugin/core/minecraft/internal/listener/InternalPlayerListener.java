@@ -168,11 +168,6 @@ public final class InternalPlayerListener implements Listener {
                 });
 
                 Tasks.runAsyncLater(() -> {
-                    final var loadTagsOnJoin = Property.getBoolean("LOAD_TAGS_ON_JOIN", true);
-                    if (loadTagsOnJoin) {
-                        platform.getNameTagResolver().applyNameTag(playerAccount);;
-                    }
-
                     Bukkit.getPluginManager().callEvent(new PlayerAccountLoadEvent(playerAccount));
                 }, 1);
             } catch (Exception e) {
@@ -216,8 +211,7 @@ public final class InternalPlayerListener implements Listener {
         // Envia o pacote de desconexão do jogador para o servidor, mesmo que não tenha a conta atualizada.
         final var packet = new PlayerDisconnectedFromServerPacket(player.getUniqueId(), currentServerId);
         platform.getNetworkClient().sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, packet);
-
-        platform.getNameTagResolver().removeNameTag(player);
+        
         //        platform.getPlayerStatisticsService().unloadPlayerAccount(player.getUniqueId()).whenComplete((unloaded, error) -> {
         //            if (error != null) {
         //                log.error("Failed to unload player statistics for {}: {}", player.getName(), error.getMessage(), error);
@@ -269,10 +263,6 @@ public final class InternalPlayerListener implements Listener {
         Player localPlayer = event.getLocalPlayer();
         if (localPlayer == null) return;
         
-        final var loadTagsOnJoin = Property.getBoolean("LOAD_TAGS_ON_JOIN", true);
-        if (loadTagsOnJoin) {
-            platform.getNameTagResolver().applyNameTag(event.getPlayerAccount());
-        }
         platform.getPermissionInjector().injectPermissions(localPlayer);
     }
     

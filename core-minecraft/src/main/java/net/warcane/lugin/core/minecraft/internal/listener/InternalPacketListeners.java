@@ -61,8 +61,7 @@ public class InternalPacketListeners {
 
         final var player = Bukkit.getPlayer(uuid);
         if (player == null) return;
-
-        platform.getNameTagResolver().applyNameTag(account);
+        
         platform.getPermissionInjector().injectPermissions(player);
     }
 
