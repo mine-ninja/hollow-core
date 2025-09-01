@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * Representa um resolvedor de tags de nome para jogadores.
@@ -19,34 +20,35 @@ import java.util.Map;
 public abstract class NameTagResolver {
     protected static final Map<String, NameTag> PLAYER_TAGS = new HashMap<>();
     
-    @Nullable
-    public String getPrefix(@NotNull Player player) {
+    public Supplier<String> getPrefix(@NotNull Player player) {
         NameTag existingTeam = PLAYER_TAGS.get(player.getName());
         if (existingTeam != null && existingTeam.prefix() != null) {
             return existingTeam.prefix();
         }
-        return null;
+        return () -> "";
     }
     
-    @Nullable
-    public String getSuffix(@NotNull Player player) {
+    public Supplier<String> getSuffix(@NotNull Player player) {
         NameTag existingTeam = PLAYER_TAGS.get(player.getName());
         if (existingTeam != null && existingTeam.suffix() != null) {
             return existingTeam.suffix();
         }
-        return null;
+        return () -> "";
     }
     
-    @Nullable
-    public String getColor(@NotNull Player player) {
+    public Supplier<String> getColor(@NotNull Player player) {
         NameTag existingTeam = PLAYER_TAGS.get(player.getName());
         if (existingTeam != null && existingTeam.color() != null) {
             return existingTeam.color();
         }
-        return null;
+        return () -> "";
     }
     
     public void setPrefix(@NotNull Player player, String prefix) throws UnsupportedOperationException {
+        setPrefix(player, () -> prefix);
+    }
+    
+    public void setPrefix(@NotNull Player player, Supplier<String> prefix) throws UnsupportedOperationException {
         NameTag existingTeam = PLAYER_TAGS.get(player.getName());
         if (existingTeam != null) {
             setNameTag(player, existingTeam.withPrefix(prefix));
@@ -56,6 +58,10 @@ public abstract class NameTagResolver {
     }
     
     public void setSuffix(@NotNull Player player, String suffix) throws UnsupportedOperationException {
+        setSuffix(player, () -> suffix);
+    }
+    
+    public void setSuffix(@NotNull Player player, Supplier<String> suffix) throws UnsupportedOperationException {
         NameTag existingTeam = PLAYER_TAGS.get(player.getName());
         if (existingTeam != null) {
             setNameTag(player, existingTeam.withSuffix(suffix));
@@ -65,6 +71,10 @@ public abstract class NameTagResolver {
     }
     
     public void setColor(@NotNull Player player, @Nullable String color) throws UnsupportedOperationException {
+        setColor(player, () -> color);
+    }
+    
+    public void setColor(@NotNull Player player, @Nullable Supplier<String> color) throws UnsupportedOperationException {
         NameTag existingTeam = PLAYER_TAGS.get(player.getName());
         if (existingTeam != null) {
             setNameTag(player, existingTeam.withColor(color));
@@ -89,15 +99,19 @@ public abstract class NameTagResolver {
         PLAYER_TAGS.remove(player.getName());
     }
     
-    public void setNameTag(@NotNull Player player, String prefix, String suffix, @Nullable String color) {
+    public void setNameTag(@NotNull Player player, String prefix, String suffix, String color) {
         NameTag existingTeam = PLAYER_TAGS.get(player.getName());
         if (existingTeam != null) {
             removeNameTag(player);
         }
         
-        prefix = prefix != null ? prefix.substring(0, Math.min(prefix.length(), 16)) : "";
-        suffix = suffix != null ? suffix.substring(0, Math.min(suffix.length(), 16)) : "";
+        String finalPrefix = prefix != null ? prefix.substring(0, Math.min(prefix.length(), 16)) : "";
+        String finalSuffix = suffix != null ? suffix.substring(0, Math.min(suffix.length(), 16)) : "";
         
+        setNameTag(player, () -> finalPrefix, () -> finalSuffix, () -> color);
+    }
+    
+    public void setNameTag(@NotNull Player player, Supplier<String> prefix, Supplier<String> suffix, Supplier<String> color) {
         setNameTag(player, new NameTag(prefix, suffix, color));
     }
     
@@ -110,16 +124,16 @@ public abstract class NameTagResolver {
         return Bukkit.getPlayer(account.uniqueId());
     }
     
-    public record NameTag(String prefix, String suffix, @Nullable String color) {
-        public NameTag withColor(@Nullable String color) {
+    public record NameTag(Supplier<String> prefix, Supplier<String> suffix, Supplier<String> color) {
+        public NameTag withColor(Supplier<String> color) {
             return new NameTag(this.prefix, this.suffix, color);
         }
         
-        public NameTag withPrefix(String prefix) {
+        public NameTag withPrefix(Supplier<String> prefix) {
             return new NameTag(prefix, this.suffix, this.color);
         }
         
-        public NameTag withSuffix(String suffix) {
+        public NameTag withSuffix(Supplier<String> suffix) {
             return new NameTag(this.prefix, suffix, this.color);
         }
     }

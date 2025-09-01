@@ -29,10 +29,13 @@ public class ModernNameTagResolver extends NameTagResolver {
         if (localPlayer == null) return;
         
         final var group = account.getHighestSubscription().group();
-        var groupPrefix = group.getPrefix();
         
+        String groupPrefix;
         if (group.getModernTag() != ' ') {
             groupPrefix = parse(Component.text(group.getModernTag() + " ", Style.empty().font(Key.key("lugin:tags")).color(TextColor.color(0xFFFFFF))));
+        }
+        else {
+            groupPrefix = group.getPrefix();
         }
         
         NameTag nameTag = PLAYER_TAGS.get(localPlayer.getName());
@@ -40,7 +43,7 @@ public class ModernNameTagResolver extends NameTagResolver {
             removeNameTag(localPlayer);
         }
         
-        setNameTag(localPlayer, new NameTag(groupPrefix, "", ColorUtil.toString(group.getNamedTextColor())));
+        setNameTag(localPlayer, new NameTag(() -> groupPrefix, () -> "", () -> ColorUtil.toString(group.getNamedTextColor())));
         updateAllTags();
     }
     
