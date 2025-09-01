@@ -1,42 +1,29 @@
 package net.warcane.lugin.core.minecraft.nametag;
 
-import lombok.RequiredArgsConstructor;
-import net.warcane.lugin.core.minecraft.BukkitPlatform;
-import net.warcane.lugin.core.minecraft.util.nametag.NameTags;
 import net.warcane.lugin.core.player.account.PlayerAccount;
-import net.warcane.lugin.core.util.property.Property;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+
 import org.jetbrains.annotations.NotNull;
 
-@RequiredArgsConstructor
-public class LegacyNameTagResolver implements NameTagResolver {
-
-    private final BukkitPlatform platform;
-
+public class LegacyNameTagResolver extends NameTagResolver {
     @Override
     public void applyNameTag(@NotNull PlayerAccount account) {
         final var localPlayer = this.getPlayer(account);
         if (localPlayer == null) return;
-
-        final var currentSubscriptionType = platform.getSubscriptionCategoryType();
-        final var highestSubscription = account.getHighestSubscription(currentSubscriptionType);
-        final var group = highestSubscription.group();
-        final var groupPrefix = group.getPrefix();
-        final var priority = group.getPriorityValue();
-        final var groupColor = group.getNamedTextColor();
-
-        final var loadTagsOnJoin = Property.getBoolean("LOAD_TAGS_ON_JOIN", true);
-        if (loadTagsOnJoin) {
-            NameTags.setNameTag(localPlayer, groupPrefix, "", priority, groupColor);
-            NameTags.updateAllTags();
-        }
+        
+        final var group = account.getHighestSubscription().group();
+        setNameTag(localPlayer, group.getPrefix(), "", "&" + group.getPrefixColorCode());
+        updateAllTags();
     }
-
+    
     @Override
-    public void removeNameTag(@NotNull PlayerAccount account) {
-        final var localPlayer = this.getPlayer(account);
-        if (localPlayer != null) {
-            NameTags.removeNameTag(localPlayer);
-            NameTags.updateAllTags();
+    public void updateAllTags() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            NameTag team = PLAYER_TAGS.get(player.getName());
+            if (team != null) {
+                setNameTag(player, team.prefix(), team.suffix(), team.color());
+            }
         }
     }
 }

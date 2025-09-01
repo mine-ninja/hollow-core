@@ -8,8 +8,7 @@ insert_final_newline = true
 [*.java]
 indent_style = space
 indent_size = 4
-ij_continuation_indent_size = 2
-max_line_length = 120
+ij_continuation_indent_size = 4
 
 [*.{xml,fxml}]
 indent_style = space

@@ -1,6 +1,6 @@
 package net.warcane.lugin.core.minecraft.internal.command.permission;
 
-import lombok.extern.slf4j.Slf4j;
+import com.google.common.collect.Lists;
 import net.warcane.lugin.core.group.GroupPermissionService;
 import net.warcane.lugin.core.group.GroupPermissionSet;
 import net.warcane.lugin.core.group.PlayerGroup;
@@ -8,8 +8,10 @@ import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.command.SimpleCommand;
 import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
-import org.jetbrains.annotations.NotNull;
 
+import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -33,11 +35,7 @@ public class GroupPermissionCommand extends SimpleCommand {
     @Override
     public void performCommand(@NotNull CommandContext ctx) throws CommandFailedException {
         final var subCommand = ctx.getRawArgOrThrow(0, "§cVocê deve especificar um subcomando: add, remove ou list.");
-        final var group = ctx.getArgOrThrow(
-          1,
-          PlayerGroup::fromId,
-          "§cGrupo inválido. Use um dos seguintes: " + String.join(", ", PlayerGroup.NAMES)
-        );
+        final var group = ctx.getArgOrThrow(1, PlayerGroup::fromId, "§cGrupo inválido. Use um dos seguintes: " + String.join(", ", PlayerGroup.NAMES));
 
         service.getGroupPermissionSet(group)
           .whenComplete((found, error) -> {
@@ -117,7 +115,9 @@ public class GroupPermissionCommand extends SimpleCommand {
         final var argsLength = args.length;
 
         if (argsLength == 1) {
-            return List.of("add", "remove", "list");
+            ArrayList<String> result = Lists.newArrayList("add", "remove", "list");
+            result.removeIf(s -> !s.toLowerCase().startsWith(args[0].toLowerCase()));
+            return result;
         }
         if (argsLength == 2) {
             return PlayerGroup.NAMES.stream()

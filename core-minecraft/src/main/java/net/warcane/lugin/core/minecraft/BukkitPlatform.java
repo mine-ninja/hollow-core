@@ -2,7 +2,6 @@ package net.warcane.lugin.core.minecraft;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
-import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.AbstractPlatform;
 import net.warcane.lugin.core.MinecraftServerPlatform;
 import net.warcane.lugin.core.Platform;
@@ -15,6 +14,7 @@ import net.warcane.lugin.core.minecraft.internal.listener.InternalPlayerListener
 import net.warcane.lugin.core.minecraft.internal.listener.PlayerGroupUpdatingListener;
 import net.warcane.lugin.core.minecraft.menu.SimpleMenuManager;
 import net.warcane.lugin.core.minecraft.nametag.LegacyNameTagResolver;
+import net.warcane.lugin.core.minecraft.nametag.ModernNameTagResolver;
 import net.warcane.lugin.core.minecraft.nametag.NameTagResolver;
 import net.warcane.lugin.core.minecraft.permission.PermissionInjector;
 import net.warcane.lugin.core.minecraft.vanish.VanishManager;
@@ -37,9 +37,11 @@ import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
+
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -110,6 +112,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     private final VanishManager vanishManager;
     private final SimpleMenuManager menuManager;
 
+    @Getter
     private NameTagResolver nameTagResolver;
 
     private boolean online;
@@ -125,7 +128,13 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         this.vanishManager = new VanishManager(this);
         this.playerStatisticsService = new PlayerStatisticsServiceImpl(getExecutorService());
         this.menuManager = new SimpleMenuManager(this);
-        this.nameTagResolver = new LegacyNameTagResolver(this);
+        
+        final var usesModernTags = Property.getBoolean("USE_MODERN_TAGS", false);
+        if (usesModernTags) {
+            this.nameTagResolver = new ModernNameTagResolver();
+        } else {
+            this.nameTagResolver = new LegacyNameTagResolver();
+        }
 
         this.loadGroupPermissions();
 
@@ -232,16 +241,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     public PlayerStatisticsService getPlayerStatisticsService() {
         return playerStatisticsService;
     }
-
-    @NotNull
-    public NameTagResolver getNameTagProvider() {
-        return nameTagResolver;
-    }
-
-    public void setNameTagProvider(@NotNull NameTagResolver nameTagResolver) {
-        this.nameTagResolver = nameTagResolver;
-    }
-
+    
     public void updateServerInfo() {
         if (!online) return;
 

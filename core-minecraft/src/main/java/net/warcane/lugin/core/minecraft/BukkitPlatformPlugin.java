@@ -14,6 +14,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.plugin.PluginManager;
+
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -29,8 +31,14 @@ public class BukkitPlatformPlugin extends SimplePlugin {
         bukkitPlatform.init();
 
         registerCommands("lugin", new ListServersCommand(), new ListPlayersCommand());
-
-
+        PluginManager manager = Bukkit.getPluginManager();
+        
+        if (manager.isPluginEnabled("PlaceholderAPI")) {
+            new net.warcane.lugin.core.minecraft.compat.PAPICompat(this, bukkitPlatform.getNameTagResolver()).register();
+        }
+        if (manager.isPluginEnabled("Vault")) {
+            net.warcane.lugin.core.minecraft.compat.VaultCompat.register(this);
+        }
         if (bukkitPlatform.getServerCategoryType() == ServerCategoryType.LOGIN) {
             Bukkit.getWorlds().forEach(world -> {
                 world.setDifficulty(Difficulty.PEACEFUL);
@@ -40,7 +48,7 @@ public class BukkitPlatformPlugin extends SimplePlugin {
                 world.setGameRuleValue("doMobSpawning", "false");
             });
 
-            Bukkit.getPluginManager().registerEvents(new LimboListener(), this);
+            manager.registerEvents(new LimboListener(), this);
         }
     }
 

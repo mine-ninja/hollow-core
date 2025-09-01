@@ -8,17 +8,17 @@ import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 public abstract class SimpleCommand extends Command {
-
+    public static final List<String> NONE_ARGS = Collections.emptyList();
+    
     /**
      * @deprecated Use {@link #setPermission(String)} instead.
      */
-    @Deprecated(
-      since = "1.0.0"
-    )
+    @Deprecated(since = "1.0.0")
     protected String requiredPermission;
     protected String noPermissionMessage;
 
@@ -35,9 +35,8 @@ public abstract class SimpleCommand extends Command {
         this.playersOnly = false;
         this.playersOnlyMessage = "§cEste comando só pode ser executado por jogadores.";
     }
-
-    protected void setRequiredPermission(String requiredPermission)
-    {
+    
+    protected void setRequiredPermission(String requiredPermission) {
         this.requiredPermission = requiredPermission;
         super.setPermission(requiredPermission);
     }
@@ -117,10 +116,17 @@ public abstract class SimpleCommand extends Command {
     public abstract void performCommand(@NotNull CommandContext ctx) throws CommandFailedException;
 
     public List<String> performTabComplete(@NotNull CommandContext ctx) {
-        return Collections.emptyList();
+        return NONE_ARGS;
     }
-
-
+    
+    protected List<String> filterStartingWith(Collection<String> list, String prefix) {
+        if (prefix == null || prefix.isEmpty()) { return List.copyOf(list); }
+        
+        return list.stream()
+          .filter(s -> s.toLowerCase().startsWith(prefix.toLowerCase()))
+          .toList();
+    }
+    
     private SimpleSubCommand getSubCommand(String name) {
         if (subCommands.isEmpty()) return null;
 

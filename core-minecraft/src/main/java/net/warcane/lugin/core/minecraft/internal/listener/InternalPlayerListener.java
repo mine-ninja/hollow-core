@@ -1,7 +1,5 @@
 package net.warcane.lugin.core.minecraft.internal.listener;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
 import net.warcane.lugin.core.group.PlayerGroup;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
@@ -9,8 +7,6 @@ import net.warcane.lugin.core.minecraft.event.account.PlayerAccountLoadEvent;
 import net.warcane.lugin.core.minecraft.event.account.PlayerAccountUpdateEvent;
 import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.util.LocationUtil;
-import net.warcane.lugin.core.minecraft.util.Tab;
-import net.warcane.lugin.core.minecraft.util.nametag.NameTags;
 import net.warcane.lugin.core.minecraft.vanish.VanishManager;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerConnectedToServerPacket;
@@ -34,9 +30,10 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import static net.warcane.lugin.core.minecraft.task.Tasks.runAsync;
 import static net.warcane.lugin.core.minecraft.task.Tasks.runAsyncLater;
@@ -47,12 +44,7 @@ import static net.warcane.lugin.core.player.wallet.WalletService.LoadWalletOptio
 @Slf4j
 @RequiredArgsConstructor
 public final class InternalPlayerListener implements Listener {
-
-    private static final List<String> HEADER = List.of("§b§lLUGIN.COM.BR");
-    private static final List<String> FOOTER = List.of("§aRanks, cosméticos e caixas em §c§lLUGIN.COM.BR");
-
-    private static final Tab TAB = new Tab(HEADER, FOOTER);
-
+    
     private static final String FAILED_TO_LOAD_ERR_MSG = "§cSua conta está sendo revisada. Tente novamente em alguns minutos. (Código de erro: 1001)";
 
     private final BukkitPlatform platform;
@@ -67,9 +59,7 @@ public final class InternalPlayerListener implements Listener {
             }
 
             log.info("Player with UUID {} is attempting to join the server.", uniqueId);
-            final var account = platform.getPlayerAccountService().loadPlayerAccount(uniqueId,
-              new PlayerAccountService.AccountLoadOptions(null, false)
-            ).join();
+            final var account = platform.getPlayerAccountService().loadPlayerAccount(uniqueId, new PlayerAccountService.AccountLoadOptions(null, false)).join();
             if (account == null) {
                 log.error("Failed to load player account for UUID {} during pre-login.", uniqueId);
                 event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text(platform.getDisallowJoinMessage()));
@@ -87,8 +77,7 @@ public final class InternalPlayerListener implements Listener {
             event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text(FAILED_TO_LOAD_ERR_MSG));
         }
     }
-
-
+    
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerJoin(PlayerJoinEvent event) {
         final var player = event.getPlayer();
@@ -96,11 +85,9 @@ public final class InternalPlayerListener implements Listener {
 
         final var playerId = player.getUniqueId();
         final var name = player.getName();
-
-        platform.getPlayerAccountService().loadPlayerAccount(
-          playerId,
-          withDefaultAccount(createDefaultAccount(playerId, name), true)
-        ).whenComplete((playerAccount, error) -> {
+        
+        platform.getPlayerAccountService().loadPlayerAccount(playerId, withDefaultAccount(createDefaultAccount(playerId, name), true))
+            .whenComplete((playerAccount, error) -> {
             if (error != null) {
                 error.printStackTrace();
                 log.error("Failed to load player account for {}: {}", player.getName(), error.getMessage(), error);
@@ -111,15 +98,12 @@ public final class InternalPlayerListener implements Listener {
             try {
                 final var categoryType = platform.getSubscriptionCategoryType();
                 PlayerGroup group = playerAccount.getHighestSubscription(categoryType).group();
-                final var priority = group.getPriorityValue();
-                final var groupPrefix = group.getPrefix();
-
                 if (Property.get("ALLOWED_GROUPS") != null && !platform.isGroupAllowedToJoin(group)) {
                     log.info("Player {} with UUID {} has group {} which is not allowed to join the server.", player.getName(), playerId, group.name());
                     this.syncKick(player, platform.getDisallowJoinMessage());
                     return;
                 }
-
+                
                 // Só envia o pacote de connect caso realmente carregue as informações do jogador.
                 // caso o contrario ele vai ser kickado (como mostra no código acima).
                 final var packet = new PlayerConnectedToServerPacket(playerId, currentServerId);
@@ -128,8 +112,7 @@ public final class InternalPlayerListener implements Listener {
                 log.debug("Player account loaded for {}: {}", player.getName(), playerAccount);
                 platform.getGameServerService().update(platform.getGameServer());
                 platform.getPermissionInjector().injectPermissions(player);
-
-                TAB.tick(player);
+                
                 if (platform.getServerCategoryType() == ServerCategoryType.LOGIN) {
                     Tasks.runSync(() -> player.setGameMode(GameMode.ADVENTURE));
                 }
@@ -187,8 +170,7 @@ public final class InternalPlayerListener implements Listener {
                 Tasks.runAsyncLater(() -> {
                     final var loadTagsOnJoin = Property.getBoolean("LOAD_TAGS_ON_JOIN", true);
                     if (loadTagsOnJoin) {
-                        NameTags.setNameTag(player, groupPrefix, "", priority, group.getNamedTextColor());
-                        NameTags.updateAllTags();
+                        platform.getNameTagResolver().applyNameTag(playerAccount);;
                     }
 
                     Bukkit.getPluginManager().callEvent(new PlayerAccountLoadEvent(playerAccount));
@@ -235,20 +217,17 @@ public final class InternalPlayerListener implements Listener {
         final var packet = new PlayerDisconnectedFromServerPacket(player.getUniqueId(), currentServerId);
         platform.getNetworkClient().sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, packet);
 
-        NameTags.removeNameTag(player);
-
-//        platform.getPlayerStatisticsService().unloadPlayerAccount(player.getUniqueId()).whenComplete((unloaded, error) -> {
-//            if (error != null) {
-//                log.error("Failed to unload player statistics for {}: {}", player.getName(), error.getMessage(), error);
-//            } else if (unloaded == null) {
-//                log.info("Player statistics not found for {} during unload", player.getName());
-//            } else {
-//                log.info("Player statistics unloaded for {}: {}", player.getName(), unloaded);
-//            }
-//        });
-
-
-
+        platform.getNameTagResolver().removeNameTag(player);
+        //        platform.getPlayerStatisticsService().unloadPlayerAccount(player.getUniqueId()).whenComplete((unloaded, error) -> {
+        //            if (error != null) {
+        //                log.error("Failed to unload player statistics for {}: {}", player.getName(), error.getMessage(), error);
+        //            } else if (unloaded == null) {
+        //                log.info("Player statistics not found for {} during unload", player.getName());
+        //            } else {
+        //                log.info("Player statistics unloaded for {}: {}", player.getName(), unloaded);
+        //            }
+        //        });
+        
         runAsync(() -> {
             final var state = PlayerNetworkStateManager.getInstance().getPlayerState(player.getUniqueId());
             if (state != null) {
@@ -289,21 +268,14 @@ public final class InternalPlayerListener implements Listener {
     public void onGroupUpdate(PlayerAccountUpdateEvent event) {
         Player localPlayer = event.getLocalPlayer();
         if (localPlayer == null) return;
-
-        final var categoryType = platform.getSubscriptionCategoryType();
-        PlayerGroup group = event.getPlayerAccount().getHighestSubscription(categoryType).group();
-        final var priority = group.getPriorityValue();
-        final var groupPrefix = group.getPrefix();
-
-        final var loadTagsOnJoin = Property.get("LOAD_TAGS_ON_JOIN", "true").equalsIgnoreCase("true");
+        
+        final var loadTagsOnJoin = Property.getBoolean("LOAD_TAGS_ON_JOIN", true);
         if (loadTagsOnJoin) {
-            platform.getNameTagProvider().applyNameTag(event.getPlayerAccount());
+            platform.getNameTagResolver().applyNameTag(event.getPlayerAccount());
         }
-
         platform.getPermissionInjector().injectPermissions(localPlayer);
     }
-
-
+    
     private void syncKick(@NotNull Player player) {
         this.syncKick(player, FAILED_TO_LOAD_ERR_MSG);
     }
@@ -315,6 +287,4 @@ public final class InternalPlayerListener implements Listener {
             }
         });
     }
-
-
 }
