@@ -23,10 +23,16 @@ public class PAPICompat extends PlaceholderExpansion {
         
         switch (params) {
             case "player_prefix" -> {
-                return this.resolver.getTagPrefix(player) + this.resolver.getTagColor(player);
+                String prefix = this.resolver.getTagPrefix(player);
+                String color = this.resolver.getTagColor(player);
+                if (prefix != null && color != null) {
+                    prefix += color;
+                }
+                return prefix;
             }
             case "player_suffix" -> {
-                return this.resolver.getTagSuffix(player);
+                String suffix = this.resolver.getTagSuffix(player);
+                return suffix != null ? suffix : "";
             }
         }
         
