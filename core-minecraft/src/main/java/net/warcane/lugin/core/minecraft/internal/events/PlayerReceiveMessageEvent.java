@@ -3,6 +3,7 @@ package net.warcane.lugin.core.minecraft.internal.events;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
@@ -15,18 +16,23 @@ import org.jetbrains.annotations.Nullable;
  * @project lugin-core
  */
 @Getter
-@RequiredArgsConstructor
 public class PlayerReceiveMessageEvent extends Event implements Cancellable {
 
     private static final HandlerList HANDLER_LIST = new HandlerList();
 
     private final Player player;
-    @Nullable
     private final Component message;
-    @Nullable
     private final String rawMessage;
     private final String key;
     private boolean cancelled = false;
+
+    public PlayerReceiveMessageEvent(Player player, Component message, String rawMessage, String key) {
+        super(!Bukkit.isPrimaryThread());
+        this.player = player;
+        this.message = message;
+        this.rawMessage = rawMessage;
+        this.key = key;
+    }
 
     @Override
     public boolean isCancelled() {
