@@ -28,6 +28,12 @@ public class WalletService {
     private final RedisCache<Wallet> redisCachedWallet = new RedisCache<>(Wallet.class);
     private final MongoRepository<UUID, Wallet> walletRepository = new MongoRepository<>(Wallet.class, "uniqueId");
 
+    /**
+     * Lock para transações, garantindo que apenas uma transação por jogador seja processada por vez.
+     */
+    private final RedisCache<Boolean> transactionLock = new RedisCache<>(Boolean.class);
+
+
     public WalletService(@NotNull ExecutorService executorService) {
         this.executorService = executorService;
         walletRepository.useCollection(collection -> {
@@ -94,6 +100,20 @@ public class WalletService {
         return wallet;
     }
 
+    public boolean isLocked(@Nullable UUID playerId) {
+        if (playerId == null) return false;
+
+        final var locked = transactionLock.get("wallet_transaction_locks:" + playerId);
+        return locked != null && locked;
+    }
+
+    public void lock(@NotNull UUID playerId) {
+        transactionLock.set("wallet_transaction_locks:" + playerId, true, 60);
+    }
+
+    public void unlock(@NotNull UUID playerId) {
+        transactionLock.del("wallet_transaction_locks:" + playerId);
+    }
 
     /**
      * Obtém ou carrega a carteira do jogador, primeiro verificando o cache local.
@@ -400,94 +420,38 @@ public class WalletService {
       @NotNull BigDecimal amount
     ) {
         try {
-            log.info("=== INICIO DA TRANSFERENCIA ===");
             log.info("Transferring {} {} from {} to {}", amount, currencyId, senderId, receiverId);
 
-            log.info("Fetching wallets for transfer: senderId={}, receiverId={}, currencyId={}, amount={}",
-              senderId, receiverId, currencyId, amount);
-
-            // DEBUG: Busca da carteira do remetente
-            log.info("STEP 1: Iniciando busca da carteira do remetente ({})", senderId);
-            long startTime = System.currentTimeMillis();
-
             final var senderWalletFuture = this.getOrLoadWallet(senderId).orTimeout(1, TimeUnit.SECONDS);
-            log.info("STEP 1.1: CompletableFuture criado para remetente, aguardando join()...");
-
             final var senderWallet = senderWalletFuture.join();
-            long senderWalletTime = System.currentTimeMillis() - startTime;
-            log.info("STEP 1.2: Carteira do remetente obtida em {}ms: {}", senderWalletTime, senderWallet != null ? "ENCONTRADA" : "NULL");
 
             if (senderWallet == null) {
-                log.warn("STEP 1.3: Carteira do remetente não encontrada, retornando erro");
                 return TransactionResult.walletNotFound(senderId);
             }
 
-            // DEBUG: Verificação de fundos
-            log.info("STEP 2: Verificando fundos do remetente");
-            log.info("STEP 2.1: Saldo atual de {} na moeda {}: {}", senderId, currencyId, senderWallet.getCurrencyAmount(currencyId));
-
             if (!senderWallet.hasAmount(currencyId, amount)) {
-                log.warn("STEP 2.2: Fundos insuficientes - Necessário: {}, Disponível: {}", amount, senderWallet.getCurrencyAmount(currencyId));
                 return TransactionResult.insufficientFunds(currencyId, amount, senderWallet.getCurrencyAmount(currencyId));
             }
-            log.info("STEP 2.3: Fundos suficientes confirmados");
-
-            // DEBUG: Busca da carteira do destinatário
-            log.info("STEP 3: Iniciando busca da carteira do destinatário ({})", receiverId);
-            startTime = System.currentTimeMillis();
 
             final var receiverWalletFuture = this.getOrLoadWallet(receiverId);
-            log.info("STEP 3.1: CompletableFuture criado para destinatário, aguardando join()...");
-
             final var receiverWallet = receiverWalletFuture.join();
-            long receiverWalletTime = System.currentTimeMillis() - startTime;
-            log.info("STEP 3.2: Carteira do destinatário obtida em {}ms: {}", receiverWalletTime, receiverWallet != null ? "ENCONTRADA" : "NULL");
 
             if (receiverWallet == null) {
-                log.warn("STEP 3.3: Carteira do destinatário não encontrada, retornando erro");
                 return TransactionResult.walletNotFound(receiverId);
             }
 
-            // DEBUG: Atualização da carteira do remetente
-            log.info("STEP 4: Atualizando carteira do remetente");
-            log.info("STEP 4.1: Subtraindo {} de {} da carteira do remetente", amount, currencyId);
-            startTime = System.currentTimeMillis();
-
             final var updatedSenderWallet = senderWallet.subtractCurrencyAmount(currencyId, amount);
-            log.info("STEP 4.2: Carteira do remetente atualizada localmente, iniciando saveWallet()...");
-
-            final var savedSenderWalletFuture = saveWallet(updatedSenderWallet);
-            log.info("STEP 4.3: CompletableFuture criado para salvar remetente, aguardando join()...");
-
-            final var savedSenderWallet = savedSenderWalletFuture.join();
-            long saveSenderTime = System.currentTimeMillis() - startTime;
-            log.info("STEP 4.4: Carteira do remetente salva em {}ms", saveSenderTime);
-
-            // DEBUG: Atualização da carteira do destinatário
-            log.info("STEP 5: Atualizando carteira do destinatário");
-            log.info("STEP 5.1: Adicionando {} de {} à carteira do destinatário", amount, currencyId);
-            startTime = System.currentTimeMillis();
+            final var savedSenderWallet = saveWallet(updatedSenderWallet).join();
 
             final var updatedReceiverWallet = receiverWallet.addCurrencyAmount(currencyId, amount);
-            log.info("STEP 5.2: Carteira do destinatário atualizada localmente, iniciando saveWallet()...");
+            final var savedReceiverWallet = saveWallet(updatedReceiverWallet).join();
 
-            final var savedReceiverWalletFuture = saveWallet(updatedReceiverWallet);
-            log.info("STEP 5.3: CompletableFuture criado para salvar destinatário, aguardando join()...");
-
-            final var savedReceiverWallet = savedReceiverWalletFuture.join();
-            long saveReceiverTime = System.currentTimeMillis() - startTime;
-            log.info("STEP 5.4: Carteira do destinatário salva em {}ms", saveReceiverTime);
-
-            // DEBUG: Sucesso
-            log.info("STEP 6: Transferência completada com sucesso");
-            log.info("=== FIM DA TRANSFERENCIA ===");
+            log.info("Transfer completed successfully: {} {} from {} to {}", amount, currencyId, senderId, receiverId);
 
             return TransactionResult.success(savedSenderWallet.uniqueId(), savedReceiverWallet.uniqueId(), currencyId, amount);
-
         } catch (Exception e) {
-            log.error("ERRO DURANTE TRANSFERÊNCIA: ", e);
-            log.error("Detalhes do erro: senderId={}, receiverId={}, currencyId={}, amount={}",
-              senderId, receiverId, currencyId, amount);
+            log.error("Error during transfer: senderId={}, receiverId={}, currencyId={}, amount={}",
+                senderId, receiverId, currencyId, amount, e);
             return TransactionResult.failure(e);
         }
     }

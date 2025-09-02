@@ -8,10 +8,6 @@ import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException
 import net.warcane.lugin.core.minecraft.currency.Currency;
 import net.warcane.lugin.core.minecraft.util.version.VersionChecker;
 import net.warcane.lugin.core.player.wallet.transaction.TransactionResult;
-import net.warcane.lugin.core.player.wallet.transaction.TransactionResult.Failure;
-import net.warcane.lugin.core.player.wallet.transaction.TransactionResult.InsufficientFunds;
-import net.warcane.lugin.core.player.wallet.transaction.TransactionResult.InvalidCurrency;
-import net.warcane.lugin.core.player.wallet.transaction.TransactionResult.WalletNotFound;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
@@ -106,6 +102,7 @@ public class CurrencyBasedCommand extends SimpleCommand {
         if (localTargetPlayer == null || !localTargetPlayer.isOnline()) {
             throw new CommandFailedException("§cO jogador " + playerName + " não está online no mesmo servidor que você.");
         }
+
         PersistentDataContainer pdc = localTargetPlayer.getPersistentDataContainer();
         if (pdc.has(RECEIVE_PAYMENTS_KEY) && !pdc.get(RECEIVE_PAYMENTS_KEY, PersistentDataType.BOOLEAN)) {
             throw new CommandFailedException("§cO jogador " + playerName + " não está aceitando pagamentos no momento.");
@@ -134,30 +131,55 @@ public class CurrencyBasedCommand extends SimpleCommand {
             throw new CommandFailedException("§cVocê não possui saldo suficiente para pagar " + currency.formatAmount(amount) + ".");
         }
 
+
         platform.getExecutorService().execute(() -> {
-            TransactionResult result = platform.getWalletService()
-              .transferCurrency(sourceWallet.uniqueId(), targetWallet.uniqueId(), currency.id(), amount);
+            if (platform.getWalletService().isLocked(sourceWallet.uniqueId())) {
+                ctx.sendMessage("§cSua carteira está ocupada com outra transação. Tente novamente em alguns instantes.");
+                return;
+            }
 
-            switch (result) {
-                case TransactionResult.Success ignored -> {
-                    final var bukkitSound = VersionChecker.isModernVersion()
-                      ? Sound.BLOCK_NOTE_BLOCK_PLING
-                      : Sound.valueOf("NOTE_PLING");
+            if (platform.getWalletService().isLocked(targetWallet.uniqueId())) {
+                ctx.sendMessage("§cA carteira do jogador " + playerName + " está ocupada com outra transação. Tente novamente em alguns instantes.");
+            }
 
-                    player.playSound(player.getLocation(), bukkitSound, 1.0f, 1.0f);
-                    ctx.sendMessage("§aPagamento de " + currency.formatAmount(amount) + " realizado com sucesso para " + playerName + ".");
-                    platform.sendMessageToPlayer(targetWallet.uniqueId(), "§aVocê recebeu um pagamento de %s de %s.".formatted(currency.formatAmount(amount), player.getName()));
+
+            platform.getWalletService().lock(sourceWallet.uniqueId());
+            platform.getWalletService().lock(targetWallet.uniqueId());
+
+            try {
+                TransactionResult result = platform.getWalletService()
+                    .transferCurrency(sourceWallet.uniqueId(), targetWallet.uniqueId(), currency.id(), amount);
+
+                switch (result) {
+                    case TransactionResult.Success ignored -> {
+                        final var bukkitSound = VersionChecker.isModernVersion()
+                            ? Sound.BLOCK_NOTE_BLOCK_PLING
+                            : Sound.valueOf("NOTE_PLING");
+
+                        player.playSound(player.getLocation(), bukkitSound, 1.0f, 1.0f);
+                        ctx.sendMessage("§aPagamento de " + currency.formatAmount(amount) + " realizado com sucesso para " + playerName + ".");
+                        platform.sendMessageToPlayer(targetWallet.uniqueId(), "§aVocê recebeu um pagamento de %s de %s.".formatted(currency.formatAmount(amount), player.getName()));
+                    }
+
+                    case TransactionResult.Failure(Throwable throwable) ->
+                        throw new CommandFailedException("§cErro ao realizar o pagamento: " + throwable);
+                    case TransactionResult.InsufficientFunds(
+                        String currencyId, BigDecimal requiredAmount, BigDecimal providedAmount
+                    ) ->
+                        throw new CommandFailedException("§cSaldo insuficiente para pagar " + currency.formatAmount(requiredAmount) + ". §cVocê tem apenas " + currency.formatAmount(providedAmount) + ".");
+                    case TransactionResult.InvalidCurrency ignored ->
+                        throw new CommandFailedException("§cMoeda inválida especificada para o pagamento.");
+                    case TransactionResult.WalletNotFound ignored ->
+                        throw new CommandFailedException("§cCarteira do jogador não encontrada.");
+                    case null, default ->
+                        throw new CommandFailedException("§cErro desconhecido ao realizar o pagamento.");
                 }
-
-                case Failure(Throwable throwable) ->
-                  throw new CommandFailedException("§cErro ao realizar o pagamento: " + throwable);
-                case InsufficientFunds(String currencyId, BigDecimal requiredAmount, BigDecimal providedAmount) ->
-                  throw new CommandFailedException("§cSaldo insuficiente para pagar " + currency.formatAmount(requiredAmount) + ". §cVocê tem apenas " + currency.formatAmount(providedAmount) + ".");
-                case InvalidCurrency ignored ->
-                  throw new CommandFailedException("§cMoeda inválida especificada para o pagamento.");
-                case WalletNotFound ignored ->
-                  throw new CommandFailedException("§cCarteira do jogador não encontrada.");
-                case null, default -> throw new CommandFailedException("§cErro desconhecido ao realizar o pagamento.");
+            } catch (Exception e) {
+                log.error("Erro ao processar pagamento de {} para {}: {}", player.getName(), playerName, e.getMessage());
+                ctx.sendMessage("§cUm erro interno ocorreu ao processar o pagamento. Tente novamente mais tarde.");
+            } finally {
+                platform.getWalletService().unlock(sourceWallet.uniqueId());
+                platform.getWalletService().unlock(targetWallet.uniqueId());
             }
         });
 
