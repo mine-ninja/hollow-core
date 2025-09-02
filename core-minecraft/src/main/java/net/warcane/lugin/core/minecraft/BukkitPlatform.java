@@ -25,6 +25,7 @@ import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerConnectToServerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDirectPlayGameCategoryPacket;
 import net.warcane.lugin.core.network.packet.impl.player.SendSoundToPlayerPacket;
+import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerConnectToSubCategoryPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerUnregisterPacket;
 import net.warcane.lugin.core.player.state.PlayerNetworkStateManager;
@@ -34,6 +35,7 @@ import net.warcane.lugin.core.player.subscription.SubscriptionCategoryType;
 import net.warcane.lugin.core.server.GameServer;
 import net.warcane.lugin.core.server.ServerPlayers;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
+import net.warcane.lugin.core.server.type.ServerSubCategoryType;
 import net.warcane.lugin.core.util.address.HostAddress;
 import net.warcane.lugin.core.util.property.Property;
 import org.bukkit.Bukkit;
@@ -106,6 +108,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
     private final Plugin plugin;
     private final ServerCategoryType serverCategoryType;
+    private final ServerSubCategoryType serverSubCategoryType;
     private final InternalCommandManager internalCommandManager;
     private final PermissionInjector permissionInjector;
     private final PlayerStatisticsService playerStatisticsService;
@@ -124,6 +127,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
         this.plugin = plugin;
         this.serverCategoryType = serverCategoryType;
+        this.serverSubCategoryType = Property.getEnum("SERVER_SUB_CATEGORY", ServerSubCategoryType.class, ServerSubCategoryType.NONE);
         this.internalCommandManager = new InternalCommandManager(this);
         this.permissionInjector = PermissionInjector.fromCurrentPlatform(this);
         this.currencyManager = new CurrencyManager(this);
@@ -195,7 +199,12 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     public @NotNull ServerCategoryType getServerCategoryType() {
         return serverCategoryType;
     }
-
+    
+    @Override
+    public @NotNull ServerSubCategoryType getServerSubCategoryType() {
+        return this.serverSubCategoryType;
+    }
+    
     @Override
     @Contract(pure = true)
     public @NotNull ServerPlayers getPlayerCount() {
@@ -220,7 +229,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     }
 
     public GameServer getGameServer() {
-        return new GameServer(this.getId(), this.getServerCategoryType(), this.getServerHostAddress(), this.getPlayerCount(), this.online);
+        return new GameServer(this.getId(), this.getServerCategoryType(), this.getServerSubCategoryType(), this.getServerHostAddress(), this.getPlayerCount(), this.online);
     }
 
     public boolean isGroupAllowedToJoin(@NotNull PlayerGroup playerGroup) {
@@ -257,6 +266,15 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
     public void tryConnectPlayerToServerCategory(@NotNull UUID player, @NotNull ServerCategoryType categoryType) {
         final var packet = new PlayerDirectPlayGameCategoryPacket(player, categoryType);
+        networkClient.sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, packet);
+    }
+    
+    /**
+     * Tenta conectar um jogador a uma subcategoria de servidor específica.
+     * O jogador vai ser conectado ao servidor com menos jogadores online dentro da subcategoria.
+     */
+    public void tryConnectPlayerToSubCategory(@NotNull UUID player, @NotNull ServerSubCategoryType subCategoryType) {
+        final var packet = new PlayerConnectToSubCategoryPacket(player, subCategoryType);
         networkClient.sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, packet);
     }
 

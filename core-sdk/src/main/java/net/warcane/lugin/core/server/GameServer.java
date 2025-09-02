@@ -3,6 +3,7 @@ package net.warcane.lugin.core.server;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
+import net.warcane.lugin.core.server.type.ServerSubCategoryType;
 import net.warcane.lugin.core.util.address.HostAddress;
 
 /**
@@ -17,19 +18,18 @@ import net.warcane.lugin.core.util.address.HostAddress;
 public record GameServer(
   @JsonProperty("i") String serverId,
   @JsonProperty("c") ServerCategoryType categoryType,
+  @JsonProperty("sc") ServerSubCategoryType subCategory,
   @JsonProperty("a") HostAddress hostAddress,
   @JsonProperty("p") ServerPlayers serverPlayers,
   @JsonProperty("o") boolean online
 ) {
-
-
     public GameServer withPlayerCount(ServerPlayers newServerPlayers) {
-        return new GameServer(serverId, categoryType, hostAddress,
+        return new GameServer(serverId, categoryType, subCategory, hostAddress,
           newServerPlayers, online);
     }
 
     public GameServer withOnlineStatus(boolean newOnlineStatus) {
-        return new GameServer(serverId, categoryType, hostAddress,
+        return new GameServer(serverId, categoryType, subCategory, hostAddress,
           serverPlayers, newOnlineStatus);
     }
 }
