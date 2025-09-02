@@ -2,12 +2,9 @@ package net.warcane.lugin.core.util.property;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.function.Supplier;
 
 public class Property {
-
-
     @NotNull
     public static String getOrThrow(@NotNull String key, @NotNull Supplier<Throwable> exceptionSupplier) {
         var value = get(key);
@@ -19,9 +16,8 @@ public class Property {
             }
         }
         return value;
-
     }
-
+    
     @NotNull
     public static String getOrThrow(@NotNull String key) {
         var value = get(key);
@@ -30,11 +26,12 @@ public class Property {
         }
         return value;
     }
-
+    
     /**
      * Obtém o valor de uma propriedade do sistema, seja do ambiente ou da propriedade do sistema.
      *
      * @param key a chave da propriedade a ser obtida
+     *
      * @return o valor da propriedade, ou null se a propriedade não existir
      */
     @Nullable
@@ -45,24 +42,26 @@ public class Property {
         }
         return env;
     }
-
+    
     /**
      * Obtém o valor de uma propriedade do sistema, seja do ambiente ou da propriedade do sistema.
      *
      * @param key          a chave da propriedade a ser obtida
      * @param defaultValue o valor padrão a ser usado caso a propriedade não exista
+     *
      * @return o valor da propriedade, ou o valor padrão fornecido se a propriedade não existir
      */
     @NotNull
     public static String get(@NotNull String key, @NotNull String defaultValue) {
         return get(key, () -> defaultValue);
     }
-
+    
     /**
      * Obtém o valor de uma propriedade do sistema como um booleano, seja do ambiente ou da propriedade do sistema.
      *
      * @param key          a chave da propriedade a ser obtida
      * @param defaultValue o valor padrão a ser usado caso a propriedade não exista
+     *
      * @return o valor da propriedade como booleano, ou o valor padrão fornecido se a propriedade não existir
      */
     public static boolean getBoolean(@NotNull String key, boolean defaultValue) {
@@ -72,12 +71,13 @@ public class Property {
         }
         return Boolean.parseBoolean(value);
     }
-
+    
     /**
      * Obtém o valor de uma propriedade do sistema, seja do ambiente ou da propriedade do sistema.
      *
      * @param key                  a chave da propriedade a ser obtida
      * @param defaultValueSupplier um fornecedor de valor padrão a ser usado caso a propriedade não exista
+     *
      * @return o valor da propriedade, ou o valor padrão fornecido se a propriedade não existir
      */
     public static String get(@NotNull String key, @NotNull Supplier<String> defaultValueSupplier) {
@@ -88,7 +88,27 @@ public class Property {
                 env = defaultValueSupplier.get();
             }
         }
-
         return env == null ? defaultValueSupplier.get() : env;
+    }
+    
+    /**
+     * Obtém o valor de uma propriedade do sistema como um enum, seja do ambiente ou da propriedade do sistema.
+     *
+     * @param key          a chave da propriedade a ser obtida
+     * @param enumClass   a classe do enum
+     * @param defaultValue o valor padrão a ser usado caso a propriedade não exista ou for inválida
+     *
+     * @return o valor da propriedade como enum, ou o valor padrão fornecido se a propriedade não existir ou for inválida
+     */
+    public static <E extends Enum<E>> E getEnum(@NotNull String key, @NotNull Class<E> enumClass, @NotNull E defaultValue) {
+        var value = get(key);
+        if (value == null) {
+            return defaultValue;
+        }
+        try {
+            return Enum.valueOf(enumClass, value.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return defaultValue;
+        }
     }
 }

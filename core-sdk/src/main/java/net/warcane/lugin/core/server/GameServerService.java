@@ -6,12 +6,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.database.RedisConnector;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
+import net.warcane.lugin.core.server.type.ServerSubCategoryType;
 import net.warcane.lugin.core.util.JsonUtil;
 import net.warcane.lugin.core.util.address.HostAddress;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import redis.clients.jedis.Jedis;
-
 import java.util.*;
 
 /**
@@ -26,6 +25,8 @@ public class GameServerService {
     private static final String KEY = "gs";
     // Chave para o índice de categorias de servidores
     private static final String CATEGORY_IDX_KEY = "gsc:";
+    // Chave para o índice de sub-categorias de servidores
+    private static final String SUB_CATEGORY_IDX_KEY = "gssc:";
 
     /**
      * Conector Redis para persistência de dados do estado do servidor
@@ -121,14 +122,31 @@ public class GameServerService {
               .toList();
         });
     }
+    
+    public List<GameServer> queryServersBySubCategory(@NotNull ServerSubCategoryType subCategory) {
+        final var categoryTypeName = subCategory.name();
+        return connector.supplyFromJedis(jedis -> {
+            final var serverIds = jedis.smembers(SUB_CATEGORY_IDX_KEY + categoryTypeName);
+            if (serverIds.isEmpty()) {
+                return Collections.emptyList();
+            }
+            return serverIds
+              .stream()
+              .map(this::getById)
+              .filter(Objects::nonNull)
+              .toList();
+        });
+    }
 
     public void update(@NotNull GameServer server) {
         connector.useJedis(jedis -> {
             final var rawData = JsonUtil.toJson(server);
             final var categoryId = server.categoryType().name();
+            final var subCategoryId = server.subCategory().name();
 
             jedis.hset(KEY, server.serverId(), rawData);
             jedis.sadd(CATEGORY_IDX_KEY + categoryId, server.serverId());
+            jedis.sadd(SUB_CATEGORY_IDX_KEY + subCategoryId, server.serverId());
         });
     }
 
@@ -138,6 +156,7 @@ public class GameServerService {
             if (server != null) {
                 jedis.hdel(KEY, serverId);
                 jedis.srem(CATEGORY_IDX_KEY + server.categoryType().name(), serverId);
+                jedis.srem(SUB_CATEGORY_IDX_KEY + server.subCategory().name(), serverId);
 
                 log.info("Servidor {} desregistrado da rede com sucesso.", serverId);
             }
