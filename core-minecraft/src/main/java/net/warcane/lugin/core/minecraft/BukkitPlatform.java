@@ -2,6 +2,8 @@ package net.warcane.lugin.core.minecraft;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.AbstractPlatform;
 import net.warcane.lugin.core.MinecraftServerPlatform;
 import net.warcane.lugin.core.Platform;
@@ -18,6 +20,7 @@ import net.warcane.lugin.core.minecraft.nametag.ModernNameTagResolver;
 import net.warcane.lugin.core.minecraft.nametag.NameTagResolver;
 import net.warcane.lugin.core.minecraft.permission.PermissionInjector;
 import net.warcane.lugin.core.minecraft.vanish.VanishManager;
+import net.warcane.lugin.core.minecraft.whitelist.WhitelistService;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerConnectToServerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDirectPlayGameCategoryPacket;
@@ -37,11 +40,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
-
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -111,6 +112,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     private final CurrencyManager currencyManager;
     private final VanishManager vanishManager;
     private final SimpleMenuManager menuManager;
+    private final WhitelistService whitelistService;
 
     @Getter
     private NameTagResolver nameTagResolver;
@@ -128,7 +130,9 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         this.vanishManager = new VanishManager(this);
         this.playerStatisticsService = new PlayerStatisticsServiceImpl(getExecutorService());
         this.menuManager = new SimpleMenuManager(this);
-        
+
+        this.whitelistService = new WhitelistService(this);
+
         final var usesModernTags = Property.getBoolean("USE_MODERN_TAGS", false);
         if (usesModernTags) {
             this.nameTagResolver = new ModernNameTagResolver(this);
@@ -137,7 +141,6 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         }
 
         this.loadGroupPermissions();
-
         Bukkit.getServicesManager().register(Platform.class, this, plugin, ServicePriority.Normal);
     }
 
@@ -182,6 +185,10 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
         PlayerNetworkStateManager stateManager = PlayerNetworkStateManager.getInstance();
         stateManager.getOnlinePlayersInServer(this.getId()).forEach(stateManager::unregister);
+    }
+
+    public WhitelistService getWhitelistService() {
+        return whitelistService;
     }
 
     @Override

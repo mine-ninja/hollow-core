@@ -1,5 +1,7 @@
 package net.warcane.lugin.core.minecraft.internal.listener;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
 import net.warcane.lugin.core.group.PlayerGroup;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
@@ -30,9 +32,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
 import static net.warcane.lugin.core.minecraft.task.Tasks.runAsync;
@@ -72,6 +71,22 @@ public final class InternalPlayerListener implements Listener {
                 event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text(platform.getDisallowJoinMessage()));
                 return;
             }
+
+            final int currentPlayers = Bukkit.getOnlinePlayers().size();
+            final int whitelistMaxPlayers = platform.getWhitelistService().getWhitelistPlayers();
+            if (platform.getWhitelistService().isWhitelistEnabled() && currentPlayers >= whitelistMaxPlayers) {
+                final boolean shouldBypass = subscriptions.stream().anyMatch(sub -> sub.group().isSpecialGroup());
+                if (shouldBypass) {
+                    log.info("Player with UUID {} is allowed to bypass the whitelist and join the full server.", uniqueId);
+                    return;
+                }
+
+                log.info("Server is whitelisted and full ({} / {}), denying access to player with UUID {}.", currentPlayers, whitelistMaxPlayers, uniqueId);
+                event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text("§cO Servidor está lotado no momento. Tente novamente mais tarde."));
+                return;
+            }
+
+
         } catch (Exception e) {
             e.printStackTrace();
             event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text(FAILED_TO_LOAD_ERR_MSG));
@@ -103,7 +118,7 @@ public final class InternalPlayerListener implements Listener {
                     this.syncKick(player, platform.getDisallowJoinMessage());
                     return;
                 }
-                
+
                 // Só envia o pacote de connect caso realmente carregue as informações do jogador.
                 // caso o contrario ele vai ser kickado (como mostra no código acima).
                 final var packet = new PlayerConnectedToServerPacket(playerId, currentServerId);

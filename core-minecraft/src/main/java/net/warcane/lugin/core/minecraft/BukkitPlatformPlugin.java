@@ -6,6 +6,7 @@ import net.warcane.lugin.core.minecraft.command.SimpleCommand;
 import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
 import net.warcane.lugin.core.minecraft.plugin.SimplePlugin;
+import net.warcane.lugin.core.minecraft.whitelist.WhitelistService;
 import net.warcane.lugin.core.server.GameServer;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
 import org.bukkit.Bukkit;
@@ -15,7 +16,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.PluginManager;
-
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -25,10 +25,14 @@ public class BukkitPlatformPlugin extends SimplePlugin {
 
     private BukkitPlatform bukkitPlatform;
 
+
     @Override
     public void onEnable() {
+        saveDefaultConfig();
+
         bukkitPlatform = BukkitPlatform.provide(this);
         bukkitPlatform.init();
+
 
         registerCommands("lugin", new ListServersCommand(), new ListPlayersCommand());
         PluginManager manager = Bukkit.getPluginManager();
