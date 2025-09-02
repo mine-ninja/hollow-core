@@ -34,7 +34,7 @@ public class VanishManager {
             setVanish(player.getUniqueId(), true);
 
             for (Player target : Bukkit.getOnlinePlayers())
-                if (!canSeeIfVanished(target, player))
+                if (!canSeeIfVanished(target))
                     target.hidePlayer(player);
         }
     }
@@ -59,21 +59,7 @@ public class VanishManager {
         vanishCache.set(IDX + ":" + playerId, value.toString());
     }
 
-    public boolean canSeeIfVanished(Player player, Player target) {
-        PlayerAccount playerAccount = BukkitPlatform.getInstance().getPlayerAccountService().getCachedAccount(player.getUniqueId());
-        PlayerAccount targetAccount = BukkitPlatform.getInstance().getPlayerAccountService().getCachedAccount(target.getUniqueId());
-
-        SubscriptionCategoryType categoryType = BukkitPlatform.getInstance().getSubscriptionCategoryType();
-
-        if (playerAccount != null && targetAccount != null) {
-            PlayerGroup playerGroup = playerAccount.getHighestSubscription(categoryType).group();
-            PlayerGroup targetGroup = targetAccount.getHighestSubscription(categoryType).group();
-
-            if (playerGroup != null && targetGroup != null) {
-                return playerGroup.getPowerLevel() >= targetGroup.getPowerLevel();
-            }
-        }
-
-        return false;
+    public boolean canSeeIfVanished(Player player) {
+        return player.hasPermission("lugin.vanish");
     }
 }

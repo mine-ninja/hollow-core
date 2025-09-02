@@ -176,7 +176,7 @@ public final class InternalPlayerListener implements Listener {
                     for (Player target : Bukkit.getOnlinePlayers()) {
                         VanishManager vanishManager = BukkitPlatform.getInstance().getVanishManager();
 
-                        if (vanishManager.isVanished(target) && !vanishManager.canSeeIfVanished(player, target)) {
+                        if (vanishManager.isVanished(target) && !vanishManager.canSeeIfVanished(player)) {
                             player.hidePlayer(target);
                         }
                     }
