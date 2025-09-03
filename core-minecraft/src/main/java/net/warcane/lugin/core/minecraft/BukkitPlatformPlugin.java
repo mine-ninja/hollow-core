@@ -5,14 +5,20 @@ import net.kyori.adventure.text.Component;
 import net.warcane.lugin.core.minecraft.command.SimpleCommand;
 import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
+import net.warcane.lugin.core.minecraft.compat.PAPICompat;
+import net.warcane.lugin.core.minecraft.compat.VaultCompat;
 import net.warcane.lugin.core.minecraft.plugin.SimplePlugin;
 import net.warcane.lugin.core.minecraft.whitelist.WhitelistService;
 import net.warcane.lugin.core.server.GameServer;
+import net.warcane.lugin.core.server.ServerPlayers;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
 import org.bukkit.Bukkit;
 import org.bukkit.Difficulty;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.PluginManager;
@@ -37,10 +43,10 @@ public class BukkitPlatformPlugin extends SimplePlugin {
         PluginManager manager = Bukkit.getPluginManager();
         
         if (manager.isPluginEnabled("PlaceholderAPI")) {
-            new net.warcane.lugin.core.minecraft.compat.PAPICompat(this, bukkitPlatform.getNameTagResolver()).register();
+            new PAPICompat(this, bukkitPlatform.getNameTagResolver()).register();
         }
         if (manager.isPluginEnabled("Vault")) {
-            net.warcane.lugin.core.minecraft.compat.VaultCompat.register(this);
+            VaultCompat.register(this);
         }
         if (bukkitPlatform.getServerCategoryType() == ServerCategoryType.LOGIN) {
             Bukkit.getWorlds().forEach(world -> {
@@ -78,10 +84,13 @@ public class BukkitPlatformPlugin extends SimplePlugin {
 
             final int size = gameServers.size();
             var message = Component.text("§aServidores (§7" + size + "§a): ");
+            int totalPlayers = 0;
             for (int i = 0; i < gameServers.size(); i++) {
                 GameServer server = gameServers.get(i);
 
-                final var playerCount = server.serverPlayers().toFormattedString();
+                final var serverPlayers = server.serverPlayers();
+                totalPlayers += serverPlayers.online();
+                final var playerCount = serverPlayers.toFormattedString();
                 final var serverCategory = server.categoryType().name();
 
                 message = message.append(Component.text("§a" + server.serverId()))
@@ -91,6 +100,9 @@ public class BukkitPlatformPlugin extends SimplePlugin {
                     message = message.append(Component.newline());
                 }
             }
+
+            message = message.append(Component.newline())
+              .append(Component.text("§aTotal de jogadores online na rede: §b" + totalPlayers));
 
             ctx.sendMessage(message);
         }
@@ -167,13 +179,13 @@ public class BukkitPlatformPlugin extends SimplePlugin {
         }
 
         @EventHandler
-        public void foodLevelChange(org.bukkit.event.entity.FoodLevelChangeEvent event) {
+        public void foodLevelChange(FoodLevelChangeEvent event) {
             event.setCancelled(true);
         }
 
         @EventHandler
-        public void onDamage(org.bukkit.event.entity.EntityDamageEvent event) {
-            if (event.getEntity() instanceof org.bukkit.entity.Player) {
+        public void onDamage(EntityDamageEvent event) {
+            if (event.getEntity() instanceof Player) {
                 event.setCancelled(true);
             }
         }
