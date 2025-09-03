@@ -27,7 +27,7 @@ public class CurrencyBasedCommand extends SimpleCommand {
     private static final Pattern BIG_DECIMAL_PATTERN = Pattern.compile("^-?\\d+(\\.\\d+)?$");
     private static final List<String> INVALID_AMOUNT_TOKENS = List.of("nan", "inf", "-inf", "null", "undefined");
 
-    private static final NamespacedKey RECEIVE_PAYMENTS_KEY = new NamespacedKey("lugin", "money_receive_toggle");
+//    private static final NamespacedKey RECEIVE_PAYMENTS_KEY = new NamespacedKey("lugin", "money_receive_toggle");
 
     private final BukkitPlatform platform;
     private final Currency currency;
@@ -103,10 +103,10 @@ public class CurrencyBasedCommand extends SimpleCommand {
             throw new CommandFailedException("§cO jogador " + playerName + " não está online no mesmo servidor que você.");
         }
 
-        PersistentDataContainer pdc = localTargetPlayer.getPersistentDataContainer();
-        if (pdc.has(RECEIVE_PAYMENTS_KEY) && !pdc.get(RECEIVE_PAYMENTS_KEY, PersistentDataType.BOOLEAN)) {
-            throw new CommandFailedException("§cO jogador " + playerName + " não está aceitando pagamentos no momento.");
-        }
+//        PersistentDataContainer pdc = localTargetPlayer.getPersistentDataContainer();
+//        if (pdc.has(RECEIVE_PAYMENTS_KEY) && !pdc.get(RECEIVE_PAYMENTS_KEY, PersistentDataType.BOOLEAN)) {
+//            throw new CommandFailedException("§cO jogador " + playerName + " não está aceitando pagamentos no momento.");
+//        }
 
         final var sender = ctx.getSender();
         if (!(sender instanceof Player player))

@@ -1,5 +1,7 @@
 package net.warcane.lugin.core.minecraft.internal.listener;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.event.account.PlayerAccountLoadEvent;
 import net.warcane.lugin.core.minecraft.internal.events.PlayerReceiveMessageEvent;
@@ -15,16 +17,15 @@ import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleport
 import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleportToTargetPacket;
 import net.warcane.lugin.core.network.packet.impl.staff.GoCachePacket;
 import net.warcane.lugin.core.network.packet.impl.staff.StaffMessagePacket;
+import net.warcane.lugin.core.network.packet.impl.wallet.WalletRefreshRequestPacket;
 import net.warcane.lugin.core.network.packet.listener.PacketListener;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -63,6 +64,31 @@ public class InternalPacketListeners {
         if (player == null) return;
         
         platform.getPermissionInjector().injectPermissions(player);
+    }
+
+    public static class WalletUpdateListener implements PacketListener<WalletRefreshRequestPacket> {
+
+
+        @Override
+        public void onReceivePacket(@NotNull WalletRefreshRequestPacket packet, @NotNull Headers headers) {
+            final var origin = headers.serverOriginId();
+            if (origin.equalsIgnoreCase(BukkitPlatform.getInstance().getId())) {
+                return;
+            }
+
+            BukkitPlatform.getInstance()
+                .getWalletService()
+                .getOrLoadWallet(packet.walletId())
+                .whenComplete((found, error) -> {
+                    if (error != null) {
+                        log.error("Error loading wallet for id " + packet.walletId(), error);
+                    } else if (found != null) {
+                        log.info("Loaded wallet for id " + packet.walletId() + " updated on server " + origin + " and cached locally.");
+                    } else {
+                        log.warn("Wallet not found for id " + packet.walletId() + ", sending empty wallet to server " + origin);
+                    }
+                });
+        }
     }
 
     public static class TargetedTeleportListener implements PacketListener<PlayerTeleportToTargetPacket> {

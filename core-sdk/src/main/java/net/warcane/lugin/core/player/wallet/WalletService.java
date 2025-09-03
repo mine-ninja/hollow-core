@@ -2,6 +2,9 @@ package net.warcane.lugin.core.player.wallet;
 
 import com.mongodb.client.model.*;
 import lombok.extern.slf4j.Slf4j;
+import net.warcane.lugin.core.Platform;
+import net.warcane.lugin.core.network.channel.NetworkChannel;
+import net.warcane.lugin.core.network.packet.impl.wallet.WalletRefreshRequestPacket;
 import net.warcane.lugin.core.player.fetcher.PlayerUuidFetcher;
 import net.warcane.lugin.core.player.wallet.transaction.TransactionResult;
 import net.warcane.lugin.core.util.data.MongoRepository;
@@ -22,8 +25,8 @@ import java.util.function.Supplier;
 @Slf4j
 public class WalletService {
 
+    private final Platform platform;
     private final ExecutorService executorService;
-
     private final Map<UUID, Wallet> localCachedWallets = new ConcurrentHashMap<>();
     private final RedisCache<Wallet> redisCachedWallet = new RedisCache<>(Wallet.class);
     private final MongoRepository<UUID, Wallet> walletRepository = new MongoRepository<>(Wallet.class, "uniqueId");
@@ -34,7 +37,8 @@ public class WalletService {
     private final RedisCache<Boolean> transactionLock = new RedisCache<>(Boolean.class);
 
 
-    public WalletService(@NotNull ExecutorService executorService) {
+    public WalletService(@NotNull Platform platform, @NotNull ExecutorService executorService) {
+        this.platform = platform;
         this.executorService = executorService;
         walletRepository.useCollection(collection -> {
             collection.createIndex(Indexes.hashed("uniqueId"));
@@ -205,7 +209,9 @@ public class WalletService {
                 throw new IllegalStateException("Failed to update wallet for player: " + toUpdate.uniqueId());
             }
 
+
             if (options.updateCaches) {
+                platform.getNetworkClient().sendNetworkPacket(NetworkChannel.OPERATION, new WalletRefreshRequestPacket(updated.uniqueId()));
                 redisCachedWallet.hset("wallets", toUpdate.uniqueId().toString(), updated);
                 localCachedWallets.put(toUpdate.uniqueId(), updated);
             }

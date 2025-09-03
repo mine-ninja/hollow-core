@@ -63,7 +63,7 @@ public abstract class AbstractPlatform implements Platform {
         this.gameServerService = new GameServerService(redisConnector);
         this.playerAccountService = PlayerAccountService.of(executorService);
         this.groupPermissionService = new GroupPermissionService(executorService);
-        this.walletService = new WalletService(executorService);
+        this.walletService = new WalletService( this, executorService);
 
 
     }

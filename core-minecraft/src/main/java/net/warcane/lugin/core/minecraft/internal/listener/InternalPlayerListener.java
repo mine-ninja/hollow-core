@@ -182,9 +182,8 @@ public final class InternalPlayerListener implements Listener {
                     }
                 });
 
-                Tasks.runAsyncLater(() -> {
-                    Bukkit.getPluginManager().callEvent(new PlayerAccountLoadEvent(playerAccount));
-                }, 1);
+                Tasks.runAsyncLater(() -> Bukkit.getPluginManager().callEvent(new PlayerAccountLoadEvent(playerAccount)), 1);
+
             } catch (Exception e) {
                 e.printStackTrace();
                 log.error("Error while processing player join for {}: {}", player.getName(), e.getMessage(), e);
