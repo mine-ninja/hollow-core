@@ -32,9 +32,8 @@ public class BukkitPlatformPlugin extends SimplePlugin {
 
         bukkitPlatform = BukkitPlatform.provide(this);
         bukkitPlatform.init();
-
-
-        registerCommands("lugin", new ListServersCommand(), new ListPlayersCommand());
+        
+        registerCommands("lugin", new ListServersCommand(), new ListPlayersCommand(), new ServerInfo());
         PluginManager manager = Bukkit.getPluginManager();
         
         if (manager.isPluginEnabled("PlaceholderAPI")) {
@@ -130,6 +129,26 @@ public class BukkitPlatformPlugin extends SimplePlugin {
                 return list;
             }
             return super.performTabComplete(ctx);
+        }
+    }
+    
+    final class ServerInfo extends SimpleCommand {
+        public ServerInfo() {
+            super("serverinfo");
+            this.requiredPermission = "lugin.manager";
+        }
+
+        @Override
+        public void performCommand(@NotNull CommandContext ctx) throws CommandFailedException {
+            final var server = bukkitPlatform.getGameServer();
+            final var playerCount = server.serverPlayers().toFormattedString();
+            ctx.sendMessage(
+                "§aServidor: §b" + server.serverId()
+                + " §7[" + playerCount + "] §b"
+                + " " + server.categoryType().name()
+                + " | " + server.subCategory().name()
+                + " | " + server.hostAddress().toString()
+            );
         }
     }
 

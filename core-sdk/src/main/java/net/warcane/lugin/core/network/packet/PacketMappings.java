@@ -8,6 +8,7 @@ import net.warcane.lugin.core.network.packet.impl.generic.JsonPacket;
 import net.warcane.lugin.core.network.packet.impl.internal.PingPacket;
 import net.warcane.lugin.core.network.packet.impl.internal.PongPacket;
 import net.warcane.lugin.core.network.packet.impl.player.*;
+import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerConnectToSubCategoryPacket;
 import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerLoseGroupPacket;
 import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerReceiveGroupPacket;
 import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleportToLocationPacket;
@@ -55,7 +56,6 @@ final class PacketMappings {
         entry(5, PlayerDisconnectedFromServerPacket.class),
         entry(6, PlayerJoinRequestPacket.class),
         entry(7, PlayerDirectPlayGameCategoryPacket.class),
-        entry(16, PlayerConnectToServerPacket.class),
 
         entry(88, SendModernMessageToPlayerPacket.class),
         entry(8, SendMessageToPlayerPacket.class),
@@ -71,8 +71,10 @@ final class PacketMappings {
         entry(14, WalletRefreshRequestPacket.class),
 
         entry(15, JsonPacket.class),
+        entry(16, PlayerConnectToServerPacket.class),
         entry(17, GoCommandPacket.class),
-        entry(18, GoCachePacket.class)
+        entry(18, GoCachePacket.class),
+        entry(19, PlayerConnectToSubCategoryPacket.class)
       )
     );
 

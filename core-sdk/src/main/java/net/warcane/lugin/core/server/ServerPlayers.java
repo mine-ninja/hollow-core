@@ -11,11 +11,6 @@ public record ServerPlayers(
   @JsonProperty("m") int max
 ) {
     @JsonIgnore
-    public int online() {
-        return online;
-    }
-
-    @JsonIgnore
     public boolean isFull() {
         return online >= max;
     }

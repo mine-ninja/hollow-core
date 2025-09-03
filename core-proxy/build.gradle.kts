@@ -19,3 +19,7 @@ tasks.shadowJar {
     mergeServiceFiles()
     minimize()
 }
+
+tasks.build {
+    dependsOn(tasks.shadowJar)
+}

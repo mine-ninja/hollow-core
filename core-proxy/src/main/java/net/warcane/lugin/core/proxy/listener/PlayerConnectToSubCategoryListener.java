@@ -19,9 +19,10 @@ public class PlayerConnectToSubCategoryListener implements PacketListener<Player
     @Override
     public void onReceivePacket(@NotNull PlayerConnectToSubCategoryPacket packet, @NotNull Headers headers) {
         final var categoryToSendPlayer = packet.subCategoryType();
-        List<GameServer> servers = platform.getGameServerService().queryServersBySubCategory(categoryToSendPlayer).stream()
+        List<GameServer> servers = platform.getGameServerService().queryAllServersInNetwork().stream()
+            .filter(gameServer -> gameServer.subCategory() == categoryToSendPlayer)
             .filter(gameServer -> !gameServer.serverPlayers().isFull())
-            .sorted(Comparator.comparingInt(value -> ((GameServer) value).serverPlayers().online()))
+            .sorted(Comparator.comparingInt(value -> value.serverPlayers().online()))
             .toList();
         
         if (servers.isEmpty()) {
