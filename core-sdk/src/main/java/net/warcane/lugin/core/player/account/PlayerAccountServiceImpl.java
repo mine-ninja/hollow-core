@@ -1,5 +1,8 @@
 package net.warcane.lugin.core.player.account;
 
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.FindOneAndReplaceOptions;
+import com.mongodb.client.model.ReturnDocument;
 import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.player.fetcher.PlayerUuidFetcher;
 import net.warcane.lugin.core.util.data.MongoRepository;
@@ -12,6 +15,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
+
+import static java.util.Objects.requireNonNull;
 
 @Slf4j
 public class PlayerAccountServiceImpl implements PlayerAccountService {
@@ -153,8 +158,11 @@ public class PlayerAccountServiceImpl implements PlayerAccountService {
 
         return supply(() -> {
             var removed = options.updateBeforeUnload()
-              ? repository.save(removedFromLocalCache, PlayerAccount::uniqueId)
-              : removedFromLocalCache;
+                ? repository.supplyFromCollection(collection ->
+                requireNonNull(collection.findOneAndReplace(Filters.eq("uniqueId", playerId), removedFromLocalCache,
+                new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER).upsert(true)))) : removedFromLocalCache;
+
+
 
             if (options.unloadFromCache()) {
                 redisCache.hdel(CACHE_KEY, playerId.toString());

@@ -10,6 +10,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,6 +52,20 @@ public class SimpleMenuManager implements Listener {
         }
 
         menu.openToPlayer(this, player, initialData);
+    }
+
+
+    @EventHandler
+    public void handlePlayerClick(InventoryDragEvent event) {
+        final var inventory = event.getInventory();
+
+        final var context = getContextFromInventory(inventory);
+        if (context == null) return;
+
+        final var menu = context.getMenu();
+        if (menu.defaultConfig.isGlobalClickCancelled()) {
+            event.setCancelled(true);
+        }
     }
 
 
