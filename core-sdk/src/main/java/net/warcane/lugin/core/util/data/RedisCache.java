@@ -14,6 +14,10 @@ import java.util.function.Supplier;
  */
 public class RedisCache<O> {
 
+    private static final String HSET_AND_GET_SCRIPT = """
+            redis.call('HSET', KEYS[1], KEYS[2], ARGV[1])
+            return redis.call('HGET', KEYS[1], KEYS[2])
+        """;
 
     protected final RedisConnector connector;
     protected final GenericSerializer<O> serializer;
@@ -29,6 +33,19 @@ public class RedisCache<O> {
     public RedisCache(@NotNull RedisConnector connector, @NotNull GenericSerializer<O> serializer) {
         this.connector = connector;
         this.serializer = serializer;
+    }
+
+    @Nullable
+    public O hSetAndGet(@NotNull String key, String field, O value) {
+        return connector.supplyFromJedis(jedis -> {
+            final var result = (String) jedis.eval(
+                HSET_AND_GET_SCRIPT,
+                2,
+                key, field,
+                serializer.serialize(value)
+            );
+            return result == null ? null : serializer.deserialize(result);
+        });
     }
 
     public void set(@NotNull String key, @NotNull O value, long seconds) {

@@ -59,6 +59,6 @@ public class InternalCommandManager {
     }
 
     public void registerCurrencyCommand(@NotNull Currency currency) {
-        Bukkit.getCommandMap().register("lugin", new CurrencyBasedCommand(platform, currency));
+        Bukkit.getCommandMap().register("lugin", new CurrencyBasedCommand(platform, currency , currency.allowPlayerPayments()));
     }
 }

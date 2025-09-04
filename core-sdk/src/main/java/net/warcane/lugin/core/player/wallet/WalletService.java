@@ -119,6 +119,15 @@ public class WalletService {
         transactionLock.del("wallet_transaction_locks:" + playerId);
     }
 
+    public Wallet getWalletFromRedis(@NotNull UUID playerId){
+        return redisCachedWallet.hget("wallets", playerId.toString());
+    }
+
+    public void updateCaches(@NotNull Wallet wallet) {
+        localCachedWallets.put(wallet.uniqueId(), wallet);
+        redisCachedWallet.hset("wallets", wallet.uniqueId().toString(), wallet);
+    }
+
     /**
      * Obtém ou carrega a carteira do jogador, primeiro verificando o cache local.
      *
@@ -134,6 +143,7 @@ public class WalletService {
 
             final var fromRedis = redisCachedWallet.hget("wallets", playerId.toString());
             if (fromRedis != null) {
+                log.info("Loaded wallet from Redis for player: {}", playerId);
                 localCachedWallets.put(playerId, fromRedis);
                 return fromRedis;
             }
@@ -158,11 +168,6 @@ public class WalletService {
      */
     public CompletableFuture<@Nullable Wallet> getOrLoadWallet(@NotNull String playerName) {
         return CompletableFuture.supplyAsync(() -> {
-            final var cached = this.getCachedWallet(playerName);
-            if (cached != null) {
-                return cached;
-            }
-
             final var idFromName = PlayerUuidFetcher.getInstance().fetchPlayerUuid(playerName);
             if (idFromName == null) {
                 return null;
@@ -173,7 +178,6 @@ public class WalletService {
                 localCachedWallets.put(fromRedis.uniqueId(), fromRedis);
                 return fromRedis;
             }
-
 
             final var fromMongo = walletRepository.findById(idFromName);
             if (fromMongo != null) {
@@ -204,17 +208,23 @@ public class WalletService {
      */
     public CompletableFuture<@NotNull Wallet> saveWallet(@NotNull Wallet toUpdate, @NotNull UpdateWalletOptions options) {
         return CompletableFuture.supplyAsync(() -> {
+            if (options.updateCaches) {
+                final var updatedOnRedis = redisCachedWallet.hSetAndGet("wallets", toUpdate.uniqueId().toString(), toUpdate);
+                if (updatedOnRedis == null) {
+                    throw new IllegalStateException("Failed to update wallet in Redis for player: " + toUpdate.uniqueId());
+                }
+            }
+
             final var updated = walletRepository.save(toUpdate, Wallet::uniqueId);
             if (updated == null) {
                 throw new IllegalStateException("Failed to update wallet for player: " + toUpdate.uniqueId());
             }
 
-
             if (options.updateCaches) {
-                platform.getNetworkClient().sendNetworkPacket(NetworkChannel.OPERATION, new WalletRefreshRequestPacket(updated.uniqueId()));
-                redisCachedWallet.hset("wallets", toUpdate.uniqueId().toString(), updated);
                 localCachedWallets.put(toUpdate.uniqueId(), updated);
             }
+
+            platform.getNetworkClient().sendNetworkPacket(NetworkChannel.OPERATION, new WalletRefreshRequestPacket(updated.uniqueId()));
             return updated;
         }, executorService);
     }
@@ -260,6 +270,13 @@ public class WalletService {
       @NotNull LoadWalletOptions options
     ) {
         return CompletableFuture.supplyAsync(() -> {
+            final var fromRedis = redisCachedWallet.hget("wallets", playerId.toString());
+            if (fromRedis != null) {
+                log.info("Loaded wallet from Redis for player: {} {}", playerId, fromRedis);
+                localCachedWallets.put(playerId, fromRedis);
+                return fromRedis;
+            }
+
             var load = walletRepository.findById(playerId);
             if (load == null) {
                 if (options.hasWalletCreator()) {
@@ -293,7 +310,6 @@ public class WalletService {
                     throw new IllegalStateException("Failed to unload wallet for player: " + toUnload.uniqueId());
                 }
 
-                redisCachedWallet.hset("wallets", toUnload.uniqueId().toString(), updated);
                 localCachedWallets.remove(toUnload.uniqueId());
                 return updated;
             } else {

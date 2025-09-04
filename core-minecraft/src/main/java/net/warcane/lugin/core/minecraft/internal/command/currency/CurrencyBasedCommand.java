@@ -6,23 +6,28 @@ import net.warcane.lugin.core.minecraft.command.SimpleCommand;
 import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
 import net.warcane.lugin.core.minecraft.currency.Currency;
+import net.warcane.lugin.core.minecraft.task.Tasks;
+import net.warcane.lugin.core.minecraft.util.cooldown.Cooldown;
 import net.warcane.lugin.core.minecraft.util.version.VersionChecker;
 import net.warcane.lugin.core.player.wallet.transaction.TransactionResult;
 import org.bukkit.Bukkit;
-import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
-import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 @Slf4j
-public class CurrencyBasedCommand extends SimpleCommand {
+public class CurrencyBasedCommand extends SimpleCommand implements Listener {
 
     private static final Pattern BIG_DECIMAL_PATTERN = Pattern.compile("^-?\\d+(\\.\\d+)?$");
     private static final List<String> INVALID_AMOUNT_TOKENS = List.of("nan", "inf", "-inf", "null", "undefined");
@@ -31,11 +36,22 @@ public class CurrencyBasedCommand extends SimpleCommand {
 
     private final BukkitPlatform platform;
     private final Currency currency;
+    private final boolean allowPayments;
 
-    public CurrencyBasedCommand(BukkitPlatform platform, Currency currency) {
+    private final Map<UUID, Long> cooldownMap = new ConcurrentHashMap<>();
+
+    public CurrencyBasedCommand(BukkitPlatform platform, Currency currency, boolean allowPayments) {
         super(currency.commandName());
         this.platform = platform;
         this.currency = currency;
+        this.allowPayments = allowPayments;
+
+        Bukkit.getPluginManager().registerEvents(this, platform.getPlugin());
+    }
+
+    @EventHandler
+    public void quit(PlayerQuitEvent event) {
+        cooldownMap.remove(event.getPlayer().getUniqueId());
     }
 
     @Override
@@ -56,12 +72,13 @@ public class CurrencyBasedCommand extends SimpleCommand {
             case "ver" ->
               handleViewBalanceCommand(ctx, ctx.getRawArgOrThrow(1, "§cVocê deve especificar o nome do jogador."));
             case "pagar", "pay" -> {
-                if (currency.allowPlayerPayments()) {
+                if (!currency.allowPlayerPayments()) {
                     ctx.sendMessage("§cEste comando não está disponível para pagamentos de jogadores.");
                     return;
                 }
 
                 this.handlePayCommand(ctx, ctx.getRawArgOrThrow(1, "§cVocê deve especificar o nome do jogador para pagar."));
+
             }
             case "top" -> handleTopCommand(ctx);
             default -> throw new CommandFailedException("§cSubcomando inválido. Use: ver, pagar ou top.");
@@ -89,7 +106,10 @@ public class CurrencyBasedCommand extends SimpleCommand {
           });
     }
 
+    private final Map<String, Long> payCommandCooldowns = new ConcurrentHashMap<>();
+
     private void handlePayCommand(@NotNull CommandContext ctx, @NotNull String playerName) {
+
         if (ctx.getSenderAsPlayer().getName().equalsIgnoreCase(playerName)) {
             throw new CommandFailedException("§cVocê não pode pagar a si mesmo.");
         }
@@ -131,6 +151,10 @@ public class CurrencyBasedCommand extends SimpleCommand {
             throw new CommandFailedException("§cVocê não possui saldo suficiente para pagar " + currency.formatAmount(amount) + ".");
         }
 
+        if (!Cooldown.setIfNotInCooldown(player.getUniqueId(), 7_000L, "money-pay")) {
+            ctx.sendMessage("§cAguarde um pouco antes de tentar pagar novamente.");
+            return;
+        }
 
         platform.getExecutorService().execute(() -> {
             if (platform.getWalletService().isLocked(sourceWallet.uniqueId())) {
@@ -178,8 +202,10 @@ public class CurrencyBasedCommand extends SimpleCommand {
                 log.error("Erro ao processar pagamento de {} para {}: {}", player.getName(), playerName, e.getMessage());
                 ctx.sendMessage("§cUm erro interno ocorreu ao processar o pagamento. Tente novamente mais tarde.");
             } finally {
-                platform.getWalletService().unlock(sourceWallet.uniqueId());
-                platform.getWalletService().unlock(targetWallet.uniqueId());
+                Tasks.runAsyncLater(() -> {
+                    platform.getWalletService().unlock(sourceWallet.uniqueId());
+                    platform.getWalletService().unlock(targetWallet.uniqueId());
+                }, 20 * 3);
             }
         });
 

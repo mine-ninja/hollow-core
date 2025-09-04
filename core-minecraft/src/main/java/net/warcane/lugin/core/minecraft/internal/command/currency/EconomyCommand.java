@@ -43,6 +43,11 @@ public class EconomyCommand extends SimpleCommand {
             return;
         }
 
+        if (subCommand.equalsIgnoreCase("list")) {
+            handleListCurrenciesCommand(ctx);
+            return;
+        }
+
         final var playerName = ctx.getRawArgOrThrow(1, PLAYER_NAME_ERROR);
         final var currencyId = ctx.getRawArgOrThrow(2, CURRENCY_ID_ERROR);
         final var currency = platform.getCurrencyManager().getCurrency(currencyId);
@@ -55,7 +60,6 @@ public class EconomyCommand extends SimpleCommand {
             case "add" -> handleBalanceOperation(commandCtx, BalanceOperation.ADD);
             case "remove" -> handleBalanceOperation(commandCtx, BalanceOperation.REMOVE);
             case "view" -> handleViewBalanceCommand(commandCtx);
-            case "list" -> handleListCurrenciesCommand(ctx);
             default -> throw new CommandFailedException(INVALID_SUBCOMMAND_ERROR);
         }
     }
@@ -101,7 +105,8 @@ public class EconomyCommand extends SimpleCommand {
               walletService.saveWallet(changed)
                 .whenComplete((updated, updateError) -> {
                     if (updateError != null) {
-                        throw new CommandFailedException(UPDATE_WALLET_ERROR.formatted(updateError.getMessage()));
+                        error.printStackTrace();
+                        return;
                     }
 
                     final var formattedAmount = ctx.currency().formatAmount(amount);
@@ -119,7 +124,8 @@ public class EconomyCommand extends SimpleCommand {
 
         ctx.sendMessage("§aMoedas registradas:");
         for (var currency : currencies) {
-            ctx.sendMessage(" - §b" + currency.id() + "§a: " + currency.displayName() + " §7(" + currency.symbol() + "§7)");
+            final var allowPlayerPayments = currency.allowPlayerPayments() ? "§aSim" : "§cNão";
+            ctx.sendMessage(" - §b" + currency.id() + "§a: " + currency.displayName() + " §7(" + currency.symbol() + "§7) " + " - Pagamentos entre jogadores: " + allowPlayerPayments);
         }
     }
 

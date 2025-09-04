@@ -49,6 +49,7 @@ public class InternalPacketListeners {
         networkClient.registerPacketListener(SendSoundToPlayerPacket.class, new SendSoundToPlayerPacketListener());
         networkClient.registerPacketListener(PlayerTeleportToTargetPacket.class, new TargetedTeleportListener());
         networkClient.registerPacketListener(GoCachePacket.class, new GoCacheListener());
+        networkClient.registerPacketListener(WalletRefreshRequestPacket.class, new WalletUpdateListener());
 
         final var listener = new GoCacheListener();
 
@@ -68,26 +69,36 @@ public class InternalPacketListeners {
 
     public static class WalletUpdateListener implements PacketListener<WalletRefreshRequestPacket> {
 
-
         @Override
         public void onReceivePacket(@NotNull WalletRefreshRequestPacket packet, @NotNull Headers headers) {
             final var origin = headers.serverOriginId();
-            if (origin.equalsIgnoreCase(BukkitPlatform.getInstance().getId())) {
+            final var serverId = BukkitPlatform.getInstance().getId();
+            final var platform = BukkitPlatform.getInstance();
+            if (origin.equals(serverId)) {
+                log.debug("Ignoring wallet refresh request for wallet id {} from same server {}", packet.walletId(), serverId);
                 return;
             }
 
-            BukkitPlatform.getInstance()
-                .getWalletService()
-                .getOrLoadWallet(packet.walletId())
-                .whenComplete((found, error) -> {
-                    if (error != null) {
-                        log.error("Error loading wallet for id " + packet.walletId(), error);
-                    } else if (found != null) {
-                        log.info("Loaded wallet for id " + packet.walletId() + " updated on server " + origin + " and cached locally.");
+            final var walletFromRedis = platform.getWalletService().getWalletFromRedis(packet.walletId());
+            if (walletFromRedis != null) {
+                platform.getWalletService().updateCaches(walletFromRedis);
+                log.info("Updated wallet with id {} from redis cache {}", packet.walletId(), walletFromRedis);
+                return;
+            }
+
+            BukkitPlatform.getInstance().getExecutorService().execute(() -> {
+                try {
+                    final var wallet = platform.getWalletService().loadPlayerWallet(packet.walletId()).join();
+                    if (wallet != null) {
+                        platform.getWalletService().updateCaches(wallet);
+                        log.info("Loaded and updated wallet with id {} from database {}", packet.walletId(), wallet);
                     } else {
-                        log.warn("Wallet not found for id " + packet.walletId() + ", sending empty wallet to server " + origin);
+                        log.warn("Could not find wallet with id {} to update", packet.walletId());
                     }
-                });
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
         }
     }
 
