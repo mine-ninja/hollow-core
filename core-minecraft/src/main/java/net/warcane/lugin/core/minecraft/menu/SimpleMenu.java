@@ -8,11 +8,12 @@ import org.bukkit.event.inventory.InventoryEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public abstract class SimpleMenu {
+public abstract class SimpleMenu<T extends PlayerMenuContext> {
 
     protected final Map<UUID, PlayerMenuContext> playerContexts = new HashMap<>();
     protected final MenuConfig defaultConfig = new MenuConfig();
@@ -49,13 +50,19 @@ public abstract class SimpleMenu {
         }
     }
 
+    protected abstract T createContext(@NotNull Player player,
+                                       @NotNull Map<String, Object> rawData,
+                                       @NotNull MenuConfig menuConfig,
+                                       @NotNull SimpleMenuManager manager);
+
     void openToPlayer(@NotNull SimpleMenuManager manager, @NotNull Player player, @NotNull Map<String, Object> initialData) {
         final var openHandler = new MenuConfig(defaultConfig);
-        final var ctx = new PlayerMenuContext(player, initialData, openHandler, this, manager);
+        final var ctx = createContext(player, initialData, openHandler, manager);
         if (!this.onPreOpen(ctx, openHandler)) return;
 
         ctx.initialize();
         playerContexts.put(player.getUniqueId(), ctx);
         ctx.open();
     }
+
 }

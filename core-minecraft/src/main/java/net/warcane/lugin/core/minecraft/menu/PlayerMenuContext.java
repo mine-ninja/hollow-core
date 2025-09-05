@@ -25,16 +25,16 @@ import java.util.stream.IntStream;
 
 public class PlayerMenuContext implements InventoryHolder {
 
-    private static final ItemStack AIR = new ItemStack(Material.AIR);
+    protected static final ItemStack AIR = new ItemStack(Material.AIR);
 
-    private final Player player;
-    private final Map<String, Object> rawData;
-    private final MenuConfig menuConfig;
-    private final SimpleMenu menu;
-    private final SimpleMenuManager manager;
+    protected final Player player;
+    protected final Map<String, Object> rawData;
+    protected final MenuConfig menuConfig;
+    protected final SimpleMenu menu;
+    protected final SimpleMenuManager manager;
 
-    private Inventory inventory;
-    private final Int2ObjectMap<SimpleMenuItem> items = new Int2ObjectOpenHashMap<>();
+    protected Inventory inventory;
+    protected final Int2ObjectMap<SimpleMenuItem> items = new Int2ObjectOpenHashMap<>();
 
     protected final Stopwatch stopwatch = new Stopwatch();
 
@@ -227,16 +227,15 @@ public class PlayerMenuContext implements InventoryHolder {
     public int[] getCorners() {
         int size = menuConfig.getRows() * 9;
         return IntStream.range(0, size)
-          .filter(i -> i < 2 || (i > 6 && i < 10)
-                       || i == 17 || i == size - 18
-                       || (i > size - 11 && i < size - 7) || i > size - 3).toArray();
+            .filter(i -> i < 2 || (i > 6 && i < 10)
+                         || i == 17 || i == size - 18
+                         || (i > size - 11 && i < size - 7) || i > size - 3).toArray();
     }
 
     @NotNull
-    public MenuConfig getMenuConfig(){
+    public MenuConfig getMenuConfig() {
         return menuConfig;
     }
-
 
     @SuppressWarnings("deprecation")
     private Inventory createInv() {
@@ -244,7 +243,7 @@ public class PlayerMenuContext implements InventoryHolder {
             case String title -> Bukkit.createInventory(this, menuConfig.getRows() * 9, title);
             case Component title -> Bukkit.createInventory(this, menuConfig.getRows() * 9, title);
             default ->
-              throw new IllegalArgumentException("Unsupported title type: " + menuConfig.getTitle().getClass().getName());
+                throw new IllegalArgumentException("Unsupported title type: " + menuConfig.getTitle().getClass().getName());
         };
     }
 
