@@ -2,6 +2,8 @@ package net.warcane.lugin.core.minecraft.menu;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import lombok.AccessLevel;
+import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.warcane.lugin.core.minecraft.menu.config.MenuConfig;
 import net.warcane.lugin.core.minecraft.menu.item.SimpleMenuItem;
@@ -23,22 +25,23 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
-public class PlayerMenuContext implements InventoryHolder {
+public class PlayerMenuContext implements MenuContext {
 
     protected static final ItemStack AIR = new ItemStack(Material.AIR);
 
     protected final Player player;
     protected final Map<String, Object> rawData;
     protected final MenuConfig menuConfig;
-    protected final SimpleMenu menu;
+    protected final SimpleMenu<PlayerMenuContext> menu;
     protected final SimpleMenuManager manager;
 
     protected Inventory inventory;
     protected final Int2ObjectMap<SimpleMenuItem> items = new Int2ObjectOpenHashMap<>();
 
+    @Getter
     protected final Stopwatch stopwatch = new Stopwatch();
 
-    public PlayerMenuContext(Player player, Map<String, Object> rawData, MenuConfig menuConfig, SimpleMenu menu, SimpleMenuManager manager) {
+    public PlayerMenuContext(Player player, Map<String, Object> rawData, MenuConfig menuConfig, SimpleMenu<PlayerMenuContext> menu, SimpleMenuManager manager) {
         this.player = player;
         this.rawData = rawData;
         this.menuConfig = menuConfig;
@@ -167,6 +170,7 @@ public class PlayerMenuContext implements InventoryHolder {
      * Atualiza o contexto do menu para o jogador, atualizando os items no inventário
      * com os renderizadores associados a cada item.
      */
+    @Override
     public void update() {
         for (var entry : items.int2ObjectEntrySet()) {
             var slot = entry.getIntKey();

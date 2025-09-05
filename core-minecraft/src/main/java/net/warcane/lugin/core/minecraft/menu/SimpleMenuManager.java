@@ -112,15 +112,15 @@ public class SimpleMenuManager implements Listener {
 
     @EventHandler
     public void onTick(AsyncServerTickEvent event) {
-        for (SimpleMenu menu : menus.values()) {
-            for (PlayerMenuContext context : menu.playerContexts.values()) {
+        for (SimpleMenu<?> menu : menus.values()) {
+            for (MenuContext context : menu.playerContexts.values()) {
                 if (!context.getMenuConfig().isTickUpdateEnabled()) continue;
 
                 long updateIntervalMillis = context.getMenuConfig().getUpdateIntervalMillis();
-                long elapsed = context.stopwatch.elapsedTimeInMillis();
+                long elapsed = context.getStopwatch().elapsedTimeInMillis();
                 if (elapsed < updateIntervalMillis) continue;
 
-                context.stopwatch.reset();
+                context.getStopwatch().reset();
                 menu.onTick(context);
             }
         }

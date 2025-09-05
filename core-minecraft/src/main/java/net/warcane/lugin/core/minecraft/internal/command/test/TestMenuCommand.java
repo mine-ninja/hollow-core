@@ -5,6 +5,7 @@ import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.command.SimpleCommand;
 import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
+import net.warcane.lugin.core.minecraft.menu.MenuContext;
 import net.warcane.lugin.core.minecraft.menu.PlayerMenuContext;
 import net.warcane.lugin.core.minecraft.menu.SimpleMenu;
 import net.warcane.lugin.core.minecraft.menu.config.MenuConfig;
@@ -73,7 +74,7 @@ public class TestMenuCommand extends SimpleCommand {
         }
 
         @Override
-        protected void onTick(@NotNull PlayerMenuContext ctx) {
+        protected void onTick(@NotNull MenuContext ctx) {
             ctx.update();
             super.onTick(ctx);
         }

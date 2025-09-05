@@ -31,7 +31,7 @@ public abstract class SimpleMenu<T extends PlayerMenuContext> {
         // The default implementation does nothing.
     }
 
-    protected void onTick(@NotNull PlayerMenuContext ctx) {
+    protected void onTick(@NotNull MenuContext ctx) {
         // The default implementation does nothing.
     }
 
@@ -57,7 +57,7 @@ public abstract class SimpleMenu<T extends PlayerMenuContext> {
 
     void openToPlayer(@NotNull SimpleMenuManager manager, @NotNull Player player, @NotNull Map<String, Object> initialData) {
         final var openHandler = new MenuConfig(defaultConfig);
-        final var ctx = createContext(player, initialData, openHandler, manager);
+        final PlayerMenuContext ctx = createContext(player, initialData, openHandler, manager);
         if (!this.onPreOpen(ctx, openHandler)) return;
 
         ctx.initialize();
