@@ -8,6 +8,7 @@ import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException
 import net.warcane.lugin.core.minecraft.menu.MenuContext;
 import net.warcane.lugin.core.minecraft.menu.PlayerMenuContext;
 import net.warcane.lugin.core.minecraft.menu.SimpleMenu;
+import net.warcane.lugin.core.minecraft.menu.SimpleMenuManager;
 import net.warcane.lugin.core.minecraft.menu.config.MenuConfig;
 import net.warcane.lugin.core.minecraft.util.sound.PredefinedSound;
 import org.bukkit.Material;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
@@ -39,7 +41,7 @@ public class TestMenuCommand extends SimpleCommand {
         platform.getMenuManager().openToPlayer(ctx.getSenderAsPlayer(), TestMenu.class);
     }
 
-    public static class TestMenu extends SimpleMenu {
+    public static class TestMenu extends SimpleMenu<PlayerMenuContext> {
 
         private static final ThreadLocalRandom RANDOM = ThreadLocalRandom.current();
         private static final List<Material> TEST_MATERIALS = List.of(
@@ -83,6 +85,11 @@ public class TestMenuCommand extends SimpleCommand {
         protected void onError(@NotNull PlayerMenuContext ctx, @Nullable InventoryEvent event, @NotNull Throwable error) {
             final var eventName = event.getEventName();
             log.error("Erro no menu {} durante o evento {}", this.getClass().getSimpleName(), eventName, error);
+        }
+
+        @Override
+        protected PlayerMenuContext createContext(@NotNull Player player, @NotNull Map rawData, @NotNull MenuConfig menuConfig, @NotNull SimpleMenuManager manager) {
+            return new PlayerMenuContext(player, rawData, menuConfig, this, manager);
         }
     }
 }
