@@ -32,7 +32,7 @@ public class PlayerMenuContext implements MenuContext {
     protected final Player player;
     protected final Map<String, Object> rawData;
     protected final MenuConfig menuConfig;
-    protected final SimpleMenu<PlayerMenuContext> menu;
+    protected final SimpleMenu menu;
     protected final SimpleMenuManager manager;
 
     protected Inventory inventory;
@@ -41,7 +41,7 @@ public class PlayerMenuContext implements MenuContext {
     @Getter
     protected final Stopwatch stopwatch = new Stopwatch();
 
-    public PlayerMenuContext(Player player, Map<String, Object> rawData, MenuConfig menuConfig, SimpleMenu<PlayerMenuContext> menu, SimpleMenuManager manager) {
+    public PlayerMenuContext(Player player, Map<String, Object> rawData, MenuConfig menuConfig, SimpleMenu menu, SimpleMenuManager manager) {
         this.player = player;
         this.rawData = rawData;
         this.menuConfig = menuConfig;

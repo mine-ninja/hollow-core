@@ -18,7 +18,7 @@ import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 //
-public class MenuPagination<T> extends PlayerMenuContext {
+public class MenuPaginationContext<T> extends PlayerMenuContext {
 
     private List<Integer> paginationSlots;
     private int currentPage = 0;
@@ -27,7 +27,7 @@ public class MenuPagination<T> extends PlayerMenuContext {
     private BiFunction<Player, T, ItemStack> currentItemRenderer;
     private BiConsumer<T, InventoryClickEvent> currentClickHandler;
 
-    public MenuPagination(Player player, Map<String, Object> rawData, MenuConfig menuConfig, SimpleMenu menu, SimpleMenuManager manager) {
+    public MenuPaginationContext(Player player, Map<String, Object> rawData, MenuConfig menuConfig, SimpleMenu menu, SimpleMenuManager manager) {
         super(player, rawData, menuConfig, menu, manager);
     }
 

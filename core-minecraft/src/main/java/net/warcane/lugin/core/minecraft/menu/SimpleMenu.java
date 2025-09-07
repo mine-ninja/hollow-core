@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public abstract class SimpleMenu<T extends PlayerMenuContext> {
+public abstract class SimpleMenu {
 
     protected final Map<UUID, PlayerMenuContext> playerContexts = new HashMap<>();
     protected final MenuConfig defaultConfig = new MenuConfig();
@@ -50,14 +50,9 @@ public abstract class SimpleMenu<T extends PlayerMenuContext> {
         }
     }
 
-    protected abstract T createContext(@NotNull Player player,
-                                       @NotNull Map<String, Object> rawData,
-                                       @NotNull MenuConfig menuConfig,
-                                       @NotNull SimpleMenuManager manager);
-
     void openToPlayer(@NotNull SimpleMenuManager manager, @NotNull Player player, @NotNull Map<String, Object> initialData) {
         final var openHandler = new MenuConfig(defaultConfig);
-        final PlayerMenuContext ctx = createContext(player, initialData, openHandler, manager);
+        final PlayerMenuContext ctx = new PlayerMenuContext(player, initialData, openHandler,this, manager);
         if (!this.onPreOpen(ctx, openHandler)) return;
 
         ctx.initialize();
@@ -65,4 +60,5 @@ public abstract class SimpleMenu<T extends PlayerMenuContext> {
         ctx.open();
     }
 
+    protected abstract PlayerMenuContext createContext(@NotNull Player player, @NotNull Map rawData, @NotNull MenuConfig menuConfig, @NotNull SimpleMenuManager manager);
 }

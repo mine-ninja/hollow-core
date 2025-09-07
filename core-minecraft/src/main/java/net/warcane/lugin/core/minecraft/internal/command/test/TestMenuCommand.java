@@ -41,7 +41,7 @@ public class TestMenuCommand extends SimpleCommand {
         platform.getMenuManager().openToPlayer(ctx.getSenderAsPlayer(), TestMenu.class);
     }
 
-    public static class TestMenu extends SimpleMenu<PlayerMenuContext> {
+    public static class TestMenu extends SimpleMenu {
 
         private static final ThreadLocalRandom RANDOM = ThreadLocalRandom.current();
         private static final List<Material> TEST_MATERIALS = List.of(

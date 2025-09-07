@@ -112,7 +112,7 @@ public class SimpleMenuManager implements Listener {
 
     @EventHandler
     public void onTick(AsyncServerTickEvent event) {
-        for (SimpleMenu<?> menu : menus.values()) {
+        for (SimpleMenu menu : menus.values()) {
             for (MenuContext context : menu.playerContexts.values()) {
                 if (!context.getMenuConfig().isTickUpdateEnabled()) continue;
 
