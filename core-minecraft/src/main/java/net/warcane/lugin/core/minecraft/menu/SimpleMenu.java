@@ -59,6 +59,4 @@ public abstract class SimpleMenu {
         playerContexts.put(player.getUniqueId(), ctx);
         ctx.open();
     }
-
-    protected abstract PlayerMenuContext createContext(@NotNull Player player, @NotNull Map rawData, @NotNull MenuConfig menuConfig, @NotNull SimpleMenuManager manager);
 }
