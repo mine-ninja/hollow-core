@@ -86,10 +86,5 @@ public class TestMenuCommand extends SimpleCommand {
             final var eventName = event.getEventName();
             log.error("Erro no menu {} durante o evento {}", this.getClass().getSimpleName(), eventName, error);
         }
-
-        @Override
-        protected PlayerMenuContext createContext(@NotNull Player player, @NotNull Map rawData, @NotNull MenuConfig menuConfig, @NotNull SimpleMenuManager manager) {
-            return new PlayerMenuContext(player, rawData, menuConfig, this, manager);
-        }
     }
 }
