@@ -55,8 +55,9 @@ public class SimpleMenuManager implements Listener {
     }
 
 
+
     @EventHandler
-    public void handlePlayerClick(InventoryDragEvent event) {
+    public void handlePlayerClick(InventoryDragEvent event) { // Matheus: Cancelar o drag
         final var inventory = event.getInventory();
 
         final var context = getContextFromInventory(inventory);

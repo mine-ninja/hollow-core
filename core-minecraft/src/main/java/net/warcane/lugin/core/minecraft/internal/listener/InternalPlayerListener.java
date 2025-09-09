@@ -53,10 +53,7 @@ public final class InternalPlayerListener implements Listener {
     public void handlePreLogin(@NotNull AsyncPlayerPreLoginEvent event) {
         try {
             final var uniqueId = event.getUniqueId();
-            if (Property.get("ALLOWED_GROUPS") == null) {
-                log.info("Server has no group restrictions, allowing all players to join.");
-                return;
-            }
+
 
             log.info("Player with UUID {} is attempting to join the server.", uniqueId);
             final var account = platform.getPlayerAccountService().loadPlayerAccount(uniqueId, new PlayerAccountService.AccountLoadOptions(null, false)).join();
@@ -67,6 +64,19 @@ public final class InternalPlayerListener implements Listener {
             }
 
             final var subscriptions = account.subscriptions();
+            final var highestGroup = account.getHighestSubscription(platform.getSubscriptionCategoryType()).group();
+            if (this.isServerFull() && highestGroup == PlayerGroup.DEFAULT) {
+                // only vip can join fullserver
+                log.info("Player with UUID {} is trying to join a full server and has no VIP group.", uniqueId);
+                event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, "§cO servidor está cheio no momento. Apenas jogadores VIP podem entrar em servidores cheios. Considere adquirir um VIP em nosso site!");
+                return;
+            }
+
+            if (Property.get("ALLOWED_GROUPS") == null) {
+                log.info("Server has no group restrictions, allowing all players to join.");
+                return;
+            }
+
             final boolean isAbleToJoin = subscriptions.stream().anyMatch(sub -> platform.isGroupAllowedToJoin(sub.group()));
             if (!isAbleToJoin) {
                 event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text(platform.getDisallowJoinMessage()));
@@ -224,7 +234,8 @@ public final class InternalPlayerListener implements Listener {
         final var currentServerId = platform.getId();
 
         final var wallet = platform.getWalletService().getCachedWalletOrThrow(player.getUniqueId());
-        platform.getWalletService().unloadWallet(wallet, new WalletService.UnloadWalletOptions(true))
+        platform.getWalletService()
+            .unloadWallet(wallet, new WalletService.UnloadWalletOptions(true))
             .whenComplete((unloadedWallet, walletError) -> {
                 if (walletError != null) {
                     log.error("Failed to unload wallet for {}: {}", player.getName(), walletError.getMessage(), walletError);
@@ -303,5 +314,24 @@ public final class InternalPlayerListener implements Listener {
                 player.kickPlayer(reason);
             }
         });
+    }
+
+    public boolean isServerFull() {
+        final int maxSlots = this.getMaxServerSlots();
+        if (maxSlots <= 0) return false;
+
+        final int onlinePlayers = Bukkit.getOnlinePlayers().size();
+        return onlinePlayers >= maxSlots - 1;
+    }
+
+    private int getMaxServerSlots() {
+        final var fromProperty = Property.get("MAX_PLAYERS");
+        if (fromProperty == null) return -1;
+
+        try {
+            return Integer.parseInt(fromProperty);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 }

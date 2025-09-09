@@ -16,7 +16,6 @@ import net.warcane.lugin.core.minecraft.internal.command.staff.StaffMessageComma
 import net.warcane.lugin.core.minecraft.internal.command.staff.VanishCommand;
 import net.warcane.lugin.core.minecraft.internal.command.test.TestMenuCommand;
 import net.warcane.lugin.core.minecraft.internal.command.test.TestTimeCommand;
-import net.warcane.lugin.core.minecraft.internal.command.whitelist.WhiteListCommand;
 import net.warcane.lugin.core.util.property.Property;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandMap;
@@ -55,7 +54,6 @@ public class InternalCommandManager {
         commandMap.register("lugin", new TestTimeCommand());
         commandMap.register("lugin", new VanishCommand(platform));
         commandMap.register("lugin", new GoCommand(platform));
-        commandMap.register("lugin", new WhiteListCommand(platform));
     }
 
     public void registerCurrencyCommand(@NotNull Currency currency) {
