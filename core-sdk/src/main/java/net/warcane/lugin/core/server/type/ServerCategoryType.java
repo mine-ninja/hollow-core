@@ -18,7 +18,7 @@ public enum ServerCategoryType {
     LOBBY("Lobby"),
     BEDWARS("BedWars"),
     SKYWARS("SkyWars"),
-    MINA("Mina", List.of(ServerSubCategoryType.MINA_1, ServerSubCategoryType.MINA_2, ServerSubCategoryType.MINA_3)),
+    MINA("Mina", List.of(ServerSubCategoryType.MINA_1, ServerSubCategoryType.MINA_2, ServerSubCategoryType.MINA_3, ServerSubCategoryType.MINA_4)),
     FACTIONS("Factions");
     
     private final String displayName;

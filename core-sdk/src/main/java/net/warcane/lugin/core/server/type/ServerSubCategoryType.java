@@ -13,5 +13,6 @@ public enum ServerSubCategoryType {
     
     MINA_1,
     MINA_2,
-    MINA_3;
+    MINA_3,
+    MINA_4;
 }
