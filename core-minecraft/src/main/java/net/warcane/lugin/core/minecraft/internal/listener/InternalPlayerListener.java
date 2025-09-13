@@ -222,7 +222,7 @@ public final class InternalPlayerListener implements Listener {
             }
         });
 
-        platform.getPlayerStatisticsService().loadPlayerAccount(playerId).whenComplete((playerStatistics, statisticsError) -> {
+        /*platform.getPlayerStatisticsService().loadPlayerAccount(playerId).whenComplete((playerStatistics, statisticsError) -> {
             if (statisticsError != null) {
                 log.error("Failed to load player statistics for {}: {}", player.getName(), statisticsError.getMessage(), statisticsError);
                 this.syncKick(player);
@@ -230,7 +230,7 @@ public final class InternalPlayerListener implements Listener {
             }
 
             log.info("Player statistics loaded for {}: {}", player.getName(), playerStatistics);
-        });
+        });*/
 
         if (VersionChecker.isLegacyVersion()) {
             Bukkit.getScheduler().runTaskLaterAsynchronously(BukkitPlatform.getInstance().getPlugin(), () -> {
@@ -282,7 +282,7 @@ public final class InternalPlayerListener implements Listener {
 
         final var unloadOptions = new AccountUnloadOptions(false, true);
 
-        platform.getPlayerStatisticsService()
+        /*platform.getPlayerStatisticsService()
           .unloadPlayerAccount(player.getUniqueId())
           .whenComplete((unloaded, error) -> {
               if (error != null) {
@@ -292,7 +292,7 @@ public final class InternalPlayerListener implements Listener {
               } else {
                   log.info("Player statistics unloaded for {}: {}", player.getName(), unloaded);
               }
-          });
+          });*/
 
         platform.getPlayerAccountService()
           .unloadPlayerAccount(player.getUniqueId(), unloadOptions)
