@@ -60,12 +60,13 @@ public class RedisConnector {
             poolConfig.setTestOnBorrow(true);
             poolConfig.setTestOnReturn(true);
 
-            jedisPool = new JedisPool(poolConfig, new HostAndPort(host, port), DefaultJedisClientConfig.builder()
+            /*jedisPool = new JedisPool(poolConfig, new HostAndPort(host, port), DefaultJedisClientConfig.builder()
                 .socketTimeoutMillis(2000)
                 .connectionTimeoutMillis(2000)
                 .blockingSocketTimeoutMillis(2000)
                 .password(password)
-                .build());
+                .build());*/
+            jedisPool = new JedisPool(poolConfig, host, port, 2000, password);
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("Invalid Redis URI: " + redisUri, e);
         }
