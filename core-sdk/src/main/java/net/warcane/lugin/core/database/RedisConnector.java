@@ -3,9 +3,7 @@ package net.warcane.lugin.core.database;
 import lombok.Data;
 import net.warcane.lugin.core.util.property.Property;
 import org.jetbrains.annotations.NotNull;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -62,7 +60,12 @@ public class RedisConnector {
             poolConfig.setTestOnBorrow(true);
             poolConfig.setTestOnReturn(true);
 
-            jedisPool = new JedisPool(poolConfig, host, port, 2000, password);
+            jedisPool = new JedisPool(poolConfig, new HostAndPort(host, port), DefaultJedisClientConfig.builder()
+                .socketTimeoutMillis(2000)
+                .connectionTimeoutMillis(2000)
+                .blockingSocketTimeoutMillis(2000)
+                .password(password)
+                .build());
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("Invalid Redis URI: " + redisUri, e);
         }
