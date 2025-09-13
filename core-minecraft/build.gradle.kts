@@ -64,7 +64,7 @@ tasks.withType(xyz.jpenilla.runtask.task.AbstractRun::class) {
 }
 
 tasks.shadowJar {
-  archiveBaseName.set("core-minigames")
+  archiveBaseName.set("core-minecraft")
   mergeServiceFiles()
   minimize()
 }

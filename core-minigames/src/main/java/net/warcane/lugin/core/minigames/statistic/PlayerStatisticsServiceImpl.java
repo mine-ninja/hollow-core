@@ -9,7 +9,6 @@ import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import org.bson.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import redis.clients.jedis.Jedis;
 import redis.clients.jedis.params.ScanParams;
 import redis.clients.jedis.resps.ScanResult;
 
@@ -27,7 +26,7 @@ public class PlayerStatisticsServiceImpl implements PlayerStatisticsService {
 
     private static PlayerStatisticsService instance = null;
 
-    private final Jedis jedisPool;
+    private final RedisConnector redisConnector;
     private final MongoCollection<Document> collection;
 
     private final Map<UUID, PlayerStatistics> localCache = new ConcurrentHashMap<>();
@@ -36,7 +35,7 @@ public class PlayerStatisticsServiceImpl implements PlayerStatisticsService {
     public PlayerStatisticsServiceImpl(@NotNull ExecutorService executorService) {
         this.executorService = executorService;
 
-        this.jedisPool = RedisConnector.getInstance().getJedisPool().getResource();
+        this.redisConnector = RedisConnector.getInstance();
         this.collection = MongoDbConnector.getInstance().getCollection("stats", Document.class);
 
         collection.createIndex(Indexes.hashed("key"));
@@ -119,17 +118,19 @@ public class PlayerStatisticsServiceImpl implements PlayerStatisticsService {
             return CompletableFuture.failedFuture(new IllegalStateException("Failed to unload player statistics: " + playerId));
 
         return supply(() -> {
-            String cursor = ScanParams.SCAN_POINTER_START;
-            ScanParams scanParams = new ScanParams().match(PlayerStatistics.REDIS_PREFIX + playerId + ":*").count(100);
+            redisConnector.useJedis(jedisPool -> {
+                String cursor = ScanParams.SCAN_POINTER_START;
+                ScanParams scanParams = new ScanParams().match(PlayerStatistics.REDIS_PREFIX + playerId + ":*").count(100);
 
-            do {
-                ScanResult<String> scanResult = jedisPool.scan(cursor, scanParams);
-                cursor = scanResult.getCursor();
+                do {
+                    ScanResult<String> scanResult = jedisPool.scan(cursor, scanParams);
+                    cursor = scanResult.getCursor();
 
-                if (!scanResult.getResult().isEmpty()) {
-                    jedisPool.del(scanResult.getResult().toArray(new String[0]));
-                }
-            } while (!cursor.equals(ScanParams.SCAN_POINTER_START));
+                    if (!scanResult.getResult().isEmpty()) {
+                        jedisPool.del(scanResult.getResult().toArray(new String[0]));
+                    }
+                } while (!cursor.equals(ScanParams.SCAN_POINTER_START));
+            });
 
             return removedFromLocalCache;
         });
