@@ -7,5 +7,6 @@ rootProject.name = "lugin-core"
 include(
   "core-sdk",
   "core-proxy",
-  "core-minecraft"
+  "core-minecraft",
+  "core-minigames"
 )

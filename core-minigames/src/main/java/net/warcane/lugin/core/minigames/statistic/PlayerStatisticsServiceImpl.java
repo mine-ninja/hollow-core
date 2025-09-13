@@ -1,10 +1,11 @@
-package net.warcane.lugin.core.player.statistic;
+package net.warcane.lugin.core.minigames.statistic;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Indexes;
 import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.database.MongoDbConnector;
 import net.warcane.lugin.core.database.RedisConnector;
+import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import org.bson.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,8 @@ import java.util.function.Supplier;
 @Slf4j
 public class PlayerStatisticsServiceImpl implements PlayerStatisticsService {
 
+    private static PlayerStatisticsService instance = null;
+
     private final Jedis jedisPool;
     private final MongoCollection<Document> collection;
 
@@ -37,6 +40,13 @@ public class PlayerStatisticsServiceImpl implements PlayerStatisticsService {
         this.collection = MongoDbConnector.getInstance().getCollection("stats", Document.class);
 
         collection.createIndex(Indexes.hashed("key"));
+    }
+
+    public static PlayerStatisticsService getInstance() {
+        if (instance == null)
+            instance = new PlayerStatisticsServiceImpl(BukkitPlatform.getInstance().getExecutorService());
+
+        return instance;
     }
 
     @Override

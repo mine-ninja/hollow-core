@@ -1,4 +1,4 @@
-package net.warcane.lugin.core.minecraft.util.mode.bedwars;
+package net.warcane.lugin.core.minigames.util.bedwars;
 
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;

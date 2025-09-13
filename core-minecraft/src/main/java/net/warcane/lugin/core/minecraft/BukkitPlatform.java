@@ -29,8 +29,6 @@ import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerConnec
 import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerUnregisterPacket;
 import net.warcane.lugin.core.player.state.PlayerNetworkStateManager;
-import net.warcane.lugin.core.player.statistic.PlayerStatisticsService;
-import net.warcane.lugin.core.player.statistic.PlayerStatisticsServiceImpl;
 import net.warcane.lugin.core.player.subscription.SubscriptionCategoryType;
 import net.warcane.lugin.core.server.GameServer;
 import net.warcane.lugin.core.server.ServerPlayers;
@@ -111,7 +109,6 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     private final ServerSubCategoryType serverSubCategoryType;
     private final InternalCommandManager internalCommandManager;
     private final PermissionInjector permissionInjector;
-    private final PlayerStatisticsService playerStatisticsService;
     private final CurrencyManager currencyManager;
     private final VanishManager vanishManager;
     private final SimpleMenuManager menuManager;
@@ -132,7 +129,6 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         this.permissionInjector = PermissionInjector.fromCurrentPlatform(this);
         this.currencyManager = new CurrencyManager(this);
         this.vanishManager = new VanishManager(this);
-        this.playerStatisticsService = new PlayerStatisticsServiceImpl(getExecutorService());
         this.menuManager = new SimpleMenuManager(this);
 
         this.whitelistService = new WhitelistService(this);
@@ -251,11 +247,6 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     @NotNull
     public PermissionInjector getPermissionInjector() {
         return permissionInjector;
-    }
-
-    @NotNull
-    public PlayerStatisticsService getPlayerStatisticsService() {
-        return playerStatisticsService;
     }
     
     public void updateServerInfo() {

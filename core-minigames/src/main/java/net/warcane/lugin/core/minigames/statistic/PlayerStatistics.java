@@ -1,4 +1,4 @@
-package net.warcane.lugin.core.player.statistic;
+package net.warcane.lugin.core.minigames.statistic;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;

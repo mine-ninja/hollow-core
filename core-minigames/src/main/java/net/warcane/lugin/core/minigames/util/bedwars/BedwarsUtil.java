@@ -1,7 +1,7 @@
-package net.warcane.lugin.core.minecraft.util.mode.bedwars;
+package net.warcane.lugin.core.minigames.util.bedwars;
 
-import net.warcane.lugin.core.player.statistic.PlayerStatistics;
-import net.warcane.lugin.core.minecraft.util.mode.StatsType;
+import net.warcane.lugin.core.minigames.statistic.PlayerStatistics;
+import net.warcane.lugin.core.minigames.util.StatsType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.TimeUnit;

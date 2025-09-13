@@ -1,4 +1,4 @@
-package net.warcane.lugin.core.minecraft.util.mode;
+package net.warcane.lugin.core.minigames.util;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
