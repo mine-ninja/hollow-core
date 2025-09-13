@@ -22,7 +22,7 @@ public class PlayerStatistics {
 
     public static final String REDIS_PREFIX = "playerstat:";
 
-    private static final Jedis jedisPool = RedisConnector.getInstance().getJedisPool().getResource();
+    private static final Jedis jedisPool = RedisConnector.getInstance().getJedisPool().getResource(); // TODO: Ta errado mano, isso aqui ta crashando
     private static final MongoCollection<Document> collection = MongoDbConnector.getInstance().getCollection("stats", Document.class);
 
     @Getter
