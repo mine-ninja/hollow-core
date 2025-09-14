@@ -64,7 +64,7 @@ public final class InternalPlayerListener implements Listener {
             log.info("Player with UUID {} is attempting to join the server.", uniqueId);
 
             // Isso aqui precisa hitar o redis primeiro... por algum motivo esta hitando o mongo wtf
-            final var account = platform.getPlayerAccountService().loadPlayerAccount(uniqueId, new PlayerAccountService.AccountLoadOptions(null, false)).join();
+            final var account = platform.getPlayerAccountService().getPlayerAccount(uniqueId).join();
             if (account == null) {
                 log.error("Failed to load player account for UUID {} during pre-login.", uniqueId);
                 event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text(platform.getDisallowJoinMessage()));
