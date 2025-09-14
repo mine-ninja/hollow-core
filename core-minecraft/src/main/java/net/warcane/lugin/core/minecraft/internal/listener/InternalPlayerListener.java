@@ -1,7 +1,5 @@
 package net.warcane.lugin.core.minecraft.internal.listener;
 
-import com.destroystokyo.paper.profile.PlayerProfile;
-import com.destroystokyo.paper.profile.ProfileProperty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
@@ -40,8 +38,6 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Optional;
-
 import static net.warcane.lugin.core.minecraft.task.Tasks.runAsync;
 import static net.warcane.lugin.core.minecraft.task.Tasks.runAsyncLater;
 import static net.warcane.lugin.core.player.account.PlayerAccount.createDefaultAccount;
@@ -59,10 +55,15 @@ public final class InternalPlayerListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void handlePreLogin(@NotNull AsyncPlayerPreLoginEvent event) {
         try {
+            // Matheus: Por enquanto da pra fazer assim... (Precisa de uma logica melhor depois)
+            if (platform.isGroupAllowedToJoin(PlayerGroup.DEFAULT) && !this.isServerFull()) {
+                return;
+            }
+
             final var uniqueId = event.getUniqueId();
-
-
             log.info("Player with UUID {} is attempting to join the server.", uniqueId);
+
+            // Isso aqui precisa hitar o redis primeiro... por algum motivo esta hitando o mongo wtf
             final var account = platform.getPlayerAccountService().loadPlayerAccount(uniqueId, new PlayerAccountService.AccountLoadOptions(null, false)).join();
             if (account == null) {
                 log.error("Failed to load player account for UUID {} during pre-login.", uniqueId);
@@ -79,10 +80,6 @@ public final class InternalPlayerListener implements Listener {
                 return;
             }
 
-            if (Property.get("ALLOWED_GROUPS") == null) {
-                log.info("Server has no group restrictions, allowing all players to join.");
-                return;
-            }
 
             final boolean isAbleToJoin = subscriptions.stream().anyMatch(sub -> platform.isGroupAllowedToJoin(sub.group()));
             if (!isAbleToJoin) {
