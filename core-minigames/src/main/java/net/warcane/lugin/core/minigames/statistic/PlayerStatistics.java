@@ -22,7 +22,7 @@ public class PlayerStatistics {
 
     public static final String REDIS_PREFIX = "playerstat:";
 
-    private static final Jedis jedisPool = RedisConnector.getInstance().getJedisPool().getResource(); // TODO: Ta errado mano, isso aqui ta crashando
+    private static final RedisConnector redisConnector = RedisConnector.getInstance();
     private static final MongoCollection<Document> collection = MongoDbConnector.getInstance().getCollection("stats", Document.class);
 
     @Getter
@@ -71,13 +71,14 @@ public class PlayerStatistics {
             cache.computeIfAbsent(key, k -> new HashMap<>()).put(day, value);
 
             String redisKey = REDIS_PREFIX + uuid + ":" + key;
-            jedisPool.hset(redisKey, String.valueOf(day), String.valueOf(value));
+
+            redisConnector.useJedis(jedis -> jedis.hset(redisKey, String.valueOf(day), String.valueOf(value)));
 
             Document dayValueDoc = new Document("day", day).append("value", value);
 
             Bson filter = Filters.and(
-                    Filters.eq("key", uuid),
-                    Filters.eq(key + ".day", day)
+                Filters.eq("key", uuid),
+                Filters.elemMatch(key, Filters.eq("day", day))
             );
 
             Bson update = Updates.set(key + ".$", dayValueDoc);

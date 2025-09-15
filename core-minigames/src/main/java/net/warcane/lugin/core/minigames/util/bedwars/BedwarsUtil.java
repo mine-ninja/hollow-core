@@ -13,6 +13,15 @@ public class BedwarsUtil {
     private static int getCurrentDay() {
         return (int) (System.currentTimeMillis() / MILLISECONDS_PER_DAY);
     }
+
+    public static void addCoins(@NotNull PlayerStatistics playerStatistics, int value) {
+        playerStatistics.addValue(getCurrentDay(), "bedwars_coins", value);
+    }
+
+    public static int getCoins(@NotNull PlayerStatistics playerStatistics) {
+        return playerStatistics.getTotalValue("bedwars_coins");
+    }
+
     public static void setStats(@NotNull PlayerStatistics playerStatistics, @NotNull BedwarsMode bedwarsMode, @NotNull StatsType statsType, int value) {
         if (bedwarsMode == BedwarsMode.ALL)
             throw new IllegalArgumentException("Cannot set stats for the ALL mode directly. Set them for individual modes.");

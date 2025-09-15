@@ -37,8 +37,6 @@ public class PlayerStatisticsServiceImpl implements PlayerStatisticsService {
 
         this.redisConnector = RedisConnector.getInstance();
         this.collection = MongoDbConnector.getInstance().getCollection("stats", Document.class);
-
-        collection.createIndex(Indexes.hashed("key"));
     }
 
     public static PlayerStatisticsService getInstance() {
