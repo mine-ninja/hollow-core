@@ -63,7 +63,6 @@ public final class InternalPlayerListener implements Listener {
             final var uniqueId = event.getUniqueId();
             log.info("Player with UUID {} is attempting to join the server.", uniqueId);
 
-            // Isso aqui precisa hitar o redis primeiro... por algum motivo esta hitando o mongo wtf
             final var account = platform.getPlayerAccountService().getPlayerAccount(uniqueId).join();
             if (account == null) {
                 log.error("Failed to load player account for UUID {} during pre-login.", uniqueId);
@@ -74,7 +73,6 @@ public final class InternalPlayerListener implements Listener {
             final var subscriptions = account.subscriptions();
             final var highestGroup = account.getHighestSubscription(platform.getSubscriptionCategoryType()).group();
             if (this.isServerFull() && highestGroup == PlayerGroup.DEFAULT) {
-                // only vip can join fullserver
                 log.info("Player with UUID {} is trying to join a full server and has no VIP group.", uniqueId);
                 event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, "§cO servidor está cheio no momento. Apenas jogadores VIP podem entrar em servidores cheios. Considere adquirir um VIP em nosso site!");
                 return;
