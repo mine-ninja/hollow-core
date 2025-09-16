@@ -54,13 +54,29 @@ public final class InternalPlayerListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void handlePreLogin(@NotNull AsyncPlayerPreLoginEvent event) {
+        final var uniqueId = event.getUniqueId();
+
         try {
+            // carrega a carteira do cara sempre direto no login.
+            if (platform.getServerCategoryType() != ServerCategoryType.LOGIN) {
+                final var wallet = platform.getWalletService()
+                    .loadPlayerWallet(event.getUniqueId(),
+                        withDefaultWallet(Wallet.createDefaultWallet(event.getUniqueId(), event.getName()), true)
+                    ).join();
+
+                if (wallet == null) {
+                    log.error("Failed to load wallet for UUID {} during pre-login.", uniqueId);
+                    event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text(FAILED_TO_LOAD_ERR_MSG));
+                } else {
+                    log.info("Wallet loaded for player UUID {}: {}", uniqueId, wallet);
+                }
+            }
+
             // Matheus: Por enquanto da pra fazer assim... (Precisa de uma logica melhor depois)
             if (platform.isGroupAllowedToJoin(PlayerGroup.DEFAULT) && !this.isServerFull()) {
                 return;
             }
 
-            final var uniqueId = event.getUniqueId();
             log.info("Player with UUID {} is attempting to join the server.", uniqueId);
 
             final var account = platform.getPlayerAccountService().getPlayerAccount(uniqueId).join();
@@ -98,21 +114,6 @@ public final class InternalPlayerListener implements Listener {
                 event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text("§cO Servidor está lotado no momento. Tente novamente mais tarde."));
                 return;
             }
-
-            if (platform.getServerCategoryType() != ServerCategoryType.LOGIN) {
-                final var wallet = platform.getWalletService()
-                    .loadPlayerWallet(event.getUniqueId(),
-                        withDefaultWallet(Wallet.createDefaultWallet(event.getUniqueId(), event.getName()), true)
-                    ).join();
-
-                if (wallet == null) {
-                    log.error("Failed to load wallet for UUID {} during pre-login.", uniqueId);
-                    event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text(FAILED_TO_LOAD_ERR_MSG));
-                } else {
-                    log.info("Wallet loaded for player UUID {}: {}", uniqueId, wallet);
-                }
-            }
-
         } catch (Exception e) {
             e.printStackTrace();
             event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text(FAILED_TO_LOAD_ERR_MSG));
