@@ -68,8 +68,7 @@ public class SimpleMenuManager implements Listener {
             event.setCancelled(true);
         }
     }
-
-
+    
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerClickMenu(InventoryClickEvent event) {
         final var inventory = event.getInventory();
