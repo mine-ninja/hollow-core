@@ -1,4 +1,4 @@
-package net.warcane.lugin.core.minecraft.internal.command.currency.gamemode;
+package net.warcane.lugin.core.minecraft.internal.command.gamemode;
 
 import com.google.common.collect.ImmutableMap;
 import net.warcane.lugin.core.minecraft.command.SimpleCommand;

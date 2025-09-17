@@ -5,7 +5,7 @@ import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.currency.Currency;
 import net.warcane.lugin.core.minecraft.internal.command.currency.CurrencyBasedCommand;
 import net.warcane.lugin.core.minecraft.internal.command.currency.EconomyCommand;
-import net.warcane.lugin.core.minecraft.internal.command.currency.gamemode.GameModeCommand;
+import net.warcane.lugin.core.minecraft.internal.command.gamemode.GameModeCommand;
 import net.warcane.lugin.core.minecraft.internal.command.lobby.LobbyCommand;
 import net.warcane.lugin.core.minecraft.internal.command.permission.GroupPermissionCommand;
 import net.warcane.lugin.core.minecraft.internal.command.permission.PlayerGroupCommand;
