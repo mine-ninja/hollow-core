@@ -8,6 +8,8 @@ import net.warcane.lugin.core.AbstractPlatform;
 import net.warcane.lugin.core.MinecraftServerPlatform;
 import net.warcane.lugin.core.Platform;
 import net.warcane.lugin.core.group.PlayerGroup;
+import net.warcane.lugin.core.minecraft.centralcart.CentralCart;
+import net.warcane.lugin.core.minecraft.centralcart.listener.MapOrderListener;
 import net.warcane.lugin.core.minecraft.currency.CurrencyManager;
 import net.warcane.lugin.core.minecraft.event.tick.AsyncServerTickEvent;
 import net.warcane.lugin.core.minecraft.internal.command.InternalCommandManager;
@@ -19,6 +21,7 @@ import net.warcane.lugin.core.minecraft.nametag.LegacyNameTagResolver;
 import net.warcane.lugin.core.minecraft.nametag.ModernNameTagResolver;
 import net.warcane.lugin.core.minecraft.nametag.NameTagResolver;
 import net.warcane.lugin.core.minecraft.permission.PermissionInjector;
+import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.vanish.VanishManager;
 import net.warcane.lugin.core.minecraft.whitelist.WhitelistService;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
@@ -40,6 +43,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
+import org.bukkit.plugin.java.JavaPlugin;
+
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,7 +68,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
      * @param plugin       o plugin Bukkit associado a esta plataforma.
      * @return a instância de BukkitPlatform.
      */
-    public static BukkitPlatform provide(@NotNull Plugin plugin) {
+    public static BukkitPlatform provide(@NotNull JavaPlugin plugin) {
         final var rawType = Property.getOrThrow("SERVER_TYPE");
         final var categoryType = ServerCategoryType.fromName(rawType);
         if (!isInitialized()) {
@@ -114,12 +119,12 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     private final SimpleMenuManager menuManager;
     private final WhitelistService whitelistService;
 
-    @Getter
-    private NameTagResolver nameTagResolver;
+    @Getter private NameTagResolver nameTagResolver;
+    @Getter private CentralCart centralCart;
 
     private boolean online;
 
-    private BukkitPlatform(Plugin plugin, @NotNull ServerCategoryType serverCategoryType) {
+    private BukkitPlatform(JavaPlugin plugin, @NotNull ServerCategoryType serverCategoryType) {
         super(HostAddress.localAddress((short) Bukkit.getPort()));
 
         this.plugin = plugin;
@@ -132,7 +137,10 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         this.menuManager = new SimpleMenuManager(this);
 
         this.whitelistService = new WhitelistService(this);
-
+        
+        this.centralCart = new CentralCart();
+        this.centralCart.initSocket();
+        
         final var usesModernTags = Property.getBoolean("USE_MODERN_TAGS", false);
         if (usesModernTags) {
             this.nameTagResolver = new ModernNameTagResolver(this);
@@ -172,7 +180,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         this.online = true;
 
         gameServerService.update(this.getGameServer().withOnlineStatus(true));
-
+        
         log.info("Bukkit Platform is now online with ID: {}, Category: {} and SubCategory: {}", this.getId(), this.getServerCategoryType(), this.getServerSubCategoryType());
         Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::updateServerInfo, 20, 20 * 10);
         Bukkit.getConsoleSender().sendMessage("§aCarregando nomes de jogadores para o redis (para acesso rápido)");
@@ -185,6 +193,10 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
         PlayerNetworkStateManager stateManager = PlayerNetworkStateManager.getInstance();
         stateManager.getOnlinePlayersInServer(this.getId()).forEach(stateManager::unregister);
+        
+        if (this.centralCart != null) {
+            this.centralCart.disableSocket();
+        }
     }
 
     public WhitelistService getWhitelistService() {

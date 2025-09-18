@@ -1,45 +1,61 @@
 plugins {
-  `java-library`
-  // shadow
-  id("com.gradleup.shadow") version ("9.0.0-rc1")
-  id("io.papermc.paperweight.userdev") version ("1.7.1")
-  id("xyz.jpenilla.run-paper") version "2.3.1"
+    `java-library`
+    // shadow
+    id("com.gradleup.shadow") version ("9.0.0-rc1")
+    id("io.papermc.paperweight.userdev") version ("1.7.1")
+    id("xyz.jpenilla.run-paper") version "2.3.1"
 }
 
 repositories {
-  mavenCentral()
-  maven { url = uri("https://jitpack.io") }
-  maven { url = uri("https://oss.sonatype.org/content/groups/public/") }
-  maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots") }
-  maven { url = uri("https://repo.dmulloy2.net/repository/public/") }
-  maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
-  maven { url = uri("https://repo.extendedclip.com/releases/") }
-  maven {
-    name = "papermc"
-    url = uri("https://repo.papermc.io/repository/maven-public/")
-  }
-
-  val repositoryUser = (project.findProperty("luginUser") ?: "lugin") as String
-  val repositoryPassword = (project.findProperty("luginPassword") ?: "lugin") as String
-
-  maven {
-    name = "reposiliteRepositoryReleases"
-    url = uri("http://node.luginbr.net:19133/private")
-    isAllowInsecureProtocol = true
-    credentials {
-      username = repositoryUser
-      password = repositoryPassword
+    mavenCentral()
+    maven { url = uri("https://jitpack.io") }
+    maven { url = uri("https://oss.sonatype.org/content/groups/public/") }
+    maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots") }
+    maven { url = uri("https://repo.dmulloy2.net/repository/public/") }
+    maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
+    maven { url = uri("https://repo.extendedclip.com/releases/") }
+    maven {
+        name = "papermc"
+        url = uri("https://repo.papermc.io/repository/maven-public/")
     }
-  }
+
+    val repositoryUser = (project.findProperty("luginUser") ?: "lugin") as String
+    val repositoryPassword = (project.findProperty("luginPassword") ?: "lugin") as String
+
+    maven {
+        name = "reposiliteRepositoryReleases"
+        url = uri("http://node.luginbr.net:19133/private")
+        isAllowInsecureProtocol = true
+        credentials {
+            username = repositoryUser
+            password = repositoryPassword
+        }
+    }
 }
 
 dependencies {
-  api(project(":core-sdk"))
-  api("fr.mrmicky:fastboard:2.1.5")
-  compileOnlyApi("com.github.retrooper:packetevents-spigot:2.9.1")
-  compileOnly("com.github.MilkBowl:VaultAPI:1.7")
-  compileOnly("me.clip:placeholderapi:2.11.6")
-  paperweight.paperDevBundle("1.21-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("1.21-R0.1-SNAPSHOT")
+    api(project(":core-sdk"))
+    api("fr.mrmicky:fastboard:2.1.5")
+
+    implementation("com.squareup.okhttp3:okhttp:5.1.0")
+    implementation("de.tr7zw:item-nbt-api:2.14.0")
+    implementation("io.socket:socket.io-client:2.1.1") {
+        exclude("org.json", "json")
+    }
+
+    compileOnlyApi("com.github.retrooper:packetevents-spigot:2.9.1")
+    compileOnly("com.github.MilkBowl:VaultAPI:1.7")
+    compileOnly("me.clip:placeholderapi:2.11.6")
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
 }
 
 tasks.runServer {
@@ -64,9 +80,12 @@ tasks.withType(xyz.jpenilla.runtask.task.AbstractRun::class) {
 }
 
 tasks.shadowJar {
-  archiveBaseName.set("core-minecraft")
-  mergeServiceFiles()
-  minimize()
+    relocate("okhttp3", "net.warcane.core.libs.okhttp3")
+    relocate("de.tr7zw", "net.warcane.core.libs.nbtapi")
+
+    archiveBaseName.set("core-minecraft")
+    mergeServiceFiles()
+    minimize()
 }
 
 tasks.build {

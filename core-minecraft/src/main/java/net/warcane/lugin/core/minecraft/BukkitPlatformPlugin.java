@@ -2,12 +2,16 @@ package net.warcane.lugin.core.minecraft;
 
 import com.google.common.collect.Lists;
 import net.kyori.adventure.text.Component;
+import net.warcane.lugin.core.minecraft.centralcart.CentralCart;
+import net.warcane.lugin.core.minecraft.centralcart.listener.MapOrderListener;
 import net.warcane.lugin.core.minecraft.command.SimpleCommand;
 import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
 import net.warcane.lugin.core.minecraft.compat.PAPICompat;
 import net.warcane.lugin.core.minecraft.compat.VaultCompat;
+import net.warcane.lugin.core.minecraft.menu.SimpleMenuManager;
 import net.warcane.lugin.core.minecraft.plugin.SimplePlugin;
+import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.whitelist.WhitelistService;
 import net.warcane.lugin.core.server.GameServer;
 import net.warcane.lugin.core.server.ServerPlayers;
@@ -58,6 +62,16 @@ public class BukkitPlatformPlugin extends SimplePlugin {
             });
 
             manager.registerEvents(new LimboListener(), this);
+        }
+        
+        CentralCart centralCart = bukkitPlatform.getCentralCart();
+        if (!centralCart.isTokenValid()) {
+            this.getLogger().severe("O token do Central Cart não foi definido. Verifique a variável de ambiente 'CENTRAL_CART_TOKEN'. Compras In-Game estarão desabilitadas.");
+        }
+        else {
+            Tasks.runAsync(centralCart::loadProducts);
+            manager.registerEvents(new MapOrderListener(this), this);
+            this.getLogger().info("Central Cart habilitado com sucesso.");
         }
     }
 
