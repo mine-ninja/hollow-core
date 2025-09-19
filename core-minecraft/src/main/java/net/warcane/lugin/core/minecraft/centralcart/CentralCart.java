@@ -149,14 +149,12 @@ public class CentralCart {
 		this.socket.on("EXECUTE_COMMAND", args -> {
 			assert args[0] != null;
 			
-			QueuedCommand[] queuedCommand = new QueuedCommand[]{ (new Gson()).fromJson(args[0].toString(), QueuedCommand.class) };
-			for (QueuedCommand command : queuedCommand) {
-				if (command.userId() == null) return;
-				
-				Player player = Bukkit.getPlayer(command.userId());
-				if (player != null || command.offlineExecute()) {
-					Tasks.runSync(() -> Bukkit.getServer().getPluginManager().callEvent(new OrderActivatedEvent(command.userId(), command.order())));
-				}
+			QueuedCommand queuedCommand = (new Gson()).fromJson(args[0].toString(), QueuedCommand.class);
+			if (queuedCommand.userId() == null) return;
+			
+			Player player = Bukkit.getPlayer(queuedCommand.userId());
+			if (player != null || queuedCommand.offlineExecute()) {
+				Tasks.runSync(() -> Bukkit.getServer().getPluginManager().callEvent(new OrderActivatedEvent(queuedCommand.userId(), queuedCommand.order())));
 			}
 		});
 		logger.info("Conectando com o provedor de entregas...");
