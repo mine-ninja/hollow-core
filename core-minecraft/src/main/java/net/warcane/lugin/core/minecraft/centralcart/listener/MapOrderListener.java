@@ -60,7 +60,7 @@ public class MapOrderListener implements Listener {
                     Component.newline(),
                     Component.textOfChildren(
                         Component.text("Compra foi processada com sucesso. ", NamedTextColor.GREEN),
-                        Component.text("(ID: %s)".formatted("AAAA"), NamedTextColor.GRAY)
+                        Component.text("(ID: %s)".formatted(order.internalId()), NamedTextColor.GRAY)
                     ).appendNewline(),
                     Component.text("Relogue no servidor para receber seus produtos.", NamedTextColor.GREEN).appendNewline(),
                     Component.newline()
