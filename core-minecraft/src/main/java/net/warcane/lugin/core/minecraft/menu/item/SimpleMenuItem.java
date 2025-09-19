@@ -33,7 +33,7 @@ public final class SimpleMenuItem {
      * @param itemStack O ItemStack que será renderizado para o jogador.
      */
     public SimpleMenuItem(@NotNull ItemStack itemStack, @NotNull Consumer<InventoryClickEvent> clickHandler) {
-        this .renderer = player -> itemStack;
+        this.renderer = player -> itemStack;
         this.clickHandler = clickHandler;
     }
     
