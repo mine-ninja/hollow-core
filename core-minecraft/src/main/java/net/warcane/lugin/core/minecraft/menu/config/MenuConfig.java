@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import net.kyori.adventure.text.Component;
+import net.warcane.lugin.core.minecraft.menu.MenuLayout;
 import net.warcane.lugin.core.minecraft.util.sound.PredefinedSound;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +32,8 @@ public class MenuConfig {
 
     @Builder.Default
     private long updateIntervalMillis = 1;
+    
+    private MenuLayout layout;
 
     @Builder.Default
     private PredefinedSound clickSound = null;
@@ -40,6 +43,9 @@ public class MenuConfig {
     public MenuConfig(@NotNull MenuConfig config) {
         this.title = config.title;
         this.rows = config.rows;
+        if (config.getLayout() != null) {
+            this.setLayout(config.getLayout());
+        }
         this.globalClickCancelled = config.globalClickCancelled;
         this.globalDragCancelled = config.globalDragCancelled;
         this.tickUpdateEnabled = config.tickUpdateEnabled;
@@ -51,12 +57,22 @@ public class MenuConfig {
     public void setOptions(@NotNull MenuConfig options) {
         setTitle(options.getTitle());
         setRows(options.getRows());
+        setLayout(options.getLayout());
         setGlobalClickCancelled(options.isGlobalClickCancelled());
         setGlobalDragCancelled(options.isGlobalDragCancelled());
         setTickUpdateEnabled(options.isTickUpdateEnabled());
         setUpdateIntervalMillis(options.getUpdateIntervalMillis());
         setClickSound(options.getClickSound());
         setCloseSound(options.getCloseSound());
+    }
+    
+    public void setLayout(String... lines) {
+        this.setLayout(MenuLayout.of(lines));
+    }
+    
+    public void setLayout(@NotNull MenuLayout layout) {
+        this.layout = layout;
+        setRows(layout.rows());
     }
 
     public void setUpdateIntervalMillis(long intervalMillis, TimeUnit unit) {
