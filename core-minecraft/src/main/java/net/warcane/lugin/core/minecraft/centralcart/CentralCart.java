@@ -55,7 +55,8 @@ public class CentralCart {
 	private final OkHttpClient client;
 	private Socket socket;
 	
-	@Getter private final Map<Integer, Product> productMap = Maps.newConcurrentMap();
+	@Getter
+    private final Map<Integer, Product> productMap = Maps.newConcurrentMap();
 	
 	public CentralCart() {
 		this.client = new OkHttpClient.Builder()
@@ -132,24 +133,6 @@ public class CentralCart {
 		this.productMap.clear();
 		jsonArray.forEach(jsonElement -> {
             Product product = gson.fromJson(jsonElement, Product.class);
-            /*JsonObject jsonObject = jsonElement.getAsJsonObject();
-			
-			Product.ProductBuilder builder = Product.builder();
-			
-			int id = jsonObject.get("id").getAsInt();
-			builder.id(id);
-			builder.enabled(jsonObject.get("enabled").getAsBoolean());
-			builder.price(jsonObject.get("price").getAsDouble());
-			builder.name(jsonObject.get("name").getAsString());
-			builder.slug(jsonObject.get("slug").getAsString());
-			
-			if (jsonObject.has("description") && !jsonObject.get("description").isJsonNull()) {
-				builder.description(jsonObject.get("description").getAsString().replaceAll("\\n", "<newline>"));
-			}
-			if (jsonObject.has("category_id") && !jsonObject.get("category_id").isJsonNull()) {
-				builder.categoryId(jsonObject.get("category_id").getAsInt());
-			}
-			builder.priceDisplay(jsonObject.get("price_display").getAsString());*/
 			this.productMap.put(product.id(), product);
 		});
         
@@ -183,6 +166,10 @@ public class CentralCart {
 	public void disableSocket() {
 		this.socket.disconnect();
 	}
+    
+    public Product getProduct(int id) {
+        return this.productMap.get(id);
+    }
     
     public List<Product> getProducts() {
         return Lists.newArrayList(this.productMap.values());

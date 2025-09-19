@@ -18,6 +18,7 @@ import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -102,28 +103,38 @@ public class PlayerMenuContext implements MenuContext {
     }
     
     public void setItem(char key, @NotNull SimpleMenuItem menuItem) {
-        if (menuConfig.getLayout() == null) throw new IllegalStateException("Menu layout is set, cannot use character keys.");
+        if (menuConfig.getLayout() == null) throw new IllegalStateException("Menu layout isn't set, cannot use character keys.");
         setItem(menuConfig.getLayout().get(key), menuItem);
     }
     
     public void setItem(char key, @NotNull Function<Player, ItemStack> itemRenderer, @NotNull Consumer<InventoryClickEvent> clickHandler) {
-        if (menuConfig.getLayout() == null) throw new IllegalStateException("Menu layout is set, cannot use character keys.");
+        if (menuConfig.getLayout() == null) throw new IllegalStateException("Menu layout isn't set, cannot use character keys.");
         setItem(menuConfig.getLayout().get(key), itemRenderer, clickHandler);
     }
     
     public void setItem(char key, @NotNull ItemStack itemStack, @NotNull Consumer<InventoryClickEvent> clickHandler) {
-        if (menuConfig.getLayout() == null) throw new IllegalStateException("Menu layout is set, cannot use character keys.");
+        if (menuConfig.getLayout() == null) throw new IllegalStateException("Menu layout isn't set, cannot use character keys.");
         setItem(menuConfig.getLayout().get(key), itemStack, clickHandler);
     }
     
     public void setItem(char key, @NotNull ItemStack itemStack) {
-        if (menuConfig.getLayout() == null) throw new IllegalStateException("Menu layout is set, cannot use character keys.");
+        if (menuConfig.getLayout() == null) throw new IllegalStateException("Menu layout isn't set, cannot use character keys.");
         setItem(menuConfig.getLayout().get(key), itemStack);
     }
     
     public void setItem(char key, @NotNull Function<Player, ItemStack> itemRenderer) {
-        if (menuConfig.getLayout() == null) throw new IllegalStateException("Menu layout is set, cannot use character keys.");
+        if (menuConfig.getLayout() == null) throw new IllegalStateException("Menu layout isn't set, cannot use character keys.");
         setItem(menuConfig.getLayout().get(key), itemRenderer);
+    }
+    
+    public void setItem(char key, @NotNull BiConsumer<Integer, SimpleMenuItem> itemSupplier) {
+        if (menuConfig.getLayout() == null) throw new IllegalStateException("Menu layout isn't set, cannot use character keys.");
+        int[] slots = menuConfig.getLayout().get(key);
+        for (int i = 0; i < slots.length; i++) {
+            SimpleMenuItem item = new SimpleMenuItem();
+            itemSupplier.accept(i, item);
+            setItem(slots[i], item);
+        }
     }
     
     public void setItem(int[] slots, @NotNull SimpleMenuItem menuItem) {

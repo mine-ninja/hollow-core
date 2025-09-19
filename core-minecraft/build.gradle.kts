@@ -38,10 +38,14 @@ dependencies {
     api(project(":core-sdk"))
     api("fr.mrmicky:fastboard:2.1.5")
 
+    implementation("net.kyori:adventure-platform-bukkit:4.4.1")
+    implementation("net.kyori:adventure-text-minimessage:4.24.0")
+
     implementation("com.squareup.okhttp3:okhttp:5.1.0")
     implementation("de.tr7zw:item-nbt-api:2.14.0")
     implementation("io.socket:socket.io-client:2.1.1") {
         exclude("org.json", "json")
+        exclude("com.squareup.okhttp3", "okhttp")
     }
 
     compileOnlyApi("com.github.retrooper:packetevents-spigot:2.9.1")
@@ -80,8 +84,8 @@ tasks.withType(xyz.jpenilla.runtask.task.AbstractRun::class) {
 }
 
 tasks.shadowJar {
-    relocate("okhttp3", "net.warcane.core.libs.okhttp3")
-    relocate("de.tr7zw", "net.warcane.core.libs.nbtapi")
+    relocate("okhttp3", "net.warcane.lugin.core.libs.okhttp3")
+    relocate("de.tr7zw", "net.warcane.lugin.core.libs.nbtapi")
 
     archiveBaseName.set("core-minecraft")
     mergeServiceFiles()

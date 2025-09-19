@@ -2,14 +2,11 @@ package net.warcane.lugin.core.minecraft;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.AbstractPlatform;
 import net.warcane.lugin.core.MinecraftServerPlatform;
 import net.warcane.lugin.core.Platform;
 import net.warcane.lugin.core.group.PlayerGroup;
 import net.warcane.lugin.core.minecraft.centralcart.CentralCart;
-import net.warcane.lugin.core.minecraft.centralcart.listener.MapOrderListener;
 import net.warcane.lugin.core.minecraft.currency.CurrencyManager;
 import net.warcane.lugin.core.minecraft.event.tick.AsyncServerTickEvent;
 import net.warcane.lugin.core.minecraft.internal.command.InternalCommandManager;
@@ -21,7 +18,6 @@ import net.warcane.lugin.core.minecraft.nametag.LegacyNameTagResolver;
 import net.warcane.lugin.core.minecraft.nametag.ModernNameTagResolver;
 import net.warcane.lugin.core.minecraft.nametag.NameTagResolver;
 import net.warcane.lugin.core.minecraft.permission.PermissionInjector;
-import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.vanish.VanishManager;
 import net.warcane.lugin.core.minecraft.whitelist.WhitelistService;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
@@ -45,9 +41,10 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.Executors;

@@ -2,8 +2,11 @@ package net.warcane.lugin.core.minecraft.centralcart.listener;
 
 import de.tr7zw.changeme.nbtapi.NBT;
 import de.tr7zw.changeme.nbtapi.iface.ReadableNBT;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
+import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.warcane.lugin.core.minecraft.BukkitPlatformPlugin;
 import net.warcane.lugin.core.minecraft.centralcart.OrderActivatedEvent;
 import net.warcane.lugin.core.minecraft.centralcart.models.Order;
@@ -13,11 +16,13 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 
@@ -47,14 +52,20 @@ public class MapOrderListener implements Listener {
             }
             
             player.getInventory().remove(itemStack);
-            player.sendMessage(Component.textOfChildren(
-                Component.newline(),
-                Component.text("SUCESSO!", NamedTextColor.GREEN).appendNewline(),
-                Component.text("A sua compra foi processada com sucesso. ", NamedTextColor.YELLOW)
-                    .append(Component.text("(Order: %s)".formatted(order.internalId()), NamedTextColor.GRAY)),
-                Component.text("Relogue no servidor para receber seus produtos.", NamedTextColor.YELLOW),
-                Component.newline()
-            ));
+            BukkitAudiences adventure = BukkitPlatformPlugin.getInstance().adventure();
+            adventure.player(player)
+                .sendMessage(Component.textOfChildren(
+                    Component.newline(),
+                    Component.text("SUCESSO!", NamedTextColor.GREEN, TextDecoration.BOLD).appendNewline(),
+                    Component.newline(),
+                    Component.textOfChildren(
+                        Component.text("Compra foi processada com sucesso. ", NamedTextColor.GREEN),
+                        Component.text("(ID: %s)".formatted("AAAA"), NamedTextColor.GRAY)
+                    ).appendNewline(),
+                    Component.text("Relogue no servidor para receber seus produtos.", NamedTextColor.GREEN).appendNewline(),
+                    Component.newline()
+                ));
+            adventure.player(player).playSound(Sound.sound(org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, Sound.Source.PLAYER, 0.5F, 1.0F), Sound.Emitter.self());
         });
     }
     
@@ -70,17 +81,16 @@ public class MapOrderListener implements Listener {
 			if (!read.hasTag("isBuyMap")) return;
 			
 			player.getInventory().remove(stack);
-			
-			String orderId = read.getString("orderId");
-            player.sendMessage(Component.textOfChildren(
-                Component.newline(),
-                Component.text("&cERROR!"),
-                Component.newline(),
-                Component.text("&cA compra com o ID &e%s &cfoi removida do seu inventário.\n".formatted(orderId)),
-                Component.text("&cVocê ainda pode realizar o pagamento caso tenha ele salvo."),
-                Component.text("Se precisar poderá gerar um novo código realizando a compra novamente."),
-                Component.newline()
-            ));
+            BukkitPlatformPlugin.getInstance().adventure().player(player)
+                .sendMessage(Component.textOfChildren(
+                    Component.newline(),
+                    Component.text("ERROR!", NamedTextColor.RED, TextDecoration.BOLD).appendNewline(),
+                    Component.newline(),
+                    Component.text("A compra foi removida do seu inventário.", NamedTextColor.RED).appendNewline(),
+                    Component.text("Você ainda pode realizar o pagamento caso tenha ele salvo.", NamedTextColor.RED).appendNewline(),
+                    Component.text("Você pode gerar um novo código para comprar novamente.", NamedTextColor.RED).appendNewline(),
+                    Component.newline()
+                ));
 			event.setCancelled(true);
 			return;
 		}
@@ -92,16 +102,16 @@ public class MapOrderListener implements Listener {
 		if (!read.hasTag("isBuyMap")) return;
 		
 		player.getInventory().remove(currentItem);
-		String orderId = read.getString("orderId");
-        player.sendMessage(Component.textOfChildren(
-            Component.newline(),
-            Component.text("ERROR!", NamedTextColor.RED),
-            Component.newline(),
-            Component.text("&cA compra com o ID &e%s &cfoi removida do seu inventário.\n".formatted(orderId)),
-            Component.text("&cVocê ainda pode realizar o pagamento caso tenha ele salvo."),
-            Component.text("Se precisar poderá gerar um novo código realizando a compra novamente."),
-            Component.newline()
-        ));
+        BukkitPlatformPlugin.getInstance().adventure().player(player)
+            .sendMessage(Component.textOfChildren(
+                Component.newline(),
+                Component.text("ERROR!", NamedTextColor.RED, TextDecoration.BOLD).appendNewline(),
+                Component.newline(),
+                Component.text("A compra foi removida do seu inventário.", NamedTextColor.RED).appendNewline(),
+                Component.text("Você ainda pode realizar o pagamento caso tenha ele salvo.", NamedTextColor.RED).appendNewline(),
+                Component.text("Você pode gerar um novo código para comprar novamente.", NamedTextColor.RED).appendNewline(),
+                Component.newline()
+            ));
 		event.setCancelled(true);
 	}
 	
@@ -118,16 +128,16 @@ public class MapOrderListener implements Listener {
 		if (!read.hasTag("isBuyMap")) return;
 		
 		player.getInventory().remove(itemStack);
-		String orderId = read.getString("orderId");
-        player.sendMessage(Component.textOfChildren(
-            Component.newline(),
-            Component.text("&cERROR!"),
-            Component.newline(),
-            Component.text("&cA compra com o ID &e%s &cfoi removida do seu inventário.\n".formatted(orderId)),
-            Component.text("&cVocê ainda pode realizar o pagamento caso tenha ele salvo."),
-            Component.text("Se precisar poderá gerar um novo código realizando a compra novamente."),
-            Component.newline()
-        ));
+        BukkitPlatformPlugin.getInstance().adventure().player(player)
+            .sendMessage(Component.textOfChildren(
+                Component.newline(),
+                Component.text("ERROR!", NamedTextColor.RED, TextDecoration.BOLD).appendNewline(),
+                Component.newline(),
+                Component.text("A compra foi removida do seu inventário.", NamedTextColor.RED).appendNewline(),
+                Component.text("Você ainda pode realizar o pagamento caso tenha ele salvo.", NamedTextColor.RED).appendNewline(),
+                Component.text("Você pode gerar um novo código para comprar novamente.", NamedTextColor.RED).appendNewline(),
+                Component.newline()
+            ));
 		event.setCancelled(true);
 	}
 	
@@ -145,20 +155,34 @@ public class MapOrderListener implements Listener {
 		if (!read.hasTag("isBuyMap")) return;
 		
 		item.remove();
-		String orderId = read.getString("orderId");
-        player.sendMessage(Component.textOfChildren(
-            Component.newline(),
-            Component.text("&cERROR!"),
-            Component.newline(),
-            Component.text("&cA compra com o ID &e%s &cfoi removida do seu inventário.\n".formatted(orderId)),
-            Component.text("&cVocê ainda pode realizar o pagamento caso tenha ele salvo."),
-            Component.text("Se precisar poderá gerar um novo código realizando a compra novamente."),
-            Component.newline()
-        ));
+        BukkitPlatformPlugin.getInstance().adventure().player(player)
+            .sendMessage(Component.textOfChildren(
+                Component.newline(),
+                Component.text("ERROR!", NamedTextColor.RED, TextDecoration.BOLD).appendNewline(),
+                Component.newline(),
+                Component.text("A compra foi removida do seu inventário.", NamedTextColor.RED).appendNewline(),
+                Component.text("Você ainda pode realizar o pagamento caso tenha ele salvo.", NamedTextColor.RED).appendNewline(),
+                Component.text("Você pode gerar um novo código para comprar novamente.", NamedTextColor.RED).appendNewline(),
+                Component.newline()
+            ));
 	}
 	
-	@EventHandler
+	@EventHandler(priority = EventPriority.HIGHEST)
 	void onPlayerQuit(PlayerQuitEvent event) {
+		Player player = event.getPlayer();
+		Arrays.stream(player.getInventory().getContents())
+			.filter(Objects::nonNull)
+			.filter(itemStack -> itemStack.getType() == Material.FILLED_MAP)
+			.forEach(itemStack -> {
+				ReadableNBT read = NBT.readNbt(itemStack);
+				if (!read.hasTag("isBuyMap")) return;
+				
+				player.getInventory().remove(itemStack);
+			});
+	}
+ 
+	@EventHandler(priority = EventPriority.LOW)
+	void onPlayerJoin(PlayerJoinEvent event) {
 		Player player = event.getPlayer();
 		Arrays.stream(player.getInventory().getContents())
 			.filter(Objects::nonNull)
