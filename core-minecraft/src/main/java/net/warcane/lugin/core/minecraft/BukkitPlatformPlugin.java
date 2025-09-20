@@ -83,7 +83,7 @@ public class BukkitPlatformPlugin extends SimplePlugin {
             this.getLogger().severe("O token do Central Cart não foi definido. Verifique a variável de ambiente 'CENTRAL_CART_TOKEN'. Compras In-Game estarão desabilitadas.");
         } else {
             Tasks.runAsync(centralCart::loadProducts);
-            Tasks.runAsyncRepeating(new MapWatcher(), 0L, 1000L);
+            Tasks.runAsyncRepeating(new MapWatcher(), 0L, 600L); // 30 segundos
             
             manager.registerEvents(new MapOrderListener(this), this);
             this.getLogger().info("Central Cart habilitado com sucesso.");

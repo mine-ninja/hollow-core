@@ -1,5 +1,6 @@
 package net.warcane.lugin.core.minecraft.centralcart.models;
 
+import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
@@ -40,7 +41,7 @@ public record Coupon(
             JsonObject obj = json.getAsJsonObject();
             
             JsonArray applies = JsonParser.parseString(obj.get("applies_to").getAsString()).getAsJsonArray();
-            List<Integer> appliesTo = context.deserialize(applies, List.class);
+            List<Integer> appliesTo = context.deserialize(applies, new TypeToken<List<Integer>>(){}.getType());
             
             return Coupon.builder()
                 .id(obj.get("id").getAsInt())
