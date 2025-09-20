@@ -12,6 +12,8 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -86,8 +88,11 @@ public class SimpleMenuManager implements Listener {
             if (contextItem != null) {
                 contextItem.clickHandler().accept(event);
             }
-
-            context.getMenuConfig().playClickSound(context.getPlayer());
+            
+            ItemStack stack = event.getCurrentItem();
+            if (stack != null && !stack.isEmpty()) {
+                context.getMenuConfig().playClickSound(context.getPlayer());
+            }
             menu.onClick(context, event);
         } catch (Exception e) {
             menu.onError(context, event, e);

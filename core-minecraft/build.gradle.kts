@@ -1,9 +1,15 @@
+import org.gradle.kotlin.dsl.invoke
+
 plugins {
     `java-library`
     // shadow
     id("com.gradleup.shadow") version ("9.0.0-rc1")
     id("io.papermc.paperweight.userdev") version ("1.7.1")
     id("xyz.jpenilla.run-paper") version "2.3.1"
+}
+
+base {
+    archivesName.set("core-minecraft")
 }
 
 repositories {
@@ -84,10 +90,10 @@ tasks.withType(xyz.jpenilla.runtask.task.AbstractRun::class) {
 }
 
 tasks.shadowJar {
-    relocate("okhttp3", "net.warcane.lugin.core.libs.okhttp3")
-    relocate("de.tr7zw", "net.warcane.lugin.core.libs.nbtapi")
+    relocate("okhttp3", "net.warcane.lugin.core.minecraft.libs.okhttp3")
 
-    archiveBaseName.set("core-minecraft")
+    archiveClassifier.set("")
+    archiveVersion.set("")
     mergeServiceFiles()
     minimize()
 }

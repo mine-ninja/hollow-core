@@ -22,12 +22,12 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class QRCodeMap {
-	public static void generateSupportedMap(final BufferedImage image, final Player player, final String displayName, final List<String> lore, final String orderId) {
+	public static void generateSupportedMap(final BufferedImage image, final Player player, final Component displayName, final List<Component> lore, final String orderId) {
 		try {
 			ItemStack stack = ItemStack.of(Material.FILLED_MAP);
 			stack.editMeta(meta -> {
-                meta.displayName(Component.text(displayName).decoration(TextDecoration.ITALIC, false));
-                meta.setLore(lore);
+                meta.displayName(displayName.decoration(TextDecoration.ITALIC, false));
+                meta.lore(lore);
                 meta.addItemFlags(ItemFlag.values());
                 
 				if (meta instanceof MapMeta mapMeta) {

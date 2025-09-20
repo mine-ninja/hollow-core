@@ -16,7 +16,6 @@ import static java.util.stream.Collectors.toMap;
 @Getter
 @AllArgsConstructor
 public enum PlayerGroup {
-
     MASTER("master", "§6[Master] ", '\uE003', "Master", NamedTextColor.GOLD, 12),
     MANAGER("gerente", "§4[Gerente] ", '\uE004', "Gerente", NamedTextColor.DARK_RED, 11),
     ADMIN("admin", "§c[Admin] ", '\uE005', "Admin", NamedTextColor.RED, 10),
@@ -29,28 +28,15 @@ public enum PlayerGroup {
     CHAMPION("campeao", "§3[Campeão] ", '\uE000', "Campeão", NamedTextColor.DARK_AQUA, 3),
     ALPHA("alpha", "§b[Alpha] ", '\uE00E', "Alpha", NamedTextColor.AQUA, 2),
     DEFAULT("default", "§7", ' ', "Membro", NamedTextColor.GRAY, 1); // TODO: esperar a tag
-
-
-    public static final Map<String, PlayerGroup> BY_ID = Arrays.stream(values())
-      .collect(toMap(PlayerGroup::getId, Function.identity()));
-
-    public static final List<String> NAMES = Arrays.stream(values())
-      .map(PlayerGroup::getId)
-      .toList();
-
+    
+    public static final Map<String, PlayerGroup> BY_ID = Arrays.stream(values()).collect(toMap(PlayerGroup::getId, Function.identity()));
+    public static final List<String> NAMES = Arrays.stream(values()).map(PlayerGroup::getId).toList();
     public static final List<PlayerGroup> entries = List.of(values());
-
-    public static final List<PlayerGroup> STAFF_GROUPS = Arrays.stream(values())
-      .filter(PlayerGroup::isStaffGroup)
-      .toList();
-
-    public static final List<PlayerGroup> SPECIAL_GROUPS = Arrays.stream(values())
-      .filter(PlayerGroup::isSpecialGroup)
-      .toList();
+    public static final List<PlayerGroup> STAFF_GROUPS = Arrays.stream(values()).filter(PlayerGroup::isStaffGroup).toList();
+    public static final List<PlayerGroup> SPECIAL_GROUPS = Arrays.stream(values()).filter(PlayerGroup::isSpecialGroup).toList();
 
     private static final int MAX_PRIORITY_VALUE = 90;
-
-
+    
     private final String id;
     private final String prefix;
     private final char modernTag;
@@ -96,5 +82,13 @@ public enum PlayerGroup {
 
     public boolean isVipGroup() {
         return this == CHAMPION || this == HERO || this == LEGENDARY || this == SUPREME;
+    }
+    
+    public PlayerGroup getNextVipGroup() {
+        return switch (this) {
+            case CHAMPION -> LEGENDARY;
+            case LEGENDARY -> SUPREME;
+            default -> null;
+        };
     }
 }

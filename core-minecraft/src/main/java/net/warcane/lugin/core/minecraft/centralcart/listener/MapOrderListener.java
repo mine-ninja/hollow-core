@@ -2,13 +2,14 @@ package net.warcane.lugin.core.minecraft.centralcart.listener;
 
 import de.tr7zw.changeme.nbtapi.NBT;
 import de.tr7zw.changeme.nbtapi.iface.ReadableNBT;
+import io.papermc.paper.event.player.PlayerItemFrameChangeEvent;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.warcane.lugin.core.minecraft.BukkitPlatformPlugin;
-import net.warcane.lugin.core.minecraft.centralcart.OrderActivatedEvent;
+import net.warcane.lugin.core.minecraft.centralcart.events.OrderActivatedEvent;
 import net.warcane.lugin.core.minecraft.centralcart.models.Order;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -45,28 +46,27 @@ public class MapOrderListener implements Listener {
         Order order = event.getOrder();
         if (!player.getInventory().contains(Material.FILLED_MAP)) return;
         
-        Arrays.stream(player.getInventory().getContents()).filter(Objects::nonNull).filter(itemStack -> itemStack.getType() == Material.FILLED_MAP).forEach(itemStack -> {
+        for (ItemStack itemStack : player.getInventory().getContents()) {
+            if (itemStack == null || itemStack.getType() != Material.FILLED_MAP) continue;
+            
             ReadableNBT read = NBT.readNbt(itemStack);
-            if (!read.hasTag("isBuyMap") || !read.getString("orderId").equalsIgnoreCase(order.internalId())) {
-                return;
-            }
+            if (!read.hasTag("isBuyMap") || !read.getString("orderId").equalsIgnoreCase(order.internalId())) continue;
             
             player.getInventory().remove(itemStack);
             BukkitAudiences adventure = BukkitPlatformPlugin.getInstance().adventure();
-            adventure.player(player)
-                .sendMessage(Component.textOfChildren(
-                    Component.newline(),
-                    Component.text("SUCESSO!", NamedTextColor.GREEN, TextDecoration.BOLD).appendNewline(),
-                    Component.newline(),
-                    Component.textOfChildren(
-                        Component.text("Compra foi processada com sucesso. ", NamedTextColor.GREEN),
-                        Component.text("(ID: %s)".formatted(order.internalId()), NamedTextColor.GRAY)
-                    ).appendNewline(),
-                    Component.text("Relogue no servidor para receber seus produtos.", NamedTextColor.GREEN).appendNewline(),
-                    Component.newline()
-                ));
+            adventure.player(player).sendMessage(Component.textOfChildren(
+                Component.newline(),
+                Component.text("SUCESSO!", NamedTextColor.GREEN, TextDecoration.BOLD).appendNewline(),
+                Component.newline(),
+                Component.textOfChildren(
+                    Component.text("Compra processada com sucesso. ", NamedTextColor.GREEN),
+                    Component.text("(ID: %s)".formatted(order.internalId()), NamedTextColor.GRAY)
+                ).appendNewline(),
+                Component.text("Relogue no servidor para receber seus produto(s).", NamedTextColor.GREEN).appendNewline(),
+                Component.newline()
+            ));
             adventure.player(player).playSound(Sound.sound(org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, Sound.Source.PLAYER, 0.5F, 1.0F), Sound.Emitter.self());
-        });
+        }
     }
     
 	@EventHandler
@@ -166,8 +166,16 @@ public class MapOrderListener implements Listener {
                 Component.newline()
             ));
 	}
-	
-	@EventHandler(priority = EventPriority.HIGHEST)
+    
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void onPlayerItemFrameChange(PlayerItemFrameChangeEvent event) {
+        ReadableNBT read = NBT.readNbt(event.getItemStack());
+        if (read.hasTag("isBuyMap")) {
+            event.setCancelled(true);
+        }
+    }
+    
+    @EventHandler(priority = EventPriority.HIGHEST)
 	void onPlayerQuit(PlayerQuitEvent event) {
 		Player player = event.getPlayer();
 		Arrays.stream(player.getInventory().getContents())

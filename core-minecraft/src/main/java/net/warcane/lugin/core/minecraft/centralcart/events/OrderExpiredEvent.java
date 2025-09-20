@@ -1,6 +1,5 @@
-package net.warcane.lugin.core.minecraft.centralcart;
+package net.warcane.lugin.core.minecraft.centralcart.events;
 
-import net.warcane.lugin.core.minecraft.centralcart.models.Order;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
@@ -8,14 +7,14 @@ import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 @Getter
-public class OrderActivatedEvent extends Event {
+public class OrderExpiredEvent extends Event {
     private static final HandlerList handlerList = new HandlerList();
     private final String userId;
-    private final Order order;
+    private final String orderId;
     
-    public OrderActivatedEvent(String userId, Order order) {
+    public OrderExpiredEvent(String userId, String orderId) {
         this.userId = userId;
-        this.order = order;
+        this.orderId = orderId;
     }
     
     public static HandlerList getHandlerList() {
