@@ -55,9 +55,7 @@ public class SimpleMenuManager implements Listener {
 
         menu.openToPlayer(this, player, initialData);
     }
-
-
-
+    
     @EventHandler
     public void handlePlayerClick(InventoryDragEvent event) { // Matheus: Cancelar o drag
         final var inventory = event.getInventory();
@@ -130,8 +128,7 @@ public class SimpleMenuManager implements Listener {
             }
         }
     }
-
-
+    
     private PlayerMenuContext getContextFromInventory(@NotNull Inventory inventory) {
         if (!(inventory.getHolder() instanceof PlayerMenuContext context)) {
             return null;
