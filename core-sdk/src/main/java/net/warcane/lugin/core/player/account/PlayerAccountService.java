@@ -44,6 +44,22 @@ public interface PlayerAccountService {
      */
     @Nullable PlayerAccount getCachedAccountByName(@NotNull String playerName);
 
+
+    /**
+     * Obtém uma conta de jogador do cache remoto (Redis), se disponível.
+     *
+     * @param playerId Identificador único do jogador (não nulo).
+     * @return Conta do jogador ou null se não estiver no cache remoto.
+     */
+    @Nullable PlayerAccount loadFromRedis(@NotNull UUID playerId);
+
+    /**
+     * Atualiza os caches locais e remotos com a conta fornecida.
+     *
+     * @param account Conta do jogador a ser atualizada (não nula).
+     */
+    void updateCaches(@NotNull PlayerAccount account);
+
     /**
      * Busca a conta de um jogador pelo seu identificador único.
      *

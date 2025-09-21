@@ -19,6 +19,7 @@ import net.warcane.lugin.core.network.packet.impl.staff.GoCachePacket;
 import net.warcane.lugin.core.network.packet.impl.staff.StaffMessagePacket;
 import net.warcane.lugin.core.network.packet.impl.wallet.WalletRefreshRequestPacket;
 import net.warcane.lugin.core.network.packet.listener.PacketListener;
+import net.warcane.lugin.core.network.packet.listener.PacketListener.Headers;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -37,6 +38,9 @@ import static net.warcane.lugin.core.minecraft.util.LocationUtil.convertToRemote
 public class InternalPacketListeners {
 
     private final BukkitPlatform platform;
+
+
+
 
     public void setup() {
         final var networkClient = platform.getNetworkClient();
@@ -57,14 +61,33 @@ public class InternalPacketListeners {
         Bukkit.getPluginManager().registerEvents(listener, platform.getPlugin());
     }
 
-    private static void updatePlayerPerms(BukkitPlatform platform, UUID uuid) {
-        final var account = platform.getPlayerAccountService().getCachedAccount(uuid);
-        if (account == null) return;
+    private static void refreshPlayerPerms(Headers headers, UUID playerId) {
+        final var platform = BukkitPlatform.getInstance();
+        final var currentServerId = BukkitPlatform.getInstance().getId();
+        if (headers.serverOriginId().equals(currentServerId)) {
+            return;
+        }
 
-        final var player = Bukkit.getPlayer(uuid);
-        if (player == null) return;
-        
-        platform.getPermissionInjector().injectPermissions(player);
+        final var localPlayer = Bukkit.getPlayer(playerId);
+        if (localPlayer == null) return;
+
+        final var accountFromRedis = platform.getPlayerAccountService().loadFromRedis(playerId);
+        if (accountFromRedis != null) {
+            platform.getPlayerAccountService().updateCaches(accountFromRedis);
+            Tasks.runAsyncLater(() -> platform.getPermissionInjector().injectPermissions(localPlayer), 1);
+        } else {
+            platform.getPlayerAccountService()
+                .loadPlayerAccount(playerId)
+                .whenComplete((found, error) -> {
+                    if (found != null) {
+                        Tasks.runAsyncLater(() -> platform.getPermissionInjector().injectPermissions(localPlayer), 1);
+                    } else if (error != null) {
+                        log.error("Failed to load player account for uuid " + playerId, error);
+                    } else {
+                        log.warn("Could not find player account for uuid " + playerId);
+                    }
+                });
+        }
     }
 
     public static class WalletUpdateListener implements PacketListener<WalletRefreshRequestPacket> {
@@ -114,8 +137,8 @@ public class InternalPacketListeners {
                 final var teleportToLocationPacket = new PlayerTeleportToLocationPacket(packet.playerId(), destination);
 
                 BukkitPlatform.getInstance()
-                  .getNetworkClient()
-                  .sendNetworkPacket(NetworkChannel.OPERATION, teleportToLocationPacket);
+                    .getNetworkClient()
+                    .sendNetworkPacket(NetworkChannel.OPERATION, teleportToLocationPacket);
             }
         }
     }
@@ -206,7 +229,7 @@ public class InternalPacketListeners {
 
         @Override
         public void onReceivePacket(@NotNull PlayerReceiveGroupPacket packet, @NotNull Headers headers) {
-            updatePlayerPerms(platform, packet.playerId());
+            refreshPlayerPerms(headers, packet.playerId());
         }
     }
 
@@ -218,7 +241,7 @@ public class InternalPacketListeners {
 
         @Override
         public void onReceivePacket(@NotNull PlayerLoseGroupPacket packet, @NotNull Headers headers) {
-            updatePlayerPerms(platform, packet.playerId());
+            refreshPlayerPerms(headers, packet.playerId());
         }
     }
 
