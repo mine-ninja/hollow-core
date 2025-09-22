@@ -40,12 +40,13 @@ public class StaffCommand extends SimpleCommand {
 
             player.sendMessage("\n§fLista de membros da equipe online:\n");
             staffList.forEach(staff -> player.sendMessage(
-                String.format("  §7- %s%s §7(§f%s§7)",
+                String.format("  §f- %s%s §f(%s)",
                     staff.group().getPrefix(),
                     staff.username(),
                     formatServerName(staff.serverId())
                 )
             ));
+            player.sendMessage("\n");
         });
     }
 
@@ -55,6 +56,6 @@ public class StaffCommand extends SimpleCommand {
             return "";
         }
 
-        return server.categoryType().getDisplayName() + "§f - §8" + serverId;
+        return serverId + " - " + server.categoryType().getDisplayName();
     }
 }
