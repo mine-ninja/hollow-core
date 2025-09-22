@@ -16,50 +16,43 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 @Slf4j
 public class DynamicPaginationContext<T> extends MenuPaginationContext<T> {
-    private CompletableFuture<List<T>> future;
-    private boolean autoRebuild = false;
+    private Supplier<CompletableFuture<List<T>>> dataSupplier;
+    private boolean isLoading = false;
     
     public DynamicPaginationContext(Player player, Map<String, Object> rawData, MenuConfig menuConfig, SimpleMenu menu, SimpleMenuManager manager) {
         super(player, rawData, menuConfig, menu, manager);
     }
     
-    @Override
-    public void update() {
-        if (autoRebuild) this.refreshPages(false);
-        super.update();
-    }
-    
-    public void autoRebuild(boolean autoRebuild) {
-        this.autoRebuild = autoRebuild;
-    }
-    
-    public void setPagination(char key, CompletableFuture<List<T>> future, @NotNull BiFunction<Player, T, ItemStack> itemRenderer, @NotNull BiConsumer<T, InventoryClickEvent> clickHandler) {
+    public void setPagination(char key, Supplier<CompletableFuture<List<T>>> dataSupplier, @NotNull BiFunction<Player, T, ItemStack> itemRenderer, @NotNull BiConsumer<T, InventoryClickEvent> clickHandler) {
         if (menuConfig.getLayout() == null) {
             throw new IllegalStateException("Menu layout is not defined.");
         }
-        this.setPagination(menuConfig.getLayout().get(key), future, itemRenderer, clickHandler);
+        this.setPagination(menuConfig.getLayout().get(key), dataSupplier, itemRenderer, clickHandler);
     }
-    public void setPagination(int[] slots, CompletableFuture<List<T>> future, @NotNull BiFunction<Player, T, ItemStack> itemRenderer, @NotNull BiConsumer<T, InventoryClickEvent> clickHandler) {
+    public void setPagination(int[] slots, Supplier<CompletableFuture<List<T>>> dataSupplier, @NotNull BiFunction<Player, T, ItemStack> itemRenderer, @NotNull BiConsumer<T, InventoryClickEvent> clickHandler) {
         this.slots = IntStream.of(slots).boxed().toList();
-        this.future = future;
+        this.dataSupplier = dataSupplier;
         this.renderer = itemRenderer;
         this.clickHandler = clickHandler;
         this.currentPage = 0;
-        
-        this.refreshPages(true);
+        this.refreshData();
     }
     
-    public void refreshPages(boolean update) {
-        if (this.future == null) {
-            throw new IllegalStateException("Supplier for dynamic pagination is not set.");
+    public void refreshData() {
+        if (this.dataSupplier == null) {
+            throw new IllegalStateException("Data supplier for dynamic pagination is not set.");
         }
+        if (this.isLoading) { return; }
         
-        this.future
+        this.isLoading = true;
+        this.dataSupplier.get()
             .whenCompleteAsync((objects, throwable) -> {
+                this.isLoading = false;
                 if (throwable != null) {
                     log.error("Error fetching pagination items", throwable);
                     return;
@@ -67,12 +60,17 @@ public class DynamicPaginationContext<T> extends MenuPaginationContext<T> {
                 if (objects == null) {
                     objects = List.of();
                 }
+                
                 this.pages = Lists.partition(objects, this.slots.size());
+                if (this.currentPage >= this.pages.size()) {
+                    this.currentPage = Math.max(0, this.pages.size() - 1);
+                }
             }, Tasks::runAsync)
             .thenAcceptAsync(ts -> {
-                if (update) {
-                    this.update();
+                for (int slot : this.slots) {
+                    this.items.remove(slot);
                 }
+                super.update();
             }, Tasks::runSync);
     }
 }

@@ -1,5 +1,3 @@
-import kotlin.text.set
-
 plugins {
     java
     id("maven-publish")
