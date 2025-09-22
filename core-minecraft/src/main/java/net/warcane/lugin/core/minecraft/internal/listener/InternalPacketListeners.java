@@ -137,9 +137,10 @@ public class InternalPacketListeners {
                     goCache.remove(uuid);
 
                     Tasks.runSync(() -> {
-                        VanishManager vanishManager = BukkitPlatform.getInstance().getVanishManager();
-
-                        vanishManager.vanish(player);
+                        if (player.hasPermission("lugin.vanish")) {
+                            VanishManager vanishManager = BukkitPlatform.getInstance().getVanishManager();
+                            vanishManager.vanish(player);
+                        }
 
                         Player target = Bukkit.getPlayer(uuidTarget);
 

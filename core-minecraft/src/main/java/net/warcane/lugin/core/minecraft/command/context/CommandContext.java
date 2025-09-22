@@ -3,6 +3,7 @@ package net.warcane.lugin.core.minecraft.command.context;
 import lombok.Data;
 
 import net.kyori.adventure.text.Component;
+import net.warcane.lugin.core.minecraft.BukkitPlatformPlugin;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
 import net.warcane.lugin.core.util.time.Time;
 import org.apache.commons.lang.StringUtils;
@@ -42,7 +43,8 @@ public class CommandContext {
     
     public void sendMessage(@NotNull Component... message) {
         for (Component msg : message) {
-            sender.sendMessage(msg);
+            BukkitPlatformPlugin.getInstance().adventure()
+                .sender(sender).sendMessage(msg);
         }
     }
 
