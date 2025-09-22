@@ -69,7 +69,7 @@ public class MapOrderListener implements Listener {
         }
     }
     
-	@EventHandler
+	@EventHandler(priority = EventPriority.LOW)
 	public void onInventoryClick(InventoryClickEvent event) {
 		Player player = (Player) event.getWhoClicked();
 		
@@ -115,7 +115,7 @@ public class MapOrderListener implements Listener {
 		event.setCancelled(true);
 	}
 	
-	@EventHandler
+	@EventHandler(priority = EventPriority.LOW)
 	void onInventoryMoveItem(InventoryMoveItemEvent event) {
 		Optional<HumanEntity> optionalHumanEntity = event.getSource().getViewers().stream().findFirst();
 		if (optionalHumanEntity.isEmpty()) return;
@@ -141,7 +141,7 @@ public class MapOrderListener implements Listener {
 		event.setCancelled(true);
 	}
 	
-	@EventHandler
+	@EventHandler(priority = EventPriority.LOW)
 	void onPlayerDropItem(PlayerDropItemEvent event) {
 		Item item = event.getItemDrop();
 		if (item == null) return;
