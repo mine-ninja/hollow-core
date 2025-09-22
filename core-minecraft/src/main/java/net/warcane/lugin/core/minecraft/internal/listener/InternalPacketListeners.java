@@ -50,6 +50,7 @@ public class InternalPacketListeners {
         networkClient.registerPacketListener(PlayerTeleportToTargetPacket.class, new TargetedTeleportListener());
         networkClient.registerPacketListener(GoCachePacket.class, new GoCacheListener());
         networkClient.registerPacketListener(WalletRefreshRequestPacket.class, new WalletUpdateListener());
+        networkClient.registerPacketListener(PlayerReceiveGroupPacket.class, new StaffTrackingListener());
 
         final var listener = new GoCacheListener();
 
