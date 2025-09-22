@@ -47,7 +47,7 @@ public abstract class SimpleMenu {
         }
     }
     
-    void openToPlayer(@NotNull SimpleMenuManager manager, @NotNull Player player, @NotNull Map<String, Object> initialData) {
+    protected void openToPlayer(@NotNull SimpleMenuManager manager, @NotNull Player player, @NotNull Map<String, Object> initialData) {
         final var openHandler = new MenuConfig(defaultConfig);
         
         final PlayerMenuContext ctx = new PlayerMenuContext(player, initialData, openHandler, this, manager);

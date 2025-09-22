@@ -15,7 +15,18 @@ dependencies {
   annotationProcessor("com.velocitypowered:velocity-api:3.4.0-SNAPSHOT")
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
+
 tasks.shadowJar {
+    archiveClassifier.set("")
+    archiveVersion.set("")
     mergeServiceFiles()
     minimize()
 }

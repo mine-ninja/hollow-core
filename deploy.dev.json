@@ -1,0 +1,5 @@
+{
+	"servers": ["dffdf5a9", "13065d42"],
+	"source": "core-minecraft/build/libs/core-minecraft-dev-all.jar",
+	"target": "plugins/"
+}

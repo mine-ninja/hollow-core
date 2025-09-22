@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import net.kyori.adventure.text.Component;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.centralcart.models.Coupon;
 import net.warcane.lugin.core.minecraft.centralcart.models.Product;
@@ -16,12 +17,12 @@ import org.bukkit.inventory.ItemStack;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
 public class Checkout {
-	public void createCheckout(final Product product, final Coupon coupon, final Player player, Consumer<CheckoutResult> onResult) {
+	public void createCheckout(final Product product, final Coupon coupon, final Player player, final Component displayName, final List<Component> lore, Consumer<CheckoutResult> onResult) {
 		ItemStack hand = player.getInventory().getItemInMainHand();
 		if (hand.getType() != Material.AIR) {
             onResult.accept(new CheckoutResult(player, false, Map.of("status", "item_in_hand")));
@@ -66,6 +67,7 @@ public class Checkout {
 				
 				String return_url = this.getStringField(jsonObject, "return_url");
 				String qrCode = this.getStringField(jsonObject, "qr_code");
+                String orderId = jsonObject.get("order_id").getAsString();
 				
 				Tasks.runSync(() -> {
 					BufferedImage imgQrcode2;
@@ -74,10 +76,10 @@ public class Checkout {
 					} catch (IOException e) {
 						throw new RuntimeException(e);
 					}
-					QRCodeMap.generateSupportedMap(imgQrcode2, player, "§aCódigo QrCode", Collections.singletonList("§7Compra de " + player.getName()), jsonObject.get("order_id").getAsString());
+                    QRCodeMap.generateSupportedMap(imgQrcode2, player, displayName, lore, orderId);
 				});
 				
-                onResult.accept(new CheckoutResult(player, true, Map.of("return_url", return_url)));
+                onResult.accept(new CheckoutResult(player, true, Map.of("return_url", return_url, "order_id", orderId)));
 			} catch (Exception exception) {
                 onResult.accept(new CheckoutResult(player, false, Map.of("status", "exception")));
                 centralCart.getLogger().error("An error occurred while trying to generate the checkout for the player {}, the response json is: {}", player.getName(), response.body());

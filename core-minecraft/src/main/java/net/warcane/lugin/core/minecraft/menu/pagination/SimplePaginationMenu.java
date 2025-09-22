@@ -1,7 +1,8 @@
-package net.warcane.lugin.core.minecraft.menu;
+package net.warcane.lugin.core.minecraft.menu.pagination;
 
+import net.warcane.lugin.core.minecraft.menu.SimpleMenu;
+import net.warcane.lugin.core.minecraft.menu.SimpleMenuManager;
 import net.warcane.lugin.core.minecraft.menu.config.MenuConfig;
-import net.warcane.lugin.core.minecraft.menu.pagination.MenuPaginationContext;
 import org.bukkit.entity.Player;
 
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +17,8 @@ public abstract class SimplePaginationMenu<T> extends SimpleMenu {
         return super.onPreOpen(ctx, openHandler);
     }
     
-    void openToPlayer(@NotNull SimpleMenuManager manager, @NotNull Player player, @NotNull Map<String, Object> initialData) {
+    @Override
+    protected void openToPlayer(@NotNull SimpleMenuManager manager, @NotNull Player player, @NotNull Map<String, Object> initialData) {
         final var openHandler = new MenuConfig(defaultConfig);
         
         final MenuPaginationContext<T> ctx = new MenuPaginationContext<>(player, initialData, openHandler, this, manager);
