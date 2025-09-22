@@ -11,10 +11,7 @@ import net.warcane.lugin.core.minecraft.internal.command.permission.GroupPermiss
 import net.warcane.lugin.core.minecraft.internal.command.permission.PlayerGroupCommand;
 import net.warcane.lugin.core.minecraft.internal.command.permission.TestPermission;
 import net.warcane.lugin.core.minecraft.internal.command.server.ServerCommand;
-import net.warcane.lugin.core.minecraft.internal.command.staff.GoCommand;
-import net.warcane.lugin.core.minecraft.internal.command.staff.PlayerInfoCommand;
-import net.warcane.lugin.core.minecraft.internal.command.staff.StaffMessageCommand;
-import net.warcane.lugin.core.minecraft.internal.command.staff.VanishCommand;
+import net.warcane.lugin.core.minecraft.internal.command.staff.*;
 import net.warcane.lugin.core.minecraft.internal.command.test.TestMenuCommand;
 import net.warcane.lugin.core.minecraft.internal.command.test.TestTimeCommand;
 import net.warcane.lugin.core.util.property.Property;
@@ -56,6 +53,7 @@ public class InternalCommandManager {
         commandMap.register("lugin", new TestTimeCommand());
         commandMap.register("lugin", new VanishCommand(platform));
         commandMap.register("lugin", new GoCommand(platform));
+        commandMap.register("lugin", new StaffCommand(platform));
     }
 
     public void registerCurrencyCommand(@NotNull Currency currency) {

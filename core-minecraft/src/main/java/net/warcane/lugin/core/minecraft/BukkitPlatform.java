@@ -13,6 +13,7 @@ import net.warcane.lugin.core.minecraft.internal.command.InternalCommandManager;
 import net.warcane.lugin.core.minecraft.internal.listener.InternalPacketListeners;
 import net.warcane.lugin.core.minecraft.internal.listener.InternalPlayerListener;
 import net.warcane.lugin.core.minecraft.internal.listener.PlayerGroupUpdatingListener;
+import net.warcane.lugin.core.minecraft.internal.listener.StaffTrackingListener;
 import net.warcane.lugin.core.minecraft.menu.SimpleMenuManager;
 import net.warcane.lugin.core.minecraft.nametag.LegacyNameTagResolver;
 import net.warcane.lugin.core.minecraft.nametag.ModernNameTagResolver;
@@ -170,6 +171,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
         Bukkit.getPluginManager().registerEvents(new InternalPlayerListener(this), plugin);
         Bukkit.getPluginManager().registerEvents(new PlayerGroupUpdatingListener(this), plugin);
+        Bukkit.getPluginManager().registerEvents(new StaffTrackingListener(), plugin);
 
         final var internalPackets = new InternalPacketListeners(this);
         internalPackets.setup();
