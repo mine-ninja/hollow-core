@@ -40,15 +40,15 @@ public class PunishManager {
 
     private static PunishManager instance;
     private final MongoCollection<PunishedDTO> collection;
+    private final ExecutorService executorService;
 
     @Getter
     private PunishLogger punishLogger;
 
-    private static final ExecutorService SHARED_EXECUTOR = Executors.newCachedThreadPool();
-
-    public PunishManager(Plugin plugin) {
+    public PunishManager(Plugin plugin, ExecutorService executorService) {
         this.punishLogger = new PunishLogger(plugin.getDataFolder());
         this.collection = MongoDbConnector.getInstance().getCollection("punished_players", PunishedDTO.class);
+        this.executorService = executorService;
         Bukkit.getPluginManager().registerEvents(new PlayerPunishEvents(), plugin);
     }
 
@@ -166,19 +166,19 @@ public class PunishManager {
     public CompletableFuture<PunishedDTO> getPunishedPlayer(UUID uuid) {
         return CompletableFuture.supplyAsync(() ->
                 collection.find(Filters.eq("uuid", uuid)).first()
-        );
+        , executorService);
     }
 
     public CompletableFuture<PunishedDTO> getPunishedPlayer(String name) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                return SHARED_EXECUTOR.submit(() -> collection.find(Filters.eq("name", name)).first()).get(5, TimeUnit.SECONDS);
+                return executorService.submit(() -> collection.find(Filters.eq("name", name)).first()).get(5, TimeUnit.SECONDS);
             } catch (TimeoutException e) {
                 throw new RuntimeException("Query timed out after 5 seconds", e);
             } catch (Exception e) {
                 throw new RuntimeException("Query failed", e);
             }
-        }, SHARED_EXECUTOR);
+        }, executorService);
     }
 
     public CompletableFuture<PunishedDTO.Punishment> getPunishmentById(int id) {
@@ -200,7 +200,7 @@ public class PunishManager {
     private CompletableFuture<PunishedDTO> getPunishedByPunishmentId(int id) {
         return CompletableFuture.supplyAsync(() ->
                 collection.find(Filters.elemMatch("punishments", Filters.eq("_id", id))).first()
-        );
+        , executorService);
     }
 
     public void updatePunishmentStatus(int id, PunishedDTO.Punishment updatedPunishment) {
@@ -235,14 +235,14 @@ public class PunishManager {
         return message.startsWith("http://") || message.startsWith("https://");
     }
 
-    public static void init(Plugin plugin) {
+    public static void init(Plugin plugin, ExecutorService executorService) {
         if (instance != null) {
             throw new IllegalStateException("PunishManager is already initialized.");
         }
 
         RedisDatabase.init();
         MessageManager.init(plugin);
-        instance = new PunishManager(plugin);
+        instance = new PunishManager(plugin, executorService);
     }
 
     public static PunishManager get() {

@@ -49,7 +49,7 @@ public class VelocityPlatformPlugin {
     @Subscribe
     public void onInit(ProxyInitializeEvent event) {
         proxyServer.getEventManager().register(this, new PlayerListener());
-        new PunishManager(MongoDbConnector.getInstance());
+        new PunishManager(MongoDbConnector.getInstance(), velocityPlatform.getExecutorService());
 
     }
 

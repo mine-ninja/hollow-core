@@ -35,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class BukkitPlatformPlugin extends SimplePlugin implements Listener {
+public class BukkitPlatformPlugin extends SimplePlugin {
     @Getter private static BukkitPlatformPlugin instance;
     private BukkitPlatform bukkitPlatform;
     private BukkitAudiences adventure;
@@ -53,8 +53,6 @@ public class BukkitPlatformPlugin extends SimplePlugin implements Listener {
         if (!NBT.preloadApi()) {
             this.getLogger().severe("Não foi possível carregar o NBT-API. O plugin será desativado.");
         }
-
-        registerListeners(this); // Para usar o ServerLoadEvent
 
         bukkitPlatform = BukkitPlatform.provide(this);
         bukkitPlatform.init();
@@ -103,11 +101,6 @@ public class BukkitPlatformPlugin extends SimplePlugin implements Listener {
             this.adventure.close();
             this.adventure = null;
         }
-    }
-
-    @EventHandler
-    public void onServerLoad(ServerLoadEvent event) {
-//        PunishManager.init(this);
     }
     
     public @NotNull BukkitAudiences adventure() {

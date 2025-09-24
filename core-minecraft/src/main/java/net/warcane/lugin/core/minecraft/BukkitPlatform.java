@@ -177,7 +177,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         Bukkit.getPluginManager().registerEvents(new PlayerGroupUpdatingListener(this), plugin);
         Bukkit.getPluginManager().registerEvents(new StaffTrackingListener(), plugin);
 
-        PunishManager.init(plugin);
+        PunishManager.init(plugin, getExecutorService());
 
         final var internalPackets = new InternalPacketListeners(this);
         internalPackets.setup();
