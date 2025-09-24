@@ -27,6 +27,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.plugin.PluginManager;
 
 import lombok.Getter;
@@ -34,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class BukkitPlatformPlugin extends SimplePlugin {
+public class BukkitPlatformPlugin extends SimplePlugin implements Listener {
     @Getter private static BukkitPlatformPlugin instance;
     private BukkitPlatform bukkitPlatform;
     private BukkitAudiences adventure;
@@ -53,7 +54,7 @@ public class BukkitPlatformPlugin extends SimplePlugin {
             this.getLogger().severe("Não foi possível carregar o NBT-API. O plugin será desativado.");
         }
 
-        PunishManager.init(this);
+        registerListeners(this); // Para usar o ServerLoadEvent
 
         bukkitPlatform = BukkitPlatform.provide(this);
         bukkitPlatform.init();
@@ -102,6 +103,11 @@ public class BukkitPlatformPlugin extends SimplePlugin {
             this.adventure.close();
             this.adventure = null;
         }
+    }
+
+    @EventHandler
+    public void onServerLoad(ServerLoadEvent event) {
+        PunishManager.init(this);
     }
     
     public @NotNull BukkitAudiences adventure() {
