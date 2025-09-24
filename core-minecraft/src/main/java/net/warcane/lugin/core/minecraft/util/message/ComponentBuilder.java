@@ -1,6 +1,5 @@
 package net.warcane.lugin.core.minecraft.util.message;
 
-import br.com.lugin.essentials.api.utils.StringUtils;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickCallback;
@@ -101,10 +100,5 @@ public class ComponentBuilder {
 
     public void send(Audience audience) {
         audience.sendMessage(this.msg);
-    }
-
-    public void send(Player audience, boolean startSession) {
-        send(audience);
-        if (startSession) ChatSessionManager.registerSession(audience.getUniqueId());
     }
 }
