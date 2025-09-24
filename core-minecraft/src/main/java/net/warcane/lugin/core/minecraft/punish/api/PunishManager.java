@@ -12,10 +12,10 @@ import net.warcane.lugin.core.minecraft.punish.core.PunishLogger;
 import net.warcane.lugin.core.minecraft.punish.core.database.redis.MessageManager;
 import net.warcane.lugin.core.minecraft.punish.core.database.redis.RedisDatabase;
 import net.warcane.lugin.core.minecraft.punish.events.PlayerPunishEvents;
-import net.warcane.lugin.core.minecraft.punish.utils.MessageUtils;
 import net.warcane.lugin.core.minecraft.util.message.StringUtils;
 import net.warcane.lugin.core.player.account.PlayerAccount;
 import net.warcane.lugin.core.punish.data.*;
+import net.warcane.lugin.core.punish.utils.MessageUtils;
 import net.warcane.lugin.core.util.Tuple;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -24,10 +24,7 @@ import org.bukkit.plugin.Plugin;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 /**
  * @author Rok, Pedro Lucas nmm. Created on 26/06/2025
@@ -44,6 +41,9 @@ public class PunishManager {
 
     @Getter
     private PunishLogger punishLogger;
+
+    private static final ExecutorService SHARED_EXECUTOR = Executors.newCachedThreadPool();
+
 
     public PunishManager(Plugin plugin, ExecutorService executorService) {
         this.punishLogger = new PunishLogger(plugin.getDataFolder());
@@ -166,19 +166,19 @@ public class PunishManager {
     public CompletableFuture<PunishedDTO> getPunishedPlayer(UUID uuid) {
         return CompletableFuture.supplyAsync(() ->
                 collection.find(Filters.eq("uuid", uuid)).first()
-            , executorService);
+            , SHARED_EXECUTOR);
     }
 
     public CompletableFuture<PunishedDTO> getPunishedPlayer(String name) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                return executorService.submit(() -> collection.find(Filters.eq("name", name)).first()).get(5, TimeUnit.SECONDS);
+                return SHARED_EXECUTOR.submit(() -> collection.find(Filters.eq("name", name)).first()).get(5, TimeUnit.SECONDS);
             } catch (TimeoutException e) {
                 throw new RuntimeException("Query timed out after 5 seconds", e);
             } catch (Exception e) {
                 throw new RuntimeException("Query failed", e);
             }
-        }, executorService);
+        }, SHARED_EXECUTOR);
     }
 
     public CompletableFuture<PunishedDTO.Punishment> getPunishmentById(int id) {
@@ -200,7 +200,7 @@ public class PunishManager {
     private CompletableFuture<PunishedDTO> getPunishedByPunishmentId(int id) {
         return CompletableFuture.supplyAsync(() ->
                 collection.find(Filters.elemMatch("punishments", Filters.eq("_id", id))).first()
-            , executorService);
+            , SHARED_EXECUTOR);
     }
 
     public void updatePunishmentStatus(int id, PunishedDTO.Punishment updatedPunishment) {
