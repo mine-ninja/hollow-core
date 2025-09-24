@@ -2,6 +2,7 @@ package net.warcane.lugin.core.minecraft;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.warcane.lugin.core.AbstractPlatform;
 import net.warcane.lugin.core.MinecraftServerPlatform;
 import net.warcane.lugin.core.Platform;
@@ -19,6 +20,7 @@ import net.warcane.lugin.core.minecraft.nametag.LegacyNameTagResolver;
 import net.warcane.lugin.core.minecraft.nametag.ModernNameTagResolver;
 import net.warcane.lugin.core.minecraft.nametag.NameTagResolver;
 import net.warcane.lugin.core.minecraft.permission.PermissionInjector;
+import net.warcane.lugin.core.minecraft.punish.api.PunishManager;
 import net.warcane.lugin.core.minecraft.vanish.VanishManager;
 import net.warcane.lugin.core.minecraft.whitelist.WhitelistService;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
@@ -116,6 +118,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     private final VanishManager vanishManager;
     private final SimpleMenuManager menuManager;
     private final WhitelistService whitelistService;
+    private final BukkitAudiences adventure;
 
     @Getter private NameTagResolver nameTagResolver;
     @Getter private CentralCart centralCart;
@@ -135,7 +138,8 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         this.menuManager = new SimpleMenuManager(this);
 
         this.whitelistService = new WhitelistService(this);
-        
+        this.adventure = BukkitAudiences.create(plugin);
+
         this.centralCart = new CentralCart();
         this.centralCart.initSocket();
         
@@ -172,6 +176,8 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         Bukkit.getPluginManager().registerEvents(new InternalPlayerListener(this), plugin);
         Bukkit.getPluginManager().registerEvents(new PlayerGroupUpdatingListener(this), plugin);
         Bukkit.getPluginManager().registerEvents(new StaffTrackingListener(), plugin);
+
+        PunishManager.init(plugin);
 
         final var internalPackets = new InternalPacketListeners(this);
         internalPackets.setup();
@@ -253,6 +259,11 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     @NotNull
     public Plugin getPlugin() {
         return plugin;
+    }
+
+    @NotNull
+    public BukkitAudiences getAdventure() {
+        return adventure;
     }
 
     @NotNull

@@ -22,6 +22,7 @@ import net.warcane.lugin.core.minecraft.util.message.StringUtils;
 import net.warcane.lugin.core.player.account.PlayerAccount;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,16 +44,12 @@ public class PunishManager {
     @Getter
     private PunishLogger punishLogger;
 
-    public PunishManager(SimplePlugin plugin) {
+    private static final ExecutorService SHARED_EXECUTOR = Executors.newCachedThreadPool();
+
+    public PunishManager(Plugin plugin) {
         this.punishLogger = new PunishLogger(plugin.getDataFolder());
         this.collection = MongoDbConnector.getInstance().getCollection("punished_players", PunishedDTO.class);
-
-        plugin.registerCommands("punish",
-            new PunishCommand(),
-            new CheckPunishCommand()
-        );
-
-        plugin.registerListeners(new PlayerPunishEvents());
+        Bukkit.getPluginManager().registerEvents(new PlayerPunishEvents(), plugin);
     }
 
     public void loadPlayer(Player player) {
@@ -76,7 +73,7 @@ public class PunishManager {
     public void punishPlayer(PlayerAccount target, Player punisher, PunishmentInfo punishmentInfo, String message) {
         int nextId = MongoCounterService.get().getNextIdFor("punishment_info_id");
 
-        StringUtils.send(punisher, "<l-confirm>Punição aplicada ao jogador <l-yellow>" + target.playerName() + " <l-green> com sucesso! ID: " + nextId);
+        punisher.sendMessage("§aPunição aplicada ao jogador §e" + target.playerName() + " §a com sucesso! ID: " + nextId);
 
         if (message == null) {
             message = "Não anexada.";
@@ -173,22 +170,15 @@ public class PunishManager {
     }
 
     public CompletableFuture<PunishedDTO> getPunishedPlayer(String name) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-
-        CompletableFuture<PunishedDTO> future =
-                CompletableFuture.supplyAsync(() -> {
-                    try {
-                        return executor.submit(() -> collection.find(Filters.eq("name", name)).first()).get(5, TimeUnit.SECONDS);
-                    } catch (TimeoutException e) {
-                        throw new RuntimeException("Query timed out after 5 seconds", e);
-                    } catch (Exception e) {
-                        throw new RuntimeException("Query failed", e);
-                    }
-                }, executor);
-
-        future.whenComplete((r, t) -> executor.shutdown());
-
-        return future;
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return SHARED_EXECUTOR.submit(() -> collection.find(Filters.eq("name", name)).first()).get(5, TimeUnit.SECONDS);
+            } catch (TimeoutException e) {
+                throw new RuntimeException("Query timed out after 5 seconds", e);
+            } catch (Exception e) {
+                throw new RuntimeException("Query failed", e);
+            }
+        }, SHARED_EXECUTOR);
     }
 
     public CompletableFuture<PunishedDTO.Punishment> getPunishmentById(int id) {
@@ -245,7 +235,7 @@ public class PunishManager {
         return message.startsWith("http://") || message.startsWith("https://");
     }
 
-    public static void init(SimplePlugin plugin) {
+    public static void init(Plugin plugin) {
         if (instance != null) {
             throw new IllegalStateException("PunishManager is already initialized.");
         }

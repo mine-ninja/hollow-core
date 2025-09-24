@@ -1,6 +1,7 @@
 package net.warcane.lugin.core.minecraft.util.message;
 
 import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickCallback;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -43,12 +44,17 @@ public class ComponentBuilder {
         for (String s : hover) {
             hoverComp = hoverComp.append(StringUtils.text(s)).append(Component.text("\n"));
         }
-        this.msg = this.msg.append(StringUtils.text(msg).clickEvent(ClickEvent.runCommand("")).hoverEvent(HoverEvent.showText(hoverComp)));
+        this.msg = this.msg.append(StringUtils.text(msg)).hoverEvent(HoverEvent.showText(hoverComp));
         return this;
     }
 
     public ComponentBuilder actionHover(String msg, ClickCallback<Audience> action, String hover) {
         this.msg = this.msg.append(StringUtils.text(msg).clickEvent(ClickEvent.callback(action, ClickCallback.Options.builder().uses(1).build())).hoverEvent(HoverEvent.showText(StringUtils.text(hover))));
+        return this;
+    }
+
+    public ComponentBuilder actionHover(String msg, ClickEvent event, String hover) {
+        this.msg = this.msg.append(StringUtils.text(msg).clickEvent(event).hoverEvent(HoverEvent.showText(StringUtils.text(hover))));
         return this;
     }
 

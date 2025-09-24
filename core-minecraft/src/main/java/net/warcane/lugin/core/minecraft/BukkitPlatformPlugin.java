@@ -107,7 +107,7 @@ public class BukkitPlatformPlugin extends SimplePlugin implements Listener {
 
     @EventHandler
     public void onServerLoad(ServerLoadEvent event) {
-        PunishManager.init(this);
+//        PunishManager.init(this);
     }
     
     public @NotNull BukkitAudiences adventure() {

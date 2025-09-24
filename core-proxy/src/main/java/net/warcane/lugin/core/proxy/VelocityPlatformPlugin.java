@@ -17,7 +17,10 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
+import net.warcane.lugin.core.database.MongoDbConnector;
 import net.warcane.lugin.core.player.state.PlayerNetworkStateManager;
+import net.warcane.lugin.core.proxy.listener.PlayerListener;
+import net.warcane.lugin.core.punish.api.PunishManager;
 import net.warcane.lugin.core.server.GameServer;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
 
@@ -45,6 +48,9 @@ public class VelocityPlatformPlugin {
 
     @Subscribe
     public void onInit(ProxyInitializeEvent event) {
+        proxyServer.getEventManager().register(this, new PlayerListener());
+        new PunishManager(MongoDbConnector.getInstance());
+
     }
 
     @Subscribe
