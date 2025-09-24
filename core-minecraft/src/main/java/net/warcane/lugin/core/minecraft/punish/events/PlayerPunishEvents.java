@@ -2,9 +2,9 @@ package net.warcane.lugin.core.minecraft.punish.events;
 
 import io.papermc.paper.event.player.ChatEvent;
 import net.warcane.lugin.core.minecraft.punish.api.PunishManager;
-import net.warcane.lugin.core.minecraft.punish.utils.MessageUtils;
 import net.warcane.lugin.core.minecraft.util.message.StringUtils;
 import net.warcane.lugin.core.punish.data.*;
+import net.warcane.lugin.core.punish.utils.MessageUtils;
 import net.warcane.lugin.core.util.Tuple;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
