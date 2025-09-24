@@ -21,6 +21,7 @@ import net.warcane.lugin.core.minecraft.nametag.ModernNameTagResolver;
 import net.warcane.lugin.core.minecraft.nametag.NameTagResolver;
 import net.warcane.lugin.core.minecraft.permission.PermissionInjector;
 import net.warcane.lugin.core.minecraft.punish.api.PunishManager;
+import net.warcane.lugin.core.minecraft.util.message.AdventureFormatters;
 import net.warcane.lugin.core.minecraft.vanish.VanishManager;
 import net.warcane.lugin.core.minecraft.whitelist.WhitelistService;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
@@ -178,6 +179,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         Bukkit.getPluginManager().registerEvents(new StaffTrackingListener(), plugin);
 
         PunishManager.init(plugin, getExecutorService());
+        AdventureFormatters.init();
 
         final var internalPackets = new InternalPacketListeners(this);
         internalPackets.setup();
