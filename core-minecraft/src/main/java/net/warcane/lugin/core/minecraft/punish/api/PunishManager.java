@@ -7,19 +7,16 @@ import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import net.warcane.lugin.core.database.MongoCounterService;
 import net.warcane.lugin.core.database.MongoDbConnector;
-import net.warcane.lugin.core.minecraft.plugin.SimplePlugin;
 import net.warcane.lugin.core.minecraft.punish.api.message.PunishMessagePubSub;
-import net.warcane.lugin.core.minecraft.punish.command.CheckPunishCommand;
-import net.warcane.lugin.core.minecraft.punish.command.PunishCommand;
 import net.warcane.lugin.core.minecraft.punish.core.PunishLogger;
 import net.warcane.lugin.core.minecraft.punish.core.database.redis.MessageManager;
 import net.warcane.lugin.core.minecraft.punish.core.database.redis.RedisDatabase;
-import net.warcane.lugin.core.minecraft.punish.data.*;
 import net.warcane.lugin.core.minecraft.punish.events.PlayerPunishEvents;
 import net.warcane.lugin.core.minecraft.punish.utils.MessageUtils;
-import net.warcane.lugin.core.minecraft.util.Tuple;
 import net.warcane.lugin.core.minecraft.util.message.StringUtils;
 import net.warcane.lugin.core.player.account.PlayerAccount;
+import net.warcane.lugin.core.punish.data.*;
+import net.warcane.lugin.core.util.Tuple;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -27,7 +24,10 @@ import org.bukkit.plugin.Plugin;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author Rok, Pedro Lucas nmm. Created on 26/06/2025
@@ -73,7 +73,7 @@ public class PunishManager {
     public void punishPlayer(PlayerAccount target, Player punisher, PunishmentInfo punishmentInfo, String message) {
         int nextId = MongoCounterService.get().getNextIdFor("punishment_info_id");
 
-        punisher.sendMessage("§aPunição aplicada ao jogador §e" + target.playerName() + " §a com sucesso! ID: " + nextId);
+        StringUtils.send(punisher, "<l-confirm>Punição aplicada ao jogador <l-yellow>" + target.playerName() + " <l-green> com sucesso! ID: " + nextId);
 
         if (message == null) {
             message = "Não anexada.";
@@ -133,14 +133,14 @@ public class PunishManager {
             Player player = Bukkit.getPlayer(uuid); // Todo: Ask Matheus to save ip address in PlayerAccount
             String ipAddress = player != null ? player.getAddress().getHostString() : "unknown";
             PunishedDTO.Punishment punishment = new PunishedDTO.Punishment(
-                    id,
-                    ipAddress,
-                    repeatCount,
-                    punishInfo.id(),
-                    proofLink,
-                    System.currentTimeMillis(),
-                    timePunished,
-                    punisher.getUniqueId()
+                id,
+                ipAddress,
+                repeatCount,
+                punishInfo.id(),
+                proofLink,
+                System.currentTimeMillis(),
+                timePunished,
+                punisher.getUniqueId()
             );
             punishment.setStatus(PunishmentStatus.ACTIVE);
 
@@ -166,7 +166,7 @@ public class PunishManager {
     public CompletableFuture<PunishedDTO> getPunishedPlayer(UUID uuid) {
         return CompletableFuture.supplyAsync(() ->
                 collection.find(Filters.eq("uuid", uuid)).first()
-        , executorService);
+            , executorService);
     }
 
     public CompletableFuture<PunishedDTO> getPunishedPlayer(String name) {
@@ -184,7 +184,7 @@ public class PunishManager {
     public CompletableFuture<PunishedDTO.Punishment> getPunishmentById(int id) {
         return CompletableFuture.supplyAsync(() -> {
             PunishedDTO punished = collection.find(
-                    Filters.elemMatch("punishments", Filters.eq("_id", id))
+                Filters.elemMatch("punishments", Filters.eq("_id", id))
             ).first();
 
             if (punished != null) {
@@ -200,7 +200,7 @@ public class PunishManager {
     private CompletableFuture<PunishedDTO> getPunishedByPunishmentId(int id) {
         return CompletableFuture.supplyAsync(() ->
                 collection.find(Filters.elemMatch("punishments", Filters.eq("_id", id))).first()
-        , executorService);
+            , executorService);
     }
 
     public void updatePunishmentStatus(int id, PunishedDTO.Punishment updatedPunishment) {

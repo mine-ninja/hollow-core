@@ -4,8 +4,8 @@ import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.BukkitPlatformPlugin;
 import net.warcane.lugin.core.minecraft.punish.core.database.redis.MessageManager;
 import net.warcane.lugin.core.minecraft.punish.core.database.redis.PubSubMessage;
-import net.warcane.lugin.core.minecraft.punish.data.*;
-import net.warcane.lugin.core.minecraft.util.Tuple;
+import net.warcane.lugin.core.punish.data.*;
+import net.warcane.lugin.core.util.Tuple;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 

@@ -8,11 +8,13 @@ import net.warcane.lugin.core.minecraft.command.SimpleCommand;
 import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
 import net.warcane.lugin.core.minecraft.punish.api.PunishManager;
-import net.warcane.lugin.core.minecraft.punish.data.PunishmentInfo;
+import net.warcane.lugin.core.punish.data.*;
 import net.warcane.lugin.core.minecraft.punish.utils.MessageUtils;
 import net.warcane.lugin.core.minecraft.util.Cooldown;
+import net.warcane.lugin.core.minecraft.util.message.ComponentBuilder;
 import net.warcane.lugin.core.minecraft.util.message.StringUtils;
 import net.warcane.lugin.core.player.account.PlayerAccount;
+import net.warcane.lugin.core.util.Tuple;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,7 +48,7 @@ public class PunishCommand extends SimpleCommand {
 
         var target = ctx.getRawArgOrNull(0);
         if (target == null) {
-            player.sendMessage("§cOcorreu um erro...");
+            StringUtils.send(player, "<l-error>Ocorreu um erro...");
             return;
         }
 
@@ -62,17 +64,16 @@ public class PunishCommand extends SimpleCommand {
 
         BukkitPlatform.getInstance().getPlayerAccountService().getPlayerAccountByName(target).whenComplete((playerAccount, throwable) -> {
             if (throwable != null) {
-                player.sendMessage("§cOcorreu um erro ao buscar o jogador: " + throwable.getMessage());
+                StringUtils.send(player, "<l-error>Ocorreu um erro ao buscar o jogador: " + throwable.getMessage());
                 return;
             }
-
             if (playerAccount == null) {
-                player.sendMessage("§cJogador não encontrado.");
+                StringUtils.send(player, "<l-error>Jogador não encontrado.");
                 return;
             }
 
             if (Cooldown.isInCooldown(playerAccount.uniqueId(), "punished-" + id)) {
-                player.sendMessage("§cEste jogador já foi punido por este motivo recentemente. Aguarde um tempo antes de puni-lo novamente.");
+                StringUtils.send(player, "<l-error>Este jogador já foi punido por este motivo recentemente. Aguarde um tempo antes de puni-lo novamente.");
                 return;
             }
 
@@ -83,27 +84,27 @@ public class PunishCommand extends SimpleCommand {
 
     private boolean checkPunishRequest(Player player, int id, CommandContext ctx) {
         if (id == -1) {
-            player.sendMessage("§cID inválido.");
+            StringUtils.send(player, "<l-error>ID inválido.");
             return false;
         }
         PunishmentInfo punishment = PunishmentInfo.getPunishmentById(id);
         if (punishment == null) {
-            player.sendMessage("§cPunição não encontrada.");
+            StringUtils.send(player, "<l-error>Punição não encontrada.");
             return false;
         }
         if (!player.hasPermission(punishment.mustHavePermission())) {
-            player.sendMessage("§cVocê não tem permissão para punir por este motivo.");
+            StringUtils.send(player, "<l-error>Você não tem permissão para punir por este motivo.");
             return false;
         }
         boolean isNotGerente = !player.hasPermission("lugin.gerente");
         if (isNotGerente && !ctx.isArgsLength(3)) {
-            player.sendMessage("§cÉ neccessário anexar uma prova para aplicar a punição.");
+            StringUtils.send(player, "<l-error>É neccessário anexar uma prova para aplicar a punição.");
             return false;
         }
         try {
             String link = ctx.getRawArgOrNull(2);
             if (isNotGerente && !PunishManager.checkLink(link)) {
-                player.sendMessage("§cO link inserido é inválido.");
+                StringUtils.send(player, "<l-error>O link inserido é inválido.");
                 return false;
             }
         } catch (Exception e) {
@@ -114,37 +115,37 @@ public class PunishCommand extends SimpleCommand {
 
     private void handleDisplayOptions(Player player, String target) {
         BukkitPlatform.getInstance().getPlayerAccountService().getPlayerAccountByName(target).whenComplete((playerAccount, throwable) -> {
-            player.sendMessage("§ePunindo: §f" + target);
-            player.sendMessage("§e§lSelecione um motivo:");
-            player.sendMessage("");
-
             var audience = BukkitPlatform.getInstance().getAdventure().player(player);
-
+            ComponentBuilder builder = new ComponentBuilder()
+                .newLine()
+                .simple("<l-info>Punindo: " + target)
+                .newLine()
+                .simple("<l-info><l-yellow>Selecione um motivo:")
+                .newLine()
+                .newLine();
             for (PunishmentInfo punishment : PunishmentInfo.PUNISHMENTS) {
-                if (punishment == null || !player.hasPermission(punishment.mustHavePermission())) {
-                    continue;
+                if (!player.hasPermission(punishment.mustHavePermission())) continue;
+
+                List<String> lore = new ArrayList<>();
+                lore.add("");
+                lore.add("<l-white>" + punishment.description());
+                lore.add("");
+                int banCount = 1;
+                for (Tuple<PunishTime, PunishmentType> punishmentData : punishment.punishments()) {
+                    lore.add("<l-yellow>" + banCount++ + "º: <l-white>" + punishmentData.b().getTitle() + " <l-gray>(" + punishmentData.a().getTitle() + ")");
                 }
+                lore.add("");
+                lore.add("<l-white>Grupo mínimo: <l-green>" + MessageUtils.getFormatedPermission(punishment.mustHavePermission()));
 
-                var lore = "\n§f" + punishment.description() + "\n\n" +
-                    punishment.punishments().stream()
-                        .map(p -> "§e" + (punishment.punishments().indexOf(p) + 1) + "º: §f" +
-                            p.b().getTitle() + " §7(" + p.a().getTitle() + ")")
-                        .collect(Collectors.joining("\n")) +
-                    "\n\n§fGrupo mínimo: §a" + MessageUtils.getFormatedPermission(punishment.mustHavePermission());
-
-                var motivo = Component.text("§7• §f" + punishment.title())
-                    .clickEvent(ClickEvent.suggestCommand("/punir " + target + " " + punishment.id() + " "))
-                    .hoverEvent(HoverEvent.showText(Component.text(lore)));
-
-                audience.sendMessage(motivo);
+                builder.simple(" <l-gray>• ")
+                    .suggestHover("<l-white>" + punishment.title(), "/punir " + target + " " + punishment.id() + " ", lore.toArray(new String[0]));
+                builder.newLine();
             }
-
-            var cancelar = Component.text("§c§lCANCELAR: Clique aqui para cancelar")
-                .clickEvent(ClickEvent.callback(audience1 -> {
-                    player.sendMessage("\n\n\n§aAção cancelada com sucesso!\n");
-                }))
-                .hoverEvent(HoverEvent.showText(Component.text("§7Clique para cancelar a punição.")));
-            audience.sendMessage(cancelar);
+            builder.newLine();
+            builder.actionHover("  <l-red><b>CANCELAR", (audience1 -> {
+                StringUtils.send(player, "\n\n\n<l-info>Ação cancelada com sucesso!\n");
+            }), "<l-gray>Clique para cancelar a punição.");
+            builder.send(audience);
         });
     }
 

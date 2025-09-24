@@ -1,9 +1,9 @@
 package net.warcane.lugin.core.minecraft.punish.core;
 
-import net.warcane.lugin.core.minecraft.punish.data.PunishedDTO;
-import net.warcane.lugin.core.minecraft.punish.data.PunishmentInfo;
 import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.util.DiscordWebhook;
+import net.warcane.lugin.core.punish.data.PunishedDTO;
+import net.warcane.lugin.core.punish.data.PunishmentInfo;
 
 import java.awt.*;
 import java.io.BufferedWriter;
@@ -87,8 +87,8 @@ public class PunishLogger {
 
     private String punishmentToLog(PunishedDTO.Punishment punishment, String punisherName, PunishmentInfo info, String name, UUID uuid) {
         return String.format("Punindo: %s (%s) | Tipo: %s (x%d) | Evidência: %s | Punido por: %s | Duração: %s | ID: %d",
-                name, uuid, info.title(), punishment.getRepeatCount(), punishment.getEvidence(), punisherName,
-                punishment.getExpiresAtFormatted(), punishment.getId());
+            name, uuid, info.title(), punishment.getRepeatCount(), punishment.getEvidence(), punisherName,
+            punishment.getExpiresAtFormatted(), punishment.getId());
     }
 
     private DiscordWebhook.EmbedObject punishmentToEmbed(PunishedDTO.Punishment punishment, String punisherName, PunishmentInfo info, String name, UUID uuid) {
@@ -97,7 +97,7 @@ public class PunishLogger {
         embed.setTitle("Punindo: " + name + " (" + uuid + ")");
         embed.setColor(Color.RED);
 
-        embed.addField("Tipo de Punimento:", info.title() + " (x" + (punishment.getRepeatCount()+1) + ")", true);
+        embed.addField("Tipo de Punimento:", info.title() + " (x" + (punishment.getRepeatCount() + 1) + ")", true);
         embed.addField("Evidência:", punishment.getEvidence(), false);
         embed.addField("Punido por:", punisherName, false);
         embed.addField("Duração:", punishment.getExpiresAtFormatted(), false);
@@ -110,8 +110,8 @@ public class PunishLogger {
 
     private String revokeToLog(PunishedDTO.Punishment punishment, String revokerName) {
         return String.format("Revoke ID: %d | Evidência: %s | Revogado por: %s | Revogado em: %s | Motivo: %s",
-                punishment.getId(), punishment.getEvidence(), revokerName, punishment.getRevokedAtFormatted(),
-                punishment.getRevokeReason() != null ? punishment.getRevokeReason() : "Nenhum motivo fornecido");
+            punishment.getId(), punishment.getEvidence(), revokerName, punishment.getRevokedAtFormatted(),
+            punishment.getRevokeReason() != null ? punishment.getRevokeReason() : "Nenhum motivo fornecido");
     }
 
     private DiscordWebhook.EmbedObject revokeToEmbed(PunishedDTO.Punishment punishment, String revokerName) {

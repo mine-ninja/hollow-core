@@ -1,12 +1,10 @@
 package net.warcane.lugin.core.minecraft.util.message;
 
 import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickCallback;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
-import org.bukkit.entity.Player;
 
 /**
  * @author Rok, Pedro Lucas nmm. Created on 15/09/2025
