@@ -18,7 +18,7 @@ import net.warcane.lugin.core.minecraft.punish.data.*;
 import net.warcane.lugin.core.minecraft.punish.events.PlayerPunishEvents;
 import net.warcane.lugin.core.minecraft.punish.utils.MessageUtils;
 import net.warcane.lugin.core.minecraft.util.Tuple;
-import net.warcane.lugin.core.minecraft.util.StringUtils;
+import net.warcane.lugin.core.minecraft.util.message.StringUtils;
 import net.warcane.lugin.core.player.account.PlayerAccount;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;

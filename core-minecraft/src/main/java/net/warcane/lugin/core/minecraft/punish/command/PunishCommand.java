@@ -9,9 +9,9 @@ import net.warcane.lugin.core.minecraft.punish.data.PunishTime;
 import net.warcane.lugin.core.minecraft.punish.data.PunishmentInfo;
 import net.warcane.lugin.core.minecraft.punish.data.PunishmentType;
 import net.warcane.lugin.core.minecraft.punish.utils.MessageUtils;
+import net.warcane.lugin.core.minecraft.util.Cooldown;
 import net.warcane.lugin.core.minecraft.util.Tuple;
-import net.warcane.lugin.core.minecraft.util.StringUtils;
-import net.warcane.lugin.core.minecraft.util.cooldown.Cooldown;
+import net.warcane.lugin.core.minecraft.util.message.StringUtils;
 import net.warcane.lugin.core.minecraft.util.message.ComponentBuilder;
 import net.warcane.lugin.core.player.account.PlayerAccount;
 import org.bukkit.entity.Player;
@@ -139,7 +139,7 @@ public class PunishCommand extends SimpleCommand {
             builder.actionHover("  <l-red><b>CANCELAR", (audience -> {
                 StringUtils.send(player, "\n\n\n<l-info>Ação cancelada com sucesso!\n");
             }), "<l-gray>Clique para cancelar a punição.");
-            builder.send(player, true);
+            builder.send(player);
         });
     }
 
