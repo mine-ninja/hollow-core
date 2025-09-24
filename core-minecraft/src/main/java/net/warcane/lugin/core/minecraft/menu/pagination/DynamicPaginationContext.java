@@ -16,27 +16,29 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 @Slf4j
 public class DynamicPaginationContext<T> extends MenuPaginationContext<T> {
-    private Supplier<CompletableFuture<List<T>>> dataSupplier;
+    private Holder<T> holder;
     private boolean isLoading = false;
     
     public DynamicPaginationContext(Player player, Map<String, Object> rawData, MenuConfig menuConfig, SimpleMenu menu, SimpleMenuManager manager) {
         super(player, rawData, menuConfig, menu, manager);
     }
     
-    public void setPagination(char key, Supplier<CompletableFuture<List<T>>> dataSupplier, @NotNull BiFunction<Player, T, ItemStack> itemRenderer, @NotNull BiConsumer<T, InventoryClickEvent> clickHandler) {
+    public void setPagination(char key, Holder<T> holder, @NotNull BiFunction<Player, T, ItemStack> itemRenderer, @NotNull BiConsumer<T, InventoryClickEvent> clickHandler) {
         if (menuConfig.getLayout() == null) {
             throw new IllegalStateException("Menu layout is not defined.");
         }
-        this.setPagination(menuConfig.getLayout().get(key), dataSupplier, itemRenderer, clickHandler);
+        this.setPagination(menuConfig.getLayout().get(key), holder, itemRenderer, clickHandler);
     }
-    public void setPagination(int[] slots, Supplier<CompletableFuture<List<T>>> dataSupplier, @NotNull BiFunction<Player, T, ItemStack> itemRenderer, @NotNull BiConsumer<T, InventoryClickEvent> clickHandler) {
+    public void setPagination(int[] slots, Holder<T> holder, @NotNull BiFunction<Player, T, ItemStack> itemRenderer, @NotNull BiConsumer<T, InventoryClickEvent> clickHandler) {
         this.slots = IntStream.of(slots).boxed().toList();
-        this.dataSupplier = dataSupplier;
+        this.holder = holder;
         this.renderer = itemRenderer;
         this.clickHandler = clickHandler;
         this.currentPage = 0;
@@ -44,33 +46,49 @@ public class DynamicPaginationContext<T> extends MenuPaginationContext<T> {
     }
     
     public void refreshData() {
-        if (this.dataSupplier == null) {
+        if (this.holder == null) {
             throw new IllegalStateException("Data supplier for dynamic pagination is not set.");
         }
         if (this.isLoading) { return; }
         
         this.isLoading = true;
-        this.dataSupplier.get()
-            .whenCompleteAsync((objects, throwable) -> {
+        this.holder.dataSupplier.get()
+            .thenComposeAsync(objects -> {
                 this.isLoading = false;
-                if (throwable != null) {
-                    log.error("Error fetching pagination items", throwable);
-                    return;
-                }
                 if (objects == null) {
                     objects = List.of();
                 }
+                
+                objects = this.holder.onSuccess.apply(objects);
                 
                 this.pages = Lists.partition(objects, this.slots.size());
                 if (this.currentPage >= this.pages.size()) {
                     this.currentPage = Math.max(0, this.pages.size() - 1);
                 }
+                
+                return CompletableFuture.completedFuture(objects);
             }, Tasks::runAsync)
             .thenAcceptAsync(ts -> {
                 for (int slot : this.slots) {
                     this.items.remove(slot);
                 }
                 super.update();
-            }, Tasks::runSync);
+            }, Tasks::runSync)
+            .exceptionallyAsync(throwable -> {
+                this.isLoading = false;
+                this.holder.onError.accept(throwable);
+                log.error("Failed to fetch data for dynamic pagination menu", throwable);
+                return null;
+            }, Tasks::runAsync);
+    }
+    
+    public record Holder<T>(Supplier<CompletableFuture<List<T>>> dataSupplier, Function<List<T>, List<T>> onSuccess, Consumer<Throwable> onError) {
+        public static <T> Holder<T> of(Supplier<CompletableFuture<List<T>>> dataSupplier) {
+            return new Holder<>(dataSupplier, Function.identity(), throwable -> {});
+        }
+        
+        public static <T> Holder<T> of(Supplier<CompletableFuture<List<T>>> dataSupplier, Function<List<T>, List<T>> onSuccess, Consumer<Throwable> onError) {
+            return new Holder<>(dataSupplier, onSuccess, onError);
+        }
     }
 }
