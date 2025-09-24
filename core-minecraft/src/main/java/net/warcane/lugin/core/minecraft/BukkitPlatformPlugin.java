@@ -14,6 +14,7 @@ import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException
 import net.warcane.lugin.core.minecraft.compat.PAPICompat;
 import net.warcane.lugin.core.minecraft.compat.VaultCompat;
 import net.warcane.lugin.core.minecraft.plugin.SimplePlugin;
+import net.warcane.lugin.core.minecraft.punish.api.PunishManager;
 import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.server.GameServer;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
@@ -51,7 +52,9 @@ public class BukkitPlatformPlugin extends SimplePlugin {
         if (!NBT.preloadApi()) {
             this.getLogger().severe("Não foi possível carregar o NBT-API. O plugin será desativado.");
         }
-        
+
+        PunishManager.init(this);
+
         bukkitPlatform = BukkitPlatform.provide(this);
         bukkitPlatform.init();
         
