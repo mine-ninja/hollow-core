@@ -119,7 +119,6 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     private final VanishManager vanishManager;
     private final SimpleMenuManager menuManager;
     private final WhitelistService whitelistService;
-    private final BukkitAudiences adventure;
 
     @Getter private NameTagResolver nameTagResolver;
     @Getter private CentralCart centralCart;
@@ -139,7 +138,6 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         this.menuManager = new SimpleMenuManager(this);
 
         this.whitelistService = new WhitelistService(this);
-        this.adventure = BukkitAudiences.create(plugin);
 
         this.centralCart = new CentralCart();
         this.centralCart.initSocket();
@@ -261,11 +259,6 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     @NotNull
     public Plugin getPlugin() {
         return plugin;
-    }
-
-    @NotNull
-    public BukkitAudiences getAdventure() {
-        return adventure;
     }
 
     @NotNull

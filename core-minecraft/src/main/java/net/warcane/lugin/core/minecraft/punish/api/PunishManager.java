@@ -5,8 +5,10 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.ReplaceOptions;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
+import net.kyori.adventure.audience.Audience;
 import net.warcane.lugin.core.database.MongoCounterService;
 import net.warcane.lugin.core.database.MongoDbConnector;
+import net.warcane.lugin.core.minecraft.BukkitPlatformPlugin;
 import net.warcane.lugin.core.minecraft.punish.api.message.PunishMessagePubSub;
 import net.warcane.lugin.core.minecraft.punish.core.PunishLogger;
 import net.warcane.lugin.core.minecraft.punish.core.database.redis.MessageManager;
@@ -71,9 +73,10 @@ public class PunishManager {
     }
 
     public void punishPlayer(PlayerAccount target, Player punisher, PunishmentInfo punishmentInfo, String message) {
+        Audience audience = BukkitPlatformPlugin.getInstance().adventure().player(punisher);
         int nextId = MongoCounterService.get().getNextIdFor("punishment_info_id");
 
-        StringUtils.send(punisher, "<l-confirm>Punição aplicada ao jogador <l-yellow>" + target.playerName() + " <l-green> com sucesso! ID: " + nextId);
+        StringUtils.send(audience, "<l-confirm>Punição aplicada ao jogador <l-yellow>" + target.playerName() + " <l-green> com sucesso! ID: " + nextId);
 
         if (message == null) {
             message = "Não anexada.";

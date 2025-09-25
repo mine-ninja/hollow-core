@@ -2,6 +2,7 @@ package net.warcane.lugin.core.minecraft.punish.command;
 
 import net.kyori.adventure.text.event.ClickEvent;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
+import net.warcane.lugin.core.minecraft.BukkitPlatformPlugin;
 import net.warcane.lugin.core.minecraft.command.SimpleCommand;
 import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
@@ -54,7 +55,7 @@ public class CheckPunishCommand extends SimpleCommand {
     }
 
     private void showCheckPunish(Player player, PunishedDTO punished) {
-        var audience = BukkitPlatform.getInstance().getAdventure().player(player);
+        var audience = BukkitPlatformPlugin.getInstance().adventure().player(player);
         var msg = new ComponentBuilder();
         msg.newLine()
             .simple("<l-yellow>Histórico de <l-white>" + punished.getName() + "<l-yellow>:").newLine()

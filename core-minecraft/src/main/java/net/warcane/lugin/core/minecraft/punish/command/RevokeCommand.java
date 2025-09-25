@@ -2,6 +2,7 @@ package net.warcane.lugin.core.minecraft.punish.command;
 
 import net.kyori.adventure.audience.Audience;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
+import net.warcane.lugin.core.minecraft.BukkitPlatformPlugin;
 import net.warcane.lugin.core.minecraft.command.SimpleCommand;
 import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
@@ -36,7 +37,7 @@ public class RevokeCommand extends SimpleCommand {
         String reason = commandContext.getRawArgOrNull(1);
         RevokeManager.RevokeAction revokeAction = RevokeManager.RevokeAction.fromString(reason);
         if (revokeAction == null) {
-            Audience audience = BukkitPlatform.getInstance().getAdventure().player(commandContext.getSenderAsPlayer());
+            Audience audience = BukkitPlatformPlugin.getInstance().adventure().player(commandContext.getSenderAsPlayer());
             StringUtils.send(audience, "<l-red>Motivo de revogação inválido.");
             return;
         }

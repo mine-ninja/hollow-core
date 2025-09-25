@@ -1,19 +1,19 @@
 package net.warcane.lugin.core.minecraft.punish.command;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.audience.Audience;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
+import net.warcane.lugin.core.minecraft.BukkitPlatformPlugin;
 import net.warcane.lugin.core.minecraft.command.SimpleCommand;
 import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
 import net.warcane.lugin.core.minecraft.punish.api.PunishManager;
-import net.warcane.lugin.core.minecraft.task.Tasks;
-import net.warcane.lugin.core.punish.data.*;
 import net.warcane.lugin.core.minecraft.util.Cooldown;
 import net.warcane.lugin.core.minecraft.util.message.ComponentBuilder;
 import net.warcane.lugin.core.minecraft.util.message.StringUtils;
 import net.warcane.lugin.core.player.account.PlayerAccount;
+import net.warcane.lugin.core.punish.data.PunishTime;
+import net.warcane.lugin.core.punish.data.PunishmentInfo;
+import net.warcane.lugin.core.punish.data.PunishmentType;
 import net.warcane.lugin.core.punish.utils.MessageUtils;
 import net.warcane.lugin.core.util.Tuple;
 import org.bukkit.entity.Player;
@@ -64,51 +64,50 @@ public class PunishCommand extends SimpleCommand {
         }
 
         BukkitPlatform.getInstance().getPlayerAccountService().getPlayerAccountByName(target).whenComplete((playerAccount, throwable) -> {
-            Tasks.runSync(() -> {
-                if (throwable != null) {
-                    StringUtils.send(player, "<l-error>Ocorreu um erro ao buscar o jogador: " + throwable.getMessage());
-                    return;
-                }
-                if (playerAccount == null) {
-                    StringUtils.send(player, "<l-error>Jogador não encontrado.");
-                    return;
-                }
+            Audience audience = BukkitPlatformPlugin.getInstance().adventure().player(player);
+            if (throwable != null) {
+                StringUtils.send(audience, "<l-error>Ocorreu um erro ao buscar o jogador: " + throwable.getMessage());
+                return;
+            }
+            if (playerAccount == null) {
+                StringUtils.send(audience, "<l-error>Jogador não encontrado.");
+                return;
+            }
 
-                if (Cooldown.isInCooldown(playerAccount.uniqueId(), "punished-" + id)) {
-                    StringUtils.send(player, "<l-error>Este jogador já foi punido por este motivo recentemente. Aguarde um tempo antes de puni-lo novamente.");
-                    return;
-                }
+            if (Cooldown.isInCooldown(playerAccount.uniqueId(), "punished-" + id)) {
+                StringUtils.send(audience, "<l-error>Este jogador já foi punido por este motivo recentemente. Aguarde um tempo antes de puni-lo novamente.");
+                return;
+            }
 
-                PunishManager.get().punishPlayer(playerAccount, player, PunishmentInfo.getPunishmentById(id), ctx.getRawArgOrNull(2));
-                Cooldown.setCooldownSec(playerAccount.uniqueId(), 60 * 5L, "punished-" + id); // 5 minutes
-            });
-
+            PunishManager.get().punishPlayer(playerAccount, player, PunishmentInfo.getPunishmentById(id), ctx.getRawArgOrNull(2));
+            Cooldown.setCooldownSec(playerAccount.uniqueId(), 60 * 5L, "punished-" + id); // 5 minutes
         });
     }
 
     private boolean checkPunishRequest(Player player, int id, CommandContext ctx) {
+        Audience audience = BukkitPlatformPlugin.getInstance().adventure().player(player);
         if (id == -1) {
-            StringUtils.send(player, "<l-error>ID inválido.");
+            StringUtils.send(audience, "<l-error>ID inválido.");
             return false;
         }
         PunishmentInfo punishment = PunishmentInfo.getPunishmentById(id);
         if (punishment == null) {
-            StringUtils.send(player, "<l-error>Punição não encontrada.");
+            StringUtils.send(audience, "<l-error>Punição não encontrada.");
             return false;
         }
         if (!player.hasPermission(punishment.mustHavePermission())) {
-            StringUtils.send(player, "<l-error>Você não tem permissão para punir por este motivo.");
+            StringUtils.send(audience, "<l-error>Você não tem permissão para punir por este motivo.");
             return false;
         }
         boolean isNotGerente = !player.hasPermission("lugin.gerente");
         if (isNotGerente && !ctx.isArgsLength(3)) {
-            StringUtils.send(player, "<l-error>É neccessário anexar uma prova para aplicar a punição.");
+            StringUtils.send(audience, "<l-error>É neccessário anexar uma prova para aplicar a punição.");
             return false;
         }
         try {
             String link = ctx.getRawArgOrNull(2);
             if (isNotGerente && !PunishManager.checkLink(link)) {
-                StringUtils.send(player, "<l-error>O link inserido é inválido.");
+                StringUtils.send(audience, "<l-error>O link inserido é inválido.");
                 return false;
             }
         } catch (Exception e) {
@@ -118,8 +117,8 @@ public class PunishCommand extends SimpleCommand {
     }
 
     private void handleDisplayOptions(Player player, String target) {
+        Audience audience = BukkitPlatformPlugin.getInstance().adventure().player(player);
         BukkitPlatform.getInstance().getPlayerAccountService().getPlayerAccountByName(target).whenComplete((playerAccount, throwable) -> {
-            var audience = BukkitPlatform.getInstance().getAdventure().player(player);
             ComponentBuilder builder = new ComponentBuilder()
                 .newLine()
                 .simple("<l-info>Punindo: " + target)
