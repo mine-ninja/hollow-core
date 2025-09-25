@@ -26,11 +26,15 @@ public enum AdventureFormatters {
     LUGIN_BLACK("l-black", "<#000000>"),
     LUGIN_CYAN("l-cyan", "<#00ffff>"),
 
-    LUGIN_CONFIRM("l-negate", "<#8a8a8a>[<#ff272a>✖<#8a8a8a>] <red>"),
-    LUGIN_NEGATE("l-confirm", "<#8a8a8a>[<#00fb9a><bold>✔</bold><#8a8a8a>] <#00fb9a>"),
+    LUGIN_NEGATE("l-negate", "<#8a8a8a>[<#ff272a>✖<#8a8a8a>] <red>"),
+    LUGIN_DENY("l-deny", LUGIN_NEGATE),
+    LUGIN_CONFIRM("l-confirm", "<#8a8a8a>[<#00fb9a><bold>✔</bold><#8a8a8a>] <#00fb9a>"),
+    LUGIN_ACCEPT("l-accept", LUGIN_CONFIRM),
+    LUGIN_CHECK("l-check", LUGIN_CONFIRM),
     LUGIN_LOADING("l-loading", "<#8a8a8a>[<#f7e300>⌛<#8a8a8a>] <yellow>"),
     LUGIN_INFO("l-info", "<#8a8a8a>[<#00a2ff><bold>▶</bold><#8a8a8a>] <gray>"),
     LUGIN_SWORD("l-sword", "<#8a8a8a>[<white>🗡<#8a8a8a>] <gray>"),
+    LUGIN_KILL("l-kill", LUGIN_SWORD),
     LUGIN_SKULL("l-skull", "<#8a8a8a>[<#ff272a>☠<#8a8a8a>] <red>"),
     LUGIN_ERROR("l-error", "<#8a8a8a>[<dark_red>☠<#8a8a8a>] <dark_red>"),
     LUGIN_MESSAGE("l-message", "<#8a8a8a>[<yellow>✉<#8a8a8a>] <yellow>"),
@@ -44,6 +48,12 @@ public enum AdventureFormatters {
         this.key = key;
         this.value = value;
         this.selfClosing = false;
+    }
+
+    AdventureFormatters(String key, AdventureFormatters other) {
+        this.key = key;
+        this.value = other.value;
+        this.selfClosing = other.selfClosing;
     }
 
     public static void init() {

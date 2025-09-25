@@ -7,8 +7,11 @@ import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.title.Title;
+import net.warcane.lugin.core.minecraft.BukkitPlatformPlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
@@ -127,6 +130,14 @@ public class StringUtils {
 
     public static void send(Audience audience, String message, boolean logError, boolean forceSerialization) {
         audience.sendMessage(text(message, logError, forceSerialization));
+    }
+
+    public static void send(Player player, String message) {
+        send(BukkitPlatformPlugin.getInstance().adventure().player(player), message);
+    }
+
+    public static void send(Player player, String message, boolean logError, boolean forceSerialization) {
+        send(BukkitPlatformPlugin.getInstance().adventure().player(player), message, logError, forceSerialization);
     }
 
 
