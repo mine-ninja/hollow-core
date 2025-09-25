@@ -8,6 +8,7 @@ import net.warcane.lugin.core.minecraft.command.SimpleCommand;
 import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
 import net.warcane.lugin.core.minecraft.punish.api.PunishManager;
+import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.punish.data.*;
 import net.warcane.lugin.core.minecraft.util.Cooldown;
 import net.warcane.lugin.core.minecraft.util.message.ComponentBuilder;
@@ -63,22 +64,25 @@ public class PunishCommand extends SimpleCommand {
         }
 
         BukkitPlatform.getInstance().getPlayerAccountService().getPlayerAccountByName(target).whenComplete((playerAccount, throwable) -> {
-            if (throwable != null) {
-                StringUtils.send(player, "<l-error>Ocorreu um erro ao buscar o jogador: " + throwable.getMessage());
-                return;
-            }
-            if (playerAccount == null) {
-                StringUtils.send(player, "<l-error>Jogador não encontrado.");
-                return;
-            }
+            Tasks.runSync(() -> {
+                if (throwable != null) {
+                    StringUtils.send(player, "<l-error>Ocorreu um erro ao buscar o jogador: " + throwable.getMessage());
+                    return;
+                }
+                if (playerAccount == null) {
+                    StringUtils.send(player, "<l-error>Jogador não encontrado.");
+                    return;
+                }
 
-            if (Cooldown.isInCooldown(playerAccount.uniqueId(), "punished-" + id)) {
-                StringUtils.send(player, "<l-error>Este jogador já foi punido por este motivo recentemente. Aguarde um tempo antes de puni-lo novamente.");
-                return;
-            }
+                if (Cooldown.isInCooldown(playerAccount.uniqueId(), "punished-" + id)) {
+                    StringUtils.send(player, "<l-error>Este jogador já foi punido por este motivo recentemente. Aguarde um tempo antes de puni-lo novamente.");
+                    return;
+                }
 
-            PunishManager.get().punishPlayer(playerAccount, player, PunishmentInfo.getPunishmentById(id), ctx.getRawArgOrNull(2));
-            Cooldown.setCooldownSec(playerAccount.uniqueId(), 60 * 5L, "punished-" + id); // 5 minutes
+                PunishManager.get().punishPlayer(playerAccount, player, PunishmentInfo.getPunishmentById(id), ctx.getRawArgOrNull(2));
+                Cooldown.setCooldownSec(playerAccount.uniqueId(), 60 * 5L, "punished-" + id); // 5 minutes
+            });
+
         });
     }
 
