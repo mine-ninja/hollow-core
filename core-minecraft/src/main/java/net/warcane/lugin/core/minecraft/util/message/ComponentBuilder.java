@@ -42,7 +42,7 @@ public class ComponentBuilder {
         for (String s : hover) {
             hoverComp = hoverComp.append(StringUtils.text(s)).append(Component.text("\n"));
         }
-        this.msg = this.msg.append(StringUtils.text(msg)).hoverEvent(HoverEvent.showText(hoverComp));
+        this.msg = this.msg.append(StringUtils.text(msg).hoverEvent(HoverEvent.showText(hoverComp)));
         return this;
     }
 

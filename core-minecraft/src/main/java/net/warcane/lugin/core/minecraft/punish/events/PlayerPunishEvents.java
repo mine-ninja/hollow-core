@@ -1,5 +1,6 @@
 package net.warcane.lugin.core.minecraft.punish.events;
 
+import io.papermc.paper.event.player.AsyncChatEvent;
 import io.papermc.paper.event.player.ChatEvent;
 import net.warcane.lugin.core.minecraft.punish.api.PunishManager;
 import net.warcane.lugin.core.minecraft.util.message.StringUtils;
@@ -11,10 +12,7 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerPreLoginEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.*;
 
 import java.util.UUID;
 
@@ -83,6 +81,12 @@ public class PlayerPunishEvents implements Listener {
         PunishManager.get().unloadPlayer(player);
     }
 
+    @EventHandler
+    public void onPlayerChatEvent(AsyncPlayerChatEvent event) {
+        Player player = event.getPlayer();
+        PunishedDTO dto = PunishManager.get().getCachedPlayer(player.getUniqueId());
+        muteReply(player, dto, event);
+    }
     /*@EventHandler
     public void onPlayerTell(TellEvent event) {
         Player player = event.getPlayer();
