@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.audience.Audience;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
+import net.warcane.lugin.core.minecraft.BukkitPlatformPlugin;
 import net.warcane.lugin.core.minecraft.util.message.ComponentBuilder;
 import net.warcane.lugin.core.minecraft.util.message.StringUtils;
 import net.warcane.lugin.core.punish.data.PunishedDTO;
@@ -47,7 +48,7 @@ public class RevokeManager {
     }
 
     private void manageRevokeSession(Player player, PunishedDTO.Punishment punishment) {
-        Audience audience = BukkitPlatform.getInstance().getAdventure().player(player);
+        Audience audience = BukkitPlatformPlugin.getInstance().adventure().player(player);
         ComponentBuilder msg = ComponentBuilder.of();
         msg.newLine().newLine();
         msg.simple("<l-yellow>Selecione um motivo:");
@@ -74,7 +75,7 @@ public class RevokeManager {
     }
 
     private void applyRevoke(Player player, PunishedDTO.Punishment punishment, RevokeAction action) {
-        Audience audience = BukkitPlatform.getInstance().getAdventure().player(player);
+        Audience audience = BukkitPlatformPlugin.getInstance().adventure().player(player);
         UUID uniqueId = player.getUniqueId();
 
         punishment.setRevokerUuid(uniqueId);
@@ -91,7 +92,7 @@ public class RevokeManager {
 
 
     private boolean checkPunishCanBeRevoked(Player player, PunishedDTO.Punishment punishment) {
-        Audience audience = BukkitPlatform.getInstance().getAdventure().player(player);
+        Audience audience = BukkitPlatformPlugin.getInstance().adventure().player(player);
         final long timeWhenApplied = punishment.getAppliedAt();
         // 3 hours to revoke
         final boolean revokeExpiredTime = System.currentTimeMillis() - timeWhenApplied > (3 * 60 * 60 * 1000);
