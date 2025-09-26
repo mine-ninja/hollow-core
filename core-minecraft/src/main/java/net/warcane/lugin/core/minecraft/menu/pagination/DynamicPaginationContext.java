@@ -53,33 +53,34 @@ public class DynamicPaginationContext<T> extends MenuPaginationContext<T> {
         
         this.isLoading = true;
         this.holder.dataSupplier.get()
-            .thenComposeAsync(objects -> {
-                this.isLoading = false;
-                if (objects == null) {
-                    objects = List.of();
-                }
-                
-                objects = this.holder.onSuccess.apply(objects);
-                
-                this.pages = Lists.partition(objects, this.slots.size());
-                if (this.currentPage >= this.pages.size()) {
-                    this.currentPage = Math.max(0, this.pages.size() - 1);
-                }
-                
-                return CompletableFuture.completedFuture(objects);
-            }, Tasks::runAsync)
-            .thenAcceptAsync(ts -> {
-                for (int slot : this.slots) {
-                    this.items.remove(slot);
-                }
-                super.update();
-            }, Tasks::runSync)
-            .exceptionallyAsync(throwable -> {
-                this.isLoading = false;
-                this.holder.onError.accept(throwable);
-                log.error("Failed to fetch data for dynamic pagination menu", throwable);
-                return null;
-            }, Tasks::runAsync);
+            .thenApplyAsync(this::handleSuccess, Tasks::runAsync)
+            .handleAsync(this::handleComplete, Tasks::runSync);
+    }
+
+    private List<T> handleSuccess(List<T> data) {
+        if (data == null) data = List.of();
+        data = this.holder.onSuccess.apply(data);
+
+        this.pages = Lists.partition(data, this.slots.size());
+        if (this.currentPage >= this.pages.size()) {
+            this.currentPage = Math.max(0, this.pages.size() - 1);
+        }
+
+        return data;
+    }
+
+    private Void handleComplete(List<T> data, Throwable throwable) {
+        this.isLoading = false;
+        if (throwable != null) {
+            this.holder.onError.accept(throwable);
+            log.error("Failed to fetch data for dynamic pagination menu", throwable);
+        } else {
+            for (int slot : this.slots) {
+                this.items.remove(slot);
+            }
+            super.update();
+        }
+        return null;
     }
     
     public record Holder<T>(Supplier<CompletableFuture<List<T>>> dataSupplier, Function<List<T>, List<T>> onSuccess, Consumer<Throwable> onError) {

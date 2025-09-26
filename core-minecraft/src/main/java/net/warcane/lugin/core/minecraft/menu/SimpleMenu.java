@@ -36,6 +36,10 @@ public abstract class SimpleMenu {
         // The default implementation does nothing.
     }
     
+    public Map<UUID, PlayerMenuContext> playerContexts() {
+        return playerContexts;
+    }
+    
     @NotNull
     public MenuConfig getDefaultConfig() {
         return defaultConfig;
@@ -51,7 +55,7 @@ public abstract class SimpleMenu {
         final var openHandler = new MenuConfig(defaultConfig);
         
         final PlayerMenuContext ctx = new PlayerMenuContext(player, initialData, openHandler, this, manager);
-        if (!this.onPreOpen(ctx, openHandler)) return;
+        if (!this.onPreOpen(ctx, openHandler)) { return; }
         
         ctx.initialize();
         playerContexts.put(player.getUniqueId(), ctx);

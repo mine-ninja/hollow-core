@@ -9,10 +9,9 @@ import org.bukkit.inventory.InventoryHolder;
  * @project lugin-core
  */
 public interface MenuContext extends InventoryHolder {
-
-    public MenuConfig getMenuConfig();
-
-    public Stopwatch getStopwatch();
-
-    public void update();
+    MenuConfig getMenuConfig();
+    
+    Stopwatch getStopwatch();
+    
+    void update();
 }
