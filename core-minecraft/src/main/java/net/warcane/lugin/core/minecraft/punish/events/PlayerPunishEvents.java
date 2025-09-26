@@ -98,29 +98,6 @@ public class PlayerPunishEvents implements Listener {
         PunishManager.get().unloadPlayer(player);
     }
 
-
-    /*@EventHandler
-    public void onPlayerTell(TellEvent event) {
-        Player player = event.getPlayer();
-        PunishedDTO dto = PunishManager.get().getCachedPlayer(player.getUniqueId());
-        muteReply(player, dto, event);
-    }
-
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void onPlayerChatGlobal(ChatLocalEvent event) {
-        Player player = event.getPlayer();
-        PunishedDTO dto = PunishManager.get().getCachedPlayer(player.getUniqueId());
-        muteReply(player, dto, event);
-    }
-
-
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void onPlayerChatLocal(ChatGlobalEvent event) {
-        Player player = event.getPlayer();
-        PunishedDTO dto = PunishManager.get().getCachedPlayer(player.getUniqueId());
-        muteReply(player, dto, event);
-    }*/
-
     @EventHandler(ignoreCancelled = true)
     public void onPlayerChatEvent(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
