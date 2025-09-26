@@ -64,7 +64,7 @@ public class PunishCommand extends SimpleCommand {
         }
 
         BukkitPlatform.getInstance().getPlayerAccountService().getPlayerAccountByName(target).whenComplete((playerAccount, throwable) -> {
-            Audience audience = BukkitPlatformPlugin.getInstance().adventure().player(player);
+            var audience = BukkitPlatformPlugin.getInstance().adventure().player(player);
             if (throwable != null) {
                 StringUtils.send(audience, "<l-error>Ocorreu um erro ao buscar o jogador: " + throwable.getMessage());
                 return;
@@ -85,12 +85,12 @@ public class PunishCommand extends SimpleCommand {
     }
 
     private boolean checkPunishRequest(Player player, int id, CommandContext ctx) {
-        Audience audience = BukkitPlatformPlugin.getInstance().adventure().player(player);
+        var audience = BukkitPlatformPlugin.getInstance().adventure().player(player);
         if (id == -1) {
             StringUtils.send(audience, "<l-error>ID inválido.");
             return false;
         }
-        PunishmentInfo punishment = PunishmentInfo.getPunishmentById(id);
+        var punishment = PunishmentInfo.getPunishmentById(id);
         if (punishment == null) {
             StringUtils.send(audience, "<l-error>Punição não encontrada.");
             return false;
@@ -99,13 +99,13 @@ public class PunishCommand extends SimpleCommand {
             StringUtils.send(audience, "<l-error>Você não tem permissão para punir por este motivo.");
             return false;
         }
-        boolean isNotGerente = !player.hasPermission("lugin.gerente");
+        var isNotGerente = !player.hasPermission("lugin.gerente");
         if (isNotGerente && !ctx.isArgsLength(3)) {
-            StringUtils.send(audience, "<l-error>É neccessário anexar uma prova para aplicar a punição.");
+                        StringUtils.send(audience, "<l-error>É necessário anexar uma prova para aplicar a punição.");
             return false;
         }
         try {
-            String link = ctx.getRawArgOrNull(2);
+            var link = ctx.getRawArgOrNull(2);
             if (isNotGerente && !PunishManager.checkLink(link)) {
                 StringUtils.send(audience, "<l-error>O link inserido é inválido.");
                 return false;
@@ -117,33 +117,44 @@ public class PunishCommand extends SimpleCommand {
     }
 
     private void handleDisplayOptions(Player player, String target) {
-        Audience audience = BukkitPlatformPlugin.getInstance().adventure().player(player);
-        BukkitPlatform.getInstance().getPlayerAccountService().getPlayerAccountByName(target).whenComplete((playerAccount, throwable) -> {
-            ComponentBuilder builder = new ComponentBuilder()
+        var audience = BukkitPlatformPlugin.getInstance().adventure().player(player);
+        BukkitPlatform.getInstance().getPlayerAccountService().getPlayerAccountByName(target)
+            .whenComplete((playerAccount, throwable) -> {
+            var builder = new ComponentBuilder()
                 .newLine()
                 .simple("<l-info>Punindo: " + target)
                 .newLine()
                 .simple("<l-info><l-yellow>Selecione um motivo:")
                 .newLine()
                 .newLine();
-            for (PunishmentInfo punishment : PunishmentInfo.PUNISHMENTS) {
-                if (!player.hasPermission(punishment.mustHavePermission())) continue;
 
-                List<String> lore = new ArrayList<>();
-                lore.add("");
-                lore.add("<l-white>" + punishment.description());
-                lore.add("");
-                int banCount = 1;
-                for (Tuple<PunishTime, PunishmentType> punishmentData : punishment.punishments()) {
+            for (PunishmentInfo punishment : PunishmentInfo.PUNISHMENTS) {
+                if (!player.hasPermission(punishment.mustHavePermission())) {
+                   continue;
+                }
+
+                var lore = new ArrayList<>(List.of(
+                    "",
+                    "<l-white>" + punishment.description(),
+                    ""
+                ));
+
+                var banCount = 1;
+                for (var punishmentData : punishment.punishments()) {
                     lore.add("<l-yellow>" + banCount++ + "º: <l-white>" + punishmentData.b().getTitle() + " <l-gray>(" + punishmentData.a().getTitle() + ")");
                 }
-                lore.add("");
-                lore.add("<l-white>Grupo mínimo: <l-green>" + MessageUtils.getFormatedPermission(punishment.mustHavePermission()));
 
-                builder.simple(" <l-gray>• ")
-                    .suggestHover("<l-white>" + punishment.title(), "/punir " + target + " " + punishment.id() + " ", lore.toArray(new String[0]));
-                builder.newLine();
+                lore.addAll(List.of(
+                    "",
+                    "<l-white>Grupo mínimo: <l-green>" + MessageUtils.getFormatedPermission(punishment.mustHavePermission())
+                ));
+
+                builder
+                    .simple(" <l-gray>• ")
+                    .suggestHover("<l-white>" + punishment.title(), "/punir " + target + " " + punishment.id(), lore.toArray(new String[0]))
+                    .newLine();
             }
+
             builder.newLine();
             builder.actionHover("  <l-red><b>CANCELAR", (audience1 -> {
                 StringUtils.send(player, "\n\n\n<l-info>Ação cancelada com sucesso!\n");

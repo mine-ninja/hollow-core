@@ -107,8 +107,8 @@ public class PunishManager {
     }
 
     private CompletableFuture<PunishedDTO.Punishment> createOrAddNewPunish(PlayerAccount target, PunishmentInfo punishInfo, String proofLink, Player punisher, int id) {
-        UUID uuid = target.uniqueId();
-        CompletableFuture<PunishedDTO.Punishment> completableFuture = new CompletableFuture<>();
+        var uuid = target.uniqueId();
+        var completableFuture = new CompletableFuture<PunishedDTO.Punishment>();
 
         getPunishedPlayer(uuid).whenComplete((punished, e) -> {
             if (e != null) {
@@ -120,21 +120,26 @@ public class PunishManager {
             if (punished == null) {
                 punished = new PunishedDTO(target.playerName(), uuid, new ArrayList<>());
             } else {
-                for (PunishedDTO.Punishment p : punished.getPunishments()) {
-                    if (p.getPunishmentInfoId() != punishInfo.id()) continue;
-                    if (p.getStatus() == PunishmentStatus.REVOKED) continue;
+                for (var p : punished.getPunishments()) {
+                    if (p.getPunishmentInfoId() != punishInfo.id()) {
+                        continue;
+                    }
+
+                    if (p.getStatus() == PunishmentStatus.REVOKED) {
+                        continue;
+                    }
                     repeatCount++;
                 }
             }
 
-            Tuple<PunishTime, PunishmentType> punishmentTimeAndType = punishInfo.getPunishment(repeatCount);
-            long timePunished = punishmentTimeAndType.a().getTimeInMilliseconds();
+            var punishmentTimeAndType = punishInfo.getPunishment(repeatCount);
+            var timePunished = punishmentTimeAndType.a().getTimeInMilliseconds();
             if (timePunished > 0) {
                 timePunished = System.currentTimeMillis() + timePunished;
             }
 
-            Player player = Bukkit.getPlayer(uuid); // Todo: Ask Matheus to save ip address in PlayerAccount
-            String ipAddress = player != null ? player.getAddress().getHostString() : "unknown";
+            var player = Bukkit.getPlayer(uuid); // Todo: Ask Matheus to save ip address in PlayerAccount
+            var ipAddress = player != null ? player.getAddress().getHostString() : "unknown";
             PunishedDTO.Punishment punishment = new PunishedDTO.Punishment(
                 id,
                 ipAddress,
@@ -167,9 +172,7 @@ public class PunishManager {
     }
 
     public CompletableFuture<PunishedDTO> getPunishedPlayer(UUID uuid) {
-        return CompletableFuture.supplyAsync(() ->
-                collection.find(Filters.eq("uuid", uuid)).first()
-            , SHARED_EXECUTOR);
+        return CompletableFuture.supplyAsync(() -> collection.find(Filters.eq("uuid", uuid)).first(), SHARED_EXECUTOR);
     }
 
     public CompletableFuture<PunishedDTO> getPunishedPlayer(String name) {
@@ -218,7 +221,7 @@ public class PunishManager {
             }
 
             for (int i = 0; i < punished.getPunishments().size(); i++) {
-                PunishedDTO.Punishment punishment = punished.getPunishments().get(i);
+                var punishment = punished.getPunishments().get(i);
                 if (punishment.getId() == id) {
                     punished.getPunishments().set(i, updatedPunishment);
                     break;

@@ -25,22 +25,25 @@ public class RevokeCommand extends SimpleCommand {
 
     @Override
     public void performCommand(CommandContext commandContext) throws CommandFailedException {
-        boolean isOnlyOneArg = commandContext.isArgsLength(1);
+        var isOnlyOneArg = commandContext.isArgsLength(1);
         if (!isOnlyOneArg && !commandContext.isArgsLength(2)) {
             throw new CommandFailedException("§cUso correto: /revoke <id>");
         }
-        int punishmentId = commandContext.getIntOrDefault(0, -1);
+
+        var punishmentId = commandContext.getIntOrDefault(0, -1);
         if (isOnlyOneArg) {
             RevokeManager.get().startRevokeSession(commandContext.getSenderAsPlayer(), punishmentId, null);
             return;
         }
-        String reason = commandContext.getRawArgOrNull(1);
-        RevokeManager.RevokeAction revokeAction = RevokeManager.RevokeAction.fromString(reason);
+
+        var reason = commandContext.getRawArgOrNull(1);
+        var revokeAction = RevokeManager.RevokeAction.fromString(reason);
         if (revokeAction == null) {
-            Audience audience = BukkitPlatformPlugin.getInstance().adventure().player(commandContext.getSenderAsPlayer());
+            var audience = BukkitPlatformPlugin.getInstance().adventure().player(commandContext.getSenderAsPlayer());
             StringUtils.send(audience, "<l-red>Motivo de revogação inválido.");
             return;
         }
+
         RevokeManager.get().startRevokeSession(commandContext.getSenderAsPlayer(), punishmentId, revokeAction);
     }
 }

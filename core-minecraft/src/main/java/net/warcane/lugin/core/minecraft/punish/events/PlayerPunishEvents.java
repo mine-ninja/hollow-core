@@ -1,6 +1,5 @@
 package net.warcane.lugin.core.minecraft.punish.events;
 
-import io.papermc.paper.event.player.AsyncChatEvent;
 import io.papermc.paper.event.player.ChatEvent;
 import net.warcane.lugin.core.minecraft.punish.api.PunishManager;
 import net.warcane.lugin.core.minecraft.util.message.StringUtils;
@@ -24,47 +23,64 @@ public class PlayerPunishEvents implements Listener {
 
     @EventHandler
     public void onPlayerJoin(AsyncPlayerPreLoginEvent event) {
-        UUID uuid = event.getUniqueId();
-        PunishedDTO punishedDTO = PunishManager.get().getPunishedPlayer(uuid).join();
-        if (punishedDTO == null) return;
+        var uuid = event.getUniqueId();
+        var punishedDTO = PunishManager.get().getPunishedPlayer(uuid).join();
+
+        if (punishedDTO == null) {
+            return;
+        }
+
         Tuple<PunishTime, PunishmentType> highestPunishment = null;
         PunishedDTO.Punishment punishmentFinal = null;
-        String motive = "";
-        for (PunishedDTO.Punishment punishment : punishedDTO.getPunishments()) {
-            if (punishment.getStatus() != PunishmentStatus.ACTIVE) continue;
-            long timeToExpire = punishment.getExpiresAt() - System.currentTimeMillis();
 
-            PunishmentInfo punishmentInfo = PunishmentInfo.getPunishmentById(punishment.getPunishmentInfoId());
-            Tuple<PunishTime, PunishmentType> punishInfo = punishmentInfo.getPunishment(punishment.getRepeatCount());
+        var motive = "";
 
-            if (punishInfo.b() == PunishmentType.MUTE) continue;
+        for (var punishment : punishedDTO.getPunishments()) {
+            if (punishment.getStatus() != PunishmentStatus.ACTIVE) {
+                continue;
+            }
 
-            if (punishInfo.a().getTimeInMilliseconds() == -1) {
+            var timeToExpire = punishment.getExpiresAt() - System.currentTimeMillis();
+
+            var punishmentInfo = PunishmentInfo.getPunishmentById(punishment.getPunishmentInfoId());
+            var punishInfo = punishmentInfo.getPunishment(punishment.getRepeatCount());
+
+            if (punishInfo.b() == PunishmentType.MUTE) {
+                continue;
+            }
+
+            if (punishInfo.b() == PunishmentType.PERM) {
                 highestPunishment = punishInfo;
                 punishmentFinal = punishment;
                 motive = punishmentInfo.title();
                 break;
             }
+
             if (highestPunishment == null) {
                 highestPunishment = punishInfo;
                 punishmentFinal = punishment;
                 motive = punishmentInfo.title();
                 continue;
             }
+
             if (timeToExpire <= 0) {
                 punishment.setStatus(PunishmentStatus.EXPIRED);
                 PunishManager.get().updatePunishmentStatus(punishment.getId(), punishment);
                 continue;
             }
+
             if (highestPunishment.a().getTimeInMilliseconds() < punishInfo.a().getTimeInMilliseconds()) {
                 highestPunishment = punishInfo;
                 punishmentFinal = punishment;
                 motive = punishmentInfo.title();
             }
         }
-        if (highestPunishment == null) return;
 
-        String message = getBannedPlayerMessage(highestPunishment, motive, punishmentFinal);
+        if (highestPunishment == null) {
+            return;
+        }
+
+        var message = getBannedPlayerMessage(highestPunishment, motive, punishmentFinal);
         event.kickMessage(StringUtils.text(message));
         event.setResult(PlayerPreLoginEvent.Result.KICK_BANNED);
     }
@@ -115,45 +131,44 @@ public class PlayerPunishEvents implements Listener {
         PlayerPunishEvents.muteReply(event.getPlayer(), dto, event);
     }
 
-
     public static void muteReply(Player player, PunishedDTO dto, Cancellable event) {
-        if (dto != null) {
-            for (PunishedDTO.Punishment punishment : dto.getPunishments()) {
-                long timeToExpire = punishment.getExpiresAt() - System.currentTimeMillis();
-                if (timeToExpire <= 0 && punishment.getStatus() == PunishmentStatus.ACTIVE) {
-                    punishment.setStatus(PunishmentStatus.EXPIRED);
-                    PunishManager.get().updatePunishmentStatus(punishment.getId(), punishment);
-                    continue;
-                }
-
-                if (punishment.getStatus() == PunishmentStatus.ACTIVE) {
-                    PunishmentInfo punishmentById = PunishmentInfo.getPunishmentById(punishment.getPunishmentInfoId());
-
-                    int count = punishment.getRepeatCount();
-
-                    if (punishmentById.getPunishment(count).b() == PunishmentType.MUTE) {
-                        event.setCancelled(true);
-
-                        String time = MessageUtils.formatMilliseconds(timeToExpire);
-
-                        player.sendMessage(" ");
-                        player.sendMessage("§cVocê está silenciado. Sua punição irá expirar em " + time);
-                        player.sendMessage(" ");
-                        player.sendMessage("§c * Motivo: " + punishmentById.title());
-                        player.sendMessage("§c * Prova: " + punishment.getEvidence());
-                        player.sendMessage("§c * ID: #" + punishment.getId());
-                        player.sendMessage(" ");
-                        player.sendMessage("§cCaso ache que a sua punição tenha sido aplicada de maneira incorreta acesse §ediscord.gg/lugin§c para criar uma revisão.");
-                        player.sendMessage(" ");
-                    }
-                }
-            }
-        } else {
+       if (dto == null) {
             event.setCancelled(true);
             player.sendMessage("§cSua conta não foi carregada completamente. Espere alguns segundos.");
+            return;
+        }
+
+        for (var punishment : dto.getPunishments()) {
+            var timeToExpire = punishment.getExpiresAt() - System.currentTimeMillis();
+            if (timeToExpire <= 0 && punishment.getStatus() == PunishmentStatus.ACTIVE) {
+                punishment.setStatus(PunishmentStatus.EXPIRED);
+                PunishManager.get().updatePunishmentStatus(punishment.getId(), punishment);
+                continue;
+            }
+
+            if (punishment.getStatus() == PunishmentStatus.ACTIVE) {
+                var punishmentById = PunishmentInfo.getPunishmentById(punishment.getPunishmentInfoId());
+
+                var count = punishment.getRepeatCount();
+
+                if (punishmentById.getPunishment(count).b() == PunishmentType.MUTE) {
+                    event.setCancelled(true);
+
+                    var time = MessageUtils.formatMilliseconds(timeToExpire);
+
+                    player.sendMessage(" ");
+                    player.sendMessage("§cVocê está silenciado. Sua punição irá expirar em " + time);
+                    player.sendMessage(" ");
+                    player.sendMessage("§c * Motivo: " + punishmentById.title());
+                    player.sendMessage("§c * Prova: " + punishment.getEvidence());
+                    player.sendMessage("§c * ID: #" + punishment.getId());
+                    player.sendMessage(" ");
+                    player.sendMessage("§cCaso ache que a sua punição tenha sido aplicada de maneira incorreta acesse §ediscord.gg/lugin§c para criar uma revisão.");
+                    player.sendMessage(" ");
+                }
+            }
         }
     }
-
 
     private String getBannedPlayerMessage(Tuple<PunishTime, PunishmentType> punishmentType, String motive, PunishedDTO.Punishment punishment) {
         StringBuilder sb = new StringBuilder("<l-blue><bold>LUGIN</bold>\n");

@@ -69,7 +69,7 @@ public class PunishedDTO {
         @JsonIgnore
         @BsonIgnore
         public String getExpiresAtFormatted() {
-            if (expiresAt == -1) {
+            if (expiresAt <= 0) {
                 return "Permanente";
             }
             return MessageUtils.getFormattedTime(expiresAt);
@@ -113,7 +113,6 @@ public class PunishedDTO {
             punishment.setStatus(status);
             punishment.setRevokedAt(revokedAt);
             punishment.setRevokeReason(revokeReason);
-
 
             return punishment;
         }

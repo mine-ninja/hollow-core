@@ -6,6 +6,9 @@ import net.warcane.lugin.core.punish.data.PunishmentType;
 import net.warcane.lugin.core.util.Tuple;
 
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 /**
  * @author Rok, Pedro Lucas nmm. Created on 30/06/2025
@@ -13,14 +16,20 @@ import java.text.SimpleDateFormat;
  */
 public class MessageUtils {
 
+    public static final ZoneId ZONE = ZoneId.of("America/Sao_Paulo");
+
     public static String getFormattedTime(long timeInMillis) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy 'às' HH:mm");
-        return dateFormat.format(timeInMillis);
+        var dateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm");
+        return formatDate(Instant.ofEpochMilli(timeInMillis), dateFormat);
     }
 
-    public static String getFromattedTimeSimple(long timeInMillis) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-        return dateFormat.format(timeInMillis);
+    public static String getFormattedTimeSimple(long timeInMillis) {
+        var dateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        return formatDate(Instant.ofEpochMilli(timeInMillis), dateFormat);
+    }
+
+    public static String formatDate(Instant instant, DateTimeFormatter formatter) {
+        return formatter.withZone(ZONE).format(instant);
     }
 
     public static String formatMilliseconds(long milliseconds) {
@@ -64,7 +73,7 @@ public class MessageUtils {
             punishment.getId() + "§c.\n";
     }
 
-    public static String getFormatedPermission(String permission) {
+    public static String getFormattedPermission(String permission) {
         return switch (permission) {
             case "lugin.helper" -> "<l-green>Ajudante";
             case "lugin.moderator" -> "<l-blue>Moderador";

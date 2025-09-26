@@ -25,7 +25,7 @@ public class PlayerListener {
 
         var motive = "";
 
-        for (PunishedDTO.Punishment punishment : punishedDTO.getPunishments()) {
+        for (var punishment : punishedDTO.getPunishments()) {
             if (punishment.getStatus() != PunishmentStatus.ACTIVE) {
                 continue;
             }
@@ -36,6 +36,7 @@ public class PlayerListener {
             if (punishInfo.b() == PunishmentType.MUTE) {
                 continue;
             }
+
             if (punishInfo.b() == PunishmentType.PERM) {
                 highestPunishment = punishInfo;
                 punishmentFinal = punishment;

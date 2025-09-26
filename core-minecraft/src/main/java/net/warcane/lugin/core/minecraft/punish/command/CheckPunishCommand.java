@@ -37,67 +37,69 @@ public class CheckPunishCommand extends SimpleCommand {
         if (!ctx.isArgsLength(1)) {
             throw new CommandFailedException("§cUso correto: /checkpunir <player>");
         }
-        Player player = ctx.getSenderAsPlayer();
 
-        PunishManager.get().getPunishedPlayer(ctx.getRawArgOrThrow(0, "§cJogador não encontrado.")).whenComplete((punished, e) -> {
-            Tasks.runAsync(() -> {
+        var player = ctx.getSenderAsPlayer();
+        var playerName = ctx.getRawArgOrThrow(0, "§cJogador não encontrado.");
+
+        PunishManager.get().getPunishedPlayer(playerName)
+            .whenComplete((punished, e) -> Tasks.runAsync(() -> {
                 if (e != null) {
                     ctx.getSenderAsPlayer().sendMessage("§cErro ao buscar informações do jogador: " + e.getMessage());
                     return;
                 }
-                if (punished == null) {
-                    StringUtils.send(player, "<l-red>Jogador não encontrado ou não possui punições registradas.");
-                    return;
-                }
                 showCheckPunish(player, punished);
-            });
-        });
+            }));
     }
 
     private void showCheckPunish(Player player, PunishedDTO punished) {
+        if (punished == null) {
+            StringUtils.send(player, "<l-red>Jogador não encontrado ou não possui punições registradas.");
+            return;
+        }
+
         var audience = BukkitPlatformPlugin.getInstance().adventure().player(player);
-        var msg = new ComponentBuilder();
-        msg.newLine()
+        var msg = new ComponentBuilder()
+            .newLine()
             .simple("<l-yellow>Histórico de <l-white>" + punished.getName() + "<l-yellow>:").newLine()
             .newLine();
 
         for (var punishment : punished.getPunishments()) {
             var info = PunishmentInfo.getPunishmentById(punishment.getPunishmentInfoId());
-
             var lore = new ArrayList<String>();
-            lore.add("<l-gold>ID: <l-gray>#" + punishment.getId());
 
-            // Check if the player has permission to view IP
+            lore.add("<l-gold>ID: <l-gray>#" + punishment.getId());
             if (player.hasPermission("lugin.admin")) {
-                PlayerAccount punisher = BukkitPlatform.getInstance().getPlayerAccountService().getPlayerAccount(punishment.getPunisherUuid()).join();
+                var punisher = BukkitPlatform.getInstance().getPlayerAccountService()
+                    .getPlayerAccount(punishment.getPunisherUuid()).join();
                 lore.add("<l-gold>IP: <l-gray>" + punishment.getIpAddress());
                 lore.add("<l-gold>Autor: <l-gray>" + punisher.playerName());
             }
-            lore.add("");
 
             var punishmentTimeType = info.getPunishment(punishment.getRepeatCount());
+            lore.addAll(List.of(
+                "<l-gold>Motivo: <l-gray>" + info.title(),
+                "<l-gold>Tipo: <l-gray>" + punishmentTimeType.b().getTitle(),
+                "<l-gold>Duração: <l-gray>" + punishmentTimeType.a().getTitle(),
+                "<l-gold>Aplicada em: <l-gray>" + punishment.getAppliedAtFormatted(),
+                "<l-gold>Fim: <l-gray>" + punishment.getExpiresAtFormatted(),
+                "<l-gold>Status: <l-gray>" + punishment.getStatus().getModernColor() + punishment.getStatus().getTitle()
+            ));
 
-            lore.add("<l-gold>Motivo: <l-gray>" + info.title());
-            lore.add("<l-gold>Tipo: <l-gray>" + punishmentTimeType.b().getTitle());
-            lore.add("<l-gold>Duração: <l-gray>" + punishmentTimeType.a().getTitle());
-            lore.add("<l-gold>Aplicada em: <l-gray>" + punishment.getAppliedAtFormatted());
-            //lore.add("<l-gold>Início: <l-gray>" + punishment.getRepeatCount() + "x"); TODO: Fazer quando tiver pronto
-            lore.add("<l-gold>Fim: <l-gray>" + punishment.getExpiresAtFormatted());
-            lore.add("<l-gold>Status: <l-gray>" + punishment.getStatus().getModernColor() + punishment.getStatus().getTitle());
-            // Status-specific lore
-            if (punishment.getStatus().equals(PunishmentStatus.REVOKED)) {
-                // TODO: Find a better way to get the revoker's name
-                PlayerAccount revoker = BukkitPlatform.getInstance().getPlayerAccountService().getPlayerAccount(punishment.getRevokerUuid()).join();
-                lore.add("");
-                lore.add("<l-gold>Revogada em: <l-gray>" + punishment.getRevokedAtFormatted());
-                lore.add("<l-gold>Autor: <l-gray>" + revoker.playerName());
-                lore.add("<l-gold>Motivo: <l-gray>" + punishment.getRevokeReason());
+            if (punishment.getStatus() == PunishmentStatus.REVOKED) {
+                var revoker = BukkitPlatform.getInstance().getPlayerAccountService()
+                    .getPlayerAccount(punishment.getRevokerUuid()).join();
+                lore.addAll(List.of(
+                    "",
+                    "<l-gold>Revogada em: <l-gray>" + punishment.getRevokedAtFormatted(),
+                    "<l-gold>Autor: <l-gray>" + revoker.playerName(),
+                    "<l-gold>Motivo: <l-gray>" + punishment.getRevokeReason()
+                ));
             }
 
             msg.hover(" <l-gray>• " + punishment.getStatus().getModernColor() + info.title(), lore.toArray(new String[0]));
 
             if (!punishment.getEvidence().startsWith("Não")) {
-                msg.linkHover(" <l-white>[Prova]", punishment.getEvidence(), "<l-gray>Clique para copiar o link da prova.");
+                msg.actionHover(" <l-white>[Prova]", ClickEvent.openUrl(punishment.getEvidence()), "<l-gray>Clique para ver a prova.");
             } else {
                 msg.simple(" <l-white>[Sem prova]");
             }
@@ -105,16 +107,18 @@ public class CheckPunishCommand extends SimpleCommand {
             if (punishment.getRevokerUuid() == null) {
                 msg.actionHover(" <l-white>[Revogar]", ClickEvent.suggestCommand("/revogar " + punishment.getId()), "<l-gray>Clique para revogar esta punição.");
             }
+
             msg.newLine();
         }
-        msg.newLine();
-        msg.simple("<l-yellow>Legenda: ");
-        msg.hover("<l-green>⬛ Ativa ", "<l-gray>O jogador está cumprindo o tempo da punição ainda, portanto, ela está ativa.");
-        msg.hover("<l-yellow>⬛ Pendente ", "<l-gray>O jogador ainda não entrou no servidor após a aplicação da punição, portanto, ela está pendente.");
-        msg.hover("<l-red>⬛ Finalizada ", "<l-gray>O jogador já cumpriu o tempo da punição, portanto, ela já foi finalizada.");
-        msg.hover("<l-gray>⬛ Revogada ", "<l-gray>A punição foi revogada por algum motivo.");
-        msg.newLine();
-        msg.send(audience);
+
+        msg.newLine()
+            .simple("<l-yellow>Legenda: ")
+            .hover("<l-green>⬛ Ativa ", "<l-gray>O jogador está cumprindo o tempo da punição ainda, portanto, ela está ativa.")
+            .hover("<l-yellow>⬛ Pendente ", "<l-gray>O jogador ainda não entrou no servidor após a aplicação da punição, portanto, ela está pendente.")
+            .hover("<l-red>⬛ Finalizada ", "<l-gray>O jogador já cumpriu o tempo da punição, portanto, ela já foi finalizada.")
+            .hover("<l-gray>⬛ Revogada ", "<l-gray>A punição foi revogada por algum motivo.")
+            .newLine()
+            .send(audience);
     }
 
 
