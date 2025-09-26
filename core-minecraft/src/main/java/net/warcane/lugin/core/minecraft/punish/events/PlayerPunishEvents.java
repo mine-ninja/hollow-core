@@ -1,5 +1,6 @@
 package net.warcane.lugin.core.minecraft.punish.events;
 
+import io.papermc.paper.event.player.AsyncChatEvent;
 import io.papermc.paper.event.player.ChatEvent;
 import net.warcane.lugin.core.minecraft.punish.api.PunishManager;
 import net.warcane.lugin.core.minecraft.util.message.StringUtils;
@@ -97,12 +98,7 @@ public class PlayerPunishEvents implements Listener {
         PunishManager.get().unloadPlayer(player);
     }
 
-    @EventHandler
-    public void onPlayerChatEvent(AsyncPlayerChatEvent event) {
-        Player player = event.getPlayer();
-        PunishedDTO dto = PunishManager.get().getCachedPlayer(player.getUniqueId());
-        muteReply(player, dto, event);
-    }
+
     /*@EventHandler
     public void onPlayerTell(TellEvent event) {
         Player player = event.getPlayer();
@@ -125,10 +121,25 @@ public class PlayerPunishEvents implements Listener {
         muteReply(player, dto, event);
     }*/
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
+    public void onPlayerChatEvent(AsyncPlayerChatEvent event) {
+        Player player = event.getPlayer();
+        PunishedDTO dto = PunishManager.get().getCachedPlayer(player.getUniqueId());
+        muteReply(player, dto, event);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPlayerChatEvent(AsyncChatEvent event) {
+        Player player = event.getPlayer();
+        PunishedDTO dto = PunishManager.get().getCachedPlayer(player.getUniqueId());
+        muteReply(player, dto, event);
+    }
+
+    @EventHandler(ignoreCancelled = true)
     public void onPlayerChat(ChatEvent event) {
+        Player player = event.getPlayer();
         PunishedDTO dto = PunishManager.get().getCachedPlayer(event.getPlayer().getUniqueId());
-        PlayerPunishEvents.muteReply(event.getPlayer(), dto, event);
+        muteReply(player, dto, event);
     }
 
     public static void muteReply(Player player, PunishedDTO dto, Cancellable event) {
