@@ -32,8 +32,6 @@ public class VelocityPlatform extends AbstractPlatform implements ProxyPlatform 
     public VelocityPlatform(@NotNull ProxyServer proxyServer) {
         super(HostAddress.fromInetSocketAddress(proxyServer.getBoundAddress()));
         this.proxyServer = proxyServer;
-
-        proxyServer.getEventManager().register(this, new PlayerListener());
     }
 
     @Override
