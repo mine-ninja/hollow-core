@@ -161,12 +161,12 @@ public final class InternalPlayerListener implements Listener {
 
                 PlayerUuidFetcher.getInstance().cachePlayerUuid(name, playerId);
                 PlayerNameFetcher.getInstance().setPlayerName(playerId, name);
-
                 PlayerNetworkStateManager.getInstance().register(new PlayerNetworkState(
-                  player.getUniqueId(),
-                  player.getName(),
-                  currentServerId,
-                  platform.getServerCategoryType()
+                    player.getUniqueId(),
+                    player.getName(),
+                    currentServerId,
+                    platform.getServerCategoryType(),
+                    platform.getServerSubCategoryType()
                 ));
 
 
