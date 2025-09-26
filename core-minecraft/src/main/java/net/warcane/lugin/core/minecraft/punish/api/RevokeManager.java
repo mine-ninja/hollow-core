@@ -75,7 +75,7 @@ public class RevokeManager {
                     "/revogar " + punishment.getId() + " " + value.name() + " ",
                     "<l-yellow>" + value.displayName, "<l-white>" + value.lore,
                     "",
-                "<l-white>Grupo mínimo: <l-green>" + MessageUtils.getFormatedPermission(value.permission));
+                "<l-white>Grupo mínimo: <l-green>" + MessageUtils.getFormattedPermission(value.permission));
             msg.newLine();
         }
 

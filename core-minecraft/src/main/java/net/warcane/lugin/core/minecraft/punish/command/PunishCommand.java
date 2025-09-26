@@ -146,7 +146,7 @@ public class PunishCommand extends SimpleCommand {
 
                 lore.addAll(List.of(
                     "",
-                    "<l-white>Grupo mínimo: <l-green>" + MessageUtils.getFormatedPermission(punishment.mustHavePermission())
+                    "<l-white>Grupo mínimo: <l-green>" + MessageUtils.getFormattedPermission(punishment.mustHavePermission())
                 ));
 
                 builder
