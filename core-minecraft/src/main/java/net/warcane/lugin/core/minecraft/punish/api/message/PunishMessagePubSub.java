@@ -1,16 +1,13 @@
 package net.warcane.lugin.core.minecraft.punish.api.message;
 
-import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.BukkitPlatformPlugin;
 import net.warcane.lugin.core.minecraft.punish.core.database.redis.MessageManager;
 import net.warcane.lugin.core.minecraft.punish.core.database.redis.PubSubMessage;
 import net.warcane.lugin.core.punish.data.*;
 import net.warcane.lugin.core.util.Tuple;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -47,58 +44,49 @@ public record PunishMessagePubSub(UUID userKicked, String playerNick,
             handleToPlayer(punishmentType, punishmentInfo.title());
         }
 
-        BukkitPlatform.getInstance().getPlayerAccountService().getPlayerAccount(punishment.getPunisherUuid())
-            .whenComplete((punisherAccount, e) -> {
-                if (e != null) {
-                    Bukkit.getLogger().severe("Erro ao buscar conta do punidor: " + e.getMessage());
-                    return;
+        var permission = "lugin.punish-message";
+        var list = new ArrayList<String>();
+        list.add(" \n");
+
+        if (punishment.getStatus().equals(PunishmentStatus.REVOKED)) {
+            list.add(" §e* A punição de " + playerNick + " foi revogada.");
+            list.add("\n §e* Motivo: " + punishment.getRevokeReason());
+            list.add("\n ");
+            Bukkit.getOnlinePlayers().stream()
+                .filter((player) -> player.hasPermission(permission))
+                .forEach(p -> {
+                    for (String msg : list) {
+                        p.sendMessage(msg);
+                    }
+                });
+            return;
+        }
+
+        if (punishment.getStatus().equals(PunishmentStatus.EXPIRED)) {
+            list.add(" §e* A punição de " + playerNick + " expirou.");
+            list.add("\n ");
+            Bukkit.getOnlinePlayers().stream()
+                .filter((player) -> player.hasPermission(permission))
+                .forEach(p -> {
+                    for (String msg : list) {
+                        p.sendMessage(msg);
+                    }
+                });
+            return;
+        }
+
+        list.add(" §c* " + playerNick + " foi "
+                 + (punishmentType.b().equals(PunishmentType.MUTE) ? "mutado" : "banido") + ".");
+        list.add(" §c* Motivo: " + punishmentInfo.title() + " - " + punishment.getEvidence());
+        list.add(" §c* Duração: " + punishmentType.a().getTitle());
+        list.add(" ");
+
+        Bukkit.getOnlinePlayers().stream()
+            .filter((player -> player.hasPermission(permission) && !player.getUniqueId().equals(userKicked)))
+            .forEach(p -> {
+                for (String msg : list) {
+                    p.sendMessage(msg);
                 }
-
-                var staffer = punisherAccount.playerName(); //TODO
-                var permission = "lugin.punish-message";
-                var list = new ArrayList<String>();
-                list.add(" \n");
-
-                if (punishment.getStatus().equals(PunishmentStatus.REVOKED)) {
-                    list.add(" §e* " + staffer + " revogou a punição de " + playerNick + ".");
-                    list.add("\n §e* Motivo: " + punishment.getRevokeReason());
-                    list.add("\n ");
-                    Bukkit.getOnlinePlayers().stream()
-                        .filter((player) -> player.hasPermission(permission))
-                        .forEach(p -> {
-                            for (String msg : list) {
-                                p.sendMessage(msg);
-                            }
-                        });
-                    return;
-                }
-
-                if (punishment.getStatus().equals(PunishmentStatus.EXPIRED)) {
-                    list.add(" §e* A punição de " + playerNick + " expirou.");
-                    list.add("\n ");
-                    Bukkit.getOnlinePlayers().stream()
-                        .filter((player) -> player.hasPermission(permission))
-                        .forEach(p -> {
-                            for (String msg : list) {
-                                p.sendMessage(msg);
-                            }
-                        });
-                    return;
-                }
-
-                list.add(" §c* " + playerNick + " foi "
-                    + (punishmentType.b().equals(PunishmentType.MUTE) ? "mutado" : "banido") + ".");
-                list.add(" §c* Motivo: " + punishmentInfo.title() + " - " + punishment.getEvidence());
-                list.add(" §c* Duração: " + punishmentType.a().getTitle());
-                list.add(" ");
-
-                Bukkit.getOnlinePlayers().stream()
-                    .filter((player -> player.hasPermission(permission) && !player.getUniqueId().equals(userKicked)))
-                    .forEach(p -> {
-                        for (String msg : list) {
-                            p.sendMessage(msg);
-                        }
-                    });
             });
     }
 
