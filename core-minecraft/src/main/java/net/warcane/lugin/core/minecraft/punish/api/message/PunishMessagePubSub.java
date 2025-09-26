@@ -2,6 +2,7 @@ package net.warcane.lugin.core.minecraft.punish.api.message;
 
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.BukkitPlatformPlugin;
+import net.warcane.lugin.core.minecraft.punish.api.PunishManager;
 import net.warcane.lugin.core.minecraft.punish.core.database.redis.MessageManager;
 import net.warcane.lugin.core.minecraft.punish.core.database.redis.PubSubMessage;
 import net.warcane.lugin.core.minecraft.task.Tasks;
@@ -97,6 +98,7 @@ public record PunishMessagePubSub(UUID userKicked, String playerNick,
         if (player == null || !player.isOnline()) {
             return;
         }
+        PunishManager.get().loadPlayer(player);
 
         StringBuilder sb = new StringBuilder("§b§lLUGIN\n");
         sb.append("\n");
