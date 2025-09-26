@@ -76,7 +76,7 @@ public class MessageUtils {
     public static String getFormattedPermission(String permission) {
         return switch (permission) {
             case "lugin.helper" -> "<l-green>Ajudante";
-            case "lugin.moderator" -> "<l-blue>Moderador";
+            case "lugin.moderator" -> "<l-green>Moderador";
             case "lugin.admin" -> "<red>Admin";
             case "lugin.gerente" -> "<l-red>Gerente";
             default -> permission;
