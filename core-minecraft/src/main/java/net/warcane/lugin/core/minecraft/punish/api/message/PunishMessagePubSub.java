@@ -1,8 +1,10 @@
 package net.warcane.lugin.core.minecraft.punish.api.message;
 
+import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.BukkitPlatformPlugin;
 import net.warcane.lugin.core.minecraft.punish.core.database.redis.MessageManager;
 import net.warcane.lugin.core.minecraft.punish.core.database.redis.PubSubMessage;
+import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.punish.data.*;
 import net.warcane.lugin.core.util.Tuple;
 import org.bukkit.Bukkit;
@@ -112,7 +114,7 @@ public record PunishMessagePubSub(UUID userKicked, String playerNick,
         sb.append("§cfaça uma revisão acessando §ediscord.gg/lugin §ccom o ID §e#").append(punishment.getId()).append("§c.\n");
 
         // Its not possible to kick a player from async :)
-        Bukkit.getScheduler().runTask(BukkitPlatformPlugin.getInstance(), () -> {
+        Tasks.runSync(() -> {
             player.kickPlayer(sb.toString());
         });
     }
