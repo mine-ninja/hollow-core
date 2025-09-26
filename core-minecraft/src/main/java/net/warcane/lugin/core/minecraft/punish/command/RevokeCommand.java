@@ -18,7 +18,7 @@ import java.util.List;
 public class RevokeCommand extends SimpleCommand {
     public RevokeCommand() {
         super("revoke");
-        setRequiredPermission("lugin.moderator");
+        setRequiredPermission("lugin.revogar");
         setAliases(List.of("revogar"));
         this.playersOnly = true;
     }

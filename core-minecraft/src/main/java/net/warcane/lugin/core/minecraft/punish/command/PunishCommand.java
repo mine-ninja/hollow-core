@@ -31,7 +31,7 @@ public class PunishCommand extends SimpleCommand {
 
     public PunishCommand() {
         super("punir");
-        setRequiredPermission("lugin.helper");
+        setRequiredPermission("lugin.punir");
         setAliases(List.of("ban", "mute", "warn"));
         this.playersOnly = true;
     }

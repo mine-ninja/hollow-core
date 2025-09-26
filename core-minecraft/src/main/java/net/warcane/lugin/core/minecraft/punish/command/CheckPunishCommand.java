@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 public class CheckPunishCommand extends SimpleCommand {
     public CheckPunishCommand() {
         super("checkpunir");
-        setRequiredPermission("lugin.helper");
+        setRequiredPermission("lugin.checkpunir");
         this.playersOnly = true;
     }
 
