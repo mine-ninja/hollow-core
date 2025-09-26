@@ -101,25 +101,24 @@ public record PunishMessagePubSub(UUID userKicked, String playerNick,
         }
         PunishManager.get().loadPlayer(player);
 
-        ComponentBuilder sb = new ComponentBuilder();
-        sb.simple("<l-blue><bold>LUGIN</bold></l-blue>").newLine();
-        sb.newLine();
-        sb.simple("<l-red>Você foi banido!").newLine();
+        StringBuilder sb = new StringBuilder("§b§lLUGIN\n");
+        sb.append("\n");
+        sb.append("§cVocê foi banido!\n");
         if (punishmentType.b().equals(PunishmentType.PERM)) {
-            sb.simple("<l-red>Sua punição é permanente.").newLine();
+            sb.append("§cSua punição é permanente.\n");
         } else {
-            sb.simple("<l-red>Sua punição expira em " + punishmentType.a().getTitle() + ".").newLine();
+            sb.append("§cSua punição expira em ").append(punishmentType.a().getTitle()).append(".\n");
         }
-        sb.newLine();
-        sb.simple("<l-red>Motivo: " + reason).newLine();
-        sb.simple("<l-red>Prova: <u>" + punishment.getEvidence() + "</u>.").newLine();
-        sb.newLine();
-        sb.simple("<l-red>Caso ache que a sua punição foi aplicada de maneira incorreta,").newLine();
-        sb.simple("<l-red>faça uma revisão acessando <l-yellow><u>discord.gg/lugin</u> <l-red>com o ID <l-yellow>#" + punishment.getId() + "<l-red>.");
+        sb.append("\n");
+        sb.append("§cMotivo: ").append(reason).append("\n");
+        sb.append("§cProva: §n").append(punishment.getEvidence()).append("§r\n");
+        sb.append("\n");
+        sb.append("§cCaso ache que a sua punição foi aplicada de maneira incorreta,\n");
+        sb.append("§cfaça uma revisão acessando §ediscord.gg/lugin §ccom o ID §e#").append(punishment.getId()).append("§c.\n");
 
         // Its not possible to kick a player from async :)
         Tasks.runSync(() -> {
-            player.kick(sb.build());
+            player.kickPlayer(sb.toString());
         });
     }
 }
