@@ -1,4 +1,4 @@
-package net.warcane.lugin.core.proxy.listener;
+package net.warcane.lugin.core.proxy.punishment;
 
 import com.velocitypowered.api.event.ResultedEvent;
 import com.velocitypowered.api.event.Subscribe;
@@ -35,6 +35,12 @@ public class PlayerListener {
 
             if (punishInfo.b() == PunishmentType.MUTE) {
                 continue;
+            }
+            if (punishInfo.b() == PunishmentType.PERM) {
+                highestPunishment = punishInfo;
+                punishmentFinal = punishment;
+                motive = punishmentInfo.title();
+                break;
             }
 
             if (highestPunishment == null || punishInfo.a().getTimeInMilliseconds() == -1) {

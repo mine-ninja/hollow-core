@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
 import net.warcane.lugin.core.database.MongoDbConnector;
 import net.warcane.lugin.core.player.state.PlayerNetworkStateManager;
-import net.warcane.lugin.core.proxy.listener.PlayerListener;
+import net.warcane.lugin.core.proxy.punishment.PlayerListener;
 import net.warcane.lugin.core.punish.api.PunishManager;
 import net.warcane.lugin.core.server.GameServer;
 import net.warcane.lugin.core.server.type.ServerCategoryType;

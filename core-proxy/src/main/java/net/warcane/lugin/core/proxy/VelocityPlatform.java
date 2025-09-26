@@ -14,6 +14,7 @@ import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerUnregisterPacket;
 import net.warcane.lugin.core.network.packet.impl.staff.GoCommandPacket;
 import net.warcane.lugin.core.proxy.listener.*;
+import net.warcane.lugin.core.proxy.punishment.PlayerListener;
 import net.warcane.lugin.core.server.GameServer;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
 import net.warcane.lugin.core.util.address.HostAddress;
@@ -31,6 +32,8 @@ public class VelocityPlatform extends AbstractPlatform implements ProxyPlatform 
     public VelocityPlatform(@NotNull ProxyServer proxyServer) {
         super(HostAddress.fromInetSocketAddress(proxyServer.getBoundAddress()));
         this.proxyServer = proxyServer;
+
+        proxyServer.getEventManager().register(this, new PlayerListener());
     }
 
     @Override
