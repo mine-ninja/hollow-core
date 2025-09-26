@@ -6,6 +6,7 @@ import net.warcane.lugin.core.minecraft.punish.api.PunishManager;
 import net.warcane.lugin.core.minecraft.punish.core.database.redis.MessageManager;
 import net.warcane.lugin.core.minecraft.punish.core.database.redis.PubSubMessage;
 import net.warcane.lugin.core.minecraft.task.Tasks;
+import net.warcane.lugin.core.minecraft.util.message.ComponentBuilder;
 import net.warcane.lugin.core.punish.data.*;
 import net.warcane.lugin.core.util.Tuple;
 import org.bukkit.Bukkit;
@@ -100,24 +101,25 @@ public record PunishMessagePubSub(UUID userKicked, String playerNick,
         }
         PunishManager.get().loadPlayer(player);
 
-        StringBuilder sb = new StringBuilder("§b§lLUGIN\n");
-        sb.append("\n");
-        sb.append("§cVocê foi banido!\n");
+        ComponentBuilder sb = new ComponentBuilder();
+        sb.simple("<l-blue><bold>LUGIN</bold></l-blue>").newLine();
+        sb.newLine();
+        sb.simple("<l-red>Você foi banido!").newLine();
         if (punishmentType.b().equals(PunishmentType.PERM)) {
-            sb.append("§cSua punição é permanente.\n");
+            sb.simple("<l-red>Sua punição é permanente.").newLine();
         } else {
-            sb.append("§cSua punição expira em ").append(punishmentType.a().getTitle()).append(".\n");
+            sb.simple("<l-red>Sua punição expira em " + punishmentType.a().getTitle() + ".").newLine();
         }
-        sb.append("\n");
-        sb.append("§cMotivo: ").append(reason).append("\n");
-        sb.append("§cProva: §n").append(punishment.getEvidence()).append("§r\n");
-        sb.append("\n");
-        sb.append("§cCaso ache que a sua punição foi aplicada de maneira incorreta,\n");
-        sb.append("§cfaça uma revisão acessando §ediscord.gg/lugin §ccom o ID §e#").append(punishment.getId()).append("§c.\n");
+        sb.newLine();
+        sb.simple("<l-red>Motivo: " + reason).newLine();
+        sb.simple("<l-red>Prova: <u>" + punishment.getEvidence() + "</u>.").newLine();
+        sb.newLine();
+        sb.simple("<l-red>Caso ache que a sua punição foi aplicada de maneira incorreta,").newLine();
+        sb.simple("<l-red>faça uma revisão acessando <l-yellow><u>discord.gg/lugin</u> <l-red>com o ID <l-yellow>#" + punishment.getId() + "<l-red>.");
 
         // Its not possible to kick a player from async :)
         Tasks.runSync(() -> {
-            player.kickPlayer(sb.toString());
+            player.kick(sb.build());
         });
     }
 }
