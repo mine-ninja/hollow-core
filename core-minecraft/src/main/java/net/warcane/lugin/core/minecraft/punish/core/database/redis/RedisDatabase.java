@@ -4,13 +4,10 @@ import lombok.Getter;
 import net.warcane.lugin.core.database.RedisConnector;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPubSub;
 
 /**
  * @author Rok, Pedro Lucas nmm. Created on 02/07/2025
- * @project punish
  */
 @Getter
 public class RedisDatabase {

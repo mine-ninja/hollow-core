@@ -6,7 +6,6 @@ import java.util.ArrayList;
 
 /**
  * @author Rok, Pedro Lucas nmm. Created on 26/06/2025
- * @project punish
  */
 public record PunishmentInfo(@Deprecated  int id,
                              String modernId,

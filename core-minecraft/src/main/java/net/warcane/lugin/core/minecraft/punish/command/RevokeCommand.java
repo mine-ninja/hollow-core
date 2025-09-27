@@ -1,7 +1,5 @@
 package net.warcane.lugin.core.minecraft.punish.command;
 
-import net.kyori.adventure.audience.Audience;
-import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.BukkitPlatformPlugin;
 import net.warcane.lugin.core.minecraft.command.SimpleCommand;
 import net.warcane.lugin.core.minecraft.command.context.CommandContext;
@@ -13,7 +11,6 @@ import java.util.List;
 
 /**
  * @author Rok, Pedro Lucas nmm. Created on 30/06/2025
- * @project punish
  */
 public class RevokeCommand extends SimpleCommand {
     public RevokeCommand() {

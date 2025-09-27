@@ -14,11 +14,8 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.*;
 
-import java.util.UUID;
-
 /**
  * @author Rok, Pedro Lucas nmm. Created on 12/07/2025
- * @project punish
  */
 public class PlayerPunishEvents implements Listener {
 

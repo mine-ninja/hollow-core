@@ -16,7 +16,6 @@ import java.util.UUID;
 
 /**
  * @author Rok, Pedro Lucas nmm. Created on 10/09/2025
- * @project punish
  */
 public class PunishLogger {
     private final File logFile;
@@ -76,14 +75,13 @@ public class PunishLogger {
 
     private void sendEmbed(DiscordWebhook.EmbedObject embed) {
         try {
-            DiscordWebhook discordWebhook = new DiscordWebhook("https://discord.com/api/webhooks/1415314834953601095/f830Vo2mR4AU8v0MPgRhxlZCGfiRRYm1WOT8KJCOkds7e3tLnfn8ANXoBaLVF4cxGGIA");
+            var discordWebhook = new DiscordWebhook("https://discord.com/api/webhooks/1415314834953601095/f830Vo2mR4AU8v0MPgRhxlZCGfiRRYm1WOT8KJCOkds7e3tLnfn8ANXoBaLVF4cxGGIA");
             discordWebhook.addEmbed(embed);
             discordWebhook.execute();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
 
     private String punishmentToLog(PunishedDTO.Punishment punishment, String punisherName, PunishmentInfo info, String name, UUID uuid) {
         return String.format("Punindo: %s (%s) | Tipo: %s (x%d) | Evidência: %s | Punido por: %s | Duração: %s | ID: %d",
@@ -92,7 +90,7 @@ public class PunishLogger {
     }
 
     private DiscordWebhook.EmbedObject punishmentToEmbed(PunishedDTO.Punishment punishment, String punisherName, PunishmentInfo info, String name, UUID uuid) {
-        DiscordWebhook.EmbedObject embed = new DiscordWebhook.EmbedObject();
+        var embed = new DiscordWebhook.EmbedObject();
 
         embed.setTitle("Punindo: " + name + " (" + uuid + ")");
         embed.setColor(Color.RED);
@@ -115,7 +113,7 @@ public class PunishLogger {
     }
 
     private DiscordWebhook.EmbedObject revokeToEmbed(PunishedDTO.Punishment punishment, String revokerName) {
-        DiscordWebhook.EmbedObject embed = new DiscordWebhook.EmbedObject();
+        var embed = new DiscordWebhook.EmbedObject();
 
         embed.setTitle("Revogando punimento de ID: " + punishment.getId());
         embed.setColor(Color.YELLOW);
@@ -129,5 +127,4 @@ public class PunishLogger {
 
         return embed;
     }
-
 }

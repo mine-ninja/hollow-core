@@ -2,7 +2,6 @@ package net.warcane.lugin.core.minecraft.punish.core.database.redis;
 
 /**
  * @author Rok, Pedro Lucas nmm. Created on 02/07/2025
- * @project punish
  */
 public interface PubSubMessage {
 

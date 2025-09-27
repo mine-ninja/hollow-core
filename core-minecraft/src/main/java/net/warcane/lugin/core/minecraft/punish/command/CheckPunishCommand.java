@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 
 /**
  * @author Rok, Pedro Lucas nmm. Created on 30/06/2025
- * @project punish
  */
 public class CheckPunishCommand extends SimpleCommand {
     public CheckPunishCommand() {

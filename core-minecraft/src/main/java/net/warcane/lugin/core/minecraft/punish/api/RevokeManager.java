@@ -2,7 +2,6 @@ package net.warcane.lugin.core.minecraft.punish.api;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.kyori.adventure.audience.Audience;
 import net.warcane.lugin.core.minecraft.BukkitPlatformPlugin;
 import net.warcane.lugin.core.minecraft.util.message.ComponentBuilder;
 import net.warcane.lugin.core.minecraft.util.message.StringUtils;
@@ -12,11 +11,9 @@ import net.warcane.lugin.core.punish.utils.MessageUtils;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.UUID;
 
 /**
  * @author Rok, Pedro Lucas nmm. Created on 01/07/2025
- * @project punish
  */
 public class RevokeManager {
 

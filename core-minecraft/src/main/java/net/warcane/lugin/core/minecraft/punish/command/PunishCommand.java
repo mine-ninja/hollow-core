@@ -21,14 +21,13 @@ import java.util.stream.Collectors;
 
 /**
  * @author Rok, Pedro Lucas nmm. Created on 26/06/2025
- * @project punish
  */
 public class PunishCommand extends SimpleCommand {
 
     public PunishCommand() {
         super("punir");
         setRequiredPermission("lugin.punir");
-        setAliases(List.of("ban", "mute", "warn"));
+        setAliases(List.of("ban", "mute", "warn", "punish"));
         this.playersOnly = true;
     }
 

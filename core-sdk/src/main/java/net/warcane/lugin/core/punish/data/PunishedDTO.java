@@ -11,7 +11,6 @@ import java.util.UUID;
 
 /**
  * @author Rok, Pedro Lucas nmm. Created on 30/06/2025
- * @project punish
  */
 @Setter
 @Getter

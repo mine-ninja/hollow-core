@@ -1,12 +1,9 @@
 package net.warcane.lugin.core.minecraft.punish.api.message;
 
-import net.warcane.lugin.core.minecraft.BukkitPlatform;
-import net.warcane.lugin.core.minecraft.BukkitPlatformPlugin;
 import net.warcane.lugin.core.minecraft.punish.api.PunishManager;
 import net.warcane.lugin.core.minecraft.punish.core.database.redis.MessageManager;
 import net.warcane.lugin.core.minecraft.punish.core.database.redis.PubSubMessage;
 import net.warcane.lugin.core.minecraft.task.Tasks;
-import net.warcane.lugin.core.minecraft.util.message.ComponentBuilder;
 import net.warcane.lugin.core.punish.data.*;
 import net.warcane.lugin.core.util.Tuple;
 import org.bukkit.Bukkit;
@@ -16,7 +13,6 @@ import java.util.UUID;
 
 /**
  * @author Rok, Pedro Lucas nmm. Created on 02/07/2025
- * @project punish
  */
 public record PunishMessagePubSub(UUID userKicked, String playerNick,
                                   PunishedDTO.Punishment punishment) implements PubSubMessage {
