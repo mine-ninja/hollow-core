@@ -52,7 +52,7 @@ public class DynamicPaginationContext<T> extends MenuPaginationContext<T> {
         if (this.isLoading) { return; }
         
         this.isLoading = true;
-        this.holder.dataSupplier.get()
+        this.holder.supplier.get()
             .thenApplyAsync(this::handleSuccess, Tasks::runAsync)
             .handleAsync(this::handleComplete, Tasks::runSync);
     }
@@ -78,18 +78,27 @@ public class DynamicPaginationContext<T> extends MenuPaginationContext<T> {
             for (int slot : this.slots) {
                 this.items.remove(slot);
             }
+            this.holder.onComplete.accept(data);
             super.update();
         }
         return null;
     }
     
-    public record Holder<T>(Supplier<CompletableFuture<List<T>>> dataSupplier, Function<List<T>, List<T>> onSuccess, Consumer<Throwable> onError) {
+    public record Holder<T>(Supplier<CompletableFuture<List<T>>> supplier, Function<List<T>, List<T>> onSuccess, Consumer<List<T>> onComplete, Consumer<Throwable> onError) {
         public static <T> Holder<T> of(Supplier<CompletableFuture<List<T>>> dataSupplier) {
-            return new Holder<>(dataSupplier, Function.identity(), throwable -> {});
+            return new Holder<>(dataSupplier, Function.identity(), data -> {}, throwable -> {});
         }
         
-        public static <T> Holder<T> of(Supplier<CompletableFuture<List<T>>> dataSupplier, Function<List<T>, List<T>> onSuccess, Consumer<Throwable> onError) {
-            return new Holder<>(dataSupplier, onSuccess, onError);
+        public static <T> Holder<T> of(Supplier<CompletableFuture<List<T>>> supplier, Function<List<T>, List<T>> onSuccess) {
+            return new Holder<>(supplier, onSuccess, throwable -> {}, data -> {});
+        }
+        
+        public static <T> Holder<T> of(Supplier<CompletableFuture<List<T>>> supplier, Consumer<List<T>> onComplete) {
+            return new Holder<>(supplier, Function.identity(), onComplete, throwable -> {});
+        }
+        
+        public static <T> Holder<T> of(Supplier<CompletableFuture<List<T>>> supplier, Function<List<T>, List<T>> onSuccess, Consumer<List<T>> onComplete) {
+            return new Holder<>(supplier, onSuccess, onComplete, throwable -> {});
         }
     }
 }
