@@ -100,5 +100,9 @@ public class DynamicPaginationContext<T> extends MenuPaginationContext<T> {
         public static <T> Holder<T> of(Supplier<CompletableFuture<List<T>>> supplier, Function<List<T>, List<T>> onSuccess, Consumer<List<T>> onComplete) {
             return new Holder<>(supplier, onSuccess, onComplete, throwable -> {});
         }
+        
+        public static <T> Holder<T> of(Supplier<CompletableFuture<List<T>>> supplier, Function<List<T>, List<T>> onSuccess, Consumer<List<T>> onComplete, Consumer<Throwable> onError) {
+            return new Holder<>(supplier, onSuccess, onComplete, onError);
+        }
     }
 }
