@@ -1,6 +1,5 @@
 package net.warcane.lugin.core.minecraft.punish.command;
 
-import net.kyori.adventure.audience.Audience;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.BukkitPlatformPlugin;
 import net.warcane.lugin.core.minecraft.command.SimpleCommand;
@@ -11,11 +10,8 @@ import net.warcane.lugin.core.minecraft.util.Cooldown;
 import net.warcane.lugin.core.minecraft.util.message.ComponentBuilder;
 import net.warcane.lugin.core.minecraft.util.message.StringUtils;
 import net.warcane.lugin.core.player.account.PlayerAccount;
-import net.warcane.lugin.core.punish.data.PunishTime;
 import net.warcane.lugin.core.punish.data.PunishmentInfo;
-import net.warcane.lugin.core.punish.data.PunishmentType;
 import net.warcane.lugin.core.punish.utils.MessageUtils;
-import net.warcane.lugin.core.util.Tuple;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
@@ -155,11 +151,7 @@ public class PunishCommand extends SimpleCommand {
                     .newLine();
             }
 
-            builder.newLine();
-            builder.actionHover("  <l-red><b>CANCELAR", (audience1 -> {
-                StringUtils.send(player, "\n\n\n<l-info>Ação cancelada com sucesso!\n");
-            }), "<l-gray>Clique para cancelar a punição.");
-            builder.send(audience);
+            builder.newLine().send(audience);
         });
     }
 

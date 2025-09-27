@@ -105,7 +105,7 @@ public class CheckPunishCommand extends SimpleCommand {
             }
 
             if (punishment.getRevokerUuid() == null) {
-                msg.actionHover(" <l-white>[Revogar]", ClickEvent.suggestCommand("/revogar " + punishment.getId()), "<l-gray>Clique para revogar esta punição.");
+                msg.actionHover(" <l-white>[Revogar]", ClickEvent.runCommand("/revogar " + punishment.getId()), "<l-gray>Clique para revogar esta punição.");
             }
 
             msg.newLine();

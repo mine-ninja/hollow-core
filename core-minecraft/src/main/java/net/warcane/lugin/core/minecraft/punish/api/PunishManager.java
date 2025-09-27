@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.*;
+import java.util.regex.Pattern;
 
 /**
  * @author Rok, Pedro Lucas nmm. Created on 26/06/2025
@@ -73,8 +74,8 @@ public class PunishManager {
     }
 
     public void punishPlayer(PlayerAccount target, Player punisher, PunishmentInfo punishmentInfo, String message) {
-        Audience audience = BukkitPlatformPlugin.getInstance().adventure().player(punisher);
-        int nextId = MongoCounterService.get().getNextIdFor("punishment_info_id");
+        var audience = BukkitPlatformPlugin.getInstance().adventure().player(punisher);
+        var nextId = MongoCounterService.get().getNextIdFor("punishment_info_id");
 
         StringUtils.send(audience, "<l-confirm>Punição aplicada ao jogador <l-yellow>" + target.playerName() + " <l-green> com sucesso! ID: " + nextId);
 
@@ -82,17 +83,17 @@ public class PunishManager {
             message = "Não anexada.";
         }
 
-        String finalMessage = message;
+        var finalMessage = message;
         createOrAddNewPunish(target, punishmentInfo, message, punisher, nextId).whenComplete((punishment, throwable) -> {
             if (throwable != null) {
                 log.error(throwable);
                 return;
             }
 
-            Player player = Bukkit.getPlayer(target.uniqueId());
+            var player = Bukkit.getPlayer(target.uniqueId());
 
             if (player != null) {
-                String time = MessageUtils.formatMilliseconds(punishment.getExpiresAt() - System.currentTimeMillis());
+                var time = MessageUtils.formatMilliseconds(punishment.getExpiresAt() - System.currentTimeMillis());
                 player.sendMessage(" ");
                 player.sendMessage("§cVocê foi silenciado. Sua punição irá expirar em " + time);
                 player.sendMessage(" ");
@@ -178,7 +179,7 @@ public class PunishManager {
     public CompletableFuture<PunishedDTO> getPunishedPlayer(String name) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                return SHARED_EXECUTOR.submit(() -> collection.find(Filters.eq("name", name)).first()).get(5, TimeUnit.SECONDS);
+                return SHARED_EXECUTOR.submit(() -> collection.find(Filters.regex("name", "^" + Pattern.quote(name) + "$", "i")).first()).get(5, TimeUnit.SECONDS);
             } catch (TimeoutException e) {
                 throw new RuntimeException("Query timed out after 5 seconds", e);
             } catch (Exception e) {

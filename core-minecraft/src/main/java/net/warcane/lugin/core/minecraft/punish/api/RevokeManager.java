@@ -79,11 +79,7 @@ public class RevokeManager {
             msg.newLine();
         }
 
-        msg.newLine();
-        msg.actionHover("  <l-red><b>CANCELAR", (audience1 -> {
-            StringUtils.send(audience, "\n\n\n<l-info>Ação cancelada com sucesso!\n");
-        }), "<l-gray>Clique para cancelar.");
-        msg.send(audience);
+        msg.newLine().send(audience);
     }
 
     private void applyRevoke(Player player, PunishedDTO.Punishment punishment, RevokeAction action) {
