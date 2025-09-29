@@ -10,7 +10,10 @@ import net.warcane.lugin.core.util.data.RedisCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -27,7 +30,6 @@ public class PlayerAccountServiceImpl implements PlayerAccountService {
     private final RedisCache<PlayerAccount> redisCache = new RedisCache<>(PlayerAccount.class);
 
     private final MongoRepository<UUID, PlayerAccount> repository = new MongoRepository<>(PlayerAccount.class, "uniqueId");
-
     private final ExecutorService executorService;
 
     public PlayerAccountServiceImpl(@NotNull ExecutorService executorService) {
@@ -48,12 +50,25 @@ public class PlayerAccountServiceImpl implements PlayerAccountService {
 
     @Override
     public @Nullable PlayerAccount getCachedAccountByName(@NotNull String playerName) {
-        return localCache.values()
-          .stream()
-          .filter(Objects::nonNull)
-          .filter(account -> account.playerName() != null && account.playerName().equalsIgnoreCase(playerName))
-          .findFirst()
-          .orElse(null);
+        for (PlayerAccount account : localCache.values()) {
+            if (account != null) {
+                if (account.playerName() != null && account.playerName().equalsIgnoreCase(playerName)) {
+                    return account;
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public @Nullable PlayerAccount loadFromRedis(@NotNull UUID playerId) {
+        return redisCache.hget(CACHE_KEY, playerId.toString());
+    }
+
+    @Override
+    public void updateCaches(@NotNull PlayerAccount account) {
+        localCache.put(account.uniqueId(), account);
+        redisCache.hset(CACHE_KEY, account.uniqueId().toString(), account);
     }
 
     @Override
@@ -160,8 +175,7 @@ public class PlayerAccountServiceImpl implements PlayerAccountService {
             var removed = options.updateBeforeUnload()
                 ? repository.supplyFromCollection(collection ->
                 requireNonNull(collection.findOneAndReplace(Filters.eq("uniqueId", playerId), removedFromLocalCache,
-                new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER).upsert(true)))) : removedFromLocalCache;
-
+                    new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER).upsert(true)))) : removedFromLocalCache;
 
 
             if (options.unloadFromCache()) {
