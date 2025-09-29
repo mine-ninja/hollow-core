@@ -11,13 +11,9 @@ on:
 
 jobs:
   build-and-deploy:
-    if: "!contains(github.event.head_commit.message, '[NO-CI]')"
-
     runs-on: ubuntu-latest
     name: Build and Deploy to Pterodactyl
-
-    environment: ${{ github.ref_name == 'master' && !contains(github.event.head_commit.message, '[NO-PROD]') && 'prod' || 'dev' }}
-
+    environment: ${{ github.event.inputs.env }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -26,7 +22,7 @@ jobs:
       - name: Select environment
         id: environment
         run: |
-          if [ "${{ github.ref_name }}" == "master" ] && [[ "${{ github.event.head_commit.message }}" != *"[NO-PROD]"* ]]; then
+          if [ "${{ github.event.inputs.env }}" == "prod" ] then
             cp deploy.prod.json .pterodactyl-upload.json
             echo "PTERO_HOST=${{ vars.PROD_PANEL_URL }}" >> $GITHUB_ENV
             echo "PTERO_API_KEY=${{ secrets.PROD_API_KEY }}" >> $GITHUB_ENV
