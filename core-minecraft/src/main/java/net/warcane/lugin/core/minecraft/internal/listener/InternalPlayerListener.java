@@ -7,7 +7,7 @@ import net.warcane.lugin.core.group.PlayerGroup;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.event.account.PlayerAccountLoadEvent;
 import net.warcane.lugin.core.minecraft.event.account.PlayerAccountUpdateEvent;
-import net.warcane.lugin.core.minecraft.event.account.PlayerNickUpdateEvent;
+import net.warcane.lugin.core.minecraft.event.account.AsyncPlayerNickUpdateEvent;
 import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.util.LocationUtil;
 import net.warcane.lugin.core.minecraft.util.PlayerUtil;
@@ -92,14 +92,21 @@ public final class InternalPlayerListener implements Listener {
 
             if (!name.equals(account.playerName())) {
                 String oldName = account.playerName();
-                account = platform.getPlayerAccountService()
-                              .updatePlayerAccount(account.withNewName(name)).exceptionally(throwable -> {
-                        event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text("§cHouve um erro ao atualizar o seu nome de jogador. Tente novamente mais tarde."));
-                        throwable.printStackTrace();
-                        return null;
-                    }).join();
+                try {
+                    account = platform.getPlayerAccountService()
+                                  .updatePlayerAccount(account.withNewName(name)).join();
+                } catch (Exception e) {
+                    event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text("§cHouve um erro ao atualizar o seu nome de jogador. Tente novamente mais tarde."));
+                    e.printStackTrace();
+                    return;
+                }
 
-                new PlayerNickUpdateEvent(account, oldName, name).callEvent();
+                AsyncPlayerNickUpdateEvent nickUpdateEvent = new AsyncPlayerNickUpdateEvent(account, oldName, name);
+                nickUpdateEvent.callEvent();
+                if (nickUpdateEvent.isCancelled()) {
+                    event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text("§cHouve um erro ao atualizar o seu nome de jogador.\n").append(nickUpdateEvent.getCanceledMessage()));
+                    return;
+                }
             }
 
             final var subscriptions = account.subscriptions();
