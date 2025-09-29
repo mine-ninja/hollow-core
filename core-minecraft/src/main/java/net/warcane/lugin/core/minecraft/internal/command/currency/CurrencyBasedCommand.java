@@ -7,7 +7,7 @@ import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
 import net.warcane.lugin.core.minecraft.currency.Currency;
 import net.warcane.lugin.core.minecraft.task.Tasks;
-import net.warcane.lugin.core.minecraft.util.cooldown.Cooldown;
+import net.warcane.lugin.core.minecraft.util.Cooldown;
 import net.warcane.lugin.core.minecraft.util.version.VersionChecker;
 import net.warcane.lugin.core.player.wallet.transaction.TransactionResult;
 import org.bukkit.Bukkit;
@@ -70,7 +70,7 @@ public class CurrencyBasedCommand extends SimpleCommand implements Listener {
 
         switch (subCommand.toLowerCase()) {
             case "ver" ->
-              handleViewBalanceCommand(ctx, ctx.getRawArgOrThrow(1, "§cVocê deve especificar o nome do jogador."));
+                handleViewBalanceCommand(ctx, ctx.getRawArgOrThrow(1, "§cVocê deve especificar o nome do jogador."));
             case "pagar", "pay" -> {
                 if (!currency.allowPlayerPayments()) {
                     ctx.sendMessage("§cEste comando não está disponível para pagamentos de jogadores.");
@@ -89,21 +89,21 @@ public class CurrencyBasedCommand extends SimpleCommand implements Listener {
         ctx.sendMessage("§7§oCarregando informações...");
 
         platform.getWalletService()
-          .getOrLoadWallet(playerName)
-          .orTimeout(3, TimeUnit.SECONDS)
-          .whenComplete((found, error) -> {
-              if (error != null) {
-                  log.error("Erro ao buscar o saldo do jogador {}: {}", playerName, error.getMessage());
-                  return;
-              }
+            .getOrLoadWallet(playerName)
+            .orTimeout(3, TimeUnit.SECONDS)
+            .whenComplete((found, error) -> {
+                if (error != null) {
+                    log.error("Erro ao buscar o saldo do jogador {}: {}", playerName, error.getMessage());
+                    return;
+                }
 
-              if (found == null) {
-                  ctx.sendMessage("§cUm erro ocorreu ao buscar o saldo do jogador " + playerName + ". O jogador pode não ter uma carteira.");
-                return;
-              }
+                if (found == null) {
+                    ctx.sendMessage("§cUm erro ocorreu ao buscar o saldo do jogador " + playerName + ". O jogador pode não ter uma carteira.");
+                    return;
+                }
 
-              ctx.sendMessage("§aO saldo de §b" + playerName + "§a é §b" + currency.formatAmount(found.getCurrencyAmount(currency.id())) + "§a.");
-          });
+                ctx.sendMessage("§aO saldo de §b" + playerName + "§a é §b" + currency.formatAmount(found.getCurrencyAmount(currency.id())) + "§a.");
+            });
     }
 
     private final Map<String, Long> payCommandCooldowns = new ConcurrentHashMap<>();
@@ -213,26 +213,26 @@ public class CurrencyBasedCommand extends SimpleCommand implements Listener {
 
     private void handleTopCommand(@NotNull CommandContext ctx) {
         platform.getWalletService()
-          .getTopWalletsByCurrencyBalance(currency.id(), 10)
-          .whenCompleteAsync((list, error) -> {
-              if (error != null) {
-                  error.printStackTrace();
-                  log.error("Erro ao buscar o top de carteiras: ", error);
-                  ctx.sendMessage("§cUm erro interno ocorreu ao obter o top, tente novamente mais tarde.");
-                  return;
-              }
+            .getTopWalletsByCurrencyBalance(currency.id(), 10)
+            .whenCompleteAsync((list, error) -> {
+                if (error != null) {
+                    error.printStackTrace();
+                    log.error("Erro ao buscar o top de carteiras: ", error);
+                    ctx.sendMessage("§cUm erro interno ocorreu ao obter o top, tente novamente mais tarde.");
+                    return;
+                }
 
-              if (list.isEmpty()) {
-                  ctx.sendMessage("§cNenhum jogador encontrado com saldo na moeda " + currency.id() + ".");
-                  return;
-              }
+                if (list.isEmpty()) {
+                    ctx.sendMessage("§cNenhum jogador encontrado com saldo na moeda " + currency.id() + ".");
+                    return;
+                }
 
-              ctx.sendMessage("§aJogadores mais ricos em " + currency.pluralDisplayName() + ":");
-              for (int i = 0; i < list.size(); i++) {
-                  final var wallet = list.get(i);
-                  ctx.sendMessage("§e" + (i + 1) + ". §b" + wallet.playerName() + "§a - " + currency.formatAmount(wallet.balance()));
-              }
-          });
+                ctx.sendMessage("§aJogadores mais ricos em " + currency.pluralDisplayName() + ":");
+                for (int i = 0; i < list.size(); i++) {
+                    final var wallet = list.get(i);
+                    ctx.sendMessage("§e" + (i + 1) + ". §b" + wallet.playerName() + "§a - " + currency.formatAmount(wallet.balance()));
+                }
+            });
     }
 
     @Override
@@ -246,8 +246,8 @@ public class CurrencyBasedCommand extends SimpleCommand implements Listener {
             }
 
             return subcommands.stream()
-              .filter(cmd -> cmd.toLowerCase().startsWith(input.toLowerCase()))
-              .toList();
+                .filter(cmd -> cmd.toLowerCase().startsWith(input.toLowerCase()))
+                .toList();
         }
 
         final var subCommand = ctx.getRawArgOrNull(0);
@@ -260,10 +260,10 @@ public class CurrencyBasedCommand extends SimpleCommand implements Listener {
                 if (ctx.isArgsLength(2)) {
                     final var input = ctx.getRawArgOrNull(1);
                     return Bukkit.getOnlinePlayers().stream()
-                      .map(Player::getName)
-                      .filter(name -> input == null || name.toLowerCase().startsWith(input.toLowerCase()))
-                      .sorted()
-                      .toList();
+                        .map(Player::getName)
+                        .filter(name -> input == null || name.toLowerCase().startsWith(input.toLowerCase()))
+                        .sorted()
+                        .toList();
                 }
             }
 
@@ -278,11 +278,11 @@ public class CurrencyBasedCommand extends SimpleCommand implements Listener {
                     final var senderName = sender instanceof Player player ? player.getName() : null;
 
                     return Bukkit.getOnlinePlayers().stream()
-                      .map(Player::getName)
-                      .filter(name -> !name.equals(senderName)) // Excluir o próprio jogador
-                      .filter(name -> input == null || name.toLowerCase().startsWith(input.toLowerCase()))
-                      .sorted()
-                      .toList();
+                        .map(Player::getName)
+                        .filter(name -> !name.equals(senderName)) // Excluir o próprio jogador
+                        .filter(name -> input == null || name.toLowerCase().startsWith(input.toLowerCase()))
+                        .sorted()
+                        .toList();
                 } else if (ctx.isArgsLength(3)) {
                     // Terceiro argumento: sugerir algumas quantias comuns
                     final var input = ctx.getRawArgOrNull(2);
@@ -297,8 +297,8 @@ public class CurrencyBasedCommand extends SimpleCommand implements Listener {
                     }
 
                     return suggestions.stream()
-                      .filter(suggestion -> suggestion.startsWith(input))
-                      .toList();
+                        .filter(suggestion -> suggestion.startsWith(input))
+                        .toList();
                 }
             }
 
