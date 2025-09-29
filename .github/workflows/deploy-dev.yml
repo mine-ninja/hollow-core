@@ -22,7 +22,7 @@ jobs:
       - name: Select environment
         id: environment
         run: |
-          if [ "${{ github.event.inputs.env }}" == "prod" ] then
+          if [ "${{ github.event.inputs.env }}" == "prod" ]; then
             cp deploy.prod.json .pterodactyl-upload.json
             echo "PTERO_HOST=${{ vars.PROD_PANEL_URL }}" >> $GITHUB_ENV
             echo "PTERO_API_KEY=${{ secrets.PROD_API_KEY }}" >> $GITHUB_ENV
