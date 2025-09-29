@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 @Getter
 public class PlayerNickUpdateEvent extends Event {
 
+    @Getter
     private static final HandlerList handlerList = new HandlerList();
 
     private final PlayerAccount playerAccount;
