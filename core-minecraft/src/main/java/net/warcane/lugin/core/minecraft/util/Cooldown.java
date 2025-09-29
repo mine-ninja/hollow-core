@@ -1,4 +1,4 @@
-package net.warcane.lugin.core.minecraft.util.cooldown;
+package net.warcane.lugin.core.minecraft.util;
 
 import java.util.Set;
 import java.util.UUID;
@@ -12,8 +12,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Lucasmellof, Lucas de Mello Freitas created on 18/11/2021
  */
 public class Cooldown {
-    private static final Set<CooldownInstance> cooldownInstanceSet = ConcurrentHashMap.newKeySet();
-    
+
+    private static final Set<CooldownInstance> cooldownInstanceSet =  ConcurrentHashMap.newKeySet();
+
     /**
      * Obtém uma instância de cooldown para um jogador específico e uma chave única.
      *
@@ -23,14 +24,14 @@ public class Cooldown {
      * @return Uma instância de CooldownInstance ou null se não houver cooldown associado à chave e ao jogador.
      */
     public static CooldownInstance getCooldown(UUID uuid, String key) {
-        for (CooldownInstance cooldownInstance : cooldownInstanceSet) {
+        for(CooldownInstance cooldownInstance : cooldownInstanceSet) {
             if (uuid.equals(cooldownInstance.uuid()) && cooldownInstance.key().equals(key)) {
                 return cooldownInstance;
             }
         }
         return null;
     }
-    
+
     /**
      * Remove um cooldown associado a um jogador e uma chave única.
      *
@@ -40,14 +41,14 @@ public class Cooldown {
     public static void removeCooldown(UUID uuid, String key) {
         cooldownInstanceSet.removeIf(cooldownInstance -> uuid.equals(cooldownInstance.uuid()) && cooldownInstance.key().equals(key));
     }
-    
+
     /**
      * Remove all Coolodwn
      */
     public static void removeAllCooldown() {
         cooldownInstanceSet.clear();
     }
-    
+
     /**
      * Verifica se um jogador está em cooldown para uma chave única.
      *
@@ -68,7 +69,7 @@ public class Cooldown {
         }
         return false;
     }
-    
+
     /**
      * Retorna true e define o cooldown se o jogador não estiver em cooldown para a chave única.
      *
@@ -83,7 +84,7 @@ public class Cooldown {
         }
         return false;
     }
-    
+
     /**
      * Retorna true e define o cooldown se o jogador não estiver em cooldown para a chave única.
      *
@@ -98,7 +99,7 @@ public class Cooldown {
         }
         return false;
     }
-    
+
     /**
      * Define um cooldown em milissegundos para um jogador e uma chave única.
      *
@@ -109,7 +110,7 @@ public class Cooldown {
     public static void setCooldownMili(UUID uuid, Long time, String key) {
         cooldownInstanceSet.add(new CooldownInstance(uuid, System.currentTimeMillis() + (time), key));
     }
-    
+
     /**
      * Define um cooldown em segundos para um jogador e uma chave única.
      *
@@ -120,7 +121,7 @@ public class Cooldown {
     public static void setCooldownSec(UUID uuid, Long time, String key) {
         cooldownInstanceSet.add(new CooldownInstance(uuid, System.currentTimeMillis() + (time * 1000), key));
     }
-    
+
     /**
      * Obtém o tempo restante de cooldown em milissegundos para um jogador e uma chave única.
      *
@@ -141,7 +142,7 @@ public class Cooldown {
         }
         return 0;
     }
-    
+
     /**
      * Obtém o tempo restante de cooldown em segundos para um jogador e uma chave única.
      *
@@ -153,7 +154,7 @@ public class Cooldown {
     public static long getCooldownTimeSec(UUID uuid, String key) {
         return getCooldownTime(uuid, key) / 1000;
     }
-    
+
     /**
      * Obtém o tempo restante de cooldown em milissegundos para um jogador e uma chave única.
      *
@@ -165,7 +166,7 @@ public class Cooldown {
     public static long getCooldownTimeMili(UUID uuid, String key) {
         return getCooldownTime(uuid, key) % 1000;
     }
-    
+
     /**
      * Classe interna que representa uma instância de cooldown associada a um jogador, tempo e chave única.
      *
