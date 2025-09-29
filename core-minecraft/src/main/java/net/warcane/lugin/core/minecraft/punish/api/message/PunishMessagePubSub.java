@@ -1,9 +1,13 @@
 package net.warcane.lugin.core.minecraft.punish.api.message;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.manager.protocol.ProtocolManager;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import net.warcane.lugin.core.minecraft.punish.api.PunishManager;
 import net.warcane.lugin.core.minecraft.punish.core.database.redis.MessageManager;
 import net.warcane.lugin.core.minecraft.punish.core.database.redis.PubSubMessage;
 import net.warcane.lugin.core.minecraft.task.Tasks;
+import net.warcane.lugin.core.minecraft.util.message.StringUtils;
 import net.warcane.lugin.core.punish.data.*;
 import net.warcane.lugin.core.util.Tuple;
 import org.bukkit.Bukkit;
@@ -114,7 +118,17 @@ public record PunishMessagePubSub(UUID userKicked, String playerNick,
 
         // Its not possible to kick a player from async :)
         Tasks.runSync(() -> {
-            player.kickPlayer(sb.toString());
+            var protocolManager = PacketEvents.getAPI().getProtocolManager();
+            var version = protocolManager.getClientVersion(
+                PacketEvents.getAPI().getPlayerManager().getChannel(player)
+            );
+
+            if (version.isOlderThanOrEquals(ClientVersion.V_1_8)) {
+                player.kickPlayer(sb.toString());
+                return;
+            }
+
+            player.kick(StringUtils.formatString(sb.toString()));
         });
     }
 }
