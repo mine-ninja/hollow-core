@@ -179,7 +179,8 @@ public final class InternalPlayerListener implements Listener {
                         player.getUniqueId(),
                         player.getName(),
                         currentServerId,
-                        platform.getServerCategoryType()
+                        platform.getServerCategoryType(),
+                        platform.getServerSubCategoryType()
                     ));
 
                     final var joinData = PlayerJoinDataManager.getInstance().getPlayerJoinData(playerId);
