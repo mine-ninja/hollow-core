@@ -1,7 +1,13 @@
 name: Deploy plugins
 on:
-  push:
   workflow_dispatch:
+    inputs:
+      env:
+        description: "Ambiente para deploy"
+        type: choice
+        required: true
+        default: dev
+        options: [dev, prod]
 
 jobs:
   build-and-deploy:
