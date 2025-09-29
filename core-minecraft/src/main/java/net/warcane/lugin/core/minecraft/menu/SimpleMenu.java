@@ -6,12 +6,14 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryEvent;
 
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+@Getter
 public abstract class SimpleMenu {
     protected final Map<UUID, PlayerMenuContext> playerContexts = new HashMap<>();
     protected final MenuConfig defaultConfig = new MenuConfig();
@@ -36,11 +38,6 @@ public abstract class SimpleMenu {
         // The default implementation does nothing.
     }
     
-    @NotNull
-    public MenuConfig getDefaultConfig() {
-        return defaultConfig;
-    }
-    
     public void closeForAllPlayers() {
         for (PlayerMenuContext value : playerContexts.values()) {
             value.close();
@@ -51,7 +48,7 @@ public abstract class SimpleMenu {
         final var openHandler = new MenuConfig(defaultConfig);
         
         final PlayerMenuContext ctx = new PlayerMenuContext(player, initialData, openHandler, this, manager);
-        if (!this.onPreOpen(ctx, openHandler)) return;
+        if (!this.onPreOpen(ctx, openHandler)) { return; }
         
         ctx.initialize();
         playerContexts.put(player.getUniqueId(), ctx);

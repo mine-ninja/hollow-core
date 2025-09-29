@@ -8,7 +8,6 @@ import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException
 import net.warcane.lugin.core.minecraft.menu.MenuContext;
 import net.warcane.lugin.core.minecraft.menu.PlayerMenuContext;
 import net.warcane.lugin.core.minecraft.menu.SimpleMenu;
-import net.warcane.lugin.core.minecraft.menu.SimpleMenuManager;
 import net.warcane.lugin.core.minecraft.menu.config.MenuConfig;
 import net.warcane.lugin.core.minecraft.util.sound.PredefinedSound;
 import org.bukkit.Material;
@@ -20,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 

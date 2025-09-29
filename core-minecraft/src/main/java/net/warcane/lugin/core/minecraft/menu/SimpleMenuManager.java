@@ -42,6 +42,10 @@ public class SimpleMenuManager implements Listener {
             register(m);
         }
     }
+    
+    public SimpleMenu getMenu(@NotNull Class<? extends SimpleMenu> menuClass) {
+        return menus.get(menuClass);
+    }
 
     public void openToPlayer(@NotNull Player player, @NotNull Class<? extends SimpleMenu> menuClass) {
         openToPlayer(player, menuClass, new HashMap<>());

@@ -7,6 +7,7 @@ import net.warcane.lugin.core.group.PlayerGroup;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.event.account.PlayerAccountLoadEvent;
 import net.warcane.lugin.core.minecraft.event.account.PlayerAccountUpdateEvent;
+import net.warcane.lugin.core.minecraft.event.account.PlayerNickUpdateEvent;
 import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.util.LocationUtil;
 import net.warcane.lugin.core.minecraft.util.PlayerUtil;
@@ -16,7 +17,6 @@ import net.warcane.lugin.core.minecraft.vanish.VanishManager;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerConnectedToServerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDisconnectedFromServerPacket;
-import net.warcane.lugin.core.player.account.PlayerAccountService;
 import net.warcane.lugin.core.player.account.PlayerAccountService.AccountUnloadOptions;
 import net.warcane.lugin.core.player.fetcher.PlayerNameFetcher;
 import net.warcane.lugin.core.player.fetcher.PlayerUuidFetcher;
@@ -47,7 +47,7 @@ import static net.warcane.lugin.core.player.wallet.WalletService.LoadWalletOptio
 @Slf4j
 @RequiredArgsConstructor
 public final class InternalPlayerListener implements Listener {
-    
+
     private static final String FAILED_TO_LOAD_ERR_MSG = "§cSua conta está sendo revisada. Tente novamente em alguns minutos. (Código de erro: 1001)";
 
     private final BukkitPlatform platform;
@@ -55,14 +55,15 @@ public final class InternalPlayerListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void handlePreLogin(@NotNull AsyncPlayerPreLoginEvent event) {
         final var uniqueId = event.getUniqueId();
+        final var name = event.getName();
 
         try {
             // carrega a carteira do cara sempre direto no login.
             if (platform.getServerCategoryType() != ServerCategoryType.LOGIN) {
                 final var wallet = platform.getWalletService()
-                    .loadPlayerWallet(event.getUniqueId(),
-                        withDefaultWallet(Wallet.createDefaultWallet(event.getUniqueId(), event.getName()), true)
-                    ).join();
+                                       .loadPlayerWallet(event.getUniqueId(),
+                                           withDefaultWallet(Wallet.createDefaultWallet(event.getUniqueId(), event.getName()), true)
+                                       ).join();
 
                 if (wallet == null) {
                     log.error("Failed to load wallet for UUID {} during pre-login.", uniqueId);
@@ -79,11 +80,26 @@ public final class InternalPlayerListener implements Listener {
 
             log.info("Player with UUID {} is attempting to join the server.", uniqueId);
 
-            final var account = platform.getPlayerAccountService().getPlayerAccount(uniqueId).join();
+            var account = platform.getPlayerAccountService().getPlayerAccount(uniqueId).join();
             if (account == null) {
                 log.error("Failed to load player account for UUID {} during pre-login.", uniqueId);
                 event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text(platform.getDisallowJoinMessage()));
                 return;
+            }
+
+            PlayerUuidFetcher.getInstance().cachePlayerUuid(name, uniqueId);
+            PlayerNameFetcher.getInstance().setPlayerName(uniqueId, name);
+
+            if (!name.equals(account.playerName())) {
+                String oldName = account.playerName();
+                account = platform.getPlayerAccountService()
+                              .updatePlayerAccount(account.withNewName(name)).exceptionally(throwable -> {
+                        event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text("§cHouve um erro ao atualizar o seu nome de jogador. Tente novamente mais tarde."));
+                        throwable.printStackTrace();
+                        return null;
+                    }).join();
+
+                new PlayerNickUpdateEvent(account, oldName, name).callEvent();
             }
 
             final var subscriptions = account.subscriptions();
@@ -119,7 +135,7 @@ public final class InternalPlayerListener implements Listener {
             event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text(FAILED_TO_LOAD_ERR_MSG));
         }
     }
-    
+
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerJoin(PlayerJoinEvent event) {
         final var player = event.getPlayer();
@@ -127,96 +143,78 @@ public final class InternalPlayerListener implements Listener {
 
         final var playerId = player.getUniqueId();
         final var name = player.getName();
-        
+
         platform.getPlayerAccountService().loadPlayerAccount(playerId, withDefaultAccount(createDefaultAccount(playerId, name), true))
             .whenComplete((playerAccount, error) -> {
-            if (error != null) {
-                error.printStackTrace();
-                log.error("Failed to load player account for {}: {}", player.getName(), error.getMessage(), error);
-                this.syncKick(player);
-                return;
-            }
-
-            try {
-                final var categoryType = platform.getSubscriptionCategoryType();
-                PlayerGroup group = playerAccount.getHighestSubscription(categoryType).group();
-                if (Property.get("ALLOWED_GROUPS") != null && !platform.isGroupAllowedToJoin(group)) {
-                    log.info("Player {} with UUID {} has group {} which is not allowed to join the server.", player.getName(), playerId, group.name());
-                    this.syncKick(player, platform.getDisallowJoinMessage());
+                if (error != null) {
+                    error.printStackTrace();
+                    log.error("Failed to load player account for {}: {}", player.getName(), error.getMessage(), error);
+                    this.syncKick(player);
                     return;
                 }
 
-                // Só envia o pacote de connect caso realmente carregue as informações do jogador.
-                // caso o contrario ele vai ser kickado (como mostra no código acima).
-                final var packet = new PlayerConnectedToServerPacket(playerId, currentServerId);
-                platform.getNetworkClient().sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, packet);
+                try {
+                    final var categoryType = platform.getSubscriptionCategoryType();
+                    PlayerGroup group = playerAccount.getHighestSubscription(categoryType).group();
+                    if (Property.get("ALLOWED_GROUPS") != null && !platform.isGroupAllowedToJoin(group)) {
+                        log.info("Player {} with UUID {} has group {} which is not allowed to join the server.", player.getName(), playerId, group.name());
+                        this.syncKick(player, platform.getDisallowJoinMessage());
+                        return;
+                    }
+                  
+                    // Só envia o pacote de connect caso realmente carregue as informações do jogador.
+                    // caso o contrario ele vai ser kickado (como mostra no código acima).
+                    final var packet = new PlayerConnectedToServerPacket(playerId, currentServerId);
+                    platform.getNetworkClient().sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, packet);
 
-                log.debug("Player account loaded for {}: {}", player.getName(), playerAccount);
-                platform.getGameServerService().update(platform.getGameServer());
-                platform.getPermissionInjector().injectPermissions(player);
-                
-                if (platform.getServerCategoryType() == ServerCategoryType.LOGIN) {
-                    Tasks.runSync(() -> player.setGameMode(GameMode.ADVENTURE));
-                }
+                    log.debug("Player account loaded for {}: {}", player.getName(), playerAccount);
+                    platform.getGameServerService().update(platform.getGameServer());
+                    platform.getPermissionInjector().injectPermissions(player);
 
-                PlayerUuidFetcher.getInstance().cachePlayerUuid(name, playerId);
-                PlayerNameFetcher.getInstance().setPlayerName(playerId, name);
-                PlayerNetworkStateManager.getInstance().register(new PlayerNetworkState(
-                    player.getUniqueId(),
-                    player.getName(),
-                    currentServerId,
-                    platform.getServerCategoryType(),
-                    platform.getServerSubCategoryType()
-                ));
-
-
-                if (!name.equals(playerAccount.playerName())) {
-                    platform.getPlayerAccountService()
-                      .updatePlayerAccount(playerAccount.withNewName(name))
-                      .whenComplete((updatedAccount, updateError) -> {
-                          if (updateError != null) {
-                              log.error("Failed to update player account name for {}: {}", player.getName(), updateError.getMessage(), updateError);
-                              this.syncKick(player);
-                          } else {
-                              log.info("Player account name updated for {}: {}", player.getName(), updatedAccount);
-                          }
-                      });
-                }
-
-
-                final var joinData = PlayerJoinDataManager.getInstance().getPlayerJoinData(playerId);
-                if (joinData != null && currentServerId.equalsIgnoreCase(joinData.remoteServerLocation().targetServerId())) {
-                    Tasks.runAsyncLater(() -> {
-                        final var location = LocationUtil.transformLocation(joinData.remoteServerLocation());
-                        player.teleportAsync(location);
-                        PlayerJoinDataManager.getInstance().removeJoinData(playerId);
-                    }, 1);
-                }
-
-                Tasks.runSync(() -> {
-                    // TODO: favor não me crucificar isso é temporário
-                    if (BukkitPlatform.getInstance().getVanishManager().isVanished(player)) {
-                        BukkitPlatform.getInstance().getVanishManager().vanish(player);
+                    if (platform.getServerCategoryType() == ServerCategoryType.LOGIN) {
+                        Tasks.runSync(() -> player.setGameMode(GameMode.ADVENTURE));
                     }
 
-                    for (Player target : Bukkit.getOnlinePlayers()) {
-                        VanishManager vanishManager = BukkitPlatform.getInstance().getVanishManager();
+                    PlayerNetworkStateManager.getInstance().register(new PlayerNetworkState(
+                        player.getUniqueId(),
+                        player.getName(),
+                        currentServerId,
+                        platform.getServerCategoryType()
+                    ));
 
-                        if (vanishManager.isVanished(target) && !vanishManager.canSeeIfVanished(player)) {
-                            player.hidePlayer(target);
+                    final var joinData = PlayerJoinDataManager.getInstance().getPlayerJoinData(playerId);
+                    if (joinData != null && currentServerId.equalsIgnoreCase(joinData.remoteServerLocation().targetServerId())) {
+                        Tasks.runAsyncLater(() -> {
+                            final var location = LocationUtil.transformLocation(joinData.remoteServerLocation());
+                            player.teleportAsync(location);
+                            PlayerJoinDataManager.getInstance().removeJoinData(playerId);
+                        }, 1);
+                    }
+
+                    Tasks.runSync(() -> {
+                        // TODO: favor não me crucificar isso é temporário
+                        if (BukkitPlatform.getInstance().getVanishManager().isVanished(player)) {
+                            BukkitPlatform.getInstance().getVanishManager().vanish(player);
                         }
-                    }
-                });
 
-                Tasks.runAsyncLater(() -> Bukkit.getPluginManager().callEvent(new PlayerAccountLoadEvent(playerAccount)), 1);
+                        for (Player target : Bukkit.getOnlinePlayers()) {
+                            VanishManager vanishManager = BukkitPlatform.getInstance().getVanishManager();
 
-            } catch (Exception e) {
-                e.printStackTrace();
-                log.error("Error while processing player join for {}: {}", player.getName(), e.getMessage(), e);
-                this.syncKick(player);
-                return;
-            }
-        });
+                            if (vanishManager.isVanished(target) && !vanishManager.canSeeIfVanished(player)) {
+                                player.hidePlayer(target);
+                            }
+                        }
+                    });
+
+                    Tasks.runAsyncLater(() -> Bukkit.getPluginManager().callEvent(new PlayerAccountLoadEvent(playerAccount)), 1);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    log.error("Error while processing player join for {}: {}", player.getName(), e.getMessage(), e);
+                    this.syncKick(player);
+                    return;
+                }
+            });
 
         if (VersionChecker.isLegacyVersion()) {
             Bukkit.getScheduler().runTaskLaterAsynchronously(BukkitPlatform.getInstance().getPlugin(), () -> {
@@ -248,7 +246,7 @@ public final class InternalPlayerListener implements Listener {
         // Envia o pacote de desconexão do jogador para o servidor, mesmo que não tenha a conta atualizada.
         final var packet = new PlayerDisconnectedFromServerPacket(player.getUniqueId(), currentServerId);
         platform.getNetworkClient().sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, packet);
-        
+
         runAsync(() -> {
             final var state = PlayerNetworkStateManager.getInstance().getPlayerState(player.getUniqueId());
             if (state != null) {
@@ -259,28 +257,28 @@ public final class InternalPlayerListener implements Listener {
         final var unloadOptions = new AccountUnloadOptions(false, true);
 
         platform.getPlayerAccountService()
-          .unloadPlayerAccount(player.getUniqueId(), unloadOptions)
-          .whenComplete((unloaded, error) -> {
-            if (error != null) {
-                log.error("Failed to unload player account for {}: {}", player.getName(), error.getMessage(), error);
-            } else if (unloaded == null) {
-                log.info("Player account not found for {} during unload", player.getName());
-            } else {
-                log.info("Player account unloaded for {}: {}", player.getName(), unloaded);
-            }
+            .unloadPlayerAccount(player.getUniqueId(), unloadOptions)
+            .whenComplete((unloaded, error) -> {
+                if (error != null) {
+                    log.error("Failed to unload player account for {}: {}", player.getName(), error.getMessage(), error);
+                } else if (unloaded == null) {
+                    log.info("Player account not found for {} during unload", player.getName());
+                } else {
+                    log.info("Player account unloaded for {}: {}", player.getName(), unloaded);
+                }
 
-            runAsyncLater(platform::updateServerInfo, 20);
-        });
+                runAsyncLater(platform::updateServerInfo, 20);
+            });
     }
 
     @EventHandler
     public void onGroupUpdate(PlayerAccountUpdateEvent event) {
         Player localPlayer = event.getLocalPlayer();
         if (localPlayer == null) return;
-        
+
         platform.getPermissionInjector().injectPermissions(localPlayer);
     }
-    
+
     private void syncKick(@NotNull Player player) {
         this.syncKick(player, FAILED_TO_LOAD_ERR_MSG);
     }
