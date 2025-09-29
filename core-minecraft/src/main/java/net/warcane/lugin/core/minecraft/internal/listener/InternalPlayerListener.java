@@ -161,7 +161,7 @@ public final class InternalPlayerListener implements Listener {
                         this.syncKick(player, platform.getDisallowJoinMessage());
                         return;
                     }
-
+                  
                     // Só envia o pacote de connect caso realmente carregue as informações do jogador.
                     // caso o contrario ele vai ser kickado (como mostra no código acima).
                     final var packet = new PlayerConnectedToServerPacket(playerId, currentServerId);

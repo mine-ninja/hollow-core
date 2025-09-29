@@ -2,6 +2,7 @@ package net.warcane.lugin.core.player.state;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
+import net.warcane.lugin.core.server.type.ServerSubCategoryType;
 
 import java.util.UUID;
 
@@ -13,9 +14,9 @@ import java.util.UUID;
  * @param currentServerId ID do servidor atual em que o jogador está conectado (Ex: bw01)
  */
 public record PlayerNetworkState(
-  @JsonProperty("i") UUID playerId,
-  @JsonProperty("n") String playerName,
-  @JsonProperty("sid") String currentServerId,
-  @JsonProperty("sc") ServerCategoryType gameType
-) {
-}
+    @JsonProperty("i") UUID playerId,
+    @JsonProperty("n") String playerName,
+    @JsonProperty("sid") String currentServerId,
+    @JsonProperty("sc") ServerCategoryType gameType,
+    @JsonProperty("ssc") ServerSubCategoryType serverSubCategoryType
+) { }
