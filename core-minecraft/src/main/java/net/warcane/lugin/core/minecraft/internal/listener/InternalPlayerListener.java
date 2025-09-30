@@ -58,26 +58,6 @@ public final class InternalPlayerListener implements Listener {
         final var name = event.getName();
 
         try {
-            // carrega a carteira do cara sempre direto no login.
-            if (platform.getServerCategoryType() != ServerCategoryType.LOGIN) {
-                final var wallet = platform.getWalletService()
-                                       .loadPlayerWallet(event.getUniqueId(),
-                                           withDefaultWallet(Wallet.createDefaultWallet(event.getUniqueId(), event.getName()), true)
-                                       ).join();
-
-                if (wallet == null) {
-                    log.error("Failed to load wallet for UUID {} during pre-login.", uniqueId);
-                    event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text(FAILED_TO_LOAD_ERR_MSG));
-                } else {
-                    log.info("Wallet loaded for player UUID {}: {}", uniqueId, wallet);
-                }
-            }
-
-            // Matheus: Por enquanto da pra fazer assim... (Precisa de uma logica melhor depois)
-            if (platform.isGroupAllowedToJoin(PlayerGroup.DEFAULT) && !this.isServerFull()) {
-                return;
-            }
-
             log.info("Player with UUID {} is attempting to join the server.", uniqueId);
 
             var account = platform.getPlayerAccountService().getPlayerAccount(uniqueId).join();
@@ -107,6 +87,26 @@ public final class InternalPlayerListener implements Listener {
                     event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text("§cHouve um erro ao atualizar o seu nome de jogador.\n").append(nickUpdateEvent.getCanceledMessage()));
                     return;
                 }
+            }
+
+            // carrega a carteira do cara sempre direto no login.
+            if (platform.getServerCategoryType() != ServerCategoryType.LOGIN) {
+                final var wallet = platform.getWalletService()
+                                       .loadPlayerWallet(event.getUniqueId(),
+                                           withDefaultWallet(Wallet.createDefaultWallet(event.getUniqueId(), event.getName()), true)
+                                       ).join();
+
+                if (wallet == null) {
+                    log.error("Failed to load wallet for UUID {} during pre-login.", uniqueId);
+                    event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text(FAILED_TO_LOAD_ERR_MSG));
+                } else {
+                    log.info("Wallet loaded for player UUID {}: {}", uniqueId, wallet);
+                }
+            }
+
+            // Matheus: Por enquanto da pra fazer assim... (Precisa de uma logica melhor depois)
+            if (platform.isGroupAllowedToJoin(PlayerGroup.DEFAULT) && !this.isServerFull()) {
+                return;
             }
 
             final var subscriptions = account.subscriptions();
@@ -168,7 +168,7 @@ public final class InternalPlayerListener implements Listener {
                         this.syncKick(player, platform.getDisallowJoinMessage());
                         return;
                     }
-                  
+
                     // Só envia o pacote de connect caso realmente carregue as informações do jogador.
                     // caso o contrario ele vai ser kickado (como mostra no código acima).
                     final var packet = new PlayerConnectedToServerPacket(playerId, currentServerId);
