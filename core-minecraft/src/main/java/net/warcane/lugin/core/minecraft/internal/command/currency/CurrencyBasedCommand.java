@@ -109,12 +109,20 @@ public class CurrencyBasedCommand extends SimpleCommand implements Listener {
     private final Map<String, Long> payCommandCooldowns = new ConcurrentHashMap<>();
 
     private void handlePayCommand(@NotNull CommandContext ctx, @NotNull String playerName) {
-
         if (ctx.getSenderAsPlayer().getName().equalsIgnoreCase(playerName)) {
             throw new CommandFailedException("§cVocê não pode pagar a si mesmo.");
         }
 
-        final var targetWallet = platform.getWalletService().getCachedWallet(playerName);
+        final var localPlayer = Bukkit.getOnlinePlayers().stream()
+            .filter(p -> p.getName().equalsIgnoreCase(playerName))
+            .findFirst()
+            .orElse(null);
+
+        if(localPlayer == null) {
+            throw new CommandFailedException("§cO jogador " + playerName + " não está online no mesmo servidor que você.");
+        }
+
+        final var targetWallet = platform.getWalletService().getCachedWallet(localPlayer.getUniqueId());
         if (targetWallet == null)
             throw new CommandFailedException("§cJogador não encontrado ou não possui uma carteira.");
 
