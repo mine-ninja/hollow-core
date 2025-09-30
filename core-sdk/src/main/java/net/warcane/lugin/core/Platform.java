@@ -7,6 +7,7 @@ import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.SendMessageToPlayerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.SendModernMessageToPlayerPacket;
 import net.warcane.lugin.core.player.account.PlayerAccountService;
+import net.warcane.lugin.core.player.fetcher.ProfileService;
 import net.warcane.lugin.core.player.wallet.WalletService;
 import net.warcane.lugin.core.server.GameServerService;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +38,8 @@ public interface Platform {
     GameServerService getGameServerService();
 
     PlayerAccountService getPlayerAccountService();
+    
+    ProfileService getProfileService();
 
     GroupPermissionService getGroupPermissionService();
 
