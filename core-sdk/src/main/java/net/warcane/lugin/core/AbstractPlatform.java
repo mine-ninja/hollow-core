@@ -8,6 +8,7 @@ import net.warcane.lugin.core.group.GroupPermissionService;
 import net.warcane.lugin.core.group.PlayerGroup;
 import net.warcane.lugin.core.network.NetworkClient;
 import net.warcane.lugin.core.player.account.PlayerAccountService;
+import net.warcane.lugin.core.player.fetcher.ProfileService;
 import net.warcane.lugin.core.player.wallet.WalletService;
 import net.warcane.lugin.core.server.GameServerService;
 import net.warcane.lugin.core.util.address.HostAddress;
@@ -47,6 +48,7 @@ public abstract class AbstractPlatform implements Platform {
 
     protected final GameServerService gameServerService;
     protected final PlayerAccountService playerAccountService;
+    protected final ProfileService profileService;
     protected final GroupPermissionService groupPermissionService;
     protected final WalletService walletService;
 
@@ -62,6 +64,7 @@ public abstract class AbstractPlatform implements Platform {
 
         this.gameServerService = new GameServerService(redisConnector);
         this.playerAccountService = PlayerAccountService.of(executorService);
+        this.profileService = new ProfileService(this);
         this.groupPermissionService = new GroupPermissionService(executorService);
         this.walletService = new WalletService( this, executorService);
 
@@ -101,7 +104,12 @@ public abstract class AbstractPlatform implements Platform {
     public PlayerAccountService getPlayerAccountService() {
         return playerAccountService;
     }
-
+    
+    @Override
+    public ProfileService getProfileService() {
+        return profileService;
+    }
+    
     @Override
     public GroupPermissionService getGroupPermissionService() {
         return groupPermissionService;

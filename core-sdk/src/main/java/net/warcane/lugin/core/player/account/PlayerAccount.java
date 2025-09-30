@@ -27,6 +27,7 @@ import static net.warcane.lugin.core.player.subscription.PlayerGroupSubscription
 public record PlayerAccount(
   @JsonProperty("i") UUID uniqueId,
   @JsonProperty("n") String playerName,
+  @JsonProperty("sk") String skin,
   @JsonProperty("sb") List<PlayerGroupSubscription> subscriptions,
   @JsonProperty("c") Instant createdAt,
   @JsonProperty("l") Instant lastLogin
@@ -46,7 +47,15 @@ public record PlayerAccount(
      * @return Uma nova instância de PlayerAccount com o novo nome
      */
     public PlayerAccount withNewName(@NotNull String newName) {
-        return new PlayerAccount(uniqueId, newName, subscriptions, createdAt, lastLogin);
+        return new PlayerAccount(uniqueId, newName, skin, subscriptions, createdAt, lastLogin);
+    }
+    
+    public PlayerAccount withNewSkin(@Nullable String newSkin) {
+        return new PlayerAccount(uniqueId, playerName, newSkin, subscriptions, createdAt, lastLogin);
+    }
+    
+    public PlayerAccount withLastLogin(@NotNull Instant newLastLogin) {
+        return new PlayerAccount(uniqueId, playerName, skin, subscriptions, createdAt, newLastLogin);
     }
 
     /**
@@ -57,8 +66,8 @@ public record PlayerAccount(
      * @return Uma nova instância de PlayerAccount com o grupo "MEMBER"
      */
     @NotNull
-    public static PlayerAccount createDefaultAccount(@NotNull UUID uniqueId, @NotNull String playerName) {
-        return new PlayerAccount(uniqueId, playerName, new ArrayList<>(List.of(PlayerGroupSubscription.defaultSubscription())), Instant.now(), Instant.now());
+    public static PlayerAccount createDefaultAccount(@NotNull UUID uniqueId, @NotNull String playerName, @Nullable String skin) {
+        return new PlayerAccount(uniqueId, playerName, skin, new ArrayList<>(List.of(PlayerGroupSubscription.defaultSubscription())), Instant.now(), Instant.now());
     }
 
 
@@ -141,7 +150,7 @@ public record PlayerAccount(
         final var currentSubscriptions = new ArrayList<>(this.subscriptions);
         currentSubscriptions.removeIf(existingSubscription -> existingSubscription.equals(subscription));
 
-        return new PlayerAccount(uniqueId, playerName, currentSubscriptions, createdAt, lastLogin);
+        return new PlayerAccount(uniqueId, playerName, skin, currentSubscriptions, createdAt, lastLogin);
     }
 
     /**
@@ -158,7 +167,7 @@ public record PlayerAccount(
             currentSubscriptions.remove(existingSubscription);
         }
 
-        return new PlayerAccount(uniqueId, playerName, currentSubscriptions, createdAt, lastLogin);
+        return new PlayerAccount(uniqueId, playerName, skin, currentSubscriptions, createdAt, lastLogin);
     }
 
     public PlayerAccount withNewPermanentSubscription(@NotNull PlayerGroup group, @NotNull SubscriptionCategoryType type) {
@@ -173,7 +182,7 @@ public record PlayerAccount(
             final var newSubscription = createNewPermanentSubscription(group, type);
             currentSubscriptions.add(newSubscription);
 
-            return new PlayerAccount(uniqueId, playerName, currentSubscriptions, createdAt, lastLogin);
+            return new PlayerAccount(uniqueId, playerName, skin, currentSubscriptions, createdAt, lastLogin);
         } catch (Exception e) {
             throw new IllegalStateException("Erro ao criar assinatura permanente: " + e.getMessage(), e);
         }
@@ -195,7 +204,7 @@ public record PlayerAccount(
             final var newSubscription = createNewSubscription(group, targetExpirationTime, type);
             currentSubscriptions.add(newSubscription);
 
-            return new PlayerAccount(uniqueId, playerName, currentSubscriptions, createdAt, lastLogin);
+            return new PlayerAccount(uniqueId, playerName, skin, currentSubscriptions, createdAt, lastLogin);
         } catch (Exception e) {
             throw new IllegalStateException("Erro ao criar assinatura: " + e.getMessage(), e);
         }

@@ -1,5 +1,6 @@
 package net.warcane.lugin.core.player.fetcher;
 
+import net.warcane.lugin.core.Platform;
 import net.warcane.lugin.core.util.data.RedisCache;
 import org.jetbrains.annotations.NotNull;
 
@@ -7,7 +8,10 @@ import java.util.UUID;
 
 /**
  * Classe responsavel por buscar o nome de um jogador.
+ *
+ * @deprecated Use {@link Platform#getProfileService()} em vez disso.
  */
+@Deprecated(forRemoval = true)
 public class PlayerNameFetcher {
 
     private static final long ONE_WEEK_IN_SECONDS = 604_800L; // 7 dias em segundos

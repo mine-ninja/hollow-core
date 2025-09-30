@@ -1,13 +1,12 @@
 package net.warcane.lugin.core.minecraft.internal.listener;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import com.destroystokyo.paper.profile.ProfileProperty;
 import net.kyori.adventure.text.Component;
 import net.warcane.lugin.core.group.PlayerGroup;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
+import net.warcane.lugin.core.minecraft.event.account.AsyncPlayerNickUpdateEvent;
 import net.warcane.lugin.core.minecraft.event.account.PlayerAccountLoadEvent;
 import net.warcane.lugin.core.minecraft.event.account.PlayerAccountUpdateEvent;
-import net.warcane.lugin.core.minecraft.event.account.AsyncPlayerNickUpdateEvent;
 import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.util.LocationUtil;
 import net.warcane.lugin.core.minecraft.util.PlayerUtil;
@@ -20,6 +19,7 @@ import net.warcane.lugin.core.network.packet.impl.player.PlayerDisconnectedFromS
 import net.warcane.lugin.core.player.account.PlayerAccountService.AccountUnloadOptions;
 import net.warcane.lugin.core.player.fetcher.PlayerNameFetcher;
 import net.warcane.lugin.core.player.fetcher.PlayerUuidFetcher;
+import net.warcane.lugin.core.player.fetcher.SimpleProfile;
 import net.warcane.lugin.core.player.state.PlayerNetworkState;
 import net.warcane.lugin.core.player.state.PlayerNetworkStateManager;
 import net.warcane.lugin.core.player.teleport.PlayerJoinDataManager;
@@ -36,7 +36,11 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import java.util.Set;
 
 import static net.warcane.lugin.core.minecraft.task.Tasks.runAsync;
 import static net.warcane.lugin.core.minecraft.task.Tasks.runAsyncLater;
@@ -89,12 +93,12 @@ public final class InternalPlayerListener implements Listener {
 
             PlayerUuidFetcher.getInstance().cachePlayerUuid(name, uniqueId);
             PlayerNameFetcher.getInstance().setPlayerName(uniqueId, name);
+            platform.getProfileService().cacheProfile(new SimpleProfile(uniqueId, name, account.skin()));
 
             if (!name.equals(account.playerName())) {
                 String oldName = account.playerName();
                 try {
-                    account = platform.getPlayerAccountService()
-                                  .updatePlayerAccount(account.withNewName(name)).join();
+                    account = platform.getPlayerAccountService().updatePlayerAccount(account.withNewName(name)).join();
                 } catch (Exception e) {
                     event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text("§cHouve um erro ao atualizar o seu nome de jogador. Tente novamente mais tarde."));
                     e.printStackTrace();
@@ -150,8 +154,18 @@ public final class InternalPlayerListener implements Listener {
 
         final var playerId = player.getUniqueId();
         final var name = player.getName();
-
-        platform.getPlayerAccountService().loadPlayerAccount(playerId, withDefaultAccount(createDefaultAccount(playerId, name), true))
+        
+        // TODO - Buscar uma forma de atualizar a skin sempre q o jogador entrar.
+        String skin = null;
+        Set<ProfileProperty> properties = player.getPlayerProfile().getProperties();
+        for (ProfileProperty property : properties) {
+            if (property.getName().equals("textures")) {
+                skin = property.getValue();
+                break;
+            }
+        }
+        
+        platform.getPlayerAccountService().loadPlayerAccount(playerId, withDefaultAccount(createDefaultAccount(playerId, name, skin), true))
             .whenComplete((playerAccount, error) -> {
                 if (error != null) {
                     error.printStackTrace();
@@ -192,7 +206,7 @@ public final class InternalPlayerListener implements Listener {
 
                     final var joinData = PlayerJoinDataManager.getInstance().getPlayerJoinData(playerId);
                     if (joinData != null && currentServerId.equalsIgnoreCase(joinData.remoteServerLocation().targetServerId())) {
-                        Tasks.runAsyncLater(() -> {
+                        runAsyncLater(() -> {
                             final var location = LocationUtil.transformLocation(joinData.remoteServerLocation());
                             player.teleportAsync(location);
                             PlayerJoinDataManager.getInstance().removeJoinData(playerId);
@@ -214,7 +228,7 @@ public final class InternalPlayerListener implements Listener {
                         }
                     });
 
-                    Tasks.runAsyncLater(() -> Bukkit.getPluginManager().callEvent(new PlayerAccountLoadEvent(playerAccount)), 1);
+                    runAsyncLater(() -> Bukkit.getPluginManager().callEvent(new PlayerAccountLoadEvent(playerAccount)), 1);
 
                 } catch (Exception e) {
                     e.printStackTrace();
