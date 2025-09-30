@@ -1,5 +1,6 @@
 package net.warcane.lugin.core.player.fetcher;
 
+import net.warcane.lugin.core.Platform;
 import net.warcane.lugin.core.util.data.RedisCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -8,7 +9,10 @@ import java.util.UUID;
 
 /**
  * Classe responsavel por buscar o UUID de um jogador.
+ *
+ * @deprecated Use {@link Platform#getProfileService()} em vez disso.
  */
+@Deprecated(forRemoval = true)
 public class PlayerUuidFetcher {
 
     private static final class PlayerUuidFetcherHolder {
