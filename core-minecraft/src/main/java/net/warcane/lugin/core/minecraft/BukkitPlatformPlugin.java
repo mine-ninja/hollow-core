@@ -112,8 +112,7 @@ public class BukkitPlatformPlugin extends SimplePlugin {
     
     final class ListServersCommand extends SimpleCommand {
         public ListServersCommand() {
-            super("listservers");
-            this.requiredPermission = "lugin.manager";
+            super("listservers", "lugin.manager");
         }
         
         @Override
@@ -144,8 +143,7 @@ public class BukkitPlatformPlugin extends SimplePlugin {
     
     final class ListPlayersCommand extends SimpleCommand {
         public ListPlayersCommand() {
-            super("listplayers");
-            this.requiredPermission = "lugin.manager";
+            super("listplayers", "lugin.manager");
         }
         
         @Override
@@ -176,8 +174,7 @@ public class BukkitPlatformPlugin extends SimplePlugin {
     
     final class ServerInfo extends SimpleCommand {
         public ServerInfo() {
-            super("serverinfo");
-            this.requiredPermission = "lugin.manager";
+            super("serverinfo", "lugin.manager");
         }
         
         @Override

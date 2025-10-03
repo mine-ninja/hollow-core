@@ -36,10 +36,9 @@ public class PlayerGroupCommand extends SimpleCommand {
     private final PlayerAccountService playerAccountService;
 
     public PlayerGroupCommand(@NotNull BukkitPlatform platform) {
-        super("playergroup");
+        super("playergroup", "lugin.master");
         this.platform = platform;
         this.playerAccountService = platform.getPlayerAccountService();
-        this.requiredPermission = "lugin.master";
     }
 
     // /playergroup add <player> <group> [permanente|perma|-p|-1] [category]

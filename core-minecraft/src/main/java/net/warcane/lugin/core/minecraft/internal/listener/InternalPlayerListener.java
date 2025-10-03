@@ -16,6 +16,7 @@ import net.warcane.lugin.core.minecraft.vanish.VanishManager;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerConnectedToServerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDisconnectedFromServerPacket;
+import net.warcane.lugin.core.player.account.PlayerAccountService;
 import net.warcane.lugin.core.player.account.PlayerAccountService.AccountUnloadOptions;
 import net.warcane.lugin.core.player.fetcher.PlayerNameFetcher;
 import net.warcane.lugin.core.player.fetcher.PlayerUuidFetcher;
@@ -40,6 +41,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import java.time.Instant;
 import java.util.Set;
 
 import static net.warcane.lugin.core.minecraft.task.Tasks.runAsync;
@@ -275,22 +277,35 @@ public final class InternalPlayerListener implements Listener {
                 PlayerNetworkStateManager.getInstance().unregister(state);
             }
         });
-
-        final var unloadOptions = new AccountUnloadOptions(false, true);
-
-        platform.getPlayerAccountService()
-            .unloadPlayerAccount(player.getUniqueId(), unloadOptions)
-            .whenComplete((unloaded, error) -> {
-                if (error != null) {
-                    log.error("Failed to unload player account for {}: {}", player.getName(), error.getMessage(), error);
-                } else if (unloaded == null) {
-                    log.info("Player account not found for {} during unload", player.getName());
-                } else {
-                    log.info("Player account unloaded for {}: {}", player.getName(), unloaded);
+        
+        final var accountService = platform.getPlayerAccountService();
+        accountService.getPlayerAccount(player.getUniqueId())
+            .whenCompleteAsync((account, throwable) -> {
+                if (account == null || throwable != null) {
+                    if (throwable != null) {
+                        log.error("Failed to get player account for {} during quit: {}", player.getName(), throwable.getMessage(), throwable);
+                    }
+                    else {
+                        log.debug("Player account not found for {} during quit", player.getName());
+                    }
+                    return;
                 }
-
-                runAsyncLater(platform::updateServerInfo, 20);
-            });
+                
+                accountService.updatePlayerAccount(account.withLastLogin(Instant.now()))
+                    .thenAccept(acc -> accountService.unloadPlayerAccount(acc.uniqueId(), new AccountUnloadOptions(false, true))
+                        .whenComplete((unloaded, error) -> {
+                            if (error != null) {
+                                log.error("Failed to unload player account for {}: {}", player.getName(), error.getMessage(), error);
+                            } else if (unloaded == null) {
+                                log.info("Player account not found for {} during unload", player.getName());
+                            } else {
+                                log.info("Player account unloaded for {}: {}", player.getName(), unloaded);
+                            }
+                            
+                            runAsyncLater(platform::updateServerInfo, 20);
+                        })
+                    );
+            }, Tasks::runAsync);
     }
 
     @EventHandler

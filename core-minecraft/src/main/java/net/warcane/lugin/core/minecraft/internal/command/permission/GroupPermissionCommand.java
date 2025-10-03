@@ -22,10 +22,9 @@ public class GroupPermissionCommand extends SimpleCommand {
     private final GroupPermissionService service;
 
     public GroupPermissionCommand(BukkitPlatform platform) {
-        super("groupperm");
+        super("groupperm", "lugin.master");
         this.platform = platform;
         this.service = platform.getGroupPermissionService();
-        this.requiredPermission = "lugin.master";
     }
 
 
@@ -105,8 +104,8 @@ public class GroupPermissionCommand extends SimpleCommand {
             return;
         }
 
-        final var joinedPermissions = String.join(", ", currentPermissions.permissions());
-        ctx.sendMessage("§aPermissões do grupo " + group.name() + " §7(" + size + "):" + joinedPermissions);
+        final var joinedPermissions = String.join("\n- ", currentPermissions.permissions());
+        ctx.sendMessage("§aPermissões do grupo " + group.name() + " §7(" + size + "):\n- " + joinedPermissions);
     }
 
     @Override

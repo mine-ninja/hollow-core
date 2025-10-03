@@ -24,11 +24,10 @@ public class GoCommand extends SimpleCommand {
     private final BukkitPlatform platform;
 
     public GoCommand(BukkitPlatform platform) {
-        super("btp");
+        super("btp", "lugin.staff");
 
         this.setAliases(List.of("go"));
         this.platform = platform;
-        this.requiredPermission = "lugin.staff";
         this.playersOnly = true;
     }
 

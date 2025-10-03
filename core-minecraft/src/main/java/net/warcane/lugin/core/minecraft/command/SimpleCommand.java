@@ -5,8 +5,10 @@ import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException
 import net.warcane.lugin.core.minecraft.command.subcommand.SimpleSubCommand;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.jetbrains.annotations.NotNull;
+import org.bukkit.util.StringUtil;
 
+import org.jetbrains.annotations.NotNull;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -16,24 +18,24 @@ public abstract class SimpleCommand extends Command {
     public static final List<String> NONE_ARGS = Collections.emptyList();
     
     /**
-     * @deprecated Use {@link #setPermission(String)} instead.
+     * @deprecated Use {@link #setRequiredPermission(String)} instead.
      */
-    @Deprecated(since = "1.0.0")
-    protected String requiredPermission;
-    protected String noPermissionMessage;
-
-
-    protected boolean playersOnly;
-    protected String playersOnlyMessage;
+    @Deprecated(since = "1.0.0", forRemoval = true)
+    protected String requiredPermission = null;
+    protected String noPermissionMessage = "§cVocê não tem permissão para executar este comando.";
+    
+    protected boolean playersOnly = false;
+    protected String playersOnlyMessage = "§cEste comando só pode ser executado por jogadores.";
 
     protected List<SimpleSubCommand> subCommands = Collections.emptyList();
 
     public SimpleCommand(String name) {
         super(name);
-        this.requiredPermission = null;
-        this.noPermissionMessage = "§cVocê não tem permissão para executar este comando.";
-        this.playersOnly = false;
-        this.playersOnlyMessage = "§cEste comando só pode ser executado por jogadores.";
+    }
+    
+    public SimpleCommand(@NotNull String name, String requiredPermission) {
+        super(name);
+        this.setRequiredPermission(requiredPermission);
     }
     
     protected void setRequiredPermission(String requiredPermission) {
@@ -121,18 +123,22 @@ public abstract class SimpleCommand extends Command {
     
     protected List<String> filterStartingWith(Collection<String> list, String prefix) {
         if (prefix == null || prefix.isEmpty()) { return List.copyOf(list); }
-        
-        return list.stream()
-          .filter(s -> s.toLowerCase().startsWith(prefix.toLowerCase()))
-          .toList();
+        List<String> result = new ArrayList<>();
+        for (String s : list) {
+            if (StringUtil.startsWithIgnoreCase(s, prefix)) {
+                result.add(s);
+            }
+        }
+        return result;
     }
     
     private SimpleSubCommand getSubCommand(String name) {
         if (subCommands.isEmpty()) return null;
-
-        return subCommands.stream()
-          .filter(subCommand -> subCommand.matchesWith(name))
-          .findFirst()
-          .orElse(null);
+        for (SimpleSubCommand subCommand : subCommands) {
+            if (subCommand.matchesWith(name)) {
+                return subCommand;
+            }
+        }
+        return null;
     }
 }

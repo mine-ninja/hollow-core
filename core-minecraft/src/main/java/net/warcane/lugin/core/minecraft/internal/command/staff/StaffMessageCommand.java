@@ -17,15 +17,13 @@ public class StaffMessageCommand extends SimpleCommand {
     private final BukkitPlatform platform;
 
     public StaffMessageCommand(BukkitPlatform platform) {
-        super("s");
+        super("s", "lugin.staff");
         this.platform = platform;
-        this.requiredPermission = "lugin.staff";
         this.playersOnly = true;
     }
 
     @Override
     public void performCommand(@NotNull CommandContext ctx) throws CommandFailedException {
-        final var serverId = platform.getId();
         final var player = ctx.getSenderAsPlayer();
         final var account = platform.getPlayerAccountService().getCachedAccount(player.getUniqueId());
         if (account == null) {

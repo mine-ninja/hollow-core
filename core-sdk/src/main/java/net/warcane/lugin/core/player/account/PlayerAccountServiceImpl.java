@@ -100,8 +100,6 @@ public class PlayerAccountServiceImpl implements PlayerAccountService {
         }
 
         return supply(() -> {
-
-
             final var fromMongo = repository.findFirstFromPropertyIgnoreCase("playerName", playerName);
             if (fromMongo != null) {
                 log.info("Found player account for {} in MongoDB: {}", playerName, fromMongo);

@@ -30,9 +30,8 @@ public class GameModeCommand extends SimpleCommand {
 
 
     public GameModeCommand() {
-        super("gamemode");
+        super("gamemode", "lugin.gamemode");
         setAliases(List.of("gm"));
-        this.requiredPermission = "lugin.gamemode";
     }
 
     @Override
