@@ -3,6 +3,7 @@ package net.warcane.lugin.core.minecraft.internal.command;
 import lombok.RequiredArgsConstructor;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.currency.Currency;
+import net.warcane.lugin.core.minecraft.gamerule.command.GameRuleCommand;
 import net.warcane.lugin.core.minecraft.internal.command.currency.CurrencyBasedCommand;
 import net.warcane.lugin.core.minecraft.internal.command.currency.EconomyCommand;
 import net.warcane.lugin.core.minecraft.internal.command.gamemode.GameModeCommand;
@@ -60,6 +61,7 @@ public class InternalCommandManager {
         commandMap.register("punish", new PunishCommand());
         commandMap.register("punish", new CheckPunishCommand());
         commandMap.register("punish", new RevokeCommand());
+        commandMap.register("lugin", new GameRuleCommand(platform));
     }
 
     public void registerCurrencyCommand(@NotNull Currency currency) {

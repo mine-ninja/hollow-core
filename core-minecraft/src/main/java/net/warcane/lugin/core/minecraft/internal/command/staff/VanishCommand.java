@@ -21,11 +21,9 @@ public class VanishCommand extends SimpleCommand {
     private final BukkitPlatform platform;
 
     public VanishCommand(BukkitPlatform platform) {
-        super("v");
-
+        super("v", "lugin.vanish");
         this.setAliases(List.of("vanish"));
         this.platform = platform;
-        this.requiredPermission = "lugin.vanish";
         this.playersOnly = true;
     }
 

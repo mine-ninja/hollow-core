@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.warcane.lugin.core.network.packet.impl.generic.JsonPacket;
+import net.warcane.lugin.core.network.packet.impl.gamerule.GameRuleUpdatePacket;
 import net.warcane.lugin.core.network.packet.impl.internal.PingPacket;
 import net.warcane.lugin.core.network.packet.impl.internal.PongPacket;
 import net.warcane.lugin.core.network.packet.impl.player.*;
@@ -74,7 +75,8 @@ final class PacketMappings {
         entry(16, PlayerConnectToServerPacket.class),
         entry(17, GoCommandPacket.class),
         entry(18, GoCachePacket.class),
-        entry(19, PlayerConnectToSubCategoryPacket.class)
+        entry(19, PlayerConnectToSubCategoryPacket.class),
+        entry(20, GameRuleUpdatePacket.class)
       )
     );
 

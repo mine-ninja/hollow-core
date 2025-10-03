@@ -2,7 +2,6 @@ package net.warcane.lugin.core.minecraft;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
-import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.warcane.lugin.core.AbstractPlatform;
 import net.warcane.lugin.core.MinecraftServerPlatform;
 import net.warcane.lugin.core.Platform;
@@ -10,6 +9,8 @@ import net.warcane.lugin.core.group.PlayerGroup;
 import net.warcane.lugin.core.minecraft.centralcart.CentralCart;
 import net.warcane.lugin.core.minecraft.currency.CurrencyManager;
 import net.warcane.lugin.core.minecraft.event.tick.AsyncServerTickEvent;
+import net.warcane.lugin.core.minecraft.gamerule.GameRuleManager;
+import net.warcane.lugin.core.minecraft.gamerule.listener.WorldLoadListener;
 import net.warcane.lugin.core.minecraft.internal.command.InternalCommandManager;
 import net.warcane.lugin.core.minecraft.internal.listener.InternalPacketListeners;
 import net.warcane.lugin.core.minecraft.internal.listener.InternalPlayerListener;
@@ -119,6 +120,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     private final VanishManager vanishManager;
     private final SimpleMenuManager menuManager;
     private final WhitelistService whitelistService;
+    private final GameRuleManager gameRuleManager;
 
     @Getter private NameTagResolver nameTagResolver;
     @Getter private CentralCart centralCart;
@@ -138,6 +140,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         this.menuManager = new SimpleMenuManager(this);
 
         this.whitelistService = new WhitelistService(this);
+        this.gameRuleManager = new GameRuleManager(this);
 
         this.centralCart = new CentralCart();
         this.centralCart.initSocket();
@@ -163,6 +166,10 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         menuManager.initialize();
 
         internalCommandManager.registerInternalCommands();
+        
+        // Initialize game rule system
+        gameRuleManager.initialize();
+        Bukkit.getPluginManager().registerEvents(new WorldLoadListener(this), plugin);
 
         log.info("Initializing Bukkit Platform with category: {}", serverCategoryType.getDisplayName());
 
@@ -330,5 +337,10 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     @NotNull
     public SimpleMenuManager getMenuManager() {
         return menuManager;
+    }
+    
+    @NotNull
+    public GameRuleManager getGameRuleManager() {
+        return gameRuleManager;
     }
 }
