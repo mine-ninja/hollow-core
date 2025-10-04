@@ -3,17 +3,18 @@ package net.warcane.lugin.core.minecraft.gamerule;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents a custom game rule with a name and value type.
+ * Represents a custom game rule with a name, type, default value, and optional global scope.
+ * <p>
+ * Custom game rules can be either world-specific or global (server-wide).
  *
- * @param <T> The type of the game rule value (Boolean, Integer, String, etc.)
+ * @param name         the unique name of the game rule
+ * @param type         the value type (Boolean, Integer, String, etc.)
+ * @param defaultValue the default value when not set
+ * @param description  optional description of the rule
+ * @param global       whether this rule applies globally across all worlds
+ * @param <T>          the type of the game rule value
  */
-public record CustomGameRule<T>(
-    String name,
-    Class<T> type,
-    T defaultValue,
-    String description,
-    boolean global
-) {
+public record CustomGameRule<T>(String name, Class<T> type, T defaultValue, String description, boolean global) {
     public CustomGameRule(@NotNull String name, @NotNull Class<T> type, @NotNull T defaultValue, @NotNull String description, boolean global) {
         this.name = name;
         this.type = type;
@@ -31,21 +32,36 @@ public record CustomGameRule<T>(
     }
     
     /**
-     * Creates a global game rule that applies to all worlds on the server.
+     * Creates a global game rule that applies to all worlds across all servers.
+     *
+     * @param name         the unique name
+     * @param type         the value type
+     * @param defaultValue the default value
+     * @param description  the description
+     * @param <T>          the value type
+     *
+     * @return a global game rule
      */
     public static <T> CustomGameRule<T> global(@NotNull String name, @NotNull Class<T> type, @NotNull T defaultValue, @NotNull String description) {
         return new CustomGameRule<>(name, type, defaultValue, description, true);
     }
     
     /**
-     * Creates a global game rule that applies to all worlds on the server.
+     * Creates a global game rule that applies to all worlds across all servers.
+     *
+     * @param name         the unique name
+     * @param type         the value type
+     * @param defaultValue the default value
+     * @param <T>          the value type
+     *
+     * @return a global game rule
      */
     public static <T> CustomGameRule<T> global(@NotNull String name, @NotNull Class<T> type, @NotNull T defaultValue) {
         return new CustomGameRule<>(name, type, defaultValue, "", true);
     }
     
     /**
-     * Validates if the provided value is valid for this game rule.
+     * Validates if the provided value is compatible with this game rule's type.
      *
      * @param value the value to validate
      *
@@ -89,6 +105,6 @@ public record CustomGameRule<T>(
     
     @Override
     public @NotNull String toString() {
-        return "CustomGameRule{name='" + name + "', type=" + type.getSimpleName() + ", default=" + defaultValue + "}";
+        return "CustomGameRule{name='" + name + "', type=" + type.getSimpleName() + ", default=" + defaultValue + ", global=" + global + "}";
     }
 }

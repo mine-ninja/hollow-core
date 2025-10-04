@@ -36,7 +36,6 @@ public class GameRuleCommand extends SimpleCommand {
         final var args = ctx.getArgs();
         final var sender = ctx.getSender();
         if (args.length == 0) {
-            // List all custom game rules
             sender.sendMessage(ChatColor.GOLD + "=== Custom Game Rules ===");
             final var rules = GameRuleRegistry.getAllGameRules();
             if (rules.isEmpty()) {
@@ -44,7 +43,8 @@ public class GameRuleCommand extends SimpleCommand {
                 return;
             }
             for (CustomGameRule<?> rule : rules) {
-                sender.sendMessage(ChatColor.YELLOW + rule.name() + ChatColor.GRAY + " (" + rule.type().getSimpleName() + ")" + ChatColor.WHITE + " - Default: " + ChatColor.GREEN + rule.defaultValue());
+                String scope = rule.global() ? ChatColor.AQUA + " [GLOBAL]" : "";
+                sender.sendMessage(ChatColor.YELLOW + rule.name() + scope + ChatColor.GRAY + " (" + rule.type().getSimpleName() + ")" + ChatColor.WHITE + " - Default: " + ChatColor.GREEN + rule.defaultValue());
                 if (!rule.description().isEmpty()) {
                     sender.sendMessage(ChatColor.GRAY + "  " + rule.description());
                 }
@@ -59,39 +59,52 @@ public class GameRuleCommand extends SimpleCommand {
             throw new CommandFailedException(ChatColor.RED + "Unknown custom game rule: " + ruleName + "\n" + ChatColor.GRAY + "Use /customgamerule to see all available rules.");
         }
         
-        // Determine target world
-        World targetWorld;
-        if (args.length >= 3) {
-            targetWorld = Bukkit.getWorld(args[2]);
-            if (targetWorld == null) {
-                throw new CommandFailedException(ChatColor.RED + "Unknown world: " + args[2]);
+        World targetWorld = null;
+        if (gameRule.global()) {
+            if (args.length >= 3) {
+                sender.sendMessage(ChatColor.YELLOW + "Note: " + ChatColor.GRAY + ruleName + " is a global rule, world parameter ignored.");
             }
-        } else if (sender instanceof Player player) {
-            targetWorld = player.getWorld();
         } else {
-            targetWorld = Bukkit.getWorlds().getFirst();
+            if (args.length >= 3) {
+                targetWorld = Bukkit.getWorld(args[2]);
+                if (targetWorld == null) {
+                    throw new CommandFailedException(ChatColor.RED + "Unknown world: " + args[2]);
+                }
+            } else if (sender instanceof Player player) {
+                targetWorld = player.getWorld();
+            } else {
+                targetWorld = Bukkit.getWorlds().getFirst();
+            }
         }
         
         if (args.length == 1) {
-            // Get current value
-            final Object value = platform.getGameRuleManager().getCustomGameRule(targetWorld, ruleName);
-            if (value == null) {
-                sender.sendMessage(ChatColor.YELLOW + ruleName + ChatColor.GRAY + " is not set in " + targetWorld.getName() + ". Default: " + ChatColor.GREEN + gameRule.defaultValue());
+            @SuppressWarnings("unchecked")
+            final CustomGameRule<Object> typedRule = (CustomGameRule<Object>) gameRule;
+            final Object value;
+            
+            if (gameRule.global()) {
+                value = platform.getGameRuleManager().getGlobalGameRule(typedRule);
+                sender.sendMessage(ChatColor.YELLOW + ruleName + ChatColor.AQUA + " [GLOBAL]" + ChatColor.GRAY + " = " + ChatColor.GREEN + value);
             } else {
+                value = platform.getGameRuleManager().getWorldGameRule(targetWorld, typedRule);
                 sender.sendMessage(ChatColor.YELLOW + ruleName + ChatColor.GRAY + " = " + ChatColor.GREEN + value + ChatColor.GRAY + " (in " + targetWorld.getName() + ")");
             }
             return;
         }
         
-        // Set value
         final String valueStr = args[1];
         try {
-            final Object parsedValue = gameRule.parseValue(valueStr);
-            // Use unchecked cast to work around generic wildcard limitation
             @SuppressWarnings("unchecked")
-            final Class<Object> type = (Class<Object>) gameRule.type();
-            platform.getGameRuleManager().setCustomGameRule(targetWorld, ruleName, type, parsedValue);
-            sender.sendMessage(ChatColor.GREEN + "Set " + ChatColor.YELLOW + ruleName + ChatColor.GREEN + " to " + ChatColor.WHITE + parsedValue + ChatColor.GREEN + " in world " + ChatColor.YELLOW + targetWorld.getName());
+            final CustomGameRule<Object> typedRule = (CustomGameRule<Object>) gameRule;
+            final Object parsedValue = gameRule.parseValue(valueStr);
+            
+            if (gameRule.global()) {
+                platform.getGameRuleManager().setGlobalGameRule(typedRule, parsedValue);
+                sender.sendMessage(ChatColor.GREEN + "Set " + ChatColor.YELLOW + ruleName + ChatColor.AQUA + " [GLOBAL]" + ChatColor.GREEN + " to " + ChatColor.WHITE + parsedValue);
+            } else {
+                platform.getGameRuleManager().setWorldGameRule(targetWorld, typedRule, parsedValue);
+                sender.sendMessage(ChatColor.GREEN + "Set " + ChatColor.YELLOW + ruleName + ChatColor.GREEN + " to " + ChatColor.WHITE + parsedValue + ChatColor.GREEN + " in world " + ChatColor.YELLOW + targetWorld.getName());
+            }
         } catch (IllegalArgumentException e) {
             throw new CommandFailedException(ChatColor.RED + "Invalid value: " + e.getMessage() + "\n" + ChatColor.GRAY + "Expected type: " + gameRule.type().getSimpleName());
         }
@@ -102,17 +115,14 @@ public class GameRuleCommand extends SimpleCommand {
         final var args = ctx.getArgs();
         
         if (args.length == 1) {
-            // Complete game rule names
             return filterStartingWith(GameRuleRegistry.getAllGameRules().stream().map(CustomGameRule::name).collect(Collectors.toList()), args[0]);
         } else if (args.length == 2) {
-            // Complete values based on type
             final CustomGameRule<?> rule = GameRuleRegistry.getGameRule(args[0]);
             if (rule != null && rule.type() == Boolean.class) {
                 return filterStartingWith(List.of("true", "false"), args[1]);
             }
             return NONE_ARGS;
         } else if (args.length == 3) {
-            // Complete world names
             return filterStartingWith(Bukkit.getWorlds().stream().map(World::getName).collect(Collectors.toList()), args[2]);
         }
         

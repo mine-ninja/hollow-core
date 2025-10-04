@@ -8,7 +8,9 @@ import org.bukkit.event.world.WorldLoadEvent;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Listener to initialize custom game rules storage when worlds are loaded.
+ * Bukkit event listener for initializing game rules when worlds are loaded.
+ * <p>
+ * Ensures that dynamically loaded worlds have their game rules initialized.
  */
 public class WorldLoadListener implements Listener {
     

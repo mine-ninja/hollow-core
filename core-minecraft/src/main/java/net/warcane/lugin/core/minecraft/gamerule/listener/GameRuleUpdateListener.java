@@ -9,7 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Listens for game rule updates from other servers in the network.
+ * Network packet listener for cross-server game rule updates.
+ * <p>
+ * Receives GameRuleUpdatePacket from other servers and updates the local cache.
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -21,9 +23,8 @@ public class GameRuleUpdateListener implements PacketListener<GameRuleUpdatePack
         final String worldName = packet.worldName();
         final String ruleName = packet.ruleName();
         final Object value = packet.value();
+        
         log.debug("Received game rule update from network: {} = {} for world {}", ruleName, value, worldName);
-        // Update local cache via the manager's handleRemoteUpdate method
         platform.getGameRuleManager().handleRemoteUpdate(worldName, ruleName, value);
     }
 }
-

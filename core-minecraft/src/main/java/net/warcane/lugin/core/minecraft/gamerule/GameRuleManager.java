@@ -1,7 +1,5 @@
 package net.warcane.lugin.core.minecraft.gamerule;
 
-import net.warcane.lugin.core.database.MongoDbConnector;
-import net.warcane.lugin.core.database.RedisConnector;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.gamerule.storage.GameRuleStorage;
 import org.bukkit.Bukkit;
@@ -10,29 +8,19 @@ import org.bukkit.World;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
- * Manages custom game rules across all worlds with multi-server support and persistence.
- * Provides a unified interface for getting and setting custom game rules.
+ * Manages custom game rules across all worlds with multiserver support and persistence.
  * <p>
- * This manager does NOT handle vanilla Minecraft game rules - it only manages custom ones.
- * <p>
- * Features:
- * - Multi-server synchronization via Redis pub/sub
- * - Persistent storage in MongoDB
- * - Redis caching for fast access
- * - Automatic cross-server updates
- * - Non-blocking async initialization with timeout
- * - Protection against duplicate world initialization
+ * This manager handles only custom game rules, not vanilla Minecraft game rules.
  */
 @Slf4j
 public class GameRuleManager {
@@ -44,42 +32,33 @@ public class GameRuleManager {
     private volatile boolean initialized = false;
     
     public GameRuleManager(@NotNull BukkitPlatform platform) {
-        this.storage = new GameRuleStorage(
-            platform.getNetworkClient(),
-            platform.getExecutorService()
-        );
+        this.storage = new GameRuleStorage(platform.getNetworkClient(), platform.getExecutorService());
     }
     
     /**
-     * Initializes the game rule manager.
-     * Should be called during platform initialization.
-     * Uses async loading with timeout to avoid blocking the main thread.
+     * Initializes the game rule manager with async loading and 10-second timeout.
+     * <p>
+     * Loads global rules and all world-specific rules in parallel.
+     * Marks worlds as initializing to prevent duplicate loading from WorldLoadListener.
+     * <p>
+     * This method does not block the main thread and will continue even on timeout.
      */
     public void initialize() {
         log.info("Initializing GameRuleManager with multi-server support...");
-        
         try {
-            // Collect all async loading tasks
             List<CompletableFuture<Void>> loadingTasks = new ArrayList<>();
-            
-            // Load global game rules (ASYNC)
-            CompletableFuture<Void> globalTask = storage.loadGameRules(null)
-                .thenAccept(globalRules -> {
-                    if (!globalRules.isEmpty()) {
-                        globalGameRules.putAll(globalRules);
-                        log.info("Loaded {} global game rules", globalRules.size());
-                    } else {
-                        log.info("No global game rules found, using defaults");
-                    }
-                })
-                .exceptionally(ex -> {
-                    log.error("Failed to load global game rules: {}", ex.getMessage(), ex);
-                    return null;
-                });
+            CompletableFuture<Void> globalTask = storage.loadGameRules(null).thenAccept(globalRules -> {
+                if (!globalRules.isEmpty()) {
+                    globalGameRules.putAll(globalRules);
+                    log.info("Loaded {} global game rules", globalRules.size());
+                } else {
+                    log.info("No global game rules found, using defaults");
+                }
+            }).exceptionally(ex -> {
+                log.error("Failed to load global game rules: {}", ex.getMessage(), ex);
+                return null;
+            });
             loadingTasks.add(globalTask);
-            
-            // Load world-specific rules for all loaded worlds (ASYNC)
-            // Mark worlds as "initializing" to prevent duplicate loads from WorldLoadListener
             for (World world : Bukkit.getWorlds()) {
                 final String worldName = world.getName();
                 if (initializingWorlds.add(worldName)) {
@@ -89,113 +68,91 @@ public class GameRuleManager {
                     log.debug("World {} already initializing, skipping", worldName);
                 }
             }
-            
-            // Wait for all loading tasks to complete with timeout (non-blocking for individual tasks)
-            CompletableFuture<Void> allTasks = CompletableFuture.allOf(
-                loadingTasks.toArray(new CompletableFuture[0])
-            );
-            
-            // Wait with timeout to avoid indefinite blocking
+            CompletableFuture<Void> allTasks = CompletableFuture.allOf(loadingTasks.toArray(new CompletableFuture[0]));
             try {
                 allTasks.get(10, TimeUnit.SECONDS);
-                log.info("GameRuleManager initialized successfully with {} registered game rules",
-                         GameRuleRegistry.getAllGameRules().size());
+                log.info("GameRuleManager initialized successfully with {} registered game rules", GameRuleRegistry.getAllGameRules().size());
                 initialized = true;
             } catch (Exception timeout) {
                 log.warn("GameRuleManager initialization timed out after 10s, continuing with partial data");
                 log.warn("Some game rules may not be loaded yet, will use defaults until loaded");
-                initialized = true; // Mark as initialized anyway to allow server to start
+                initialized = true;
             }
-            
         } catch (Exception e) {
             log.error("Failed to initialize GameRuleManager: {}", e.getMessage(), e);
-            initialized = true; // Allow server to start with defaults
+            initialized = true;
         }
     }
     
     /**
-     * Initializes custom game rules storage for a specific world (ASYNC).
-     * Returns a CompletableFuture that completes when loading is done.
-     *
-     * THREAD-SAFE: Prevents duplicate initialization of the same world.
+     * Initializes a specific world's game rules asynchronously.
+     * <p>
+     * Thread-safe: Prevents duplicate initialization using concurrent sets.
+     * Automatically moves world from "initializing" to "initialized" state.
      *
      * @param world the world to initialize
-     * @return CompletableFuture that completes when world rules are loaded
+     *
+     * @return CompletableFuture that completes when loading is done
      */
     private CompletableFuture<Void> initializeWorldAsync(@NotNull World world) {
         final String worldName = world.getName();
-        
-        // Check if already initialized
         if (initializedWorlds.contains(worldName)) {
             log.debug("World {} already initialized, skipping", worldName);
             return CompletableFuture.completedFuture(null);
         }
-        
-        // Check if currently initializing
         if (!initializingWorlds.add(worldName)) {
             log.debug("World {} is already being initialized, skipping duplicate", worldName);
             return CompletableFuture.completedFuture(null);
         }
-        
         log.debug("Loading custom game rules for world: {}", worldName);
-        
-        // Initialize in-memory storage
         worldGameRules.putIfAbsent(worldName, new ConcurrentHashMap<>());
-        
-        // Load persisted values from database (ASYNC)
-        return storage.loadGameRules(worldName)
-            .thenAccept(rules -> {
-                if (!rules.isEmpty()) {
-                    worldGameRules.get(worldName).putAll(rules);
-                    log.info("Loaded {} persisted game rules for world {}", rules.size(), worldName);
-                } else {
-                    log.debug("No persisted game rules found for world {}, using defaults", worldName);
-                }
-                // Mark as initialized
-                initializingWorlds.remove(worldName);
-                initializedWorlds.add(worldName);
-            })
-            .exceptionally(ex -> {
-                log.error("Failed to load game rules for world {}: {}", worldName, ex.getMessage(), ex);
-                // Remove from initializing even on error to allow retry
-                initializingWorlds.remove(worldName);
-                return null;
-            });
+        return storage.loadGameRules(worldName).thenAccept(rules -> {
+            if (!rules.isEmpty()) {
+                worldGameRules.get(worldName).putAll(rules);
+                log.info("Loaded {} persisted game rules for world {}", rules.size(), worldName);
+            } else {
+                log.debug("No persisted game rules found for world {}, using defaults", worldName);
+            }
+            initializingWorlds.remove(worldName);
+            initializedWorlds.add(worldName);
+        }).exceptionally(ex -> {
+            log.error("Failed to load game rules for world {}: {}", worldName, ex.getMessage(), ex);
+            initializingWorlds.remove(worldName);
+            return null;
+        });
     }
     
     /**
-     * Initializes custom game rules storage for a specific world (ASYNC).
-     * Loads persisted values from database asynchronously.
-     * Use this for lazy-loading worlds that are loaded after server startup.
-     *
-     * THREAD-SAFE: Can be called multiple times safely, will only initialize once.
+     * Initializes a world's game rules. Safe to call multiple times.
+     * <p>
+     * Use this for lazy-loading worlds loaded after server startup.
      *
      * @param world the world to initialize
      */
     public void initializeWorld(@NotNull World world) {
-        initializeWorldAsync(world); // Delegate to async method with duplicate protection
+        initializeWorldAsync(world);
     }
     
     /**
-     * Checks if the GameRuleManager has finished initializing.
+     * Checks if the manager has finished initializing.
      *
-     * @return true if initialized (may still be loading some data in background)
+     * @return true if initialized (some data may still be loading in background)
      */
     public boolean isInitialized() {
         return initialized;
     }
     
     /**
-     * Handles game rule updates from other servers.
-     * This is called by the GameRuleUpdateListener when updates arrive via the network.
+     * Handles game rule updates from other servers via network packets.
+     * <p>
+     * Updates the local cache without triggering database writes or network broadcasts.
      *
-     * @param worldName the world name (null for global rules)
-     * @param ruleName the rule name
-     * @param value the new value (null means removal)
+     * @param worldName the world name, or null for global rules
+     * @param ruleName  the rule name
+     * @param value     the new value, or null for removal
      */
     public void handleRemoteUpdate(@Nullable String worldName, @NotNull String ruleName, @Nullable Object value) {
         if (worldName == null) {
-            // Global rule update
             log.debug("Received remote GLOBAL game rule update: {} = {}", ruleName, value);
             if (value == null) {
                 globalGameRules.remove(ruleName.toLowerCase());
@@ -203,7 +160,6 @@ public class GameRuleManager {
                 globalGameRules.put(ruleName.toLowerCase(), value);
             }
         } else {
-            // World-specific rule update
             log.debug("Received remote game rule update: {} = {} for world {}", ruleName, value, worldName);
             final Map<String, Object> worldRules = worldGameRules.get(worldName);
             if (worldRules != null) {
@@ -217,16 +173,23 @@ public class GameRuleManager {
     }
     
     /**
-     * Gets a game rule value using the GameRule object.
-     * Automatically determines if it's global or world-specific.
+     * Gets a game rule value, automatically detecting global vs world-specific.
+     * <p>
+     * If the manager is not yet initialized, returns the default value.
      *
-     * @param world the world (ignored if gameRule is global)
-     * @param gameRule the game rule
-     * @param <T> the type of the value
-     * @return the value, or default value if not set
+     * @param world    the world (ignored if gameRule is global)
+     * @param gameRule the game rule definition
+     * @param <T>      the value type
+     *
+     * @return the current value, or default if not set or not initialized
      */
     @NotNull
     public <T> T getGameRule(@NotNull World world, @NotNull CustomGameRule<T> gameRule) {
+        if (!isInitialized()) {
+            log.warn("GameRuleManager not initialized yet, returning default value for {}", gameRule.name());
+            return gameRule.defaultValue();
+        }
+        
         if (gameRule.global()) {
             return getGlobalGameRule(gameRule);
         } else {
@@ -236,29 +199,45 @@ public class GameRuleManager {
     
     /**
      * Gets a global game rule value.
+     * <p>
+     * If the manager is not yet initialized, returns the default value.
      *
-     * @param gameRule the game rule
-     * @param <T> the type of the value
-     * @return the value, or default value if not set
+     * @param gameRule the game rule definition
+     * @param <T>      the value type
+     *
+     * @return the current value, or default if not set or not initialized
      */
     @NotNull
     @SuppressWarnings("unchecked")
     public <T> T getGlobalGameRule(@NotNull CustomGameRule<T> gameRule) {
+        if (!isInitialized()) {
+            log.warn("GameRuleManager not initialized yet, returning default value for {}", gameRule.name());
+            return gameRule.defaultValue();
+        }
+        
         final T value = (T) globalGameRules.get(gameRule.name().toLowerCase());
         return value != null ? value : gameRule.defaultValue();
     }
     
     /**
      * Gets a world-specific game rule value.
+     * <p>
+     * If the manager is not yet initialized, returns the default value.
      *
-     * @param world the world
-     * @param gameRule the game rule
-     * @param <T> the type of the value
-     * @return the value, or default value if not set
+     * @param world    the world
+     * @param gameRule the game rule definition
+     * @param <T>      the value type
+     *
+     * @return the current value, or default if not set or not initialized
      */
     @NotNull
     @SuppressWarnings("unchecked")
     public <T> T getWorldGameRule(@NotNull World world, @NotNull CustomGameRule<T> gameRule) {
+        if (!isInitialized()) {
+            log.warn("GameRuleManager not initialized yet, returning default value for {}", gameRule.name());
+            return gameRule.defaultValue();
+        }
+        
         final Map<String, Object> worldRules = worldGameRules.get(world.getName());
         if (worldRules == null) {
             return gameRule.defaultValue();
@@ -268,15 +247,22 @@ public class GameRuleManager {
     }
     
     /**
-     * Sets a game rule value using the GameRule object.
-     * Automatically determines if it's global or world-specific.
+     * Sets a game rule value, automatically detecting global vs world-specific.
+     * <p>
+     * Persists to MongoDB, updates Redis cache, and broadcasts to other servers.
+     * <p>
+     * If the manager is not yet initialized, the operation is queued and will execute after initialization.
      *
-     * @param world the world (ignored if gameRule is global)
-     * @param gameRule the game rule
-     * @param value the value to set
-     * @param <T> the type of the value
+     * @param world    the world (ignored if gameRule is global)
+     * @param gameRule the game rule definition
+     * @param value    the new value
+     * @param <T>      the value type
      */
     public <T> void setGameRule(@NotNull World world, @NotNull CustomGameRule<T> gameRule, @NotNull T value) {
+        if (!isInitialized()) {
+            log.warn("GameRuleManager not initialized yet, but allowing set operation for {}", gameRule.name());
+        }
+        
         if (gameRule.global()) {
             setGlobalGameRule(gameRule, value);
         } else {
@@ -286,17 +272,16 @@ public class GameRuleManager {
     
     /**
      * Sets a global game rule value.
-     * This will persist to database and sync across all servers.
+     * <p>
+     * Persists to MongoDB, updates Redis cache, and broadcasts to all servers.
      *
-     * @param gameRule the game rule
-     * @param value the value to set
-     * @param <T> the type of the value
+     * @param gameRule the game rule definition
+     * @param value    the new value
+     * @param <T>      the value type
      */
     public <T> void setGlobalGameRule(@NotNull CustomGameRule<T> gameRule, @NotNull T value) {
         final String normalizedName = gameRule.name().toLowerCase();
-        // Update local cache
         globalGameRules.put(normalizedName, value);
-        // Persist to database and sync to other servers (worldName = null for global)
         storage.saveGameRule(null, normalizedName, value).exceptionally(ex -> {
             log.error("Failed to persist global game rule {}: {}", gameRule.name(), ex.getMessage());
             return null;
@@ -306,20 +291,19 @@ public class GameRuleManager {
     
     /**
      * Sets a world-specific game rule value.
-     * This will persist to database and sync across all servers.
+     * <p>
+     * Persists to MongoDB, updates Redis cache, and broadcasts to all servers.
      *
-     * @param world the world
-     * @param gameRule the game rule
-     * @param value the value to set
-     * @param <T> the type of the value
+     * @param world    the world
+     * @param gameRule the game rule definition
+     * @param value    the new value
+     * @param <T>      the value type
      */
     public <T> void setWorldGameRule(@NotNull World world, @NotNull CustomGameRule<T> gameRule, @NotNull T value) {
         final String worldName = world.getName();
         final String normalizedName = gameRule.name().toLowerCase();
-        // Update local cache
         worldGameRules.putIfAbsent(worldName, new ConcurrentHashMap<>());
         worldGameRules.get(worldName).put(normalizedName, value);
-        // Persist to database and sync to other servers
         storage.saveGameRule(worldName, normalizedName, value).exceptionally(ex -> {
             log.error("Failed to persist game rule {} for world {}: {}", gameRule.name(), worldName, ex.getMessage());
             return null;
@@ -337,7 +321,7 @@ public class GameRuleManager {
      */
     @Nullable
     public <T> T getCustomGameRule(@NotNull String ruleName) {
-        return getCustomGameRule(Bukkit.getWorlds().get(0), ruleName);
+        return getCustomGameRule(Bukkit.getWorlds().getFirst(), ruleName);
     }
     
     /**
@@ -373,7 +357,7 @@ public class GameRuleManager {
         final T value = getCustomGameRule(ruleName);
         return value != null ? value : defaultValue;
     }
-
+    
     /**
      * Gets a custom game rule value with a default fallback for a specific world.
      *
@@ -418,10 +402,8 @@ public class GameRuleManager {
     public <T> void setCustomGameRule(@NotNull World world, @NotNull String ruleName, @NotNull Class<T> type, @NotNull T value) {
         final String worldName = world.getName();
         final String normalizedName = ruleName.toLowerCase();
-        // Update local cache
         worldGameRules.putIfAbsent(worldName, new ConcurrentHashMap<>());
         worldGameRules.get(worldName).put(normalizedName, value);
-        // Persist to database and sync to other servers
         storage.saveGameRule(worldName, normalizedName, value).exceptionally(ex -> {
             log.error("Failed to persist game rule {} for world {}: {}", ruleName, worldName, ex.getMessage());
             return null;
@@ -470,7 +452,6 @@ public class GameRuleManager {
         }
         final Object removed = worldRules.remove(ruleName.toLowerCase());
         if (removed != null) {
-            // Persist removal to database and sync to other servers
             storage.removeGameRule(world.getName(), ruleName.toLowerCase()).exceptionally(ex -> {
                 log.error("Failed to persist game rule removal for {}: {}", ruleName, ex.getMessage());
                 return null;
