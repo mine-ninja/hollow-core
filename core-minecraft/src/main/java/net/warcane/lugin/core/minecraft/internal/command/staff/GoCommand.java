@@ -45,7 +45,7 @@ public class GoCommand extends SimpleCommand {
 
         if (target != null) {
             if (player.hasPermission("lugin.vanish"))
-                BukkitPlatform.getInstance().getVanishManager().setVanish(player.getUniqueId(), true);
+                BukkitPlatform.getInstance().getVanishManager().vanish(player);
 
             player.sendMessage(COMMAND_SUCCESS.formatted(target.getName()));
             player.teleport(target);
