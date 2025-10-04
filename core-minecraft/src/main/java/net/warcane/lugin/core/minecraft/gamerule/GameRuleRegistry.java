@@ -7,8 +7,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Registry for custom game rules.
- * This allows plugins to register their own game rules that can be managed alongside vanilla ones.
+ * Thread-safe registry for custom game rules.
+ * <p>
+ * Allows plugins to register their own game rules that can be managed
+ * alongside vanilla Minecraft game rules.
  */
 public class GameRuleRegistry {
     private static final Map<String, CustomGameRule<?>> REGISTERED_RULES = new ConcurrentHashMap<>();
@@ -17,7 +19,7 @@ public class GameRuleRegistry {
      * Registers a custom game rule.
      *
      * @param gameRule the game rule to register
-     * @param <T>      the type of the game rule value
+     * @param <T>      the value type
      *
      * @throws IllegalStateException if a game rule with the same name is already registered
      */
@@ -55,7 +57,7 @@ public class GameRuleRegistry {
     /**
      * Gets all registered custom game rules.
      *
-     * @return collection of all registered game rules
+     * @return immutable collection of all registered game rules
      */
     @NotNull
     public static Collection<CustomGameRule<?>> getAllGameRules() {
@@ -75,10 +77,10 @@ public class GameRuleRegistry {
     
     /**
      * Clears all registered custom game rules.
-     * This should only be used during shutdown or testing.
+     * <p>
+     * Warning: This should only be used during shutdown or testing.
      */
     public static void clear() {
         REGISTERED_RULES.clear();
     }
 }
-
