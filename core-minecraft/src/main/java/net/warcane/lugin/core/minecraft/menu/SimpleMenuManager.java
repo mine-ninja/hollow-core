@@ -86,13 +86,15 @@ public class SimpleMenuManager implements Listener {
         }
 
         try {
+            // Get it before clickHandler is executed, because it can modify the item
+            final ItemStack clickedItem = event.getCurrentItem();
+            
             final var contextItem = context.getItem(event.getRawSlot());
             if (contextItem != null) {
                 contextItem.clickHandler().accept(event);
             }
             
-            ItemStack stack = event.getCurrentItem();
-            if (stack != null && !stack.isEmpty()) {
+            if (clickedItem != null && !clickedItem.isEmpty()) {
                 context.getMenuConfig().playClickSound(context.getPlayer());
             }
             menu.onClick(context, event);
@@ -108,10 +110,13 @@ public class SimpleMenuManager implements Listener {
 
         final var menu = context.getMenu();
         try {
-            context.getMenuConfig().playCloseSound(context.getPlayer());
-            menu.playerContexts.remove(context.getPlayer().getUniqueId());
-
-            menu.onClose(context, event);
+            Player player = context.getPlayer();
+            menu.playerContexts.remove(player.getUniqueId());
+            
+            if (!context.onSignInput) {
+                context.getMenuConfig().playCloseSound(player);
+                menu.onClose(context, event);
+            }
         } catch (Exception e) {
             menu.onError(context, event, e);
         }

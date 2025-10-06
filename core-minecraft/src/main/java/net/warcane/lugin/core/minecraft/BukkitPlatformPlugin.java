@@ -1,5 +1,8 @@
 package net.warcane.lugin.core.minecraft;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.event.EventManager;
+import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import com.google.common.collect.Lists;
 import de.tr7zw.changeme.nbtapi.NBT;
 import de.tr7zw.changeme.nbtapi.utils.MinecraftVersion;
@@ -13,6 +16,7 @@ import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
 import net.warcane.lugin.core.minecraft.compat.PAPICompat;
 import net.warcane.lugin.core.minecraft.compat.VaultCompat;
+import net.warcane.lugin.core.minecraft.menu.input.SignInputListener;
 import net.warcane.lugin.core.minecraft.plugin.SimplePlugin;
 import net.warcane.lugin.core.minecraft.punish.api.PunishManager;
 import net.warcane.lugin.core.minecraft.task.Tasks;
@@ -43,6 +47,12 @@ public class BukkitPlatformPlugin extends SimplePlugin {
     static {
         MinecraftVersion.disableBStats();
         MinecraftVersion.disableUpdateCheck();
+    }
+    
+    @Override
+    public void onLoad() {
+        EventManager manager = PacketEvents.getAPI().getEventManager();
+        manager.registerListener(new SignInputListener(), PacketListenerPriority.NORMAL);
     }
     
     @Override
