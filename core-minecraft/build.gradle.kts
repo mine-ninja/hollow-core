@@ -54,7 +54,7 @@ dependencies {
         exclude("com.squareup.okhttp3", "okhttp")
     }
 
-    compileOnlyApi("com.github.retrooper:packetevents-spigot:2.9.1")
+    compileOnlyApi("com.github.retrooper:packetevents-spigot:2.9.5")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7")
     compileOnly("me.clip:placeholderapi:2.11.6")
 }

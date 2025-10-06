@@ -167,7 +167,6 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
         internalCommandManager.registerInternalCommands();
         
-        // Initialize game rule system
         gameRuleManager.initialize();
         Bukkit.getPluginManager().registerEvents(new WorldLoadListener(this), plugin);
 

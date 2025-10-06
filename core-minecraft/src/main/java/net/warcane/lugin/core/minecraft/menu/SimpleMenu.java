@@ -22,17 +22,30 @@ public abstract class SimpleMenu {
         return true;
     }
     
-    protected void onClick(@NotNull PlayerMenuContext ctx, @NotNull InventoryClickEvent event) {
-        // The default implementation does nothing.
-    }
+    protected void onClick(@NotNull PlayerMenuContext ctx, @NotNull InventoryClickEvent event) { }
     
-    protected void onClose(@NotNull PlayerMenuContext ctx, @NotNull InventoryCloseEvent event) {
-        // The default implementation does nothing.
-    }
+    protected void onClose(@NotNull PlayerMenuContext ctx, @NotNull InventoryCloseEvent event) { }
     
-    protected void onTick(@NotNull MenuContext ctx) {
-        // The default implementation does nothing.
-    }
+    protected void onTick(@NotNull MenuContext ctx) { }
+    
+    /**
+     * Handles external updates for a player's menu context.
+     * <p>
+     * This method serves as a hook for developers to manually trigger a refresh
+     * of the menu's content from an external event, such as a database update,
+     * a command execution, or a message from another plugin. It is not called
+     * automatically by the menu system and must be invoked explicitly.
+     * <p>
+     * For example, if a player's balance is displayed in a menu and is updated
+     * by a command, you could call this method to refresh the menu and show the
+     * new balance without requiring the player to reopen it.
+     * <p>
+     * The default implementation is empty and should be overridden in subclasses
+     * to provide specific update logic.
+     *
+     * @param ctx The {@link PlayerMenuContext} for which the update is being triggered.
+     */
+    public void onExternalUpdate(@NotNull PlayerMenuContext ctx) { }
     
     protected void onError(@NotNull PlayerMenuContext ctx, @Nullable InventoryEvent event, @NotNull Throwable error) {
         // The default implementation does nothing.
