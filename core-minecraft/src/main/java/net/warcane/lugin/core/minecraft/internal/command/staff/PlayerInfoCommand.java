@@ -18,7 +18,6 @@ public class PlayerInfoCommand extends SimpleCommand {
     public PlayerInfoCommand(BukkitPlatform platform) {
         super("playerinfo", "lugin.staff");
         this.platform = platform;
-        this.playersOnly = true;
     }
 
     @Override

@@ -24,6 +24,7 @@ import net.warcane.lugin.core.minecraft.util.reflection.McVersion;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.util.Vector;
 
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,12 @@ public class SignInputContext extends PlayerMenuContext {
     
     public SignInputContext(Player player, Map<String, Object> rawData, MenuConfig menuConfig, SimpleMenu menu, SimpleMenuManager manager) {
         super(player, rawData, menuConfig, menu, manager);
-        this.location = player.getLocation().clone().add(0, 4, 0);
+        Location origin = player.getLocation().clone();
+        Vector direction = origin.getDirection();
+        direction = direction.setY(0);
+        direction = direction.normalize().multiply(5);
+        this.location = origin.subtract(direction);
+        
         if (!rawData.containsKey("lines")) {
             rawData.put("lines", new Component[0]);
         }
