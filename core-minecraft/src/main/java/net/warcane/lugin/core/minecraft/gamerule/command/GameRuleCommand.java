@@ -23,9 +23,8 @@ public class GameRuleCommand extends SimpleCommand {
     private final BukkitPlatform platform;
     
     public GameRuleCommand(@NotNull BukkitPlatform platform) {
-        super("customgamerule");
+        super("customgamerule", "lugin.gamerule");
         this.platform = platform;
-        this.setRequiredPermission("lugin.gamerule");
         this.noPermissionMessage = ChatColor.RED + "You don't have permission to use this command.";
         this.setDescription("Manage custom game rules");
         this.setUsage("/customgamerule [rule] [value] [world]");
