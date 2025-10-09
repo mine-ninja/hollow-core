@@ -186,7 +186,7 @@ public class WalletService {
 
             final var fromMongo = walletRepository.findById(account.uniqueId());
             if (fromMongo != null) {
-                redisCachedWallet.hset("wallets", account.toString(), fromMongo);
+                redisCachedWallet.hset("wallets", account.uniqueId().toString(), fromMongo);
                 return fromMongo;
             }
 
