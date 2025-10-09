@@ -84,7 +84,7 @@ public class SignInputContext extends PlayerMenuContext {
         Component[] lines = this.getOrDefault("lines", new Component[0]);
         NBTList<@NotNull NBTString> messages = frontText.getStringListTagOrThrow("messages");
         for (int i = 0; i < 4; i++) {
-            String gson = GsonComponentSerializer.gson().serialize(i > lines.length ? Component.empty() : lines[i]);
+            String gson = GsonComponentSerializer.gson().serialize(i >= lines.length ? Component.empty() : lines[i]);
             messages.addTag(new NBTString(gson));
         }
         
