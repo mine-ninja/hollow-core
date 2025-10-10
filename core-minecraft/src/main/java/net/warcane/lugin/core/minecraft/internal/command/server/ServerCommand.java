@@ -7,8 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ServerCommand extends SimpleCommand {
     public ServerCommand() {
-        super("server");
-        this.requiredPermission = "lugin.master";
+        super("server", "lugin.master");
         this.playersOnly = true;
     }
 

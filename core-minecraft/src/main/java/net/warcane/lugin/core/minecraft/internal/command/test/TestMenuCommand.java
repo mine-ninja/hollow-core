@@ -28,9 +28,8 @@ public class TestMenuCommand extends SimpleCommand {
     private final BukkitPlatform platform;
 
     public TestMenuCommand(BukkitPlatform platform) {
-        super("testMenu");
+        super("testMenu", "lugin.master");
         this.platform = platform;
-        this.requiredPermission = "lugin.master";
         platform.getMenuManager().register(new TestMenu());
     }
 

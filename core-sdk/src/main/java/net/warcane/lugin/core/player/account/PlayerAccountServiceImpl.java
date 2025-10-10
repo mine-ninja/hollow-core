@@ -3,13 +3,12 @@ package net.warcane.lugin.core.player.account;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.ReturnDocument;
-import lombok.extern.slf4j.Slf4j;
-import net.warcane.lugin.core.player.fetcher.PlayerUuidFetcher;
 import net.warcane.lugin.core.util.data.MongoRepository;
 import net.warcane.lugin.core.util.data.RedisCache;
+
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -64,11 +63,21 @@ public class PlayerAccountServiceImpl implements PlayerAccountService {
     public @Nullable PlayerAccount loadFromRedis(@NotNull UUID playerId) {
         return redisCache.hget(CACHE_KEY, playerId.toString());
     }
-
+    
+    @Override
+    public @Nullable PlayerAccount loadFromRedisByName(@NotNull String playerName) {
+        return redisCache.hget(CACHE_KEY, playerName.toLowerCase());
+    }
+    
     @Override
     public void updateCaches(@NotNull PlayerAccount account) {
+        final var oldAccount = redisCache.hget(CACHE_KEY, account.uniqueId().toString());
+        if (oldAccount != null && !oldAccount.playerName().equalsIgnoreCase(account.playerName())) {
+            redisCache.hdel(CACHE_KEY, oldAccount.playerName().toLowerCase());
+        }
+        
         localCache.put(account.uniqueId(), account);
-        redisCache.hset(CACHE_KEY, account.uniqueId().toString(), account);
+        redisCache.hsetMultiField(CACHE_KEY, List.of(account.uniqueId().toString(), account.playerName().toLowerCase()), account);
     }
 
     @Override
@@ -93,15 +102,14 @@ public class PlayerAccountServiceImpl implements PlayerAccountService {
             return CompletableFuture.completedFuture(local);
         }
 
-        final var playerId = PlayerUuidFetcher.getInstance().fetchPlayerUuid(playerName);
-        if (playerId != null) {
-            log.info("Fetched UUID for player {}: {}", playerName, playerId);
-            return getPlayerAccount(playerId);
-        }
-
         return supply(() -> {
-
-
+            // Check Redis by name
+            final var fromRedis = loadFromRedisByName(playerName);
+            if (fromRedis != null) {
+                localCache.put(fromRedis.uniqueId(), fromRedis);
+                return fromRedis;
+            }
+            
             final var fromMongo = repository.findFirstFromPropertyIgnoreCase("playerName", playerName);
             if (fromMongo != null) {
                 log.info("Found player account for {} in MongoDB: {}", playerName, fromMongo);
@@ -130,11 +138,10 @@ public class PlayerAccountServiceImpl implements PlayerAccountService {
                 if (updated == null) {
                     throw new IllegalStateException("Failed to update player account: " + toUpdate.uniqueId());
                 }
-
+                
                 if (options.updateCaches()) {
                     log.info("Updating caches for player account: {}", updated);
-                    localCache.put(updated.uniqueId(), updated);
-                    redisCache.hset(CACHE_KEY, updated.uniqueId().toString(), updated);
+                    updateCaches(updated);
                 }
 
                 return updated;

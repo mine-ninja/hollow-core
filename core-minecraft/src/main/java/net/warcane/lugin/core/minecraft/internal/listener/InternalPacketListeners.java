@@ -4,10 +4,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.event.account.PlayerAccountLoadEvent;
+import net.warcane.lugin.core.minecraft.gamerule.listener.GameRuleUpdateListener;
 import net.warcane.lugin.core.minecraft.internal.events.PlayerReceiveMessageEvent;
 import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.vanish.VanishManager;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
+import net.warcane.lugin.core.network.packet.impl.gamerule.GameRuleUpdatePacket;
 import net.warcane.lugin.core.network.packet.impl.player.SendMessageToPlayerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.SendModernMessageToPlayerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.SendSoundToPlayerPacket;
@@ -55,6 +57,7 @@ public class InternalPacketListeners {
         networkClient.registerPacketListener(GoCachePacket.class, new GoCacheListener());
         networkClient.registerPacketListener(WalletRefreshRequestPacket.class, new WalletUpdateListener());
         networkClient.registerPacketListener(PlayerReceiveGroupPacket.class, new StaffTrackingListener());
+        networkClient.registerPacketListener(GameRuleUpdatePacket.class, new GameRuleUpdateListener(platform));
 
         final var listener = new GoCacheListener();
 

@@ -28,9 +28,8 @@ public class EconomyCommand extends SimpleCommand {
     private final WalletService walletService;
 
     public EconomyCommand(BukkitPlatform platform) {
-        super("economy");
+        super("economy", "lugin.master");
         this.setAliases(List.of("eco"));
-        this.requiredPermission = "lugin.master";
         this.platform = platform;
         this.walletService = platform.getWalletService();
     }

@@ -1,20 +1,27 @@
 package net.warcane.lugin.core.player.wallet;
 
-import com.mongodb.client.model.*;
-import lombok.extern.slf4j.Slf4j;
+import com.mongodb.client.model.Accumulators;
+import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Indexes;
+import com.mongodb.client.model.Sorts;
 import net.warcane.lugin.core.Platform;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.wallet.WalletRefreshRequestPacket;
-import net.warcane.lugin.core.player.fetcher.PlayerUuidFetcher;
 import net.warcane.lugin.core.player.wallet.transaction.TransactionResult;
 import net.warcane.lugin.core.util.data.MongoRepository;
 import net.warcane.lugin.core.util.data.RedisCache;
 import org.bson.Document;
+
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -168,20 +175,18 @@ public class WalletService {
      */
     public CompletableFuture<@Nullable Wallet> getOrLoadWallet(@NotNull String playerName) {
         return CompletableFuture.supplyAsync(() -> {
-            final var idFromName = PlayerUuidFetcher.getInstance().fetchPlayerUuid(playerName);
-            if (idFromName == null) {
-                return null;
-            }
+            final var account = platform.getPlayerAccountService().loadFromRedisByName(playerName);
+            if (account == null) return null;
 
-            final var fromRedis = redisCachedWallet.hget("wallets", idFromName.toString());
+            final var fromRedis = redisCachedWallet.hget("wallets", account.uniqueId().toString());
             if (fromRedis != null) {
                 localCachedWallets.put(fromRedis.uniqueId(), fromRedis);
                 return fromRedis;
             }
 
-            final var fromMongo = walletRepository.findById(idFromName);
+            final var fromMongo = walletRepository.findById(account.uniqueId());
             if (fromMongo != null) {
-                redisCachedWallet.hset("wallets", idFromName.toString(), fromMongo);
+                redisCachedWallet.hset("wallets", account.uniqueId().toString(), fromMongo);
                 return fromMongo;
             }
 

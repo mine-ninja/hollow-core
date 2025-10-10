@@ -4,6 +4,7 @@ import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.command.SimpleCommand;
 import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
+import net.warcane.lugin.core.minecraft.task.Tasks;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -15,34 +16,36 @@ public class PlayerInfoCommand extends SimpleCommand {
     private final BukkitPlatform platform;
 
     public PlayerInfoCommand(BukkitPlatform platform) {
-        super("playerinfo");
+        super("playerinfo", "lugin.staff");
         this.platform = platform;
-        this.requiredPermission = "lugin.staff";
-        this.playersOnly = true;
     }
 
     @Override
     public void performCommand(@NotNull CommandContext ctx) throws CommandFailedException {
-        final var target = ctx.getLocalPlayerOrThrow(0, "§cInforme o nome do jogador.");
-        if (target == null) {
-            throw new CommandFailedException("§cJogador não encontrado no servidor no qual você está.");
-        }
-
-        final var targetAccount = platform.getPlayerAccountService().getCachedAccount(target.getUniqueId());
-        if (targetAccount == null) {
-            throw new CommandFailedException("§cConta do jogador não encontrada.");
-        }
-
-        final var subscriptionType = platform.getSubscriptionCategoryType();
-
-        ctx.sendMessage(
-          "§6§lINFORMAÇÕES AVANÇADAS: §6" + target.getName(),
-          "§7UUID: §f" + target.getUniqueId(),
-          "§7IP: §f" + target.getAddress().getAddress().getHostAddress(),
-          "§7Nome Formatado:" + targetAccount.getFormattedDisplayName(subscriptionType),
-          "§7Ultima Conexão: §f" + targetAccount.lastLogin().toString(),
-          "§7Primeira Conexão: §f" + targetAccount.createdAt().toString()
-        );
+                final var targetName = ctx.getRawArgOrThrow(0, "§cInforme o nome do jogador.");
+        
+        platform.getPlayerAccountService().getPlayerAccountByName(targetName)
+            .whenCompleteAsync((account, throwable) -> {
+                if (throwable != null) {
+                    ctx.sendMessage("§cErro ao buscar a conta do jogador: " + throwable.getMessage());
+                    return;
+                }
+                if (account == null) {
+                    ctx.sendMessage("§cConta do jogador não encontrada.");
+                    return;
+                }
+                
+                final Player player = Bukkit.getPlayer(account.playerName());
+                final var subscriptionType = platform.getSubscriptionCategoryType();
+                ctx.sendMessage(
+                    "§6§lINFORMAÇÕES AVANÇADAS: §6" + account.playerName(),
+                    "§7UUID: §f" + account.uniqueId(),
+                    "§7IP: §f" + (player == null ? "§7Offline ou em outro servidor." : player.getAddress().getAddress().getHostAddress()),
+                    "§7Nome Formatado:" + account.getFormattedDisplayName(subscriptionType),
+                    "§7Ultima Conexão: §f" + account.lastLogin().toString(),
+                    "§7Primeira Conexão: §f" + account.createdAt().toString()
+                );
+            }, Tasks::runAsync);
     }
 
     @Override

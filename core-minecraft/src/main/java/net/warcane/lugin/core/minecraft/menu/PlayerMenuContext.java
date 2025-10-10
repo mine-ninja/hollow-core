@@ -4,6 +4,8 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.kyori.adventure.text.Component;
 import net.warcane.lugin.core.minecraft.menu.config.MenuConfig;
+import net.warcane.lugin.core.minecraft.menu.input.SignInputContext;
+import net.warcane.lugin.core.minecraft.menu.input.SignInputMenu;
 import net.warcane.lugin.core.minecraft.menu.item.SimpleMenuItem;
 import net.warcane.lugin.core.minecraft.util.inventory.InventoryUpdate;
 import net.warcane.lugin.core.minecraft.util.stopwatch.Stopwatch;
@@ -17,6 +19,7 @@ import org.bukkit.inventory.ItemStack;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -35,6 +38,7 @@ public class PlayerMenuContext implements MenuContext {
     protected final SimpleMenuManager manager;
 
     protected Inventory inventory;
+    protected boolean onSignInput = false;
     protected final Int2ObjectMap<SimpleMenuItem> items = new Int2ObjectOpenHashMap<>();
 
     @Getter
@@ -42,7 +46,7 @@ public class PlayerMenuContext implements MenuContext {
 
     public PlayerMenuContext(Player player, Map<String, Object> rawData, MenuConfig menuConfig, SimpleMenu menu, SimpleMenuManager manager) {
         this.player = player;
-        this.rawData = rawData;
+        this.rawData = new HashMap<>(rawData);
         this.menuConfig = menuConfig;
         this.menu = menu;
         this.manager = manager;
@@ -222,6 +226,9 @@ public class PlayerMenuContext implements MenuContext {
             inventory.setItem(slot, menuItem.renderer().apply(player));
         });
 
+        if (this.onSignInput) {
+            this.onSignInput = false;
+        }
         player.openInventory(inventory);
     }
 
@@ -238,11 +245,11 @@ public class PlayerMenuContext implements MenuContext {
     }
 
     public void openMenu(@NotNull Class<? extends SimpleMenu> clazz, boolean forwardInitialData) {
-        openMenu(clazz, forwardInitialData, Map.of());
+        openMenu(clazz, forwardInitialData, new HashMap<>());
     }
 
     public void openMenu(@NotNull Class<? extends SimpleMenu> clazz) {
-        openMenu(clazz, false, Map.of());
+        openMenu(clazz, false, new HashMap<>());
     }
 
     public void openMenu(@NotNull Class<? extends SimpleMenu> clazz, @NotNull Map<String, Object> initialData) {
@@ -254,6 +261,30 @@ public class PlayerMenuContext implements MenuContext {
             initialData.putAll(rawData);
         }
         manager.openToPlayer(player, clazz, initialData);
+    }
+    
+    public void openSignInput(Consumer<SignInputContext> response) {
+        openSignInput(response, new Component[0], false, new HashMap<>());
+    }
+    
+    public void openSignInput(Consumer<SignInputContext> response, Component[] lines) {
+        openSignInput(response, lines, false, new HashMap<>());
+    }
+    
+    public void openSignInput(Consumer<SignInputContext> response, Component[] lines, boolean forwardInitialData) {
+        openSignInput(response, lines, forwardInitialData, new HashMap<>());
+    }
+    
+    public void openSignInput(Consumer<SignInputContext> response, Component[] lines, boolean forwardInitialData, @NotNull Map<String, Object> initialData) {
+        initialData.put("response", SignInputMenu.Response.builder().handler(response).build());
+        initialData.put("lines", lines);
+        
+        if (forwardInitialData) {
+            initialData.putAll(rawData);
+        }
+        
+        this.onSignInput = true;
+        openMenu(SignInputMenu.class, false, initialData);
     }
 
     public int[] getBorders() {
