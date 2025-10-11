@@ -59,7 +59,7 @@ public class MessageUtils {
     public static String getBannedPlayerMessage(Tuple<PunishTime, PunishmentType> punishmentType, String motive, PunishedDTO.Punishment punishment) {
         var punishmentMessage = punishmentType.b().equals(PunishmentType.PERM)
             ? "§cSua punição é permanente.\n"
-            : "§cSua punição expira em " + punishmentType.a().getTitle() + ".\n";
+            : "§cSua punição expira em " + getFormattedTime(punishment.getExpiresAt()) + ".\n";
 
         return "§b§lLUGIN\n\n" +
             "§cVocê foi banido!\n" +

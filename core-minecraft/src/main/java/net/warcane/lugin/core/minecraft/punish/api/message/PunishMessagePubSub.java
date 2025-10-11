@@ -1,14 +1,14 @@
 package net.warcane.lugin.core.minecraft.punish.api.message;
 
 import com.github.retrooper.packetevents.PacketEvents;
-import com.github.retrooper.packetevents.manager.protocol.ProtocolManager;
-import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import net.warcane.lugin.core.minecraft.punish.api.PunishManager;
 import net.warcane.lugin.core.minecraft.punish.core.database.redis.MessageManager;
 import net.warcane.lugin.core.minecraft.punish.core.database.redis.PubSubMessage;
 import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.util.message.StringUtils;
 import net.warcane.lugin.core.punish.data.*;
+import net.warcane.lugin.core.punish.utils.MessageUtils;
 import net.warcane.lugin.core.util.Tuple;
 import org.bukkit.Bukkit;
 
@@ -107,7 +107,7 @@ public record PunishMessagePubSub(UUID userKicked, String playerNick,
         if (punishmentType.b().equals(PunishmentType.PERM)) {
             sb.append("§cSua punição é permanente.\n");
         } else {
-            sb.append("§cSua punição expira em ").append(punishmentType.a().getTitle()).append(".\n");
+            sb.append("§cSua punição expira em ").append(MessageUtils.getFormattedTime(punishment.getExpiresAt())).append(".\n");
         }
         sb.append("\n");
         sb.append("§cMotivo: ").append(reason).append("\n");
@@ -118,12 +118,9 @@ public record PunishMessagePubSub(UUID userKicked, String playerNick,
 
         // Its not possible to kick a player from async :)
         Tasks.runSync(() -> {
-            var protocolManager = PacketEvents.getAPI().getProtocolManager();
-            var version = protocolManager.getClientVersion(
-                PacketEvents.getAPI().getPlayerManager().getChannel(player)
-            );
+            var version = PacketEvents.getAPI().getServerManager().getVersion();
 
-            if (version.isOlderThanOrEquals(ClientVersion.V_1_8)) {
+            if (version.isOlderThan(ServerVersion.V_1_9)) {
                 player.kickPlayer(sb.toString());
                 return;
             }
