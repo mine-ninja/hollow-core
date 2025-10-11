@@ -94,7 +94,7 @@ public class SimpleMenuManager implements Listener {
                 contextItem.clickHandler().accept(event);
             }
             
-            if (clickedItem != null && !clickedItem.isEmpty()) {
+            if (clickedItem != null && clickedItem.getType() != org.bukkit.Material.AIR) {
                 context.getMenuConfig().playClickSound(context.getPlayer());
             }
             menu.onClick(context, event);
