@@ -2,6 +2,7 @@ package net.warcane.lugin.core.punish.api;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.ReplaceOptions;
 import net.warcane.lugin.core.database.MongoDbConnector;
 import net.warcane.lugin.core.punish.data.PunishedDTO;
 
@@ -28,6 +29,28 @@ public class PunishManager {
             collection.find(Filters.eq("uuid", uuid)).first()
         , executorService);
     }
+
+    private CompletableFuture<PunishedDTO> getPunishedByPunishmentId(int id) {
+        return CompletableFuture.supplyAsync(() ->
+                collection.find(Filters.elemMatch("punishments", Filters.eq("_id", id))).first()
+            , executorService);
+    }
+
+    public void updatePunishmentStatus(int id, PunishedDTO.Punishment updatedPunishment) {
+        getPunishedByPunishmentId(id).whenComplete((punished, e) -> {
+            if (e != null || punished == null) {
+                return;
+            }
+
+            punished.getPunishments().stream()
+                .filter(p -> p.getId() == id)
+                .findFirst()
+                .ifPresent(p -> punished.getPunishments().set(punished.getPunishments().indexOf(p), updatedPunishment));
+
+            collection.replaceOne(Filters.eq("uuid", punished.getUuid()), punished, new ReplaceOptions().upsert(true));
+        });
+    }
+
 
     public static PunishManager get() {
         return punishManager;

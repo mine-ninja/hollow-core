@@ -44,6 +44,13 @@ public class PlayerListener {
                 break;
             }
 
+            var remainingMillis = punishment.getExpiresAt() - System.currentTimeMillis();
+            if (remainingMillis <= 0) {
+                punishment.setStatus(PunishmentStatus.EXPIRED);
+                PunishManager.get().updatePunishmentStatus(punishment.getId(), punishment);
+                continue;
+            }
+
             if (highestPunishment == null || punishInfo.a().getTimeInMilliseconds() == -1) {
                 highestPunishment = punishInfo;
                 punishmentFinal = punishment;
