@@ -7,6 +7,7 @@ import net.warcane.lugin.core.group.PlayerGroup;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.util.permission.PermissionGraph;
 import net.warcane.lugin.core.player.account.PlayerAccount;
+import net.warcane.lugin.core.player.permissions.PlayerPermission;
 import net.warcane.lugin.core.player.subscription.PlayerGroupSubscription;
 import net.warcane.lugin.core.player.subscription.SubscriptionCategoryType;
 import org.bukkit.entity.Player;
@@ -45,7 +46,12 @@ final class PlayerAccountPermissible extends PermissibleBase {
     @Override
     public synchronized @NotNull Set<PermissionAttachmentInfo> getEffectivePermissions() {
         Set<PermissionAttachmentInfo> effectivePermissions = super.getEffectivePermissions();
-        
+
+        account.getPermissions().stream()
+            .filter(permission -> !permission.isExpired())
+            .forEach(permission -> effectivePermissions
+                .add(new PermissionAttachmentInfo(player, permission.permission(), null, true)));
+
         for (PlayerGroupSubscription subscription : account.getSubscriptions(SubscriptionCategoryType.GLOBAL)) {
             final var group = subscription.group();
             final var permissionSet = groupPermissionService.getCachedPermissionsForGroupOrThrow(group);
@@ -61,6 +67,13 @@ final class PlayerAccountPermissible extends PermissibleBase {
       @NotNull String inName,
       @NotNull SubscriptionCategoryType subscriptionCategory
     ) {
+        if (account.getPermissions().stream()
+            .filter(playerPermission -> !playerPermission.isExpired())
+            .map(PlayerPermission::permission)
+            .anyMatch(permission -> permission.equalsIgnoreCase(inName) || permission.equalsIgnoreCase("*"))) {
+            return true;
+        }
+
         for (PlayerGroupSubscription subscription : account.getSubscriptions(SubscriptionCategoryType.GLOBAL)) {
             final var group = subscription.group();
 

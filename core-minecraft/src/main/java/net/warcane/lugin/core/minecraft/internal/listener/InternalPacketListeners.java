@@ -14,7 +14,9 @@ import net.warcane.lugin.core.network.packet.impl.player.SendMessageToPlayerPack
 import net.warcane.lugin.core.network.packet.impl.player.SendModernMessageToPlayerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.SendSoundToPlayerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerLoseGroupPacket;
+import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerLosePermissionPacket;
 import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerReceiveGroupPacket;
+import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerReceivePermissionPacket;
 import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleportToLocationPacket;
 import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleportToTargetPacket;
 import net.warcane.lugin.core.network.packet.impl.staff.GoCachePacket;
@@ -41,9 +43,6 @@ public class InternalPacketListeners {
 
     private final BukkitPlatform platform;
 
-
-
-
     public void setup() {
         final var networkClient = platform.getNetworkClient();
 
@@ -58,6 +57,8 @@ public class InternalPacketListeners {
         networkClient.registerPacketListener(WalletRefreshRequestPacket.class, new WalletUpdateListener());
         networkClient.registerPacketListener(PlayerReceiveGroupPacket.class, new StaffTrackingListener());
         networkClient.registerPacketListener(GameRuleUpdatePacket.class, new GameRuleUpdateListener(platform));
+        networkClient.registerPacketListener(PlayerReceivePermissionPacket.class, new PlayerPermissionReceivePacketListener());
+        networkClient.registerPacketListener(PlayerLosePermissionPacket.class, new PlayerLosePermissionPacketListener());
 
         final var listener = new GoCacheListener();
 
@@ -77,6 +78,7 @@ public class InternalPacketListeners {
 
         final var accountFromRedis = platform.getPlayerAccountService().loadFromRedis(playerId);
         if (accountFromRedis != null) {
+            log.debug("Refreshing permissions for player {} from redis cache", localPlayer.getName());
             platform.getPlayerAccountService().updateCaches(accountFromRedis);
             Tasks.runAsyncLater(() -> platform.getPermissionInjector().injectPermissions(localPlayer), 1);
         } else {
@@ -84,6 +86,7 @@ public class InternalPacketListeners {
                 .loadPlayerAccount(playerId)
                 .whenComplete((found, error) -> {
                     if (found != null) {
+                        log.debug("Refreshing permissions for player {} from database", localPlayer.getName());
                         Tasks.runAsyncLater(() -> platform.getPermissionInjector().injectPermissions(localPlayer), 1);
                     } else if (error != null) {
                         log.error("Failed to load player account for uuid " + playerId, error);
@@ -279,6 +282,25 @@ public class InternalPacketListeners {
             if (player == null) return;
             player.playSound(player.getLocation(), packet.soundName(), packet.volume(), packet.pitch());
 
+        }
+    }
+
+    @RequiredArgsConstructor
+    public static class PlayerPermissionReceivePacketListener implements PacketListener<PlayerReceivePermissionPacket> {
+
+        @Override
+        public void onReceivePacket(@NotNull PlayerReceivePermissionPacket packet, @NotNull Headers headers) {
+            refreshPlayerPerms(headers, packet.playerId());
+        }
+    }
+
+
+    @RequiredArgsConstructor
+    public static class PlayerLosePermissionPacketListener implements PacketListener<PlayerLosePermissionPacket> {
+
+        @Override
+        public void onReceivePacket(@NotNull PlayerLosePermissionPacket packet, @NotNull Headers headers) {
+            refreshPlayerPerms(headers, packet.playerId());
         }
     }
 }
