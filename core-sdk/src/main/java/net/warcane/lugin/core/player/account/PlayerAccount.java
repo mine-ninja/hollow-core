@@ -10,6 +10,7 @@ import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.Style;
 import net.kyori.adventure.text.format.TextColor;
 import net.warcane.lugin.core.group.PlayerGroup;
+import net.warcane.lugin.core.player.permissions.PlayerPermission;
 import net.warcane.lugin.core.player.subscription.PlayerGroupSubscription;
 import net.warcane.lugin.core.player.subscription.SubscriptionCategoryType;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,8 @@ public record PlayerAccount(
   @JsonProperty("sk") String skin,
   @JsonProperty("sb") List<PlayerGroupSubscription> subscriptions,
   @JsonProperty("c") Instant createdAt,
-  @JsonProperty("l") Instant lastLogin
+  @JsonProperty("l") Instant lastLogin,
+  @JsonProperty("p") List<PlayerPermission> permissions
 ) implements Serializable {
 
 
@@ -38,6 +40,7 @@ public record PlayerAccount(
         subscriptions = subscriptions == null ? new ArrayList<>() : new ArrayList<>(subscriptions);
         createdAt = createdAt == null ? Instant.now() : createdAt;
         lastLogin = lastLogin == null ? Instant.now() : lastLogin;
+        permissions = permissions == null ? new ArrayList<>() : new ArrayList<>(permissions);
     }
 
     /**
@@ -47,15 +50,15 @@ public record PlayerAccount(
      * @return Uma nova instância de PlayerAccount com o novo nome
      */
     public PlayerAccount withNewName(@NotNull String newName) {
-        return new PlayerAccount(uniqueId, newName, skin, subscriptions, createdAt, lastLogin);
+        return new PlayerAccount(uniqueId, newName, skin, subscriptions, createdAt, lastLogin, permissions);
     }
-    
+
     public PlayerAccount withNewSkin(@Nullable String newSkin) {
-        return new PlayerAccount(uniqueId, playerName, newSkin, subscriptions, createdAt, lastLogin);
+        return new PlayerAccount(uniqueId, playerName, newSkin, subscriptions, createdAt, lastLogin, permissions);
     }
-    
+
     public PlayerAccount withLastLogin(@NotNull Instant newLastLogin) {
-        return new PlayerAccount(uniqueId, playerName, skin, subscriptions, createdAt, newLastLogin);
+        return new PlayerAccount(uniqueId, playerName, skin, subscriptions, createdAt, newLastLogin, permissions);
     }
 
     /**
@@ -67,9 +70,8 @@ public record PlayerAccount(
      */
     @NotNull
     public static PlayerAccount createDefaultAccount(@NotNull UUID uniqueId, @NotNull String playerName, @Nullable String skin) {
-        return new PlayerAccount(uniqueId, playerName, skin, new ArrayList<>(List.of(PlayerGroupSubscription.defaultSubscription())), Instant.now(), Instant.now());
+        return new PlayerAccount(uniqueId, playerName, skin, new ArrayList<>(List.of(PlayerGroupSubscription.defaultSubscription())), Instant.now(), Instant.now(), new ArrayList<>());
     }
-
 
     /**
      * Verifica se o jogador tem poderes de um determinado grupo.
@@ -87,7 +89,6 @@ public record PlayerAccount(
         }
         return false;
     }
-
 
     /**
      * Obtém o nome do jogador formatado com o prefixo do grupo atual.
@@ -151,7 +152,7 @@ public record PlayerAccount(
         final var currentSubscriptions = new ArrayList<>(this.subscriptions);
         currentSubscriptions.removeIf(existingSubscription -> existingSubscription.equals(subscription));
 
-        return new PlayerAccount(uniqueId, playerName, skin, currentSubscriptions, createdAt, lastLogin);
+        return new PlayerAccount(uniqueId, playerName, skin, currentSubscriptions, createdAt, lastLogin, permissions);
     }
 
     /**
@@ -168,7 +169,7 @@ public record PlayerAccount(
             currentSubscriptions.remove(existingSubscription);
         }
 
-        return new PlayerAccount(uniqueId, playerName, skin, currentSubscriptions, createdAt, lastLogin);
+        return new PlayerAccount(uniqueId, playerName, skin, currentSubscriptions, createdAt, lastLogin, permissions);
     }
 
     public PlayerAccount withNewPermanentSubscription(@NotNull PlayerGroup group, @NotNull SubscriptionCategoryType type) {
@@ -181,7 +182,7 @@ public record PlayerAccount(
             final var newSubscription = createNewPermanentSubscription(group, type);
             currentSubscriptions.add(newSubscription);
 
-            return new PlayerAccount(uniqueId, playerName, skin, currentSubscriptions, createdAt, lastLogin);
+            return new PlayerAccount(uniqueId, playerName, skin, currentSubscriptions, createdAt, lastLogin, permissions);
         } catch (Exception e) {
             throw new IllegalStateException("Erro ao criar assinatura permanente: " + e.getMessage(), e);
         }
@@ -197,7 +198,7 @@ public record PlayerAccount(
             final var newSubscription = createNewSubscription(group, targetExpirationTime, type);
             currentSubscriptions.add(newSubscription);
             
-            return new PlayerAccount(uniqueId, playerName, skin, currentSubscriptions, createdAt, lastLogin);
+            return new PlayerAccount(uniqueId, playerName, skin, currentSubscriptions, createdAt, lastLogin, permissions);
         } catch (Exception e) {
             throw new IllegalStateException("Erro ao criar assinatura: " + e.getMessage(), e);
         }
@@ -237,7 +238,6 @@ public record PlayerAccount(
         return null;
     }
 
-
     @NotNull
     @JsonIgnore
     public List<PlayerGroupSubscription> getSubscriptions(@NotNull SubscriptionCategoryType type) {
@@ -264,5 +264,50 @@ public record PlayerAccount(
             }
         }
         return best;
+    }
+
+    @NotNull
+    @JsonIgnore
+    public List<PlayerPermission> getPermissions() {
+        return permissions != null ? Collections.unmodifiableList(permissions) : Collections.emptyList();
+    }
+
+    @Nullable
+    @JsonIgnore
+    public PlayerPermission getPermission(@NotNull String permission) {
+        for (var playerPermission : permissions) {
+            if (playerPermission.permission().equalsIgnoreCase(permission)) {
+                return playerPermission;
+            }
+        }
+        return null;
+    }
+
+    @JsonIgnore
+    public PlayerAccount removePermissions(@NotNull String playerPermission) {
+        final var currentPermissions = new ArrayList<>(this.permissions);
+        currentPermissions.removeIf(p -> p.permission().equalsIgnoreCase(playerPermission));
+
+        return new PlayerAccount(uniqueId, playerName, skin, subscriptions, createdAt, lastLogin, currentPermissions);
+    }
+
+    @JsonIgnore
+    public PlayerAccount withNewPermanentPermissions(@NotNull String playerPermission) {
+        final var currentPermissions = new ArrayList<>(Optional.ofNullable(permissions).orElseGet(ArrayList::new));
+        currentPermissions.removeIf(p -> p.permission().equalsIgnoreCase(playerPermission));
+
+        currentPermissions.add(PlayerPermission.createNewPermanentPermissions(playerPermission));
+
+        return new PlayerAccount(uniqueId, playerName, skin, subscriptions, createdAt, lastLogin, currentPermissions);
+    }
+
+    @JsonIgnore
+    public PlayerAccount withNewPermissions(@NotNull String playerPermission, @NotNull Instant targetExpirationTime) {
+        final var currentPermissions = new ArrayList<>(Optional.ofNullable(permissions).orElseGet(ArrayList::new));
+        currentPermissions.removeIf(p -> p.permission().equalsIgnoreCase(playerPermission));
+
+        currentPermissions.add(PlayerPermission.createNewPermissions(playerPermission, targetExpirationTime));
+
+        return new PlayerAccount(uniqueId, playerName, skin, subscriptions, createdAt, lastLogin, currentPermissions);
     }
 }

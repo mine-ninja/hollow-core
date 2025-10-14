@@ -9,9 +9,7 @@ import net.warcane.lugin.core.network.packet.impl.gamerule.GameRuleUpdatePacket;
 import net.warcane.lugin.core.network.packet.impl.internal.PingPacket;
 import net.warcane.lugin.core.network.packet.impl.internal.PongPacket;
 import net.warcane.lugin.core.network.packet.impl.player.*;
-import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerConnectToSubCategoryPacket;
-import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerLoseGroupPacket;
-import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerReceiveGroupPacket;
+import net.warcane.lugin.core.network.packet.impl.player.permission.*;
 import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleportToLocationPacket;
 import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleportToTargetPacket;
 import net.warcane.lugin.core.network.packet.impl.server.BroadcastMessagePacket;
@@ -76,7 +74,10 @@ final class PacketMappings {
         entry(17, GoCommandPacket.class),
         entry(18, GoCachePacket.class),
         entry(19, PlayerConnectToSubCategoryPacket.class),
-        entry(20, GameRuleUpdatePacket.class)
+        entry(20, GameRuleUpdatePacket.class),
+
+          entry(21, PlayerReceivePermissionPacket.class),
+          entry(22, PlayerLosePermissionPacket.class)
       )
     );
 

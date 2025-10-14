@@ -10,6 +10,7 @@ import net.warcane.lugin.core.minecraft.internal.command.gamemode.GameModeComman
 import net.warcane.lugin.core.minecraft.internal.command.lobby.LobbyCommand;
 import net.warcane.lugin.core.minecraft.internal.command.permission.GroupPermissionCommand;
 import net.warcane.lugin.core.minecraft.internal.command.permission.PlayerGroupCommand;
+import net.warcane.lugin.core.minecraft.internal.command.permission.PlayerPermissionCommand;
 import net.warcane.lugin.core.minecraft.internal.command.permission.TestPermission;
 import net.warcane.lugin.core.minecraft.internal.command.server.ServerCommand;
 import net.warcane.lugin.core.minecraft.internal.command.staff.*;
@@ -44,6 +45,7 @@ public class InternalCommandManager {
         commandMap.register("lugin", new TestPermission());
         commandMap.register("lugin", new PlayerGroupCommand(platform));
         commandMap.register("lugin", new GameModeCommand());
+        commandMap.register("lugin", new PlayerPermissionCommand(platform));
 
         final var lobbyEnabled = Property.get("LOBBY_ENABLED", "true").equalsIgnoreCase("true");
         if (lobbyEnabled) {
