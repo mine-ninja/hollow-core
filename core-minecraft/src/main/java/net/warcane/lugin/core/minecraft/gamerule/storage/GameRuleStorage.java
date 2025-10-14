@@ -1,7 +1,9 @@
 package net.warcane.lugin.core.minecraft.gamerule.storage;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
@@ -38,7 +40,11 @@ import java.util.concurrent.ExecutorService;
  */
 @Slf4j
 public class GameRuleStorage {
-    private static final Gson GSON = new GsonBuilder().create();
+    private static final ObjectMapper MAPPER = new ObjectMapper()
+        .configure(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS, false)
+        .configure(DeserializationFeature.USE_BIG_INTEGER_FOR_INTS, false);
+    
+    private static final TypeReference<Map<String, Object>> MAP_TYPE_REF = new TypeReference<>() {};
     
     private static final String REDIS_KEY_PREFIX = "gamerule:";
     private static final String SHARED_PREFIX = "shared";
@@ -156,21 +162,27 @@ public class GameRuleStorage {
                 collection.updateOne(filter, update, new UpdateOptions().upsert(true));
                 
                 final String redisKey = buildRedisKey(scope);
-                final String valueJson = GSON.toJson(value);
+                final String valueJson = MAPPER.writeValueAsString(value);
                 
                 redisConnector.useJedis(jedis -> {
                     Object result = jedis.eval(LUA_UPDATE_RULE, 1, redisKey, ruleName, valueJson, "3600");
                     if (result != null && ((Long) result) == 0L) {
-                        log.debug("Cache for scope {} doesn't exist, creating with rule {}", scope, ruleName);
-                        Map<String, Object> newCache = new HashMap<>();
-                        newCache.put(ruleName, value);
-                        String cacheJson = GSON.toJson(newCache);
-                        jedis.set(redisKey, cacheJson, SetParams.setParams().ex(3600));
+                        try {
+                            log.debug("Cache for scope {} doesn't exist, creating with rule {}", scope, ruleName);
+                            
+                            Map<String, Object> newCache = new HashMap<>();
+                            newCache.put(ruleName, value);
+                            
+                            String cacheJson = MAPPER.writeValueAsString(newCache);
+                            jedis.set(redisKey, cacheJson, SetParams.setParams().ex(3600));
+                        } catch (JsonProcessingException e) {
+                            log.error("Failed to serialize game rule {} for Redis cache: {}", ruleName, e.getMessage(), e);
+                            throw new RuntimeException(e);
+                        }
                     }
                 });
                 
-                networkClient.sendNetworkPacket(NetworkChannel.OPERATION,
-                    new GameRuleUpdatePacket(worldName, ruleName, value));
+                networkClient.sendNetworkPacket(NetworkChannel.OPERATION, new GameRuleUpdatePacket(worldName, ruleName, value));
                 log.debug("Saved game rule {} = {} for scope {} and published to network", ruleName, value, scope);
             } catch (Exception e) {
                 log.error("Failed to save game rule {} for scope {}: {}", ruleName, scope, e.getMessage(), e);
@@ -205,8 +217,7 @@ public class GameRuleStorage {
                     }
                 });
                 
-                networkClient.sendNetworkPacket(NetworkChannel.OPERATION,
-                    new GameRuleUpdatePacket(worldName, ruleName, null));
+                networkClient.sendNetworkPacket(NetworkChannel.OPERATION, new GameRuleUpdatePacket(worldName, ruleName, null));
                 log.debug("Removed game rule {} for scope {}", ruleName, scope);
             } catch (Exception e) {
                 log.error("Failed to remove game rule {} for scope {}: {}", ruleName, scope, e.getMessage(), e);
@@ -275,11 +286,20 @@ public class GameRuleStorage {
     }
     
     private String serializeGameRules(@NotNull Map<String, Object> rules) {
-        return GSON.toJson(rules);
+        try {
+            return MAPPER.writeValueAsString(rules);
+        } catch (Exception e) {
+            log.error("Failed to serialize game rules: {}", e.getMessage(), e);
+            return "{}";
+        }
     }
     
-    @SuppressWarnings("unchecked")
     private Map<String, Object> deserializeGameRules(@NotNull String json) {
-        return GSON.fromJson(json, Map.class);
+        try {
+            return MAPPER.readValue(json, MAP_TYPE_REF);
+        } catch (Exception e) {
+            log.error("Failed to deserialize game rules: {}", e.getMessage(), e);
+            return new HashMap<>();
+        }
     }
 }
