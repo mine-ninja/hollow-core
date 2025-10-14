@@ -15,7 +15,7 @@ public record PlayerPermission(
     @JsonProperty("ps") Instant permissionStart,
     @JsonProperty("pe") Instant permissionEnd,
     @JsonProperty(value = "m", defaultValue = "{}") Map<String, Object> metadata
-) implements Serializable {
+) {
 
     public static PlayerPermission createNewPermissions(String permission, Instant end) {
         return new PlayerPermission(permission, Instant.now(), end, new HashMap<>());
