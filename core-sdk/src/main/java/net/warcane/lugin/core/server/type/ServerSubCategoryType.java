@@ -10,7 +10,11 @@ public enum ServerSubCategoryType {
      */
     @ApiStatus.Internal
     NONE,
-    
+
+    OVERWORLD,
+    NETHER,
+    THE_END,
+
     MINA_1,
     MINA_2,
     MINA_3,
