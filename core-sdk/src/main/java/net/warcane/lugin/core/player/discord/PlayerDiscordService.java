@@ -50,6 +50,17 @@ public class PlayerDiscordService implements IPlayerDiscordService {
     }
 
     @Override
+    public CompletableFuture<@Nullable PlayerDiscord> findByDiscordId(@NotNull String discordId) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return repository.findFirstFromPropertyIgnoreCase("discordId", discordId);
+            } catch (Exception exception) {
+                throw new IllegalStateException("Failed to find player discord by discordId: " + discordId, exception);
+            }
+        }, executorService);
+    }
+
+    @Override
     public CompletableFuture<@NotNull PlayerDiscord> updatePlayerDiscord(@NotNull PlayerDiscord toUpdate) {
         return CompletableFuture.supplyAsync(() -> {
             try {

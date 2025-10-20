@@ -48,7 +48,7 @@ public class LinkCommand extends SimpleCommand {
                 .newLine()
                 .simple("§7Seu código (válido por 5 minutos):")
                 .newLine()
-                .clipboardHover(String.format("§a              %s", code), code, "§7Clique para copiar o código")
+                .suggestHover(String.format("§a              %s", code), code, "§7Clique para o código ir pro chat")
                 .newLine()
                 .newLine()
                 .simple("§7Siga os passos do canal: §dVincular §7no nosso Discord.")

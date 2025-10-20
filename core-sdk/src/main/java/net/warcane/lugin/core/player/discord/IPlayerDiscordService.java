@@ -14,6 +14,8 @@ public interface IPlayerDiscordService {
 
     CompletableFuture<@Nullable PlayerDiscord> getPlayerDiscord(@NotNull UUID playerId);
 
+    CompletableFuture<@Nullable PlayerDiscord> findByDiscordId(@NotNull String discordId);
+
     CompletableFuture<@NotNull PlayerDiscord> updatePlayerDiscord(@NotNull PlayerDiscord toUpdate);
 
     CompletableFuture<@NotNull PlayerDiscord> loadPlayerDiscord(@NotNull UUID playerId);
