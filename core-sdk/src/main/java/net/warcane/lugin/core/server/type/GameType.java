@@ -19,7 +19,9 @@ public enum GameType {
     FACTIONS_ICE(4, "Factions Ice", ServerCategoryType.FACTIONS),
     SKYWARS(5, "Sky Wars", ServerCategoryType.SKYWARS),
     SKYWARS_SOLO(6, "Sky Wars Solo", ServerCategoryType.SKYWARS),
-    SKYWARS_DOUBLES(7, "Sky Wars Duplas", ServerCategoryType.SKYWARS);
+    SKYWARS_DOUBLES(7, "Sky Wars Duplas", ServerCategoryType.SKYWARS),
+    FACTIONS_FIRE(8, "Factions Fire", ServerCategoryType.FACTIONS_FIRE),
+    ;
 
     public static final Int2ObjectMap<GameType> ID_MAP = Arrays.stream(values())
       .collect(Collectors.toMap(
