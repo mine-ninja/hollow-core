@@ -37,21 +37,27 @@ public class MailboxMenu extends SimplePaginationMenu<MailItem> {
             " p rrr n ");
 
         MailData mailData = ctx.get("mail_data");
+        boolean isAdmin = ctx.getOrDefault("is_admin_view", false);
         if (mailData == null) {
             return false;
         }
-        Tasks.runAsync(() -> ctx.setPagination('A', mailData.getMails(), (player, mail) -> mail.getDisplayItem(), (player, mail) -> {
-
+        Tasks.runAsync(() -> ctx.setPagination('A', mailData.getMails(), (player, mail) -> mail.getDisplayItem(), (mail, event) -> {
+            if (isAdmin) {
+                repository.removeMailItem(mailData.getUniqueId(), mail.getMailId());
+                StringUtils.send(event.getWhoClicked(), "<l-success>Item removido com sucesso da caixa de correio do jogador.");
+                ctx.close();
+                return;
+            }
         }));
 
         if (BukkitPlatform.getInstance().isRunningOnNewVersions()) {
-            return onPreOpenInNewVersion(ctx, openHandler, mailData);
+            return onPreOpenInNewVersion(ctx, openHandler, mailData, isAdmin);
         }
-        return onOldVersion(ctx, openHandler, mailData);
+        return onOldVersion(ctx, openHandler, mailData, isAdmin);
     }
 
 
-    private boolean onPreOpenInNewVersion(@NotNull MenuPaginationContext<MailItem> ctx, @NotNull MenuConfig openHandler, MailData mailData) {
+    private boolean onPreOpenInNewVersion(@NotNull MenuPaginationContext<MailItem> ctx, @NotNull MenuConfig openHandler, MailData mailData, boolean isAdmin) {
         openHandler.setTitle(Component.text());
         ItemStack nextItem = new ItemStack(Material.ECHO_SHARD);
         nextItem.editMeta(meta -> {
@@ -73,6 +79,12 @@ public class MailboxMenu extends SimplePaginationMenu<MailItem> {
             meta.displayName(StringUtils.text("<l-green>RESGATAR"));
         });
         ctx.setItem('r', redeemItem, (event) -> {
+
+            if (isAdmin) {
+                StringUtils.send(event.getWhoClicked(), "<l-negate>Você não pode resgatar itens no modo de visualização de administrador.");
+                ctx.close();
+                return;
+            }
             int slotsEmpty = 0;
             PlayerInventory inventory = event.getWhoClicked().getInventory();
             for (ItemStack itemStack : inventory.getContents()) {
@@ -102,7 +114,7 @@ public class MailboxMenu extends SimplePaginationMenu<MailItem> {
         return true;
     }
 
-    private boolean onOldVersion(@NotNull MenuPaginationContext<MailItem> ctx, @NotNull MenuConfig openHandler, MailData mailData) {
+    private boolean onOldVersion(@NotNull MenuPaginationContext<MailItem> ctx, @NotNull MenuConfig openHandler, MailData mailData, boolean isAdminOnly) {
         // TODO: essa eu deixo para meu amigo alvaro luis inácio da silva
         return false;
     }

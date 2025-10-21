@@ -34,11 +34,7 @@ public class MailManager {
 
     public MailManager() {
         this.repository = new MailItemRepository();
-
-
-        GameRuleRegistry.register(disableMail);
-
-
+        GameRuleRegistry.register(DISABLE_MAIL);
 
         BukkitPlatform.getInstance().getMenuManager().register(
             new MailboxMenu(this)

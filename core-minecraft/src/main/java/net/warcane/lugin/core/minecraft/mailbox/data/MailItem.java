@@ -1,7 +1,5 @@
 package net.warcane.lugin.core.minecraft.mailbox.data;
 
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import lombok.Data;
 import net.warcane.lugin.core.minecraft.mailbox.utils.ItemSerializer;
 import org.bson.codecs.pojo.annotations.BsonCreator;
@@ -13,8 +11,6 @@ import org.bukkit.inventory.PlayerInventory;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /**
