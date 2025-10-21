@@ -9,8 +9,10 @@ import net.warcane.lugin.core.minecraft.gamerule.GameRuleRegistry;
 import net.warcane.lugin.core.minecraft.mailbox.commands.MailCommand;
 import net.warcane.lugin.core.minecraft.mailbox.data.MailData;
 import net.warcane.lugin.core.minecraft.mailbox.data.MailItem;
+import net.warcane.lugin.core.minecraft.mailbox.events.PlayerJoinNotificationEvent;
 import net.warcane.lugin.core.minecraft.mailbox.inv.MailboxMenu;
 import net.warcane.lugin.core.minecraft.mailbox.repository.MailItemRepository;
+import net.warcane.lugin.core.minecraft.plugin.SimplePlugin;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,9 +38,12 @@ public class MailManager {
         this.repository = new MailItemRepository();
         GameRuleRegistry.register(DISABLE_MAIL);
 
-        BukkitPlatform.getInstance().getMenuManager().register(
+        BukkitPlatform pluginInstance = BukkitPlatform.getInstance();
+        pluginInstance.getMenuManager().register(
             new MailboxMenu(this)
         );
+        Plugin plugin = pluginInstance.getPlugin();
+        plugin.getServer().getPluginManager().registerEvents(new PlayerJoinNotificationEvent(this), plugin);
         BukkitPlatformPlugin.getInstance().registerCommands("mail", new MailCommand(this));
     }
 
