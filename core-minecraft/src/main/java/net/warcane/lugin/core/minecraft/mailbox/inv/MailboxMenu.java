@@ -1,7 +1,6 @@
 package net.warcane.lugin.core.minecraft.mailbox.inv;
 
 import net.kyori.adventure.text.Component;
-import net.minecraft.world.item.Item;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.mailbox.MailManager;
 import net.warcane.lugin.core.minecraft.mailbox.data.MailData;
@@ -11,7 +10,9 @@ import net.warcane.lugin.core.minecraft.menu.pagination.MenuPaginationContext;
 import net.warcane.lugin.core.minecraft.menu.pagination.SimplePaginationMenu;
 import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.util.message.StringUtils;
+import net.warcane.lugin.core.minecraft.util.sound.PredefinedSound;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,7 @@ public class MailboxMenu extends SimplePaginationMenu<MailItem> {
 
     @Override
     public boolean onPreOpen(@NotNull MenuPaginationContext<MailItem> ctx, @NotNull MenuConfig openHandler) {
+        openHandler.setClickSound(new PredefinedSound(Sound.UI_BUTTON_CLICK, 0.5F, 1.0F));
         openHandler.setLayout(
             "xxxxxxxxx",
             "xxxxxxxxx",
@@ -41,44 +43,17 @@ public class MailboxMenu extends SimplePaginationMenu<MailItem> {
         if (mailData == null) {
             return false;
         }
-        Tasks.runAsync(() -> ctx.setPagination('A', mailData.getMails(), (player, mail) -> mail.getDisplayItem(), (mail, event) -> {
-            if (isAdmin) {
-                repository.removeMailItem(mailData.getUniqueId(), mail.getMailId());
-                StringUtils.send(event.getWhoClicked(), "<l-success>Item removido com sucesso da caixa de correio do jogador.");
-                ctx.close();
-                return;
-            }
+        // TODO: Rodrigo da uma olhada, por algum motivo ele só insere o pagination se estiver async
+        Tasks.runAsync(() -> ctx.setPagination('x', mailData.getMails(), (player, mail) -> mail.getDisplayItem(), (mail, event) -> {
+            if (!isAdmin) return;
+            repository.removeMailItem(mailData.getUniqueId(), mail.getMailId());
+            StringUtils.send(event.getWhoClicked(), "<l-success>Item removido com sucesso da caixa de correio do jogador.");
+            ctx.close();
         }));
 
-        if (BukkitPlatform.getInstance().isRunningOnNewVersions()) {
-            return onPreOpenInNewVersion(ctx, openHandler, mailData, isAdmin);
-        }
-        return onOldVersion(ctx, openHandler, mailData, isAdmin);
-    }
+        boolean runningOnNewVersions = BukkitPlatform.getInstance().isRunningOnNewVersions();
 
-
-    private boolean onPreOpenInNewVersion(@NotNull MenuPaginationContext<MailItem> ctx, @NotNull MenuConfig openHandler, MailData mailData, boolean isAdmin) {
-        openHandler.setTitle(Component.text());
-        ItemStack nextItem = new ItemStack(Material.ECHO_SHARD);
-        nextItem.editMeta(meta -> {
-           meta.setCustomModelData(42);
-           meta.displayName(StringUtils.text("<l-yellow>Próxima Página"));
-        });
-        ctx.setNextButton('n', nextItem);
-
-        ItemStack previousItem = new ItemStack(Material.ECHO_SHARD);
-        previousItem.editMeta(meta -> {
-            meta.setCustomModelData(41);
-            meta.displayName(StringUtils.text("<l-yellow>Página Anterior"));
-        });
-        ctx.setPreviousButton('p', previousItem);
-
-        ItemStack redeemItem = new ItemStack(Material.ECHO_SHARD);
-        redeemItem.editMeta(meta -> {
-            meta.setCustomModelData(1);
-            meta.displayName(StringUtils.text("<l-green>RESGATAR"));
-        });
-        ctx.setItem('r', redeemItem, (event) -> {
+        ctx.setItem('r', runningOnNewVersions ? getNewRedeemItem() : getOldRedeemItem(), (event) -> {
 
             if (isAdmin) {
                 StringUtils.send(event.getWhoClicked(), "<l-negate>Você não pode resgatar itens no modo de visualização de administrador.");
@@ -108,14 +83,53 @@ public class MailboxMenu extends SimplePaginationMenu<MailItem> {
                     inventory.addItem(item.getContents());
                 });
             }
-            StringUtils.send(event.getWhoClicked(), "<l-success>Você resgatou sua caixa de correio com sucesso!");
+            StringUtils.send(event.getWhoClicked(), "<l-confirm>Você resgatou sua caixa de correio com sucesso!");
             ctx.close();
         });
+
+        if (runningOnNewVersions) {
+            return onPreOpenInNewVersion(ctx, openHandler, mailData, isAdmin);
+        }
+        return onOldVersion(ctx, openHandler, mailData, isAdmin);
+    }
+
+
+    private boolean onPreOpenInNewVersion(@NotNull MenuPaginationContext<MailItem> ctx, @NotNull MenuConfig openHandler, MailData mailData, boolean isAdmin) {
+        openHandler.setTitle(StringUtils.text("<font:lugin:negative_padding_nosplit>\uE030<white><font:lugin:chests>\uE003"));
+        ItemStack nextItem = new ItemStack(Material.ECHO_SHARD);
+        nextItem.editMeta(meta -> {
+            meta.setCustomModelData(42);
+            meta.displayName(StringUtils.formItemName("<l-yellow>Próxima Página"));
+        });
+        ctx.setNextButton('n', nextItem);
+
+        ItemStack previousItem = new ItemStack(Material.ECHO_SHARD);
+        previousItem.editMeta(meta -> {
+            meta.setCustomModelData(41);
+            meta.displayName(StringUtils.formItemName("<l-yellow>Página Anterior"));
+        });
+        ctx.setPreviousButton('p', previousItem);
         return true;
     }
 
     private boolean onOldVersion(@NotNull MenuPaginationContext<MailItem> ctx, @NotNull MenuConfig openHandler, MailData mailData, boolean isAdminOnly) {
         // TODO: essa eu deixo para meu amigo alvaro luis inácio da silva
         return false;
+    }
+
+
+    private ItemStack getNewRedeemItem() {
+        ItemStack redeemItem = new ItemStack(Material.ECHO_SHARD);
+        redeemItem.editMeta(meta -> {
+            meta.setCustomModelData(44);
+            meta.displayName(StringUtils.formItemName("<l-green>RESGATAR"));
+        });
+        return redeemItem;
+    }
+
+    private ItemStack getOldRedeemItem() {
+        ItemStack redeemItem = new ItemStack(Material.PAPER);
+        // TODO: essa eu deixo para meu amigo alvaro luis inácio da silva
+        return redeemItem;
     }
 }

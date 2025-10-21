@@ -19,7 +19,7 @@ public class MailData {
     private UUID uniqueId;
     private List<MailItem> mails = new ArrayList<>();
 
-    public static  MailData create(UUID uniqueId) {
+    public static MailData create(UUID uniqueId) {
         return new MailData(uniqueId, new ArrayList<>());
     }
 }

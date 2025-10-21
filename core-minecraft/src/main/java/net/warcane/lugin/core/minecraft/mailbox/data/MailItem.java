@@ -1,5 +1,7 @@
 package net.warcane.lugin.core.minecraft.mailbox.data;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.mojang.datafixers.kinds.IdF;
 import lombok.Data;
 import net.warcane.lugin.core.minecraft.mailbox.utils.ItemSerializer;
 import org.bson.codecs.pojo.annotations.BsonCreator;
@@ -45,15 +47,15 @@ public class MailItem {
         this.contents = contents;
     }
 
-    @BsonProperty
+    @BsonIgnore
     public ItemStack getDisplayItem() {
-        if (contents.length == 0) {
+        if (contents.length == 0 || contents[0] == null) {
             return new ItemStack(Material.BARRIER);
         }
         return contents[0];
     }
 
-    @BsonProperty
+    @BsonIgnore
     public boolean canAddToPlayerInv(PlayerInventory inventory) {
         int emptySlots = 0;
         for (ItemStack item : inventory.getContents()) {

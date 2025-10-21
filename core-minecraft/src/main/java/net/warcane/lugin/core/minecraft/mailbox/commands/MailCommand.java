@@ -9,6 +9,7 @@ import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException
 import net.warcane.lugin.core.minecraft.mailbox.MailManager;
 import net.warcane.lugin.core.minecraft.mailbox.data.MailItem;
 import net.warcane.lugin.core.minecraft.mailbox.inv.MailboxMenu;
+import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.util.message.StringUtils;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -67,9 +68,9 @@ public class MailCommand extends SimpleCommand {
                 StringUtils.send(audience, "<l-info>Você não pode resgatar nenhum item neste servidor.");
                 return;
             }
-
-            instance.getMenuManager().openToPlayer(ctx.getSenderAsPlayer(), MailboxMenu.class, Map.of("mail_data", mailData, "is_admin_view", false));
-
+            Tasks.runSync(() -> {
+                instance.getMenuManager().openToPlayer(ctx.getSenderAsPlayer(), MailboxMenu.class, Map.of("mail_data", mailData, "is_admin_view", false));
+            });
         });
     }
 
@@ -121,7 +122,9 @@ public class MailCommand extends SimpleCommand {
                             StringUtils.send(audience, "<l-info>O jogador " + playerAccount.playerName() + " não possui nenhum item na caixa de correio.");
                             return;
                         }
-                        instance.getMenuManager().openToPlayer(player, MailboxMenu.class, Map.of("mail_data", mailData, "is_admin_view", true));
+                        Tasks.runSync(() -> {
+                            instance.getMenuManager().openToPlayer(player, MailboxMenu.class, Map.of("mail_data", mailData, "is_admin_view", true));
+                        });
                     });
                 }
                 default -> StringUtils.send(audience, "<l-error>Subcomando desconhecido. Use 'add' ou 'ver'.");
