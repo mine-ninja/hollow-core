@@ -27,7 +27,6 @@ import net.warcane.lugin.core.network.packet.impl.wallet.WalletRefreshRequestPac
 import net.warcane.lugin.core.network.packet.listener.PacketListener;
 import net.warcane.lugin.core.network.packet.listener.PacketListener.Headers;
 import org.bukkit.Bukkit;
-import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -323,7 +322,6 @@ public class InternalPacketListeners {
 
             if (!packet.message().isBlank()) {
                 player.sendMessage(packet.message());
-//                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_YES, 1.0f, 1.0f);
             }
         }
     }
@@ -339,13 +337,6 @@ public class InternalPacketListeners {
                 log.info("Player is null for received unlinked discord packet packet {}", packet);
                 return;
             }
-//
-//            player.playSound(
-//                player.getLocation(),
-//                packet.hasError() ? Sound.ENTITY_VILLAGER_NO : Sound.ENTITY_VILLAGER_YES,
-//                1.0f,
-//                1.0f
-//            );
 
             if (!packet.message().isBlank()) {
                 player.sendMessage(packet.message());
