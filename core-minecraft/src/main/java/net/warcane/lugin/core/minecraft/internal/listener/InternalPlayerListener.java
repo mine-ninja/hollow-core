@@ -237,6 +237,20 @@ public final class InternalPlayerListener implements Listener {
                 }
             });
 
+        platform.getPlayerDiscordService().loadPlayerDiscord(playerId).whenComplete((playerDiscord, throwable) -> {
+            if (throwable != null) {
+                log.error("Failed to load player discord for {}: {}", player.getName(), throwable.getMessage(), throwable);
+                return;
+            }
+
+            if (playerDiscord == null) {
+                log.debug("Player discord not found for {} during load", player.getName());
+                return;
+            }
+
+            log.debug("Player discord loaded for {}: {}", player.getName(), playerDiscord);
+        });
+
         if (VersionChecker.isLegacyVersion()) {
             Bukkit.getScheduler().runTaskLaterAsynchronously(BukkitPlatform.getInstance().getPlugin(), () -> {
                 if (PlayerUtil.isCracked(player)) {
@@ -302,6 +316,8 @@ public final class InternalPlayerListener implements Listener {
                         runAsyncLater(platform::updateServerInfo, 20);
                     });
             }, Tasks::runAsync);
+
+        platform.getPlayerDiscordService().unloadPlayerDiscord(player.getUniqueId());
     }
 
     @EventHandler

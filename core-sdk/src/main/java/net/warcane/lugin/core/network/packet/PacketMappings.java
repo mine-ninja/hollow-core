@@ -9,6 +9,9 @@ import net.warcane.lugin.core.network.packet.impl.gamerule.GameRuleUpdatePacket;
 import net.warcane.lugin.core.network.packet.impl.internal.PingPacket;
 import net.warcane.lugin.core.network.packet.impl.internal.PongPacket;
 import net.warcane.lugin.core.network.packet.impl.player.*;
+import net.warcane.lugin.core.network.packet.impl.player.discord.PlayerLinkedDiscordPacket;
+import net.warcane.lugin.core.network.packet.impl.player.discord.PlayerUnlinkDiscordPacket;
+import net.warcane.lugin.core.network.packet.impl.player.discord.PlayerUnlinkedDiscordPacket;
 import net.warcane.lugin.core.network.packet.impl.player.permission.*;
 import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleportToLocationPacket;
 import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleportToTargetPacket;
@@ -77,7 +80,11 @@ final class PacketMappings {
         entry(20, GameRuleUpdatePacket.class),
 
           entry(21, PlayerReceivePermissionPacket.class),
-          entry(22, PlayerLosePermissionPacket.class)
+          entry(22, PlayerLosePermissionPacket.class),
+
+          entry(23, PlayerLinkedDiscordPacket.class),
+          entry(24, PlayerUnlinkDiscordPacket.class),
+          entry(25, PlayerUnlinkedDiscordPacket.class)
       )
     );
 
