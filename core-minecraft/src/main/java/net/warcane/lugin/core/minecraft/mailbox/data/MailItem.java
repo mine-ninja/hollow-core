@@ -7,7 +7,9 @@ import net.warcane.lugin.core.minecraft.mailbox.utils.ItemSerializer;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonIgnore;
 import org.bson.codecs.pojo.annotations.BsonProperty;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,6 +47,28 @@ public class MailItem {
         this.serverId = serverId;
         this.serializedContents = ItemSerializer.serialize(contents);
         this.contents = contents;
+    }
+
+    @BsonProperty
+    public ItemStack getDisplayItem() {
+        if (contents.length == 0) {
+            return new ItemStack(Material.BARRIER);
+        }
+        return contents[0];
+    }
+
+    @BsonProperty
+    public boolean canAddToPlayerInv(PlayerInventory inventory) {
+        int emptySlots = 0;
+        for (ItemStack item : inventory.getContents()) {
+            if (item == null || item.getType() == Material.AIR) {
+                emptySlots++;
+            }
+        }
+        if (emptySlots <= 0) {
+            return false;
+        }
+        return emptySlots > contents.length;
     }
 
 
