@@ -21,6 +21,9 @@ import net.warcane.lugin.core.minecraft.internal.command.test.TestTimeCommand;
 import net.warcane.lugin.core.minecraft.punish.command.CheckPunishCommand;
 import net.warcane.lugin.core.minecraft.punish.command.PunishCommand;
 import net.warcane.lugin.core.minecraft.punish.command.RevokeCommand;
+import net.warcane.lugin.core.minecraft.tell.ReplyCommand;
+import net.warcane.lugin.core.minecraft.tell.TellCommand;
+import net.warcane.lugin.core.minecraft.tell.ToggleTellCommand;
 import net.warcane.lugin.core.util.property.Property;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandMap;
@@ -68,6 +71,10 @@ public class InternalCommandManager {
         commandMap.register("lugin", new GameRuleCommand(platform));
         commandMap.register("lugin", new LinkCommand(platform));
         commandMap.register("lugin", new UnlinkCommand(platform));
+
+        commandMap.register("lugin", new TellCommand(platform));
+        commandMap.register("lugin", new ReplyCommand(platform));
+        commandMap.register("lugin", new ToggleTellCommand(platform));
     }
 
     public void registerCurrencyCommand(@NotNull Currency currency) {
