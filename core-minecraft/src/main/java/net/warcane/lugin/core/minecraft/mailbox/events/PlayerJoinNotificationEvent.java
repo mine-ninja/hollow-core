@@ -23,26 +23,24 @@ public class PlayerJoinNotificationEvent implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        Tasks.runAsyncLater(() -> {
-            mailManager.getMailData(event.getPlayer().getUniqueId()).whenComplete((mailData, throwable) -> {
-                if (throwable != null) {
-                    return;
+        mailManager.getMailData(event.getPlayer().getUniqueId()).whenCompleteAsync((mailData, throwable) -> {
+            if (throwable != null) {
+                return;
+            }
+            if (mailData == null) return;
+            if (mailData.getMails() == null || mailData.getMails().isEmpty()) return;
+            boolean isSameServer = false;
+            String serverId = BukkitPlatform.getInstance().getGameServer().serverId();
+            for (var mail : mailData.getMails()) {
+                if (serverId.startsWith(mail.getServerId())) {
+                    isSameServer = true;
+                    break;
                 }
-                if (mailData == null) return;
-                if (mailData.getMails() == null || mailData.getMails().isEmpty()) return;
-                boolean isSameServer = false;
-                String serverId = BukkitPlatform.getInstance().getGameServer().serverId();
-                for (var mail : mailData.getMails()) {
-                    if (serverId.startsWith(mail.getServerId())) {
-                        isSameServer = true;
-                        break;
-                    }
-                }
-                if (!isSameServer) return;
-                Audience audience = BukkitPlatformPlugin.getInstance().adventure().player(event.getPlayer());
-                StringUtils.send(audience, "<l-info>Você tem <l-yellow>" + mailData.getMails().size() + " <l-gray>item(s) na sua caixa de correio. Use <l-yellow>/mail<l-gray> para acessá-la.");
-                audience.playSound(Sound.sound().type(org.bukkit.Sound.ENTITY_PLAYER_LEVELUP).pitch(2).volume(0.5f).build());
-            });
-        }, 20L * 5L); // Delay of 1 second (20 ticks) to ensure player is fully loaded
+            }
+            if (!isSameServer) return;
+            Audience audience = BukkitPlatformPlugin.getInstance().adventure().player(event.getPlayer());
+            StringUtils.send(audience, "<l-info>Você tem <l-yellow>" + mailData.getMails().size() + " <l-gray>item(s) na sua caixa de correio. Use <l-yellow>/mail<l-gray> para acessá-la.");
+            audience.playSound(Sound.sound().type(org.bukkit.Sound.ENTITY_PLAYER_LEVELUP).pitch(2).volume(0.5f).build());
+        }, r -> Tasks.runAsyncLater(r, 20L * 5));
     }
 }
