@@ -2,6 +2,8 @@ package net.warcane.lugin.core.minecraft.mailbox.inv;
 
 import net.kyori.adventure.text.Component;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
+import net.warcane.lugin.core.minecraft.integration.Compat;
+import net.warcane.lugin.core.minecraft.integration.CoreProtect;
 import net.warcane.lugin.core.minecraft.mailbox.MailManager;
 import net.warcane.lugin.core.minecraft.mailbox.data.MailData;
 import net.warcane.lugin.core.minecraft.mailbox.data.MailItem;
@@ -13,6 +15,7 @@ import net.warcane.lugin.core.minecraft.util.message.StringUtils;
 import net.warcane.lugin.core.minecraft.util.sound.PredefinedSound;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +30,7 @@ import java.util.UUID;
  */
 public class MailboxMenu extends SimplePaginationMenu<MailItem> {
 
-    private MailManager repository;
+    private final MailManager repository;
 
     public MailboxMenu(@NotNull MailManager mailManager) {
         this.repository = mailManager;
@@ -86,6 +89,7 @@ public class MailboxMenu extends SimplePaginationMenu<MailItem> {
                     StringUtils.send(event.getWhoClicked(), "<l-negate>Ocorreu um erro ao resgatar seus itens. Tente novamente mais tarde.");
                     return;
                 }
+                handleCoreProtect((Player) event.getWhoClicked(), mailsToRemove);
                 for (MailItem item : mailsToRemove) {
                     inventory.addItem(item.getContents());
                 }
@@ -138,5 +142,18 @@ public class MailboxMenu extends SimplePaginationMenu<MailItem> {
         ItemStack redeemItem = new ItemStack(Material.PAPER);
         // TODO: essa eu deixo para meu amigo alvaro luis inácio da silva
         return redeemItem;
+    }
+
+
+    private void handleCoreProtect(Player player, List<MailItem> mailItems) {
+        Compat.CORE_PROTECT.runIfPresent(
+            () -> () ->  {
+                for (MailItem mailItem : mailItems) {
+                    for (ItemStack itemStack : mailItem.getContents()) {
+                        CoreProtect.log(player, "Resgatou item da caixa de correio: " + itemStack.getType().name() + " x" + itemStack.getAmount());
+                    }
+                }
+            }
+        );
     }
 }
