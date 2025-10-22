@@ -13,6 +13,8 @@ import net.warcane.lugin.core.network.packet.impl.gamerule.GameRuleUpdatePacket;
 import net.warcane.lugin.core.network.packet.impl.player.SendMessageToPlayerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.SendModernMessageToPlayerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.SendSoundToPlayerPacket;
+import net.warcane.lugin.core.network.packet.impl.player.discord.PlayerLinkedDiscordPacket;
+import net.warcane.lugin.core.network.packet.impl.player.discord.PlayerUnlinkedDiscordPacket;
 import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerLoseGroupPacket;
 import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerLosePermissionPacket;
 import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerReceiveGroupPacket;
@@ -59,6 +61,8 @@ public class InternalPacketListeners {
         networkClient.registerPacketListener(GameRuleUpdatePacket.class, new GameRuleUpdateListener(platform));
         networkClient.registerPacketListener(PlayerReceivePermissionPacket.class, new PlayerPermissionReceivePacketListener());
         networkClient.registerPacketListener(PlayerLosePermissionPacket.class, new PlayerLosePermissionPacketListener());
+        networkClient.registerPacketListener(PlayerLinkedDiscordPacket.class, new PlayerLinkedDiscordPacketListener());
+        networkClient.registerPacketListener(PlayerUnlinkedDiscordPacket.class, new PlayerUnlinkedDiscordPacketListener());
 
         final var listener = new GoCacheListener();
 
@@ -301,6 +305,42 @@ public class InternalPacketListeners {
         @Override
         public void onReceivePacket(@NotNull PlayerLosePermissionPacket packet, @NotNull Headers headers) {
             refreshPlayerPerms(headers, packet.playerId());
+        }
+    }
+
+    @RequiredArgsConstructor
+    public static class PlayerLinkedDiscordPacketListener implements PacketListener<PlayerLinkedDiscordPacket> {
+
+        @Override
+        public void onReceivePacket(@NotNull PlayerLinkedDiscordPacket packet, @NotNull Headers headers) {
+            Player player = Bukkit.getPlayer(packet.playerId());
+
+            if (player == null) {
+                log.info("Player is null for received linked discord packet packet {}", packet);
+                return;
+            }
+
+            if (!packet.message().isBlank()) {
+                player.sendMessage(packet.message());
+            }
+        }
+    }
+
+    @RequiredArgsConstructor
+    public static class PlayerUnlinkedDiscordPacketListener implements PacketListener<PlayerUnlinkedDiscordPacket> {
+
+        @Override
+        public void onReceivePacket(@NotNull PlayerUnlinkedDiscordPacket packet, @NotNull Headers headers) {
+            Player player = Bukkit.getPlayer(packet.playerId());
+
+            if (player == null) {
+                log.info("Player is null for received unlinked discord packet packet {}", packet);
+                return;
+            }
+
+            if (!packet.message().isBlank()) {
+                player.sendMessage(packet.message());
+            }
         }
     }
 }

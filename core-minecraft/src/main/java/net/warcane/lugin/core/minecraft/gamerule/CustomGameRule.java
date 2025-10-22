@@ -1,5 +1,8 @@
 package net.warcane.lugin.core.minecraft.gamerule;
 
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -95,6 +98,12 @@ public record CustomGameRule<T>(String name, Class<T> type, T defaultValue, Stri
                 return (T) Long.valueOf(value);
             } else if (type == Float.class) {
                 return (T) Float.valueOf(value);
+            } else if (type == Location.class) {
+                String[] split = value.split(",");
+                if (split.length != 3) {
+                    throw new IllegalArgumentException("Location must be in the format 'x,y,z'");
+                }
+                return (T) new Location(Bukkit.getWorlds().getFirst(), Double.parseDouble(split[0]), Double.parseDouble(split[1]), Double.parseDouble(split[2]));
             } else {
                 throw new IllegalArgumentException("Unsupported type: " + type.getName());
             }

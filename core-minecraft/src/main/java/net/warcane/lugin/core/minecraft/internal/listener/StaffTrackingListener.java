@@ -58,17 +58,18 @@ public class StaffTrackingListener implements Listener, PacketListener<PlayerRec
 
         var player = Bukkit.getPlayer(playerAccount.uniqueId());
 
-        if (player == null || !player.hasPermission("lugin.staff")) {
+        if (player == null) {
+            return;
+        }
+
+        var highestSubscription = playerAccount.getHighestSubscription(bukkitPlatform.getSubscriptionCategoryType());
+        var group = highestSubscription.group();
+
+        if (!group.isStaffGroup()) {
             return;
         }
 
         Tasks.runAsync(() -> {
-            var highestSubscription = playerAccount.getHighestSubscription(bukkitPlatform.getSubscriptionCategoryType());
-            var group = highestSubscription.group();
-            if (group == null) {
-                return;
-            }
-
             var staffOnlineData = new StaffOnlineData(player.getName(), gameServer.serverId(), group);
             staffOnlineCache.hset(STAFF_ONLINE_KEY, player.getUniqueId().toString(), staffOnlineData);
         });

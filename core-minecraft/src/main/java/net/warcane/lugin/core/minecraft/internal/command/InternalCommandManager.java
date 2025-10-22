@@ -6,6 +6,8 @@ import net.warcane.lugin.core.minecraft.currency.Currency;
 import net.warcane.lugin.core.minecraft.gamerule.command.GameRuleCommand;
 import net.warcane.lugin.core.minecraft.internal.command.currency.CurrencyBasedCommand;
 import net.warcane.lugin.core.minecraft.internal.command.currency.EconomyCommand;
+import net.warcane.lugin.core.minecraft.internal.command.discord.LinkCommand;
+import net.warcane.lugin.core.minecraft.internal.command.discord.UnlinkCommand;
 import net.warcane.lugin.core.minecraft.internal.command.gamemode.GameModeCommand;
 import net.warcane.lugin.core.minecraft.internal.command.lobby.LobbyCommand;
 import net.warcane.lugin.core.minecraft.internal.command.permission.GroupPermissionCommand;
@@ -64,6 +66,8 @@ public class InternalCommandManager {
         commandMap.register("punish", new CheckPunishCommand());
         commandMap.register("punish", new RevokeCommand());
         commandMap.register("lugin", new GameRuleCommand(platform));
+        commandMap.register("lugin", new LinkCommand(platform));
+        commandMap.register("lugin", new UnlinkCommand(platform));
     }
 
     public void registerCurrencyCommand(@NotNull Currency currency) {

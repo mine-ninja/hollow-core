@@ -8,6 +8,7 @@ import net.warcane.lugin.core.Platform;
 import net.warcane.lugin.core.group.PlayerGroup;
 import net.warcane.lugin.core.minecraft.centralcart.CentralCart;
 import net.warcane.lugin.core.minecraft.currency.CurrencyManager;
+import net.warcane.lugin.core.minecraft.discord.DiscordService;
 import net.warcane.lugin.core.minecraft.event.tick.AsyncServerTickEvent;
 import net.warcane.lugin.core.minecraft.gamerule.GameRuleManager;
 import net.warcane.lugin.core.minecraft.gamerule.listener.WorldLoadListener;
@@ -125,6 +126,9 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     @Getter private NameTagResolver nameTagResolver;
     @Getter private CentralCart centralCart;
 
+    @Getter
+    private final DiscordService discordService;
+
     private boolean online;
 
     private BukkitPlatform(JavaPlugin plugin, @NotNull ServerCategoryType serverCategoryType) {
@@ -153,6 +157,8 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         } else {
             this.nameTagResolver = new LegacyNameTagResolver(this);
         }
+
+        this.discordService = new DiscordService(this);
 
         this.loadGroupPermissions();
         Bukkit.getServicesManager().register(Platform.class, this, plugin, ServicePriority.Normal);
