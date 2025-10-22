@@ -1,5 +1,6 @@
 package net.warcane.lugin.core.minecraft.internal.command.staff;
 
+import net.warcane.lugin.core.connection.ConnectionReason;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.command.SimpleCommand;
 import net.warcane.lugin.core.minecraft.command.context.CommandContext;
@@ -34,15 +35,19 @@ public class GoCommand extends SimpleCommand {
     @Override
     public void performCommand(@NotNull CommandContext ctx) throws CommandFailedException {
         final var player = ctx.getSenderAsPlayer();
-
         String name = ctx.getRawArgOrNull(0);
 
         if (name == null)
             throw new CommandFailedException(NAME_NOT_INSERTED);
 
-        Player target = Bukkit.getPlayer(name);
+        if (player.hasPermission("lugin.vanish")) {
+            BukkitPlatform.getInstance().getVanishManager().vanish(player);
+        }
 
-        if (target != null) {
+        var playerAccount = platform.getPlayerAccountService().getCachedAccount(player.getUniqueId());
+        platform.getTeleportManager().teleport(playerAccount, name, ConnectionReason.COMMAND, COMMAND_SUCCESS.formatted(name));
+
+        /*if (target != null) {
             if (player.hasPermission("lugin.vanish"))
                 BukkitPlatform.getInstance().getVanishManager().vanish(player);
 
@@ -51,7 +56,9 @@ public class GoCommand extends SimpleCommand {
             return;
         }
 
+
+
         final var goMsgPacket = new GoCommandPacket(player.getUniqueId(), name);
-        platform.getNetworkClient().sendNetworkPacket(NetworkChannel.GO, goMsgPacket);
+        platform.getNetworkClient().sendNetworkPacket(NetworkChannel.GO, goMsgPacket);*/
     }
 }

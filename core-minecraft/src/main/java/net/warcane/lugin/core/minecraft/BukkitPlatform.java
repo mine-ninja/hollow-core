@@ -14,16 +14,20 @@ import net.warcane.lugin.core.minecraft.gamerule.GameRuleManager;
 import net.warcane.lugin.core.minecraft.gamerule.listener.WorldLoadListener;
 import net.warcane.lugin.core.minecraft.internal.command.InternalCommandManager;
 import net.warcane.lugin.core.minecraft.internal.listener.*;
+import net.warcane.lugin.core.minecraft.internal.listener.connection.ConnectionHandshakePacketListener;
 import net.warcane.lugin.core.minecraft.menu.SimpleMenuManager;
 import net.warcane.lugin.core.minecraft.nametag.LegacyNameTagResolver;
 import net.warcane.lugin.core.minecraft.nametag.ModernNameTagResolver;
 import net.warcane.lugin.core.minecraft.nametag.NameTagResolver;
 import net.warcane.lugin.core.minecraft.permission.PermissionInjector;
 import net.warcane.lugin.core.minecraft.punish.api.PunishManager;
+import net.warcane.lugin.core.minecraft.teleport.TeleportManager;
+import net.warcane.lugin.core.minecraft.teleport.TeleportTrafficListener;
 import net.warcane.lugin.core.minecraft.util.message.AdventureFormatters;
 import net.warcane.lugin.core.minecraft.vanish.VanishManager;
 import net.warcane.lugin.core.minecraft.whitelist.WhitelistService;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
+import net.warcane.lugin.core.network.packet.impl.connection.ConnectionHandshakePacket;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerConnectToServerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDirectPlayGameCategoryPacket;
 import net.warcane.lugin.core.network.packet.impl.player.SendSoundToPlayerPacket;
@@ -54,9 +58,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+@Getter
 @Slf4j
 public class BukkitPlatform extends AbstractPlatform implements MinecraftServerPlatform {
-
 
     private static final ScheduledExecutorService SINGLE_EXECUTOR_SERVICE = Executors.newSingleThreadScheduledExecutor(
       runnable -> new Thread(runnable, "BukkitPlatform-SingleExecutor")
@@ -107,8 +111,6 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         throw new IllegalStateException("BukkitPlatform is not initialized or not available.");
     }
 
-
-
     private final Plugin plugin;
     private final ServerCategoryType serverCategoryType;
     private final ServerSubCategoryType serverSubCategoryType;
@@ -119,6 +121,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     private final SimpleMenuManager menuManager;
     private final WhitelistService whitelistService;
     private final GameRuleManager gameRuleManager;
+    private final TeleportManager teleportManager;
 
     @Getter private NameTagResolver nameTagResolver;
     @Getter private CentralCart centralCart;
@@ -142,6 +145,8 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
         this.whitelistService = new WhitelistService(this);
         this.gameRuleManager = new GameRuleManager(this);
+
+        this.teleportManager = new TeleportManager(this);
 
         this.centralCart = new CentralCart();
         this.centralCart.initSocket();
@@ -185,6 +190,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         Bukkit.getPluginManager().registerEvents(new PlayerGroupUpdatingListener(this), plugin);
         Bukkit.getPluginManager().registerEvents(new StaffTrackingListener(), plugin);
         Bukkit.getPluginManager().registerEvents(new PlayerPermissionUpdatingListener(this), plugin);
+        Bukkit.getPluginManager().registerEvents(new TeleportTrafficListener(this), plugin);
 
         PunishManager.init(plugin, getExecutorService());
         AdventureFormatters.init();
@@ -192,10 +198,12 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         final var internalPackets = new InternalPacketListeners(this);
         internalPackets.setup();
 
+        networkClient.registerPacketListener(ConnectionHandshakePacket.class, new ConnectionHandshakePacketListener(this));
+
         this.online = true;
 
         gameServerService.update(this.getGameServer().withOnlineStatus(true));
-        
+
         log.info("Bukkit Platform is now online with ID: {}, Category: {} and SubCategory: {}", this.getId(), this.getServerCategoryType(), this.getServerSubCategoryType());
         Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::updateServerInfo, 20, 20 * 10);
         Bukkit.getConsoleSender().sendMessage("§aCarregando nomes de jogadores para o redis (para acesso rápido)");
@@ -320,30 +328,5 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
           .getServerManager()
           .getVersion()
           .isNewerThanOrEquals(ServerVersion.V_1_8_8);
-    }
-
-    @NotNull
-    public CurrencyManager getCurrencyManager() {
-        return currencyManager;
-    }
-
-    @NotNull
-    public VanishManager getVanishManager() {
-        return vanishManager;
-    }
-
-    @NotNull
-    public InternalCommandManager getInternalCommandManager() {
-        return internalCommandManager;
-    }
-
-    @NotNull
-    public SimpleMenuManager getMenuManager() {
-        return menuManager;
-    }
-    
-    @NotNull
-    public GameRuleManager getGameRuleManager() {
-        return gameRuleManager;
     }
 }

@@ -7,6 +7,7 @@ import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.event.account.AsyncPlayerNickUpdateEvent;
 import net.warcane.lugin.core.minecraft.event.account.PlayerAccountLoadEvent;
 import net.warcane.lugin.core.minecraft.event.account.PlayerAccountUpdateEvent;
+import net.warcane.lugin.core.minecraft.event.connection.ConnectionRequestEvent;
 import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.util.LocationUtil;
 import net.warcane.lugin.core.minecraft.util.PlayerUtil;
