@@ -4,6 +4,8 @@ import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.command.SimpleCommand;
 import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
+import net.warcane.lugin.core.network.channel.NetworkChannel;
+import net.warcane.lugin.core.network.packet.impl.player.PlayerUpdateAccountCachePacket;
 import net.warcane.lugin.core.player.preference.PreferenceRegistry;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +35,9 @@ public class ToggleTellCommand extends SimpleCommand {
 
                 account.setPreference(PreferenceRegistry.PRIVATE_MESSAGES_ID, !state);
                 player.sendMessage("§aSua preferência de mensagens privadas foi alterada com sucesso. \nMensagens privadas estão agora " + (state ? "§cdesativadas§a." : "§aativadas§a."));
-                return platform.getPlayerAccountService().updatePlayerAccount(account);
+                return platform.getPlayerAccountService().updatePlayerAccount(account).thenAcceptAsync(playerAccount -> {
+                    platform.getNetworkClient().sendNetworkPacket(NetworkChannel.OPERATION, new PlayerUpdateAccountCachePacket(account.uniqueId()));
+                });
             }, platform.getExecutorService());
     }
 }
