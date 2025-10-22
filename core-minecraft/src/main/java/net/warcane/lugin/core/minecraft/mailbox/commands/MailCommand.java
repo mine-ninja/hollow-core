@@ -15,6 +15,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -134,9 +135,9 @@ public class MailCommand extends SimpleCommand {
 
     @Override
     public List<String> performTabComplete(@NotNull CommandContext ctx) {
-        if (!ctx.getSender().hasPermission("lugin.mail.admin")) return List.of();
+        if (!ctx.getSender().hasPermission("lugin.mail.admin")) return Collections.EMPTY_LIST;
         if (ctx.getArgs().length == 1) {
-            return List.of("add", "ver");
+            return filterStartingWith(List.of("add", "ver"), ctx.getArgs()[0]);
         }
         return List.of();
     }
