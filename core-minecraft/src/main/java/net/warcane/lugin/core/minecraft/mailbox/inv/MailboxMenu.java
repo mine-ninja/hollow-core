@@ -17,6 +17,10 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 /**
  * @author Rok, Pedro Lucas nmm. Created on 21/10/2025
  * @project LUGIN
@@ -57,7 +61,6 @@ public class MailboxMenu extends SimplePaginationMenu<MailItem> {
 
             if (isAdmin) {
                 StringUtils.send(event.getWhoClicked(), "<l-negate>Você não pode resgatar itens no modo de visualização de administrador.");
-                ctx.close();
                 return;
             }
             int slotsEmpty = 0;
@@ -73,16 +76,20 @@ public class MailboxMenu extends SimplePaginationMenu<MailItem> {
                 return;
             }
 
+            List<MailItem> mailsToRemove = new ArrayList<>();
             for (MailItem item : mailData.getMails()) {
                 if (!item.canAddToPlayerInv(inventory)) continue;
-                repository.removeMailItem(event.getWhoClicked().getUniqueId(), item.getMailId()).whenComplete((saved, throwable) -> {
-                    if (throwable != null || !saved) {
-                        StringUtils.send(event.getWhoClicked(), "<l-negate>Ocorreu um erro ao resgatar seus itens. Tente novamente mais tarde.");
-                        return;
-                    }
-                    inventory.addItem(item.getContents());
-                });
+                mailsToRemove.add(item);
             }
+            repository.bulkRemoveMailItems(event.getWhoClicked().getUniqueId(), mailsToRemove.stream().map(MailItem::getMailId).toList()).whenComplete((saved, throwable) -> {
+                if (throwable != null || !saved) {
+                    StringUtils.send(event.getWhoClicked(), "<l-negate>Ocorreu um erro ao resgatar seus itens. Tente novamente mais tarde.");
+                    return;
+                }
+                for (MailItem item : mailsToRemove) {
+                    inventory.addItem(item.getContents());
+                }
+            });
             StringUtils.send(event.getWhoClicked(), "<l-confirm>Você resgatou sua caixa de correio com sucesso!");
             ctx.close();
         });
