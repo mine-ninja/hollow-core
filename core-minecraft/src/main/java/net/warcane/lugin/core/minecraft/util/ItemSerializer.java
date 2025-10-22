@@ -1,6 +1,5 @@
-package net.warcane.lugin.core.minecraft.mailbox.utils;
+package net.warcane.lugin.core.minecraft.util;
 
-import com.google.common.collect.Lists;
 import com.mojang.serialization.Codec;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.io.BukkitObjectInputStream;
@@ -10,9 +9,7 @@ import org.yaml.snakeyaml.external.biz.base64Coder.Base64Coder;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Base64;
-import java.util.List;
 
 public class ItemSerializer {
 	public static final Codec<ItemStack> CODEC = Codec.STRING.xmap(ItemSerializer::deserialize, ItemSerializer::serialize);
