@@ -17,8 +17,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class MongoDbConnector {
 
@@ -46,35 +45,35 @@ public class MongoDbConnector {
     }
 
     private MongoDbConnector(
-      @NotNull String connectionString,
-      @NotNull String databaseName,
-      @NotNull List<CodecProvider> additionalProviders,
-      @NotNull List<Codec<?>> additionalCodecs,
-      @NotNull List<CodecRegistry> additionalRegistries
+        @NotNull String connectionString,
+        @NotNull String databaseName,
+        @NotNull List<CodecProvider> additionalProviders,
+        @NotNull List<Codec<?>> additionalCodecs,
+        @NotNull List<CodecRegistry> additionalRegistries
     ) {
 
         CodecRegistry codecRegistry = buildCodecRegistry(additionalProviders, additionalCodecs, additionalRegistries);
 
         mongoClient = MongoClients.create(
-          MongoClientSettings.builder()
-            .applyConnectionString(new ConnectionString(connectionString))
-            .uuidRepresentation(UuidRepresentation.STANDARD)
-            .codecRegistry(codecRegistry)
-            .build()
+            MongoClientSettings.builder()
+                .applyConnectionString(new ConnectionString(connectionString))
+                .uuidRepresentation(UuidRepresentation.STANDARD)
+                .codecRegistry(codecRegistry)
+                .build()
         );
 
         database = mongoClient.getDatabase(databaseName);
     }
 
     private CodecRegistry buildCodecRegistry(
-      @NotNull List<CodecProvider> additionalProviders,
-      @NotNull List<Codec<?>> additionalCodecs,
-      @NotNull List<CodecRegistry> additionalRegistries
+        @NotNull List<CodecProvider> additionalProviders,
+        @NotNull List<Codec<?>> additionalCodecs,
+        @NotNull List<CodecRegistry> additionalRegistries
     ) {
 
         List<CodecRegistry> registries = new ArrayList<>();
-        registries.add(MongoClientSettings.getDefaultCodecRegistry());
         registries.add(CodecRegistries.fromProviders(new CustomObjectCodecProvider()));
+        registries.add(MongoClientSettings.getDefaultCodecRegistry());
         if (!additionalCodecs.isEmpty()) {
             registries.add(CodecRegistries.fromCodecs(additionalCodecs));
         }
@@ -108,9 +107,9 @@ public class MongoDbConnector {
     }
 
     public <ID, T> MongoRepository<ID, T> createNewRepository(
-      @NotNull Class<T> clazz,
-      @NotNull String idFieldName,
-      @NotNull String collectionName
+        @NotNull Class<T> clazz,
+        @NotNull String idFieldName,
+        @NotNull String collectionName
     ) {
         return new MongoRepository<>(this, clazz, idFieldName, collectionName);
     }
@@ -154,7 +153,7 @@ public class MongoDbConnector {
 
         public MongoDbConnector build() {
             return new MongoDbConnector(connectionString, databaseName,
-              additionalProviders, additionalCodecs, additionalRegistries);
+                additionalProviders, additionalCodecs, additionalRegistries);
         }
     }
 }
