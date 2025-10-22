@@ -48,7 +48,7 @@ public class TeleportTrafficListener implements Listener {
         if (packet.getLocation() != null) {
             teleportToLocation(player, packet.getLocation(), packet.getFallbackMessage());
         } else if (packet.getTargetId() != null) {
-            var targetPlayer = Bukkit.getPlayer(packet.getUserId());
+            var targetPlayer = Bukkit.getPlayer(packet.getTargetId());
 
             if (targetPlayer != null && targetPlayer.isOnline())
                 teleportToPlayer(player, targetPlayer, packet.getFallbackMessage());
