@@ -1,9 +1,7 @@
 package net.warcane.lugin.core.minecraft.mailbox.data;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.mojang.datafixers.kinds.IdF;
 import lombok.Data;
-import net.warcane.lugin.core.minecraft.mailbox.utils.ItemSerializer;
+import net.warcane.lugin.core.minecraft.util.ItemSerializer;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonIgnore;
 import org.bson.codecs.pojo.annotations.BsonProperty;

@@ -6,12 +6,12 @@ import net.warcane.lugin.core.minecraft.mailbox.data.MailItem;
 import net.warcane.lugin.core.util.data.MongoRepository;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static com.mongodb.client.model.Filters.regex;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 
 public class MailItemRepository {
@@ -50,6 +50,21 @@ public class MailItemRepository {
                 return false;
             }
             boolean removed = mailData.getMails().removeIf(mailItem -> mailItem.getMailId().equals(mailIdToRemove));
+            if (!removed) {
+                return false;
+            }
+            repository.save(mailData, MailData::getUniqueId);
+            return true;
+        });
+    }
+
+    public CompletableFuture<Boolean> bulkRemoveMailItems(@NotNull UUID playerId, @NotNull List<UUID> mailIdsToRemove) {
+        return supplyAsync(() -> {
+            MailData mailData = repository.findById(playerId);
+            if (mailData == null) {
+                return false;
+            }
+            boolean removed = mailData.getMails().removeIf(mailItem -> mailIdsToRemove.contains(mailItem.getMailId()));
             if (!removed) {
                 return false;
             }

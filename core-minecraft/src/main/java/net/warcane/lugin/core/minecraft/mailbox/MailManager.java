@@ -12,10 +12,10 @@ import net.warcane.lugin.core.minecraft.mailbox.data.MailItem;
 import net.warcane.lugin.core.minecraft.mailbox.events.PlayerJoinNotificationEvent;
 import net.warcane.lugin.core.minecraft.mailbox.inv.MailboxMenu;
 import net.warcane.lugin.core.minecraft.mailbox.repository.MailItemRepository;
-import net.warcane.lugin.core.minecraft.plugin.SimplePlugin;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -27,7 +27,8 @@ public class MailManager {
         "disableMail",
         Boolean.class,
         false,
-        "Disables hunger depletion for all players"
+        "Disables the mail system for all players",
+        true
     );
 
     private final MailItemRepository repository;
@@ -53,6 +54,10 @@ public class MailManager {
 
     public CompletableFuture<Boolean> removeMailItem(@NotNull UUID player, UUID mailId) {
         return repository.removeMail(player, mailId);
+    }
+
+    public CompletableFuture<Boolean> bulkRemoveMailItems(@NotNull UUID player, List<UUID> mailIds) {
+        return repository.bulkRemoveMailItems(player, mailIds);
     }
 
     public CompletableFuture<Boolean> removeMailItem(UUID player, MailItem data) {
