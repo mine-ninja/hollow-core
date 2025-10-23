@@ -70,7 +70,7 @@ public class MailManager {
 
     public static void init(Plugin plugin) {
         if (instance != null) {
-            throw new IllegalStateException("PunishManager is already initialized.");
+            throw new IllegalStateException("MailManager is already initialized.");
         }
         instance = new MailManager();
         log.info("MailManager initialized.");
