@@ -43,11 +43,6 @@ public class ReplyCommand extends SimpleCommand implements ITell {
             var lastSender = UUID.fromString(jedis.get(LAST_TELL_KEY + player.getUniqueId()));
             var lastSenderState = PlayerNetworkStateManager.getInstance().getPlayerState(lastSender);
 
-            if (lastSenderState == null) {
-                StringUtils.send(player, "<red>O jogador que você quer responder não está online.");
-                return;
-            }
-
             sendMessage(player, lastSenderState, ctx, true, platform);
         }));
     }

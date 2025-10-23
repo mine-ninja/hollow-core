@@ -24,11 +24,12 @@ public interface ITell {
 
     default void sendMessage(Player player, @Nullable PlayerNetworkState targetPlayer, CommandContext ctx, boolean skipName, BukkitPlatform platform) {
         if (targetPlayer == null) {
-            StringUtils.send(player, "<l-negate>O jogador não está online.");
+            StringUtils.send(player, "<l-negate>Usuário não está online.");
             return;
         }
+
         if (targetPlayer.playerId().equals(player.getUniqueId())) {
-            StringUtils.send(player, "<l-negate>Você não pode enviar mensagens para si mesmo.");
+            StringUtils.send(player, "<l-negate>Falar consigo mesmo costuma ser um sinal de loucura. Procure um especialista urgente!");
             return;
         }
 
@@ -66,7 +67,7 @@ public interface ITell {
                 }
 
                 if (!targetAcc.getPreference(PreferenceRegistry.PRIVATE_MESSAGES_ID)) {
-                    StringUtils.send(player, "<l-negate>O jogador não está aceitando mensagens privadas no momento.");
+                    StringUtils.send(player, "<l-negate>Este usuário está com o recebimento de mensagens privadas desativado.");
                     return;
                 }
 
