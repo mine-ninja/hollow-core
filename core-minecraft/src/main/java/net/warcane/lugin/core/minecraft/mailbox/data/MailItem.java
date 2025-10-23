@@ -54,6 +54,11 @@ public class MailItem {
     }
 
     @BsonIgnore
+    public boolean needToCheckInventorySpace() {
+        return contents.length > 1;
+    }
+
+    @BsonIgnore
     public boolean canAddToPlayerInv(PlayerInventory inventory) {
         int emptySlots = 0;
         for (ItemStack item : inventory.getContents()) {

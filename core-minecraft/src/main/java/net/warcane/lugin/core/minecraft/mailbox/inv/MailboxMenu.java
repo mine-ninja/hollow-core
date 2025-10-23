@@ -66,22 +66,32 @@ public class MailboxMenu extends SimplePaginationMenu<MailItem> {
                 StringUtils.send(event.getWhoClicked(), "<l-negate>Você não pode resgatar itens no modo de visualização de administrador.");
                 return;
             }
-            int slotsEmpty = 0;
             PlayerInventory inventory = event.getWhoClicked().getInventory();
-            for (ItemStack itemStack : inventory.getContents()) {
-                if (itemStack == null || itemStack.getType() == Material.AIR) {
-                    slotsEmpty++;
-                }
-            }
-            if (slotsEmpty == 0) {
-                StringUtils.send(event.getWhoClicked(), "<l-negate>Você não possui espaço suficiente no inventário para resgatar seus itens.");
-                ctx.close();
-                return;
-            }
+
 
             List<MailItem> mailsToRemove = new ArrayList<>();
+            boolean checkedInventorySpace = false;
             for (MailItem item : mailData.getMails()) {
                 if (!item.canAddToPlayerInv(inventory)) continue;
+
+                // Verifica se precisa checar espaço no inventário
+                if (item.needToCheckInventorySpace() && !checkedInventorySpace) {
+                    int slotsEmpty = 0;
+
+                    for (ItemStack itemStack : inventory.getContents()) {
+                        if (itemStack == null || itemStack.getType() == Material.AIR) {
+                            slotsEmpty++;
+                        }
+                    }
+                    if (slotsEmpty == 0) {
+                        StringUtils.send(event.getWhoClicked(), "<l-negate>Você não possui espaço suficiente no inventário para resgatar seus itens.");
+                        ctx.close();
+                        return;
+                    }
+                    checkedInventorySpace = true;
+                }
+                // ----
+
                 mailsToRemove.add(item);
             }
             repository.bulkRemoveMailItems(event.getWhoClicked().getUniqueId(), mailsToRemove.stream().map(MailItem::getMailId).toList()).whenComplete((saved, throwable) -> {
