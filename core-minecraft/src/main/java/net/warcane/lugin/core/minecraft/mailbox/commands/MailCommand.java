@@ -69,9 +69,7 @@ public class MailCommand extends SimpleCommand {
                 StringUtils.send(audience, "<l-info>Você não pode resgatar nenhum item neste servidor.");
                 return;
             }
-            Tasks.runSync(() -> {
-                instance.getMenuManager().openToPlayer(ctx.getSenderAsPlayer(), MailboxMenu.class, Map.of("mail_data", mailData, "is_admin_view", false));
-            });
+            instance.getMenuManager().openToPlayer(ctx.getSenderAsPlayer(), MailboxMenu.class, Map.of("mail_data", mailData, "is_admin_view", false));
         });
     }
 
@@ -123,9 +121,7 @@ public class MailCommand extends SimpleCommand {
                             StringUtils.send(audience, "<l-info>O jogador " + playerAccount.playerName() + " não possui nenhum item na caixa de correio.");
                             return;
                         }
-                        Tasks.runSync(() -> {
-                            instance.getMenuManager().openToPlayer(player, MailboxMenu.class, Map.of("mail_data", mailData, "is_admin_view", true));
-                        });
+                        instance.getMenuManager().openToPlayer(player, MailboxMenu.class, Map.of("mail_data", mailData, "is_admin_view", true));
                     });
                 }
                 default -> StringUtils.send(audience, "<l-error>Subcomando desconhecido. Use 'add' ou 'ver'.");
