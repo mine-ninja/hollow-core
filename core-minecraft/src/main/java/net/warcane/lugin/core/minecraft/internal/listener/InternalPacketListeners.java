@@ -10,6 +10,7 @@ import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.vanish.VanishManager;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.gamerule.GameRuleUpdatePacket;
+import net.warcane.lugin.core.network.packet.impl.player.PlayerUpdateAccountCachePacket;
 import net.warcane.lugin.core.network.packet.impl.player.SendMessageToPlayerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.SendModernMessageToPlayerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.SendSoundToPlayerPacket;
@@ -63,6 +64,7 @@ public class InternalPacketListeners {
         networkClient.registerPacketListener(PlayerLosePermissionPacket.class, new PlayerLosePermissionPacketListener());
         networkClient.registerPacketListener(PlayerLinkedDiscordPacket.class, new PlayerLinkedDiscordPacketListener());
         networkClient.registerPacketListener(PlayerUnlinkedDiscordPacket.class, new PlayerUnlinkedDiscordPacketListener());
+        networkClient.registerPacketListener(PlayerUpdateAccountCachePacket.class, new PlayerUpdateAccountCacheListener());
 
         final var listener = new GoCacheListener();
 
@@ -341,6 +343,43 @@ public class InternalPacketListeners {
             if (!packet.message().isBlank()) {
                 player.sendMessage(packet.message());
             }
+        }
+    }
+
+    private static void refreshPlayerAccountLocalCaches(Headers headers, UUID playerId) {
+        final var platform = BukkitPlatform.getInstance();
+        final var currentServerId = BukkitPlatform.getInstance().getId();
+        if (headers.serverOriginId().equalsIgnoreCase(currentServerId)) {
+            return;
+        }
+
+        var account = platform.getPlayerAccountService().loadFromRedis(playerId);
+        if (account != null) {
+            platform.getPlayerAccountService().updateCaches(account);
+            log.debug("Refreshing local cache for player {} from redis cache", account.playerName());
+        } else {
+            platform.getPlayerAccountService()
+                .loadPlayerAccount(playerId)
+                .whenComplete((found, error) -> {
+                    if (found != null) {
+                        log.debug("Refreshing local cache for player {} from database", found.playerName());
+                    } else {
+                        if (error != null) {
+                            log.error("Failed to load player account for uuid " + playerId, error);
+                        } else {
+                            log.warn("Could not find player account for uuid " + playerId);
+                        }
+                    }
+                });
+        }
+    }
+
+    @RequiredArgsConstructor
+    public static class PlayerUpdateAccountCacheListener implements PacketListener<PlayerUpdateAccountCachePacket> {
+
+        @Override
+        public void onReceivePacket(@NotNull PlayerUpdateAccountCachePacket packet, @NotNull Headers headers) {
+            refreshPlayerAccountLocalCaches(headers, packet.playerId());
         }
     }
 }

@@ -77,7 +77,8 @@ final class PacketMappings {
             entry(24, PlayerUnlinkDiscordPacket.class),
             entry(25, PlayerUnlinkedDiscordPacket.class),
 
-            entry(26, ConnectionHandshakePacket.class)
+            entry(26, ConnectionHandshakePacket.class),
+            entry(27, PlayerUpdateAccountCachePacket.class)
         )
     );
     /**

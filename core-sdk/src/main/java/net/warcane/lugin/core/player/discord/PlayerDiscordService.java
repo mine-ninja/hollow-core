@@ -68,7 +68,7 @@ public class PlayerDiscordService implements IPlayerDiscordService {
 
                 final var updated = repository.save(toUpdate, PlayerDiscord::playerId);
                 if (updated == null) {
-                    throw new IllegalStateException("Failed to update player settings: " + toUpdate.playerId());
+                    throw new IllegalStateException("Failed to update player discord: " + toUpdate.playerId());
                 }
 
                 redisCache.hset(CACHE_KEY, updated.playerId().toString(), updated);
