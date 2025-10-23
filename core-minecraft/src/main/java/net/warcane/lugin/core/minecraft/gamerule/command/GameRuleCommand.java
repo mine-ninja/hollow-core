@@ -6,14 +6,18 @@ import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
 import net.warcane.lugin.core.minecraft.gamerule.CustomGameRule;
 import net.warcane.lugin.core.minecraft.gamerule.GameRuleRegistry;
+import net.warcane.lugin.core.minecraft.util.message.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 import org.jetbrains.annotations.NotNull;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Command to manage custom game rules.
@@ -25,7 +29,6 @@ public class GameRuleCommand extends SimpleCommand {
     public GameRuleCommand(@NotNull BukkitPlatform platform) {
         super("customgamerule", "lugin.gamerule");
         this.platform = platform;
-        this.noPermissionMessage = ChatColor.RED + "You don't have permission to use this command.";
         this.setDescription("Manage custom game rules");
         this.setUsage("/customgamerule [rule] [value] [world]");
     }
@@ -35,17 +38,17 @@ public class GameRuleCommand extends SimpleCommand {
         final var args = ctx.getArgs();
         final var sender = ctx.getSender();
         if (args.length == 0) {
-            sender.sendMessage(ChatColor.GOLD + "=== Custom Game Rules ===");
+            StringUtils.send(sender, "<gold>=== Custom Game Rules ===");
             final var rules = GameRuleRegistry.getAllGameRules();
             if (rules.isEmpty()) {
-                sender.sendMessage(ChatColor.GRAY + "No custom game rules registered.");
+                StringUtils.send(sender, "<gray>No custom game rules registered.");
                 return;
             }
             for (CustomGameRule<?> rule : rules) {
-                String scope = rule.global() ? ChatColor.AQUA + " [GLOBAL]" : "";
-                sender.sendMessage(ChatColor.YELLOW + rule.name() + scope + ChatColor.GRAY + " (" + rule.type().getSimpleName() + ")" + ChatColor.WHITE + " - Default: " + ChatColor.GREEN + rule.defaultValue());
+                String scope = rule.global() ? " <aqua>[GLOBAL]" : "";
+                StringUtils.send(sender, "<yellow>" + rule.name() + scope + " <gray>(" + rule.type().getSimpleName() + ")<white> - Default: <green>" + rule.defaultValue());
                 if (!rule.description().isEmpty()) {
-                    sender.sendMessage(ChatColor.GRAY + "  " + rule.description());
+                    StringUtils.send(sender, "<gray>  " + rule.description());
                 }
             }
             return;
@@ -55,19 +58,19 @@ public class GameRuleCommand extends SimpleCommand {
         final CustomGameRule<?> gameRule = GameRuleRegistry.getGameRule(ruleName);
         
         if (gameRule == null) {
-            throw new CommandFailedException(ChatColor.RED + "Unknown custom game rule: " + ruleName + "\n" + ChatColor.GRAY + "Use /customgamerule to see all available rules.");
+            throw new CommandFailedException("§cGamerule desconhecida: " + ruleName + "\n" + "§7Use /customgamerule para ver as gamerules disponíveis.");
         }
         
         World targetWorld = null;
         if (gameRule.global()) {
             if (args.length >= 3) {
-                sender.sendMessage(ChatColor.YELLOW + "Note: " + ChatColor.GRAY + ruleName + " is a global rule, world parameter ignored.");
+                StringUtils.send(sender, "<yellow>Warning: <gray>Ignorando parâmetro de mundo para rule global  <white>'" + ruleName + "'</white>.");
             }
         } else {
             if (args.length >= 3) {
                 targetWorld = Bukkit.getWorld(args[2]);
                 if (targetWorld == null) {
-                    throw new CommandFailedException(ChatColor.RED + "Unknown world: " + args[2]);
+                    throw new CommandFailedException("§cMundo desconhecido: " + args[2]);
                 }
             } else if (sender instanceof Player player) {
                 targetWorld = player.getWorld();
@@ -83,10 +86,10 @@ public class GameRuleCommand extends SimpleCommand {
             
             if (gameRule.global()) {
                 value = platform.getGameRuleManager().getGlobalGameRule(typedRule);
-                sender.sendMessage(ChatColor.YELLOW + ruleName + ChatColor.AQUA + " [GLOBAL]" + ChatColor.GRAY + " = " + ChatColor.GREEN + value);
+                StringUtils.send(sender, "<yellow>" + ruleName + "<aqua> [GLOBAL] <gray>= <green>" + value);
             } else {
                 value = platform.getGameRuleManager().getWorldGameRule(targetWorld, typedRule);
-                sender.sendMessage(ChatColor.YELLOW + ruleName + ChatColor.GRAY + " = " + ChatColor.GREEN + value + ChatColor.GRAY + " (in " + targetWorld.getName() + ")");
+                StringUtils.send(sender, "<yellow>" + ruleName + "<gray> = <green>" + value + "<gray> (in " + targetWorld.getName() + ")");
             }
             return;
         }
@@ -96,16 +99,19 @@ public class GameRuleCommand extends SimpleCommand {
             @SuppressWarnings("unchecked")
             final CustomGameRule<Object> typedRule = (CustomGameRule<Object>) gameRule;
             final Object parsedValue = gameRule.parseValue(valueStr);
+            if (parsedValue instanceof Location loc) {
+                loc.setWorld(targetWorld);
+            }
             
             if (gameRule.global()) {
                 platform.getGameRuleManager().setGlobalGameRule(typedRule, parsedValue);
-                sender.sendMessage(ChatColor.GREEN + "Set " + ChatColor.YELLOW + ruleName + ChatColor.AQUA + " [GLOBAL]" + ChatColor.GREEN + " to " + ChatColor.WHITE + parsedValue);
+                StringUtils.send(sender, "<green>Set " + "<yellow>" + ruleName + "<aqua> [GLOBAL] " + "<green>to " + "<white>" + parsedValue);
             } else {
                 platform.getGameRuleManager().setWorldGameRule(targetWorld, typedRule, parsedValue);
-                sender.sendMessage(ChatColor.GREEN + "Set " + ChatColor.YELLOW + ruleName + ChatColor.GREEN + " to " + ChatColor.WHITE + parsedValue + ChatColor.GREEN + " in world " + ChatColor.YELLOW + targetWorld.getName());
+                StringUtils.send(sender, "<green>Set " + "<yellow>" + ruleName + "<green> to " + "<white>" + parsedValue + "<green> in world " + "<yellow>" + targetWorld.getName());
             }
         } catch (IllegalArgumentException e) {
-            throw new CommandFailedException(ChatColor.RED + "Invalid value: " + e.getMessage() + "\n" + ChatColor.GRAY + "Expected type: " + gameRule.type().getSimpleName());
+            throw new CommandFailedException("§cInvalid value: " + e.getMessage() + "\n§7Expected type: " + gameRule.type().getSimpleName());
         }
     }
     
@@ -117,8 +123,23 @@ public class GameRuleCommand extends SimpleCommand {
             return filterStartingWith(GameRuleRegistry.getAllGameRules().stream().map(CustomGameRule::name).collect(Collectors.toList()), args[0]);
         } else if (args.length == 2) {
             final CustomGameRule<?> rule = GameRuleRegistry.getGameRule(args[0]);
-            if (rule != null && rule.type() == Boolean.class) {
-                return filterStartingWith(List.of("true", "false"), args[1]);
+            if (rule != null) {
+                if (rule.type() == Boolean.class) {
+                    return filterStartingWith(List.of("true", "false"), args[1]);
+                }
+                else if (rule.type().isEnum()) {
+                    @SuppressWarnings("unchecked")
+                    Class<? extends Enum<?>> enumType = (Class<? extends Enum<?>>) rule.type();
+                    List<String> enumNames = new ArrayList<>();
+                    for (Enum<?> anEnum : enumType.getEnumConstants()) {
+                        String name = anEnum.name();
+                        enumNames.add(name);
+                    }
+                    return filterStartingWith(enumNames, args[1]);
+                }
+                else if (rule.type() == Location.class) {
+                    return List.of("<x,y,z>");
+                }
             }
             return NONE_ARGS;
         } else if (args.length == 3) {

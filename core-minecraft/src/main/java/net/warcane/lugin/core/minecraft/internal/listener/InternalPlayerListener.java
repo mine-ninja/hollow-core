@@ -7,6 +7,7 @@ import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.event.account.AsyncPlayerNickUpdateEvent;
 import net.warcane.lugin.core.minecraft.event.account.PlayerAccountLoadEvent;
 import net.warcane.lugin.core.minecraft.event.account.PlayerAccountUpdateEvent;
+import net.warcane.lugin.core.minecraft.event.connection.ConnectionRequestEvent;
 import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.util.LocationUtil;
 import net.warcane.lugin.core.minecraft.util.PlayerUtil;
@@ -195,14 +196,6 @@ public final class InternalPlayerListener implements Listener {
                         Tasks.runSync(() -> player.setGameMode(GameMode.ADVENTURE));
                     }
 
-                    PlayerNetworkStateManager.getInstance().register(new PlayerNetworkState(
-                        player.getUniqueId(),
-                        player.getName(),
-                        currentServerId,
-                        platform.getServerCategoryType(),
-                        platform.getServerSubCategoryType()
-                    ));
-
                     final var joinData = PlayerJoinDataManager.getInstance().getPlayerJoinData(playerId);
                     if (joinData != null && currentServerId.equalsIgnoreCase(joinData.remoteServerLocation().targetServerId())) {
                         runAsyncLater(() -> {
@@ -237,6 +230,20 @@ public final class InternalPlayerListener implements Listener {
                 }
             });
 
+        platform.getPlayerDiscordService().loadPlayerDiscord(playerId).whenComplete((playerDiscord, throwable) -> {
+            if (throwable != null) {
+                log.error("Failed to load player discord for {}: {}", player.getName(), throwable.getMessage(), throwable);
+                return;
+            }
+
+            if (playerDiscord == null) {
+                log.debug("Player discord not found for {} during load", player.getName());
+                return;
+            }
+
+            log.debug("Player discord loaded for {}: {}", player.getName(), playerDiscord);
+        });
+
         if (VersionChecker.isLegacyVersion()) {
             Bukkit.getScheduler().runTaskLaterAsynchronously(BukkitPlatform.getInstance().getPlugin(), () -> {
                 if (PlayerUtil.isCracked(player)) {
@@ -268,13 +275,11 @@ public final class InternalPlayerListener implements Listener {
         final var packet = new PlayerDisconnectedFromServerPacket(player.getUniqueId(), currentServerId);
         platform.getNetworkClient().sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, packet);
 
-        runAsync(() -> {
-            final var state = PlayerNetworkStateManager.getInstance().getPlayerState(player.getUniqueId());
-            if (state != null) {
-                PlayerNetworkStateManager.getInstance().unregister(state);
-            }
-        });
-        
+        final var state = PlayerNetworkStateManager.getInstance().getPlayerState(player.getUniqueId());
+        if (state != null) {
+            PlayerNetworkStateManager.getInstance().unregister(state);
+        }
+
         final var accountService = platform.getPlayerAccountService();
         accountService.getPlayerAccount(player.getUniqueId())
             .whenCompleteAsync((account, throwable) -> {
@@ -302,6 +307,8 @@ public final class InternalPlayerListener implements Listener {
                         runAsyncLater(platform::updateServerInfo, 20);
                     });
             }, Tasks::runAsync);
+
+        platform.getPlayerDiscordService().unloadPlayerDiscord(player.getUniqueId());
     }
 
     @EventHandler
@@ -310,6 +317,19 @@ public final class InternalPlayerListener implements Listener {
         if (localPlayer == null) return;
 
         platform.getPermissionInjector().injectPermissions(localPlayer);
+    }
+
+    @EventHandler
+    public void onPlayerAccountLoad(PlayerAccountLoadEvent event) {
+        var localPlayer = event.getLoadedAccount();
+
+        PlayerNetworkStateManager.getInstance().register(new PlayerNetworkState(
+            localPlayer.uniqueId(),
+            localPlayer.playerName(),
+            platform.getId(),
+            platform.getServerCategoryType(),
+            platform.getServerSubCategoryType()
+        ));
     }
 
     private void syncKick(@NotNull Player player) {

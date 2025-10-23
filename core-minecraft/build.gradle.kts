@@ -2,9 +2,8 @@ import org.gradle.kotlin.dsl.invoke
 
 plugins {
     `java-library`
-    // shadow
     id("com.gradleup.shadow") version ("9.0.0-rc1")
-    id("io.papermc.paperweight.userdev") version ("1.7.1")
+    id("io.papermc.paperweight.userdev") version "2.0.0-beta.19"
     id("xyz.jpenilla.run-paper") version "2.3.1"
 }
 
@@ -45,7 +44,7 @@ repositories {
 }
 
 dependencies {
-    paperweight.paperDevBundle("1.21-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("1.21.4-R0.1-SNAPSHOT")
     api(project(":core-sdk"))
     api("fr.mrmicky:fastboard:2.1.5")
 
@@ -53,16 +52,15 @@ dependencies {
     implementation("net.kyori:adventure-text-minimessage:4.24.0")
 
     implementation("com.squareup.okhttp3:okhttp:5.1.0")
-    implementation("de.tr7zw:item-nbt-api:2.14.0")
+    implementation("de.tr7zw:item-nbt-api:2.15.3")
     implementation("io.socket:socket.io-client:2.1.1") {
         exclude("org.json", "json")
         exclude("com.squareup.okhttp3", "okhttp")
     }
 
     compileOnlyApi("com.github.retrooper:packetevents-spigot:2.9.5")
-    compileOnly("com.github.MilkBowl:VaultAPI:1.7")
-    compileOnly("me.clip:placeholderapi:2.11.6")
-
+    compileOnly("com.github.MilkBowl:VaultAPI:1.7") { isTransitive = false }
+    compileOnly("me.clip:placeholderapi:2.11.6") { isTransitive = false }
 
     compileOnly("net.coreprotect:coreprotect:22.4")
 }
@@ -77,7 +75,7 @@ java {
 }
 
 tasks.runServer {
-    minecraftVersion("1.21.1")
+    minecraftVersion("1.21.4")
     systemProperty("com.mojang.eula.agree", "true")
 
     downloadPlugins {
@@ -98,7 +96,7 @@ tasks.withType(xyz.jpenilla.runtask.task.AbstractRun::class) {
 }
 
 tasks.shadowJar {
-    relocate("okhttp3", "net.warcane.lugin.core.minecraft.libs.okhttp3")
+    relocate("okhttp3", "net.warcane.lugin.core.libs.okhttp3")
 
     archiveClassifier.set("")
     archiveVersion.set("")

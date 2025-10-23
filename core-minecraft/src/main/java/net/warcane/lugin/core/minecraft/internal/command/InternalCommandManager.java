@@ -6,6 +6,8 @@ import net.warcane.lugin.core.minecraft.currency.Currency;
 import net.warcane.lugin.core.minecraft.gamerule.command.GameRuleCommand;
 import net.warcane.lugin.core.minecraft.internal.command.currency.CurrencyBasedCommand;
 import net.warcane.lugin.core.minecraft.internal.command.currency.EconomyCommand;
+import net.warcane.lugin.core.minecraft.internal.command.discord.LinkCommand;
+import net.warcane.lugin.core.minecraft.internal.command.discord.UnlinkCommand;
 import net.warcane.lugin.core.minecraft.internal.command.gamemode.GameModeCommand;
 import net.warcane.lugin.core.minecraft.internal.command.lobby.LobbyCommand;
 import net.warcane.lugin.core.minecraft.internal.command.permission.GroupPermissionCommand;
@@ -19,6 +21,9 @@ import net.warcane.lugin.core.minecraft.internal.command.test.TestTimeCommand;
 import net.warcane.lugin.core.minecraft.punish.command.CheckPunishCommand;
 import net.warcane.lugin.core.minecraft.punish.command.PunishCommand;
 import net.warcane.lugin.core.minecraft.punish.command.RevokeCommand;
+import net.warcane.lugin.core.minecraft.tell.ReplyCommand;
+import net.warcane.lugin.core.minecraft.tell.TellCommand;
+import net.warcane.lugin.core.minecraft.tell.ToggleTellCommand;
 import net.warcane.lugin.core.util.property.Property;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandMap;
@@ -64,6 +69,12 @@ public class InternalCommandManager {
         commandMap.register("punish", new CheckPunishCommand());
         commandMap.register("punish", new RevokeCommand());
         commandMap.register("lugin", new GameRuleCommand(platform));
+        commandMap.register("lugin", new LinkCommand(platform));
+        commandMap.register("lugin", new UnlinkCommand(platform));
+
+        commandMap.register("lugin", new TellCommand(platform));
+        commandMap.register("lugin", new ReplyCommand(platform));
+        commandMap.register("lugin", new ToggleTellCommand(platform));
     }
 
     public void registerCurrencyCommand(@NotNull Currency currency) {

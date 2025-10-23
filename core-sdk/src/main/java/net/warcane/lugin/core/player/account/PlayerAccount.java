@@ -3,6 +3,7 @@ package net.warcane.lugin.core.player.account;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
@@ -10,6 +11,7 @@ import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.Style;
 import net.kyori.adventure.text.format.TextColor;
 import net.warcane.lugin.core.group.PlayerGroup;
+import net.warcane.lugin.core.player.account.data.ScopedData;
 import net.warcane.lugin.core.player.permissions.PlayerPermission;
 import net.warcane.lugin.core.player.subscription.PlayerGroupSubscription;
 import net.warcane.lugin.core.player.subscription.SubscriptionCategoryType;
@@ -26,13 +28,14 @@ import static net.warcane.lugin.core.player.subscription.PlayerGroupSubscription
 @Slf4j
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record PlayerAccount(
-  @JsonProperty("i") UUID uniqueId,
-  @JsonProperty("n") String playerName,
-  @JsonProperty("sk") String skin,
-  @JsonProperty("sb") List<PlayerGroupSubscription> subscriptions,
-  @JsonProperty("c") Instant createdAt,
-  @JsonProperty("l") Instant lastLogin,
-  @JsonProperty("p") List<PlayerPermission> permissions
+    @JsonProperty("i") UUID uniqueId,
+    @JsonProperty("n") String playerName,
+    @JsonProperty("sk") String skin,
+    @JsonProperty("sb") List<PlayerGroupSubscription> subscriptions,
+    @JsonProperty("c") Instant createdAt,
+    @JsonProperty("l") Instant lastLogin,
+    @JsonProperty("p") List<PlayerPermission> permissions,
+    @JsonProperty("sd") ScopedData scopedData
 ) implements Serializable {
 
 
@@ -41,6 +44,7 @@ public record PlayerAccount(
         createdAt = createdAt == null ? Instant.now() : createdAt;
         lastLogin = lastLogin == null ? Instant.now() : lastLogin;
         permissions = permissions == null ? new ArrayList<>() : new ArrayList<>(permissions);
+        scopedData = scopedData == null ? new ScopedData() : scopedData;
     }
 
     /**
@@ -50,15 +54,15 @@ public record PlayerAccount(
      * @return Uma nova instância de PlayerAccount com o novo nome
      */
     public PlayerAccount withNewName(@NotNull String newName) {
-        return new PlayerAccount(uniqueId, newName, skin, subscriptions, createdAt, lastLogin, permissions);
+        return new PlayerAccount(uniqueId, newName, skin, subscriptions, createdAt, lastLogin, permissions, scopedData);
     }
 
     public PlayerAccount withNewSkin(@Nullable String newSkin) {
-        return new PlayerAccount(uniqueId, playerName, newSkin, subscriptions, createdAt, lastLogin, permissions);
+        return new PlayerAccount(uniqueId, playerName, newSkin, subscriptions, createdAt, lastLogin, permissions, scopedData);
     }
 
     public PlayerAccount withLastLogin(@NotNull Instant newLastLogin) {
-        return new PlayerAccount(uniqueId, playerName, skin, subscriptions, createdAt, newLastLogin, permissions);
+        return new PlayerAccount(uniqueId, playerName, skin, subscriptions, createdAt, newLastLogin, permissions, scopedData);
     }
 
     /**
@@ -70,7 +74,9 @@ public record PlayerAccount(
      */
     @NotNull
     public static PlayerAccount createDefaultAccount(@NotNull UUID uniqueId, @NotNull String playerName, @Nullable String skin) {
-        return new PlayerAccount(uniqueId, playerName, skin, new ArrayList<>(List.of(PlayerGroupSubscription.defaultSubscription())), Instant.now(), Instant.now(), new ArrayList<>());
+        return new PlayerAccount(
+            uniqueId, playerName, skin, List.of(PlayerGroupSubscription.defaultSubscription()),
+            Instant.now(), Instant.now(), new ArrayList<>(), new ScopedData());
     }
 
     /**
@@ -87,6 +93,7 @@ public record PlayerAccount(
                 return true;
             }
         }
+
         return false;
     }
 
@@ -152,7 +159,7 @@ public record PlayerAccount(
         final var currentSubscriptions = new ArrayList<>(this.subscriptions);
         currentSubscriptions.removeIf(existingSubscription -> existingSubscription.equals(subscription));
 
-        return new PlayerAccount(uniqueId, playerName, skin, currentSubscriptions, createdAt, lastLogin, permissions);
+        return new PlayerAccount(uniqueId, playerName, skin, currentSubscriptions, createdAt, lastLogin, permissions, scopedData);
     }
 
     /**
@@ -169,7 +176,7 @@ public record PlayerAccount(
             currentSubscriptions.remove(existingSubscription);
         }
 
-        return new PlayerAccount(uniqueId, playerName, skin, currentSubscriptions, createdAt, lastLogin, permissions);
+        return new PlayerAccount(uniqueId, playerName, skin, currentSubscriptions, createdAt, lastLogin, permissions, scopedData);
     }
 
     public PlayerAccount withNewPermanentSubscription(@NotNull PlayerGroup group, @NotNull SubscriptionCategoryType type) {
@@ -182,7 +189,7 @@ public record PlayerAccount(
             final var newSubscription = createNewPermanentSubscription(group, type);
             currentSubscriptions.add(newSubscription);
 
-            return new PlayerAccount(uniqueId, playerName, skin, currentSubscriptions, createdAt, lastLogin, permissions);
+            return new PlayerAccount(uniqueId, playerName, skin, currentSubscriptions, createdAt, lastLogin, permissions, scopedData);
         } catch (Exception e) {
             throw new IllegalStateException("Erro ao criar assinatura permanente: " + e.getMessage(), e);
         }
@@ -198,7 +205,7 @@ public record PlayerAccount(
             final var newSubscription = createNewSubscription(group, targetExpirationTime, type);
             currentSubscriptions.add(newSubscription);
             
-            return new PlayerAccount(uniqueId, playerName, skin, currentSubscriptions, createdAt, lastLogin, permissions);
+            return new PlayerAccount(uniqueId, playerName, skin, currentSubscriptions, createdAt, lastLogin, permissions, scopedData);
         } catch (Exception e) {
             throw new IllegalStateException("Erro ao criar assinatura: " + e.getMessage(), e);
         }
@@ -288,7 +295,7 @@ public record PlayerAccount(
         final var currentPermissions = new ArrayList<>(this.permissions);
         currentPermissions.removeIf(p -> p.permission().equalsIgnoreCase(playerPermission));
 
-        return new PlayerAccount(uniqueId, playerName, skin, subscriptions, createdAt, lastLogin, currentPermissions);
+        return new PlayerAccount(uniqueId, playerName, skin, subscriptions, createdAt, lastLogin, currentPermissions, scopedData);
     }
 
     @JsonIgnore
@@ -298,7 +305,7 @@ public record PlayerAccount(
 
         currentPermissions.add(PlayerPermission.createNewPermanentPermissions(playerPermission));
 
-        return new PlayerAccount(uniqueId, playerName, skin, subscriptions, createdAt, lastLogin, currentPermissions);
+        return new PlayerAccount(uniqueId, playerName, skin, subscriptions, createdAt, lastLogin, currentPermissions, scopedData);
     }
 
     @JsonIgnore
@@ -308,6 +315,21 @@ public record PlayerAccount(
 
         currentPermissions.add(PlayerPermission.createNewPermissions(playerPermission, targetExpirationTime));
 
-        return new PlayerAccount(uniqueId, playerName, skin, subscriptions, createdAt, lastLogin, currentPermissions);
+        return new PlayerAccount(uniqueId, playerName, skin, subscriptions, createdAt, lastLogin, currentPermissions, scopedData);
+    }
+
+    @JsonIgnore
+    public boolean getPreference(String key) {
+        return scopedData.getOrDefault("settings." + key, TypeToken.get(Boolean.class), true);
+    }
+
+    @JsonIgnore
+    public void setPreference(String key, boolean value) {
+        scopedData.setById("settings." + key, value);
+    }
+
+    @JsonIgnore
+    public boolean hasPreference(String key) {
+        return scopedData().has("settings." + key);
     }
 }

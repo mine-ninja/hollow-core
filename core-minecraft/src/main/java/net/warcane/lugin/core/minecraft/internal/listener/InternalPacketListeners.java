@@ -10,9 +10,12 @@ import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.vanish.VanishManager;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.gamerule.GameRuleUpdatePacket;
+import net.warcane.lugin.core.network.packet.impl.player.PlayerUpdateAccountCachePacket;
 import net.warcane.lugin.core.network.packet.impl.player.SendMessageToPlayerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.SendModernMessageToPlayerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.SendSoundToPlayerPacket;
+import net.warcane.lugin.core.network.packet.impl.player.discord.PlayerLinkedDiscordPacket;
+import net.warcane.lugin.core.network.packet.impl.player.discord.PlayerUnlinkedDiscordPacket;
 import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerLoseGroupPacket;
 import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerLosePermissionPacket;
 import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerReceiveGroupPacket;
@@ -59,6 +62,9 @@ public class InternalPacketListeners {
         networkClient.registerPacketListener(GameRuleUpdatePacket.class, new GameRuleUpdateListener(platform));
         networkClient.registerPacketListener(PlayerReceivePermissionPacket.class, new PlayerPermissionReceivePacketListener());
         networkClient.registerPacketListener(PlayerLosePermissionPacket.class, new PlayerLosePermissionPacketListener());
+        networkClient.registerPacketListener(PlayerLinkedDiscordPacket.class, new PlayerLinkedDiscordPacketListener());
+        networkClient.registerPacketListener(PlayerUnlinkedDiscordPacket.class, new PlayerUnlinkedDiscordPacketListener());
+        networkClient.registerPacketListener(PlayerUpdateAccountCachePacket.class, new PlayerUpdateAccountCacheListener());
 
         final var listener = new GoCacheListener();
 
@@ -301,6 +307,79 @@ public class InternalPacketListeners {
         @Override
         public void onReceivePacket(@NotNull PlayerLosePermissionPacket packet, @NotNull Headers headers) {
             refreshPlayerPerms(headers, packet.playerId());
+        }
+    }
+
+    @RequiredArgsConstructor
+    public static class PlayerLinkedDiscordPacketListener implements PacketListener<PlayerLinkedDiscordPacket> {
+
+        @Override
+        public void onReceivePacket(@NotNull PlayerLinkedDiscordPacket packet, @NotNull Headers headers) {
+            Player player = Bukkit.getPlayer(packet.playerId());
+
+            if (player == null) {
+                log.info("Player is null for received linked discord packet packet {}", packet);
+                return;
+            }
+
+            if (!packet.message().isBlank()) {
+                player.sendMessage(packet.message());
+            }
+        }
+    }
+
+    @RequiredArgsConstructor
+    public static class PlayerUnlinkedDiscordPacketListener implements PacketListener<PlayerUnlinkedDiscordPacket> {
+
+        @Override
+        public void onReceivePacket(@NotNull PlayerUnlinkedDiscordPacket packet, @NotNull Headers headers) {
+            Player player = Bukkit.getPlayer(packet.playerId());
+
+            if (player == null) {
+                log.info("Player is null for received unlinked discord packet packet {}", packet);
+                return;
+            }
+
+            if (!packet.message().isBlank()) {
+                player.sendMessage(packet.message());
+            }
+        }
+    }
+
+    private static void refreshPlayerAccountLocalCaches(Headers headers, UUID playerId) {
+        final var platform = BukkitPlatform.getInstance();
+        final var currentServerId = BukkitPlatform.getInstance().getId();
+        if (headers.serverOriginId().equalsIgnoreCase(currentServerId)) {
+            return;
+        }
+
+        var account = platform.getPlayerAccountService().loadFromRedis(playerId);
+        if (account != null) {
+            platform.getPlayerAccountService().updateCaches(account);
+            log.debug("Refreshing local cache for player {} from redis cache", account.playerName());
+        } else {
+            platform.getPlayerAccountService()
+                .loadPlayerAccount(playerId)
+                .whenComplete((found, error) -> {
+                    if (found != null) {
+                        log.debug("Refreshing local cache for player {} from database", found.playerName());
+                    } else {
+                        if (error != null) {
+                            log.error("Failed to load player account for uuid " + playerId, error);
+                        } else {
+                            log.warn("Could not find player account for uuid " + playerId);
+                        }
+                    }
+                });
+        }
+    }
+
+    @RequiredArgsConstructor
+    public static class PlayerUpdateAccountCacheListener implements PacketListener<PlayerUpdateAccountCachePacket> {
+
+        @Override
+        public void onReceivePacket(@NotNull PlayerUpdateAccountCachePacket packet, @NotNull Headers headers) {
+            refreshPlayerAccountLocalCaches(headers, packet.playerId());
         }
     }
 }
