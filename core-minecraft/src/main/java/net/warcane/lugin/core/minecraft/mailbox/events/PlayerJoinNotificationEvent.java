@@ -2,6 +2,7 @@ package net.warcane.lugin.core.minecraft.mailbox.events;
 
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.BukkitPlatformPlugin;
@@ -40,7 +41,7 @@ public class PlayerJoinNotificationEvent implements Listener {
             if (!isSameServer) return;
             Audience audience = BukkitPlatformPlugin.getInstance().adventure().player(event.getPlayer());
             StringUtils.send(audience, "<l-info>Você tem <l-yellow>" + mailData.getMails().size() + " <l-gray>item(s) na sua caixa de correio. Use <l-yellow>/mail<l-gray> para acessá-la.");
-            audience.playSound(Sound.sound().type(org.bukkit.Sound.ENTITY_PLAYER_LEVELUP).pitch(2).volume(0.5f).build());
+            audience.playSound(Sound.sound().type(Key.key("entity.player.levelup")).pitch(2).volume(0.5f).build());
         }, r -> Tasks.runAsyncLater(r, 20L * 5));
     }
 }
