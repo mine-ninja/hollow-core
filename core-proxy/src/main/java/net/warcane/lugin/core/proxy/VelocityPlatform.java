@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.AbstractPlatform;
 import net.warcane.lugin.core.ProxyPlatform;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
+import net.warcane.lugin.core.network.packet.impl.connection.ConnectionHandshakePacket;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerConnectToServerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDirectPlayGameCategoryPacket;
 import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerConnectToSubCategoryPacket;
@@ -14,6 +15,7 @@ import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerUnregisterPacket;
 import net.warcane.lugin.core.network.packet.impl.staff.GoCommandPacket;
 import net.warcane.lugin.core.proxy.listener.*;
+import net.warcane.lugin.core.proxy.listener.connection.ConnectionHandshakePacketListener;
 import net.warcane.lugin.core.proxy.punishment.PlayerListener;
 import net.warcane.lugin.core.server.GameServer;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
@@ -45,6 +47,7 @@ public class VelocityPlatform extends AbstractPlatform implements ProxyPlatform 
         networkClient.registerPacketListener(GoCommandPacket.class, new GoCommandPacketListener(this));
         networkClient.registerPacketListener(PlayerConnectToServerPacket.class, new PlayerConnectToServerListener(this));
         networkClient.registerPacketListener(PlayerConnectToSubCategoryPacket.class, new PlayerConnectToSubCategoryListener(this));
+        networkClient.registerPacketListener(ConnectionHandshakePacket.class, new ConnectionHandshakePacketListener(proxyServer));
 
         int serverCount = 0;
         for (GameServer gameServer : gameServerService.queryAllServersInNetwork()) {
