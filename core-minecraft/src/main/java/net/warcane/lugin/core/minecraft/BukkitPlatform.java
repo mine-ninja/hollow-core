@@ -317,7 +317,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         return PacketEvents.getAPI()
           .getServerManager()
           .getVersion()
-          .isNewerThanOrEquals(ServerVersion.V_1_8_8);
+          .isNewerThanOrEquals(ServerVersion.V_1_12);
     }
 
     @NotNull
