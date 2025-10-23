@@ -14,6 +14,7 @@ import net.warcane.lugin.core.minecraft.gamerule.GameRuleManager;
 import net.warcane.lugin.core.minecraft.gamerule.listener.WorldLoadListener;
 import net.warcane.lugin.core.minecraft.internal.command.InternalCommandManager;
 import net.warcane.lugin.core.minecraft.internal.listener.*;
+import net.warcane.lugin.core.minecraft.mailbox.MailManager;
 import net.warcane.lugin.core.minecraft.internal.listener.connection.ConnectionHandshakePacketListener;
 import net.warcane.lugin.core.minecraft.menu.SimpleMenuManager;
 import net.warcane.lugin.core.minecraft.nametag.LegacyNameTagResolver;
@@ -192,6 +193,9 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         Bukkit.getPluginManager().registerEvents(new PlayerPermissionUpdatingListener(this), plugin);
         Bukkit.getPluginManager().registerEvents(new TeleportTrafficListener(this), plugin);
 
+
+        MailManager.init(plugin);
+
         PunishManager.init(plugin, getExecutorService());
         AdventureFormatters.init();
 
@@ -327,6 +331,6 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         return PacketEvents.getAPI()
           .getServerManager()
           .getVersion()
-          .isNewerThanOrEquals(ServerVersion.V_1_8_8);
+          .isNewerThanOrEquals(ServerVersion.V_1_12);
     }
 }
