@@ -27,17 +27,12 @@ public class TellCommand extends SimpleCommand implements ITell {
     public void performCommand(@NotNull CommandContext ctx) throws CommandFailedException {
         var player = ctx.getSenderAsPlayer();
         if (ctx.isArgsLength(0) || ctx.isArgsLength(1)) {
-            StringUtils.send(player, "<l-negate>Você deve informar o nome do jogador e a mensagem que deseja enviar.");
+            StringUtils.send(player, "<red>Você deve informar o nome do jogador e a mensagem que deseja enviar.");
             return;
         }
 
         var targetName = ctx.getRawArgOrNull(0);
         var targetPlayer = PlayerNetworkStateManager.getInstance().getFromName(targetName);
-
-        if (targetPlayer == null) {
-            StringUtils.send(player, "<l-negate>Jogador não encontrado ou não está online.");
-            return;
-        }
 
         Tasks.runAsync(() -> sendMessage(player, targetPlayer, ctx, false, platform));
     }

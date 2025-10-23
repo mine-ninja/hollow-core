@@ -24,12 +24,12 @@ public interface ITell {
 
     default void sendMessage(Player player, @Nullable PlayerNetworkState targetPlayer, CommandContext ctx, boolean skipName, BukkitPlatform platform) {
         if (targetPlayer == null) {
-            StringUtils.send(player, "<l-negate>Usuário não está online.");
+            StringUtils.send(player, "<red>Usuário não está online.");
             return;
         }
 
         if (targetPlayer.playerId().equals(player.getUniqueId())) {
-            StringUtils.send(player, "<l-negate>Falar consigo mesmo costuma ser um sinal de loucura. Procure um especialista urgente!");
+            StringUtils.send(player, "<red>Falar consigo mesmo costuma ser um sinal de loucura. Procure um especialista urgente!");
             return;
         }
 
@@ -47,27 +47,27 @@ public interface ITell {
 
                 if (senderAcc == null) {
                     BukkitPlatformPlugin.getInstance().getLogger().severe("Erro ao obter a conta do remetente ao enviar mensagem privada.");
-                    StringUtils.send(player, "<l-negate>Ocorreu um erro ao processar sua solicitação. Tente novamente mais tarde.");
+                    StringUtils.send(player, "<red>Ocorreu um erro ao processar sua solicitação. Tente novamente mais tarde.");
                     return;
                 }
 
                 if (targetAcc == null) {
-                    StringUtils.send(player, "<l-negate>O jogador não está online.");
+                    StringUtils.send(player, "<red>O jogador não está online.");
                     return;
                 }
 
                 if (argsMessage.isEmpty()) {
-                    StringUtils.send(player, "<l-negate>Você deve informar uma mensagem para enviar.");
+                    StringUtils.send(player, "<red>Você deve informar uma mensagem para enviar.");
                     return;
                 }
 
                 if (!senderAcc.getPreference(PreferenceRegistry.PRIVATE_MESSAGES_ID)) {
-                    StringUtils.send(player, "<l-negate>Você desativou o envio de mensagens privadas. Use /toggle para ativá-lo.");
+                    StringUtils.send(player, "<red>Você desativou o envio de mensagens privadas. Use /toggle para ativá-lo.");
                     return;
                 }
 
-                if (!targetAcc.getPreference(PreferenceRegistry.PRIVATE_MESSAGES_ID)) {
-                    StringUtils.send(player, "<l-negate>Este usuário está com o recebimento de mensagens privadas desativado.");
+                if (!targetAcc.getPreference(PreferenceRegistry.PRIVATE_MESSAGES_ID) && !senderAcc.getHighestSubscription().group().isStaffGroup()) {
+                    StringUtils.send(player, "<red>Este usuário está com o recebimento de mensagens privadas desativado.");
                     return;
                 }
 
