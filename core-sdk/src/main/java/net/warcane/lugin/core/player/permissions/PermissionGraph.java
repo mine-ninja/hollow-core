@@ -1,4 +1,4 @@
-package net.warcane.lugin.core.minecraft.util.permission;
+package net.warcane.lugin.core.player.permissions;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;

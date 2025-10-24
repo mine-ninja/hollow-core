@@ -77,7 +77,7 @@ public class TeleportTrafficListener implements Listener {
         );
 
         player.teleport(bukkitLocation);
-        StringUtils.send(player, "<green>" + fallbackMessage);
+        StringUtils.send(player, "<green>" + fallbackMessage, false, true);
     }
 
     private void teleportToPlayer(@NonNull Player player, @NonNull Player targetPlayer, String fallbackMessage) {
