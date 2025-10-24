@@ -1,20 +1,16 @@
 package net.warcane.lugin.core.minecraft.event.connection;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.RequiredArgsConstructor;
 import net.warcane.lugin.core.network.packet.impl.connection.ConnectionHandshakePacket;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
-import org.jetbrains.annotations.NotNull;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.jetbrains.annotations.NotNull;
 import java.util.UUID;
 
 @Data
-@RequiredArgsConstructor
-@AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class ConnectionRequestEvent extends Event implements Cancellable {
 
@@ -26,7 +22,14 @@ public class ConnectionRequestEvent extends Event implements Cancellable {
 
     private String fallbackMessage;
     private boolean cancelled;
-
+    
+    public ConnectionRequestEvent(UUID userId, Side side, ConnectionHandshakePacket packet) {
+        super(true);
+        this.userId = userId;
+        this.side = side;
+        this.packet = packet;
+    }
+    
     @Override
     public @NotNull HandlerList getHandlers() {
         return HANDLER_LIST;

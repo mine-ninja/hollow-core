@@ -28,7 +28,6 @@ dependencies {
     api("redis.clients:jedis:6.0.0")
 
     api("net.kyori:adventure-api:4.22.0")
-
     api("net.kyori:adventure-text-serializer-gson:4.22.0")
 
     api("com.github.ben-manes.caffeine:caffeine:3.2.1")
@@ -36,6 +35,8 @@ dependencies {
     implementation("com.google.code.gson:gson:2.11.0")
     implementation("io.github.cdimascio:dotenv-java:3.2.0")
     implementation("it.unimi.dsi:fastutil:8.5.8")
+
+    compileOnly("com.google.guava:guava:33.3.1-jre")
 }
 
 tasks.withType<JavaCompile> {

@@ -21,6 +21,7 @@ public enum ServerCategoryType {
     MINA("Mina", List.of(ServerSubCategoryType.MINA_1, ServerSubCategoryType.MINA_2, ServerSubCategoryType.MINA_3, ServerSubCategoryType.MINA_4)),
     FACTIONS("Factions"),
     FACTIONS_FIRE("Factions Fire"),
+    NETHER("Nether")
     ;
     
     private final String displayName;
