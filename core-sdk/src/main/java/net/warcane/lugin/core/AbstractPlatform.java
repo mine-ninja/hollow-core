@@ -31,6 +31,7 @@ public abstract class AbstractPlatform implements Platform {
         return t;
     });
     
+    private static AbstractPlatform instance;
     protected final HostAddress hostAddress;
     
     protected final RedisConnector redisConnector;
@@ -46,6 +47,7 @@ public abstract class AbstractPlatform implements Platform {
     protected final PlayerDiscordService playerDiscordService;
 
     public AbstractPlatform(HostAddress hostAddress) {
+        instance = this;
         this.hostAddress = hostAddress;
         
         this.redisConnector = RedisConnector.getInstance();
@@ -77,6 +79,13 @@ public abstract class AbstractPlatform implements Platform {
     @Override
     public String getId() {
         return Property.getOrThrow("PLATFORM_ID", () -> new IllegalStateException("Propriedade 'PLATFORM_ID' não definida verifique seu arquivo '.env'"));
+    }
+    
+    public static Platform getInstance() {
+        if (instance == null) {
+            throw new IllegalStateException("Platform instance has not been initialized yet.");
+        }
+        return instance;
     }
     
     @Override

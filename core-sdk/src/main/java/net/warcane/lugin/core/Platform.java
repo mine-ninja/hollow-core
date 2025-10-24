@@ -32,6 +32,8 @@ public interface Platform {
     
     String getId();
     
+    static Platform getInstance();
+    
     NetworkClient getNetworkClient();
     
     GameServerService getGameServerService();
