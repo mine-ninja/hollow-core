@@ -1,5 +1,6 @@
 name: MinigamesPlatformPlugin
-main: net.warcane.lugin.core.minigames.MinigamesPlatform
-version: 1.0
-author: Meiallu
-api-version: 1.8
+main: net.warcane.lugin.core.minigames.MinigamesPlatformPlugin
+version: ${version}
+author: LuginServer
+api-version: ${version}
+dependencies: [BukkitPlatformPlugin]

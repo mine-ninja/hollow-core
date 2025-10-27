@@ -8,5 +8,5 @@ include(
   "core-sdk",
   "core-proxy",
   "core-minecraft",
-  //"core-minigames"
+  "core-minigames"
 )
