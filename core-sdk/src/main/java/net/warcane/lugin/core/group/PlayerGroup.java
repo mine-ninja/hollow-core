@@ -16,18 +16,20 @@ import static java.util.stream.Collectors.toMap;
 @Getter
 @AllArgsConstructor
 public enum PlayerGroup {
-    MASTER("master", "§6[Master] ", '\uE003', "Master", NamedTextColor.GOLD, 12),
-    MANAGER("gerente", "§4[Gerente] ", '\uE004', "Gerente", NamedTextColor.DARK_RED, 11),
-    ADMIN("admin", "§c[Admin] ", '\uE005', "Admin", NamedTextColor.RED, 10),
-    MODERATOR("moderador", "§2[Moderador] ", '\uE006', "Moderador", NamedTextColor.DARK_GREEN, 9),
-    HELPER("ajudante", "§2[Ajudante] ", '\uE007', "Ajudante", NamedTextColor.DARK_GREEN, 8),
-    INFLUENCER("influencer", "§5[Influencer] ", '\uE00B', "Influencer", NamedTextColor.DARK_PURPLE, 7), // TODO: esperar a tag
-    SUPREME("supremo", "§1[Supremo] ", '\uE002', "Supremo", NamedTextColor.DARK_BLUE, 6),
-    LEGENDARY("lendario", "§9[Lendário] ", '\uE001', "Lendário", NamedTextColor.BLUE, 5),
+    MASTER("master", "§6[Master] ", '\uE003', "Master", NamedTextColor.GOLD, 14),
+    MANAGER("gerente", "§4[Gerente] ", '\uE004', "Gerente", NamedTextColor.DARK_RED, 13),
+    ADMIN("admin", "§c[Admin] ", '\uE005', "Admin", NamedTextColor.RED, 12),
+    MODERATOR("moderador", "§2[Moderador] ", '\uE006', "Moderador", NamedTextColor.DARK_GREEN, 11),
+    HELPER("ajudante", "§e[Ajudante] ", '\uE007', "Ajudante", NamedTextColor.YELLOW, 10),
+    YOUTUBER("youtuber", "§c[YouTuber] ", ' ', "Youtuber", NamedTextColor.RED, 9),
+    INFLUENCER("streamer", "§9[Streamer] ", '\uE00B', "Streamer", NamedTextColor.BLUE, 8),
+    BUILDER("construtor", "§a[Construtor] ", ' ', "Construtor", NamedTextColor.GREEN, 7),
+    SUPREME("supremo", "§4[Supremo] ", '\uE002', "Supremo", NamedTextColor.DARK_RED, 6),
+    LEGENDARY("lendario", "§2[Lendário] ", '\uE001', "Lendário", NamedTextColor.DARK_GREEN, 5),
     HERO("heroi", "§5[Heroi] ", ' ', "Hero", NamedTextColor.DARK_PURPLE, 4),
     CHAMPION("campeao", "§3[Campeão] ", '\uE000', "Campeão", NamedTextColor.DARK_AQUA, 3),
     ALPHA("alpha", "§b[Alpha] ", '\uE00E', "Alpha", NamedTextColor.AQUA, 2),
-    DEFAULT("default", "§7", ' ', "Membro", NamedTextColor.GRAY, 1); // TODO: esperar a tag
+    DEFAULT("default", "§7", ' ', "Membro", NamedTextColor.GRAY, 1);
     
     public static final Map<String, PlayerGroup> BY_ID = Arrays.stream(values()).collect(toMap(PlayerGroup::getId, Function.identity()));
     public static final List<String> NAMES = Arrays.stream(values()).map(PlayerGroup::getId).toList();
@@ -77,7 +79,7 @@ public enum PlayerGroup {
     }
 
     public boolean isSpecialGroup(){
-        return isGreaterOrEqualTo(INFLUENCER);
+        return isGreaterOrEqualTo(INFLUENCER) || isGreaterOrEqualTo(YOUTUBER) || isGreaterOrEqualTo(BUILDER);
     }
 
     public boolean isVipGroup() {
