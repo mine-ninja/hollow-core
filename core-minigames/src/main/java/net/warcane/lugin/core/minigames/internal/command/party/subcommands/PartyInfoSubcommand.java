@@ -7,7 +7,6 @@ import net.warcane.lugin.core.minigames.MinigamesPlatform;
 
 public class PartyInfoSubcommand extends SimpleSubCommand {
 
-
     private final MinigamesPlatform platform;
 
     public PartyInfoSubcommand(MinigamesPlatform platform) {

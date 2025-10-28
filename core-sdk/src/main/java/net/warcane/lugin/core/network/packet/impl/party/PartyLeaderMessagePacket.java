@@ -5,8 +5,7 @@ import net.warcane.lugin.core.network.packet.NetworkPacket;
 
 import java.util.UUID;
 
-public record PartyAcceptPacket(
-    @JsonProperty("pid") UUID playerId,
-    @JsonProperty("msg") String message
-
+public record PartyLeaderMessagePacket(
+   @JsonProperty("ln") UUID leaderUUID,
+    String message
 ) implements NetworkPacket { }

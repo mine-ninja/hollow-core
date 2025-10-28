@@ -16,6 +16,8 @@ public class PartyTransferSubcommand extends SimpleSubCommand {
 
     @Override
     protected void performSubCommand(CommandContext ctx) throws CommandFailedException {
-
+        var player = ctx.getSenderAsPlayer();
+        var targetPlayerName = ctx.getRawArgOrThrow(0, "§cVocê deve informar o nome de um jogador para transferir a liderança.");
+        platform.getPartyService().transferPartyLeadership(targetPlayerName, player);
     }
 }

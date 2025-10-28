@@ -16,6 +16,8 @@ public class PartyJoinSubcommand extends SimpleSubCommand {
 
     @Override
     protected void performSubCommand(CommandContext ctx) throws CommandFailedException {
-
+        var player = ctx.getSenderAsPlayer();
+        var leaderName = ctx.getRawArgOrThrow(0, "§cVocê deve especificar o nome do líder da party.");
+        platform.getPartyService().joinInParty(player, leaderName);
     }
 }

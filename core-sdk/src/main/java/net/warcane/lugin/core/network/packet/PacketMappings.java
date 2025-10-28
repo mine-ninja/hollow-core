@@ -9,10 +9,7 @@ import net.warcane.lugin.core.network.packet.impl.generic.JsonPacket;
 import net.warcane.lugin.core.network.packet.impl.gamerule.GameRuleUpdatePacket;
 import net.warcane.lugin.core.network.packet.impl.internal.PingPacket;
 import net.warcane.lugin.core.network.packet.impl.internal.PongPacket;
-import net.warcane.lugin.core.network.packet.impl.party.PartyAcceptPacket;
-import net.warcane.lugin.core.network.packet.impl.party.PartyDenyPacket;
-import net.warcane.lugin.core.network.packet.impl.party.PartyExpiredInvitePacket;
-import net.warcane.lugin.core.network.packet.impl.party.PartyInvitePacket;
+import net.warcane.lugin.core.network.packet.impl.party.*;
 import net.warcane.lugin.core.network.packet.impl.player.*;
 import net.warcane.lugin.core.network.packet.impl.player.discord.PlayerLinkedDiscordPacket;
 import net.warcane.lugin.core.network.packet.impl.player.discord.PlayerUnlinkDiscordPacket;
@@ -85,10 +82,11 @@ final class PacketMappings {
             entry(27, PlayerUpdateAccountCachePacket.class),
 
             //PARTY
-            entry(28, PartyInvitePacket.class),
-            entry(29, PartyAcceptPacket.class),
-            entry(30, PartyDenyPacket.class),
-            entry(31, PartyExpiredInvitePacket.class)
+            entry(28, PartyExpiredInvitePacket.class),
+            entry(29, PartyMessagePacket.class),
+            entry(30, PartyLeaderMessagePacket.class),
+            entry(31, PartyInvitePacket.class),
+            entry(32, PartyDeletedPacket.class)
         )
     );
     /**

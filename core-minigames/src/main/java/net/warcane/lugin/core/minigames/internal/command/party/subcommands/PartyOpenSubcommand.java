@@ -16,6 +16,7 @@ public class PartyOpenSubcommand extends SimpleSubCommand {
 
     @Override
     protected void performSubCommand(CommandContext ctx) throws CommandFailedException {
-
+        var player = ctx.getSenderAsPlayer();
+        platform.getPartyService().openParty(player);
     }
 }

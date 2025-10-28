@@ -31,8 +31,6 @@ public class PartyInviteSubcommand extends SimpleSubCommand {
     protected void performSubCommand(CommandContext ctx) throws CommandFailedException {
         //TODO: Adicionar cooldown para evitar spam de convites.
         //TODO: Verificar se o jogador alvo está com convites bloqueados nas configurações de privacidade.
-        //TODO: Verificar se o jogador alvo já está em uma party.
-        //TODO: Verificar se a party já está no seu limite máximo de membros.
 
         var player = ctx.getSenderAsPlayer();
         var targetName = ctx.getRawArgOrThrow(0, "§cVocê deve informar o nome de um jogador para convidar.");

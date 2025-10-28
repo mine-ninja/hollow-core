@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public record PartyInvitePacket(
     @JsonProperty("pid") UUID playerId,
-    @JsonProperty("msg") String msg
+    String msg
 
 ) implements NetworkPacket {
 
