@@ -116,7 +116,7 @@ public class MailboxMenu extends SimplePaginationMenu<MailItem> {
 
 
     private boolean onPreOpenInNewVersion(@NotNull MenuPaginationContext<MailItem> ctx, @NotNull MenuConfig openHandler, MailData mailData, boolean isAdmin) {
-        openHandler.setTitle(StringUtils.text("<font:lugin:negative_padding_nosplit>\uE030<white><font:lugin:chests>\uE003"));
+        openHandler.setTitle(StringUtils.text("<font:lugin:negative_padding_nosplit>\uE030<white><font:lugin:chests>\uE01D"));
         ItemStack nextItem = new ItemStack(Material.ECHO_SHARD);
         nextItem.editMeta(meta -> {
             meta.setCustomModelData(42);
