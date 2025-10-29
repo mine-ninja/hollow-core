@@ -17,16 +17,19 @@ import net.warcane.lugin.core.minecraft.vanish.VanishManager;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerConnectedToServerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDisconnectedFromServerPacket;
+import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerReceiveGroupPacket;
 import net.warcane.lugin.core.player.account.PlayerAccountService.AccountUnloadOptions;
 import net.warcane.lugin.core.player.fetcher.PlayerNameFetcher;
 import net.warcane.lugin.core.player.fetcher.PlayerUuidFetcher;
 import net.warcane.lugin.core.player.state.PlayerNetworkState;
 import net.warcane.lugin.core.player.state.PlayerNetworkStateManager;
+import net.warcane.lugin.core.player.subscription.SubscriptionCategoryType;
 import net.warcane.lugin.core.player.teleport.PlayerJoinDataManager;
 import net.warcane.lugin.core.player.wallet.Wallet;
 import net.warcane.lugin.core.player.wallet.WalletService;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
 import net.warcane.lugin.core.util.property.Property;
+import net.warcane.lugin.core.util.time.Time;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
@@ -330,6 +333,33 @@ public final class InternalPlayerListener implements Listener {
             platform.getServerCategoryType(),
             platform.getServerSubCategoryType()
         ));
+
+        var isSupremeBeta = Property.getBoolean("ENABLE_SUPREME_BETA_AUTO", false);
+        final var supremeSubscription = localPlayer.getSubscriptionForGroup(PlayerGroup.SUPREME_BETA, SubscriptionCategoryType.GLOBAL);
+
+        if (isSupremeBeta) {
+            if (!localPlayer.getHighestSubscription().group().isStaffGroup() && supremeSubscription == null) {
+                var updateAccount = localPlayer.withNewSubscription(
+                    PlayerGroup.SUPREME_BETA,
+                    Time.parseString("12h").toInstantFromNow(),
+                    SubscriptionCategoryType.GLOBAL
+                );
+
+                platform.getPlayerAccountService().updatePlayerAccount(updateAccount).whenComplete((updatedAccount, error) -> {
+                    if (error != null) {
+                        log.error("Failed to update player account for {}: {}", localPlayer.playerName(), error.getMessage(), error);
+                    }
+                });
+            }
+        } else if (supremeSubscription != null) {
+            var updateAccount = localPlayer.removeSubscription(PlayerGroup.SUPREME_BETA, SubscriptionCategoryType.GLOBAL);
+
+            platform.getPlayerAccountService().updatePlayerAccount(updateAccount).whenComplete((updatedAccount, error) -> {
+                if (error != null) {
+                    log.error("Failed to update player account for {}: {}", localPlayer.playerName(), error.getMessage(), error);
+                }
+            });
+        }
     }
 
     private void syncKick(@NotNull Player player) {

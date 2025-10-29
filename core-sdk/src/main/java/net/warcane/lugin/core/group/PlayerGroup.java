@@ -16,14 +16,15 @@ import static java.util.stream.Collectors.toMap;
 @Getter
 @AllArgsConstructor
 public enum PlayerGroup {
-    MASTER("master", "§6[Master] ", '\uE003', "Master", NamedTextColor.GOLD, 14),
-    MANAGER("gerente", "§4[Gerente] ", '\uE004', "Gerente", NamedTextColor.DARK_RED, 13),
-    ADMIN("admin", "§c[Admin] ", '\uE005', "Admin", NamedTextColor.RED, 12),
-    MODERATOR("moderador", "§2[Moderador] ", '\uE006', "Moderador", NamedTextColor.DARK_GREEN, 11),
-    HELPER("ajudante", "§e[Ajudante] ", '\uE007', "Ajudante", NamedTextColor.YELLOW, 10),
-    YOUTUBER("youtuber", "§c[YouTuber] ", ' ', "Youtuber", NamedTextColor.RED, 9),
-    INFLUENCER("streamer", "§9[Streamer] ", '\uE00B', "Streamer", NamedTextColor.BLUE, 8),
-    BUILDER("construtor", "§a[Construtor] ", ' ', "Construtor", NamedTextColor.GREEN, 7),
+    MASTER("master", "§6[Master] ", '\uE003', "Master", NamedTextColor.GOLD, 15),
+    MANAGER("gerente", "§4[Gerente] ", '\uE004', "Gerente", NamedTextColor.DARK_RED, 14),
+    ADMIN("admin", "§c[Admin] ", '\uE005', "Admin", NamedTextColor.RED, 13),
+    MODERATOR("moderador", "§2[Moderador] ", '\uE006', "Moderador", NamedTextColor.DARK_GREEN, 12),
+    HELPER("ajudante", "§e[Ajudante] ", '\uE007', "Ajudante", NamedTextColor.YELLOW, 11),
+    YOUTUBER("youtuber", "§c[YouTuber] ", ' ', "Youtuber", NamedTextColor.RED, 10),
+    INFLUENCER("streamer", "§9[Streamer] ", '\uE00B', "Streamer", NamedTextColor.BLUE, 9),
+    BUILDER("construtor", "§a[Construtor] ", ' ', "Construtor", NamedTextColor.GREEN, 8),
+    SUPREME_BETA("supremo_beta", "§4[Supremo] ", '\uE002', "Supremo", NamedTextColor.DARK_RED, 7),
     SUPREME("supremo", "§4[Supremo] ", '\uE002', "Supremo", NamedTextColor.DARK_RED, 6),
     LEGENDARY("lendario", "§2[Lendário] ", '\uE001', "Lendário", NamedTextColor.DARK_GREEN, 5),
     HERO("heroi", "§5[Heroi] ", ' ', "Hero", NamedTextColor.DARK_PURPLE, 4),
@@ -83,7 +84,7 @@ public enum PlayerGroup {
     }
 
     public boolean isVipGroup() {
-        return this == CHAMPION || this == HERO || this == LEGENDARY || this == SUPREME;
+        return this == CHAMPION || this == HERO || this == LEGENDARY || this == SUPREME || this == SUPREME_BETA;
     }
     
     public PlayerGroup getNextVipGroup() {
