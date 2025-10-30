@@ -334,6 +334,9 @@ public final class InternalPlayerListener implements Listener {
             platform.getServerSubCategoryType()
         ));
 
+        var player = Bukkit.getPlayer(localPlayer.uniqueId());
+        if (player == null) return;
+
         var isSupremeBeta = Property.getBoolean("ENABLE_SUPREME_BETA_AUTO", false);
         final var supremeSubscription = localPlayer.getSubscriptionForGroup(PlayerGroup.SUPREME_BETA, SubscriptionCategoryType.GLOBAL);
 
@@ -349,6 +352,8 @@ public final class InternalPlayerListener implements Listener {
                     if (error != null) {
                         log.error("Failed to update player account for {}: {}", localPlayer.playerName(), error.getMessage(), error);
                     }
+
+                    Tasks.runAsyncLater(() -> platform.getPermissionInjector().injectPermissions(player), 1);
                 });
             }
         } else if (supremeSubscription != null) {
@@ -358,6 +363,8 @@ public final class InternalPlayerListener implements Listener {
                 if (error != null) {
                     log.error("Failed to update player account for {}: {}", localPlayer.playerName(), error.getMessage(), error);
                 }
+
+                Tasks.runAsyncLater(() -> platform.getPermissionInjector().injectPermissions(player), 1);
             });
         }
     }
