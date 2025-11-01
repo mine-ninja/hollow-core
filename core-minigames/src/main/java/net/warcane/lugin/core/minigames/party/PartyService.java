@@ -25,7 +25,6 @@ import redis.clients.jedis.JedisPubSub;
 import redis.clients.jedis.params.SetParams;
 
 import java.util.HashSet;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @Slf4j
@@ -38,7 +37,6 @@ public class PartyService {
     private static final int LEADER_CHECK_SECONDS = 10;
     private static final String KEY_EVENT_PATTERN = "__keyevent@*__:expired";
     private static final String EXPIRY_PREFIX = REDIS_KEY + ":exp:";
-    private static final String MEMBER_KEY = REDIS_KEY + ":member:";
 
     private boolean isLeader = false;
 
@@ -46,12 +44,14 @@ public class PartyService {
     private final RedisConnector redisConnector;
     private final NetworkClient networkClient;
     private final BukkitAudiences audiences;
+    private final PartyRepository partyRepository;
 
     public PartyService(MinigamesPlatform platform) {
         this.platform = platform;
         this.redisConnector = RedisConnector.getInstance();
         this.networkClient = platform.getNetworkClient();
         this.audiences = MinigamesPlatformPlugin.getInstance().adventure();
+        this.partyRepository = new PartyRepository(this.redisConnector);
         this.startExpiryWorker();
     }
 
@@ -69,7 +69,6 @@ public class PartyService {
                     @Override
                     public void onPMessage(String pattern, String channel, String message) {
                         if (message.startsWith(EXPIRY_PREFIX) && isLeader) {
-                            //party:exp:invite:SrSheep_:bytcode
                             var idStr = message.split(":");
                             try {
                                 if (idStr[2].equalsIgnoreCase("invite")) {
@@ -127,24 +126,15 @@ public class PartyService {
     }
 
     public void createPartyInvite(String senderName, String receiverName) {
-        redisConnector.useJedis(jedis -> {
-            var inviteExpiryKey = EXPIRY_PREFIX + "invite:" + senderName.toLowerCase() + ":" + receiverName.toLowerCase();
-            jedis.setex(inviteExpiryKey, 60, "");
-        });
+        partyRepository.createPartyInvite(senderName, receiverName);
     }
 
     public void removePartyInvite(String senderName, String receiverName) {
-        redisConnector.useJedis(jedis -> {
-            var inviteKey = EXPIRY_PREFIX + "invite:" + senderName.toLowerCase() + ":" + receiverName.toLowerCase();
-            jedis.del(inviteKey);
-        });
+        partyRepository.removePartyInvite(senderName, receiverName);
     }
 
     public boolean partyInviteExists(String senderName, String receiverName) {
-        return redisConnector.supplyFromJedis(jedis -> {
-            var inviteKey = EXPIRY_PREFIX + "invite:" + senderName.toLowerCase() + ":" + receiverName.toLowerCase();
-            return jedis.exists(inviteKey);
-        });
+        return partyRepository.partyInviteExists(senderName, receiverName);
     }
 
     private void processExpiredInviteParty(String senderName, String receiverName) {
@@ -176,7 +166,7 @@ public class PartyService {
         validatePartyInviteExists(senderName, player);
 
         if (isPlayerInParty(player.getName())) {
-            StringUtils.send(player, "<red>Você já está em uma party. Saia da sua party atual para aceitar um novo convite.");
+            StringUtils.send(player, PartyMessages.ALREADY_IN_PARTY);
             return;
         }
 
@@ -189,12 +179,12 @@ public class PartyService {
                 var receiverAcc = receiverAccount.join();
 
                 if (senderAcc == null) {
-                    StringUtils.send(player, "<red>Ocorreu um erro ao processar sua solicitação. Tente novamente mais tarde.");
+                    StringUtils.send(player, PartyMessages.PROCESS_ERROR);
                     return;
                 }
 
                 if (receiverAcc == null) {
-                    StringUtils.send(player, "<red>O jogador não está online.");
+                    StringUtils.send(player, PartyMessages.PLAYER_NOT_ONLINE);
                     return;
                 }
 
@@ -203,13 +193,11 @@ public class PartyService {
                 var party = this.processPartyInviteAccept(lender, partyMember);
 
                 if (party.members().size() == getMaxPartySizeForGroup(senderAcc)) {
-                    StringUtils.send(player, "§cA party de " + senderAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + "§c está cheia.");
+                    StringUtils.send(player, PartyMessages.PARTY_FULL);
                     return;
                 }
 
-                new ComponentBuilder()
-                    .simple("§aVocê aceitou o pedido de party de " + senderAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + "§a.")
-                    .send(audiences.player(player));
+                StringUtils.send(player, "§aVocê aceitou o pedido de party de " + senderAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + "§a.");
 
                 var targetBukkitPlayer = Bukkit.getPlayer(senderAcc.uniqueId());
                 var message = new ComponentBuilder()
@@ -235,25 +223,21 @@ public class PartyService {
                 var receiverAcc = receiverAccount.join();
 
                 if (senderAcc == null) {
-                    StringUtils.send(receiver, "<red>Ocorreu um erro ao processar sua solicitação. Tente novamente mais tarde.");
+                    StringUtils.send(receiver, PartyMessages.PROCESS_ERROR);
                     return;
                 }
 
                 if (receiverAcc == null) {
-                    StringUtils.send(receiver, "<red>O jogador não está online.");
+                    StringUtils.send(receiver, PartyMessages.PLAYER_NOT_ONLINE);
                     return;
                 }
 
-                new ComponentBuilder()
-                    .simple("§cVocê recusou o pedido de party de " + senderAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + "§c.")
-                    .send(audiences.player(receiver));
+                StringUtils.send(receiver, "§cVocê recusou o pedido de party de " + senderAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + "§c.");
 
                 var targetBukkitPlayer = Bukkit.getPlayer(senderAcc.uniqueId());
 
                 if (targetBukkitPlayer != null) {
-                    new ComponentBuilder()
-                        .simple(receiverAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + " §crecusou seu pedido de party!")
-                        .send(audiences.player(targetBukkitPlayer));
+                    StringUtils.send(targetBukkitPlayer, receiverAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + " §crecusou seu pedido de party!");
                 } else {
                     networkClient.sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, new PartyLeaderMessagePacket(
                         senderAcc.uniqueId(),
@@ -269,12 +253,12 @@ public class PartyService {
         var leaderName = player.getName();
         var party = findPartyPlayer(leaderName);
         if (party == null) {
-            StringUtils.send(player, "§cVocê não está em uma party.");
+            StringUtils.send(player, PartyMessages.NOT_IN_PARTY);
             return;
         }
 
         if (!party.leader().name().equalsIgnoreCase(leaderName)) {
-            StringUtils.send(player, "§cApenas o líder da party pode transferir a liderança.");
+            StringUtils.send(player, PartyMessages.ONLY_LEADER);
             return;
         }
 
@@ -286,25 +270,21 @@ public class PartyService {
 
         platform.getPlayerAccountService().getPlayerAccount(targetMember.uniqueId()).whenComplete((account, ex) -> {
             if (ex != null) {
-                StringUtils.send(player, "<red>Ocorreu um erro ao processar sua solicitação. Tente novamente mais tarde.");
+                StringUtils.send(player, PartyMessages.PROCESS_ERROR);
                 log.error("Error fetching player account for transferring party leadership: {}", ex.getMessage());
                 return;
             }
 
-            redisConnector.useJedis(jedis -> {
-                var updateParty = party.removeMember(targetName).addMember(party.leader()).setLeader(targetMember);
+            var updatedParty = partyRepository.transferLeadership(party, targetMember);
+            if (updatedParty == null) {
+                StringUtils.send(player, PartyMessages.PROCESS_ERROR);
+                return;
+            }
 
-                var partyKey = REDIS_KEY + ":party:" + party.partyId();
-                jedis.set(partyKey, updateParty.toJson());
-
-                player.sendMessage("§aVocê transferiu a liderança da party para " + account.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + "§a.");
-
-                networkClient.sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, PartyMessagePacket.create(party.partyId(),
-                    new ComponentBuilder()
-                        .simple(account.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + " §eé o novo líder da party.")
-                        .build()
-                ));
-            });
+            player.sendMessage("§aVocê transferiu a liderança da party para " + account.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + "§a.");
+            networkClient.sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, PartyMessagePacket.create(party.partyId(),
+                StringUtils.formatString(String.format(PartyMessages.PARTY_LEADER_TRANSFERRED, account.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL)))
+            ));
         });
     }
 
@@ -313,44 +293,39 @@ public class PartyService {
         var party = findPartyPlayer(playerName);
 
         if (party == null) {
-            StringUtils.send(player, "§cVocê não está em uma party.");
+            StringUtils.send(player, PartyMessages.NOT_IN_PARTY);
             return;
         }
 
         if (party.leader().name().equalsIgnoreCase(playerName)) {
-            StringUtils.send(player, "§cO líder da party não pode sair da party. Transfira a liderança ou delete a party.");
+            StringUtils.send(player, PartyMessages.PARTY_LEADER_CANNOT_LEAVE);
             return;
         }
 
         var partyMember = party.members().stream().filter(member -> member.name().equalsIgnoreCase(playerName)).findFirst().orElse(null);
 
         if (partyMember == null) {
-            StringUtils.send(player, "§cVocê não está em uma party.");
+            StringUtils.send(player, PartyMessages.NOT_IN_PARTY);
             return;
         }
 
         platform.getPlayerAccountService().getPlayerAccount(partyMember.uniqueId()).whenComplete((account, ex) -> {
             if (ex != null) {
-                StringUtils.send(player, "<red>Ocorreu um erro ao processar sua solicitação. Tente novamente mais tarde.");
+                StringUtils.send(player, PartyMessages.PROCESS_ERROR);
                 log.error("Error fetching player account for leaving party: {}", ex.getMessage());
                 return;
             }
 
-            redisConnector.useJedis(jedis -> {
-                var updatedParty = party.removeMember(playerName);
+            var updatedParty = partyRepository.removeMemberFromParty(party, playerName);
+            if (updatedParty == null) {
+                StringUtils.send(player, PartyMessages.PROCESS_ERROR);
+                return;
+            }
 
-                var partyKey = REDIS_KEY + ":party:" + party.partyId();
-                jedis.set(partyKey, updatedParty.toJson());
-                jedis.del(MEMBER_KEY + playerName.toLowerCase());
-
-                player.sendMessage("§cVocê saiu da party.");
-
-                networkClient.sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, PartyMessagePacket.create(party.partyId(),
-                    new ComponentBuilder()
-                        .simple(account.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + " §csaiu da party.")
-                        .build()
-                ));
-            });
+            player.sendMessage("§cVocê saiu da party.");
+            networkClient.sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, PartyMessagePacket.create(party.partyId(),
+                StringUtils.formatString(String.format(PartyMessages.PARTY_MEMBER_LEFT, account.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL)))
+            ));
         });
     }
 
@@ -358,48 +333,39 @@ public class PartyService {
         var leaderName = player.getName();
         var party = findPartyPlayer(leaderName);
         if (party == null) {
-            StringUtils.send(player, "§cVocê não está em uma party.");
+            StringUtils.send(player, PartyMessages.NOT_IN_PARTY);
             return;
         }
 
-        if (!party.leader().name().equalsIgnoreCase(leaderName)) {
-            StringUtils.send(player, "§cApenas o líder da party pode deletá-la.");
+        if (requireLeader(player, party)) {
             return;
         }
 
         platform.getPlayerAccountService().getPlayerAccount(party.leader().uniqueId()).whenComplete((account, ex) -> {
             if (ex != null) {
-                StringUtils.send(player, "<red>Ocorreu um erro ao processar sua solicitação. Tente novamente mais tarde.");
-                log.error("Error fetching player account for deleting party: {}", ex.getMessage());
+                sendError(player, "Error fetching player account for deleting party", ex);
                 return;
             }
 
-            redisConnector.useJedis(jedis -> {
-                var partyKey = REDIS_KEY + ":party:" + party.partyId();
-                jedis.del(partyKey);
-                party.members().forEach(member -> jedis.del(MEMBER_KEY + member.name().toLowerCase()));
-                jedis.del(MEMBER_KEY + party.leader().name().toLowerCase());
+            partyRepository.deleteParty(party);
+            StringUtils.send(player, PartyMessages.PARTY_DELETED);
+            var message = account.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + " §cdesfez a party.";
+            var memberNames = party.members().stream().map(PartyMember::name).toList();
+            var memberNamesNotOnlineThisServer = new HashSet<String>();
 
-                player.sendMessage("§cVocê deletou a party.");
-
-                var message = account.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + " §cdesfez a party.";
-                var memberNames = party.members().stream().map(PartyMember::name).toList();
-                var memberNamesNotOnlineThisServer = new HashSet<String>();
-
-                memberNames.forEach(memberName -> {
-                    var targetPlayer = Bukkit.getPlayer(memberName);
-                    if (targetPlayer != null) {
-                        targetPlayer.sendMessage(message);
-                    } else {
-                        memberNamesNotOnlineThisServer.add(memberName);
-                    }
-                });
-
-                networkClient.sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, new PartyDeletedPacket(
-                    memberNamesNotOnlineThisServer.stream().toList(),
-                    message
-                ));
+            memberNames.forEach(memberName -> {
+                var targetPlayer = Bukkit.getPlayer(memberName);
+                if (targetPlayer != null) {
+                    StringUtils.send(targetPlayer, message);
+                } else {
+                    memberNamesNotOnlineThisServer.add(memberName);
+                }
             });
+
+            networkClient.sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, new PartyDeletedPacket(
+                memberNamesNotOnlineThisServer.stream().toList(),
+                message
+            ));
         });
     }
 
@@ -407,12 +373,12 @@ public class PartyService {
         var leaderName = player.getName();
         var party = findPartyPlayer(leaderName);
         if (party == null) {
-            StringUtils.send(player, "§cVocê não está em uma party.");
+            StringUtils.send(player, PartyMessages.NOT_IN_PARTY);
             return;
         }
 
         if (!party.leader().name().equalsIgnoreCase(leaderName)) {
-            StringUtils.send(player, "§cApenas o líder da party pode expulsar membros.");
+            StringUtils.send(player, PartyMessages.ONLY_LEADER);
             return;
         }
 
@@ -424,27 +390,22 @@ public class PartyService {
 
         platform.getPlayerAccountService().getPlayerAccount(targetMember.uniqueId()).whenComplete((account, ex) -> {
             if (ex != null) {
-                StringUtils.send(player, "<red>Ocorreu um erro ao processar sua solicitação. Tente novamente mais tarde.");
+                StringUtils.send(player, PartyMessages.PROCESS_ERROR);
                 log.error("Error fetching player account for kicking party member: {}", ex.getMessage());
                 return;
             }
 
-            redisConnector.useJedis(jedis -> {
-                var updatedParty = party.removeMember(targetName);
+            var updatedParty = partyRepository.removeMemberFromParty(party, targetName);
+            if (updatedParty == null) {
+                StringUtils.send(player, PartyMessages.PROCESS_ERROR);
+                return;
+            }
 
-                var partyKey = REDIS_KEY + ":party:" + party.partyId();
-                jedis.set(partyKey, updatedParty.toJson());
-                jedis.del(MEMBER_KEY + targetName.toLowerCase());
-
-                player.sendMessage("§eVocê expulsou " + account.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + " §eda party.");
-
-                networkClient.sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, PartyMessagePacket.create(party.partyId(),
-                    new ComponentBuilder()
-                        .simple(account.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + " §cfoi expulso da party.")
-                        .build(),
-                    true
-                ));
-            });
+            player.sendMessage("§eVocê expulsou " + account.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + " §eda party.");
+            networkClient.sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, PartyMessagePacket.create(party.partyId(),
+                StringUtils.formatString(String.format(PartyMessages.PARTY_MEMBER_KICKED, account.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL))),
+                true
+            ));
         });
     }
 
@@ -452,7 +413,7 @@ public class PartyService {
         var playerName = player.getName();
         var party = findPartyPlayer(playerName);
         if (party == null) {
-            StringUtils.send(player, "§cVocê não está em uma party.");
+            StringUtils.send(player, PartyMessages.NOT_IN_PARTY);
             return;
         }
 
@@ -460,7 +421,7 @@ public class PartyService {
             .thenComposeAsync(accounts -> platform.getPlayerAccountService().getPlayerAccount(party.leader().uniqueId())
                 .thenAcceptAsync(leaderAcc -> {
                     if (leaderAcc == null) {
-                        StringUtils.send(player, "<red>Ocorreu um erro ao processar sua solicitação. Tente novamente mais tarde.");
+                        StringUtils.send(player, PartyMessages.PROCESS_ERROR);
                         return;
                     }
 
@@ -501,20 +462,20 @@ public class PartyService {
     public void sendPartyChatMessage(Player player, String mensagem) {
         var party = findPartyPlayer(player.getName());
         if (party == null) {
-            StringUtils.send(player, "§cVocê não está em uma party.");
+            StringUtils.send(player, PartyMessages.NOT_IN_PARTY);
             return;
         }
 
         platform.getPlayerAccountService().getPlayerAccount(player.getUniqueId()).thenAcceptAsync(senderAccount -> {
             if (senderAccount == null) {
-                StringUtils.send(player, "<red>Ocorreu um erro ao processar sua solicitação. Tente novamente mais tarde.");
+                StringUtils.send(player, PartyMessages.PROCESS_ERROR);
                 return;
             }
 
             var formattedMessage = StringUtils.formatString("§d[Party] " + senderAccount.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + "§f: " + mensagem);
             networkClient.sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, PartyMessagePacket.create(party.partyId(), formattedMessage));
         }).exceptionally(ex -> {
-            StringUtils.send(player, "<red>Ocorreu um erro ao processar sua solicitação. Tente novamente mais tarde.");
+            StringUtils.send(player, PartyMessages.PROCESS_ERROR);
             log.error("Error fetching player account for party chat message: {}", ex.getMessage());
             return null;
         });
@@ -543,90 +504,83 @@ public class PartyService {
     public void openParty(Player player) {
         var party = findPartyPlayer(player.getName());
         if (party == null) {
-            StringUtils.send(player, "§cVocê não está em uma party.");
+            StringUtils.send(player, PartyMessages.NOT_IN_PARTY);
             return;
         }
 
-        if (!party.leader().name().equalsIgnoreCase(player.getName())) {
-            StringUtils.send(player, "§cApenas o líder da party pode alterar o status da party.");
+        if (requireLeader(player, party)) {
             return;
         }
 
         if (party.isOpen()) {
-            StringUtils.send(player, "§cA party já está aberta.");
+            StringUtils.send(player, PartyMessages.PARTY_ALREADY_OPEN);
             return;
         }
 
-        var updatedParty = party.setOpen();
-
         platform.getPlayerAccountService().getPlayerAccount(player.getUniqueId()).whenComplete((account, ex) -> {
             if (ex != null) {
-                StringUtils.send(player, "<red>Ocorreu um erro ao processar sua solicitação. Tente novamente mais tarde.");
-                log.error("Error fetching player account for opening party: {}", ex.getMessage());
+                sendError(player, "Error fetching player account for opening party", ex);
                 return;
             }
 
-            redisConnector.useJedis(jedis -> {
-                var partyKey = REDIS_KEY + ":party:" + party.partyId();
-                jedis.set(partyKey, updatedParty.toJson());
+            var updatedParty = partyRepository.setPartyOpen(party);
+            if (updatedParty == null) {
+                StringUtils.send(player, PartyMessages.PROCESS_ERROR);
+                return;
+            }
 
-                networkClient.sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, PartyMessagePacket.create(party.partyId(),
-                    StringUtils.formatString(account.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + " §etornou a party pública."),
-                    true
-                ));
+            networkClient.sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, PartyMessagePacket.create(party.partyId(),
+                StringUtils.formatString(String.format(PartyMessages.PARTY_OPENED, account.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL))),
+                true
+            ));
 
-                for (var onlinePlayer : Bukkit.getOnlinePlayers()) {
-                    if (party.members().stream().noneMatch(m -> m.name().equalsIgnoreCase(onlinePlayer.getName()))) {
-                        StringUtils.send(onlinePlayer, account.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + " §etornou a party pública. Utilize o comando /party entrar para entrar em sua party.");
-                    }
+            for (var onlinePlayer : Bukkit.getOnlinePlayers()) {
+                if (party.members().stream().noneMatch(m -> m.name().equalsIgnoreCase(onlinePlayer.getName()))) {
+                    StringUtils.send(onlinePlayer, account.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + " §etornou a party pública. Utilize o comando /party entrar para entrar em sua party.");
                 }
-            });
+            }
         });
     }
 
     public void closeParty(Player player) {
         var party = findPartyPlayer(player.getName());
         if (party == null) {
-            StringUtils.send(player, "§cVocê não está em uma party.");
+            StringUtils.send(player, PartyMessages.NOT_IN_PARTY);
             return;
         }
 
-        if (!party.leader().name().equalsIgnoreCase(player.getName())) {
-            StringUtils.send(player, "§cApenas o líder da party pode alterar o status da party.");
+        if (requireLeader(player, party)) {
             return;
         }
 
         if (!party.isOpen()) {
-            StringUtils.send(player, "§cA party já está fechada.");
+            StringUtils.send(player, PartyMessages.PARTY_ALREADY_CLOSED);
             return;
         }
 
-        var updatedParty = party.setClose();
-
         platform.getPlayerAccountService().getPlayerAccount(player.getUniqueId()).whenComplete((account, ex) -> {
             if (ex != null) {
-                StringUtils.send(player, "<red>Ocorreu um erro ao processar sua solicitação. Tente novamente mais tarde.");
-                log.error("Error fetching player account for closing party: {}", ex.getMessage());
+                sendError(player, "Error fetching player account for closing party", ex);
                 return;
             }
 
-            redisConnector.useJedis(jedis -> {
-                var partyKey = REDIS_KEY + ":party:" + party.partyId();
-                jedis.set(partyKey, updatedParty.toJson());
+            var updatedParty = partyRepository.setPartyClosed(party);
+            if (updatedParty == null) {
+                StringUtils.send(player, PartyMessages.PROCESS_ERROR);
+                return;
+            }
 
-                StringUtils.send(player, "§aVocê fechou a party para novos membros.");
-
-                networkClient.sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, PartyMessagePacket.create(party.partyId(),
-                    StringUtils.formatString(account.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + " §ctornou a party privada."),
-                    true
-                ));
-            });
+            StringUtils.send(player, "§aVocê fechou a party para novos membros.");
+            networkClient.sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, PartyMessagePacket.create(party.partyId(),
+                StringUtils.formatString(String.format(PartyMessages.PARTY_CLOSED_MSG, account.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL))),
+                true
+            ));
         });
     }
 
     public void joinInParty(Player player, String leaderName) {
         if (isPlayerInParty(player.getName())) {
-            StringUtils.send(player, "§cVocê já está em uma party. Saia da sua party atual para entrar em uma nova.");
+            StringUtils.send(player, PartyMessages.ALREADY_IN_PARTY);
             return;
         }
 
@@ -637,7 +591,7 @@ public class PartyService {
         }
 
         if (!party.isOpen()) {
-            StringUtils.send(player, "§cA party de " + leaderName + " §cestá fechada para novos membros.");
+            StringUtils.send(player, PartyMessages.PARTY_CLOSED);
             return;
         }
 
@@ -650,94 +604,57 @@ public class PartyService {
                 var playerAcc = playerAccount.join();
 
                 if (leaderAcc == null || playerAcc == null) {
-                    StringUtils.send(player, "<red>Ocorreu um erro ao processar sua solicitação. Tente novamente mais tarde.");
+                    StringUtils.send(player, PartyMessages.PROCESS_ERROR);
                     return;
                 }
 
                 if (party.members().size() >= getMaxPartySizeForGroup(leaderAcc)) {
-                    StringUtils.send(player, "§cA party de " + leaderAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + "§c está cheia.");
+                    StringUtils.send(player, PartyMessages.PARTY_FULL);
                     return;
                 }
 
                 var partyMember = new PartyMember(player.getName(), playerAcc.uniqueId());
-                var updatedParty = party.addMember(partyMember);
+                var updatedParty = partyRepository.addMemberToParty(party, partyMember);
 
-                redisConnector.useJedis(jedis -> {
-                    var partyKey = REDIS_KEY + ":party:" + party.partyId();
-                    jedis.set(partyKey, updatedParty.toJson());
-                    jedis.set(MEMBER_KEY + player.getName().toLowerCase(), party.partyId());
+                if (updatedParty == null) {
+                    StringUtils.send(player, PartyMessages.PROCESS_ERROR);
+                    return;
+                }
 
-                    StringUtils.send(player, "§aVocê entrou na party de " + leaderName + "§a.");
-
-                    networkClient.sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, PartyMessagePacket.create(party.partyId(),
-                        StringUtils.formatString(playerAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + " §aentrou na party."))
-                    );
-                });
+                StringUtils.send(player, "§aVocê entrou na party de " + leaderName + "§a.");
+                networkClient.sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, PartyMessagePacket.create(party.partyId(),
+                    StringUtils.formatString(String.format(PartyMessages.PARTY_MEMBER_JOINED, playerAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL))))
+                );
             });
     }
 
     private void validatePartyInviteExists(String senderName, Player player) {
         if (!partyInviteExists(senderName, player.getName())) {
-            StringUtils.send(player, "§cNão há um convite pendente de " + senderName + ".");
+            StringUtils.send(player, String.format(PartyMessages.NO_INVITE, senderName));
         }
     }
 
     private PartyData processPartyInviteAccept(PartyMember leader, PartyMember receiver) {
-        return redisConnector.supplyFromJedis(jedis -> {
-            var party = findOrCreateParty(leader);
-
-            var updateParty = party.addMember(receiver);
-
-            var partyKey = REDIS_KEY + ":party:" + party.partyId();
-            jedis.set(partyKey, updateParty.toJson());
-            jedis.set(MEMBER_KEY + receiver.name().toLowerCase(), party.partyId());
-            this.removePartyInvite(leader.name().toLowerCase(), receiver.name());
-
-            return party;
-        });
+        var party = findOrCreateParty(leader);
+        return partyRepository.addMemberToParty(party, receiver);
     }
 
     public PartyData findPartyPlayer(String playerName) {
-        return redisConnector.supplyFromJedis(jedis -> {
-            var partyId = jedis.get(MEMBER_KEY + playerName.toLowerCase());
-            if (partyId == null) {
-                return null;
-            }
-            return findPartyById(partyId);
-        });
+        return partyRepository.findPartyByPlayer(playerName);
     }
 
     private PartyData findPartyById(String partyId) {
-        return redisConnector.supplyFromJedis(jedis -> {
-            var partyKey = REDIS_KEY + ":party:" + partyId;
-            var partyData = jedis.get(partyKey);
-            return partyData != null ? PartyData.fromJson(partyData) : null;
-        });
+        return partyRepository.findPartyById(partyId);
     }
 
     private PartyData findOrCreateParty(PartyMember leader) {
-        var leaderName = leader.name();
-        var party = findPartyPlayer(leaderName);
-        if (party != null) {
-            return party;
-        }
-
-        var id = UUID.randomUUID().toString().substring(0, 6);
-        log.info("Creating new party. {}", id);
-        var newParty = new PartyData(id, leader, new HashSet<>(), false);
-        redisConnector.useJedis(jedis -> {
-            var partyKey = REDIS_KEY + ":party:" + newParty.partyId();
-            jedis.set(partyKey, newParty.toJson());
-
-            jedis.set(MEMBER_KEY + leaderName.toLowerCase(), newParty.partyId());
-        });
-        return newParty;
+        var party = partyRepository.findPartyByPlayer(leader.name());
+        if (party != null) return party;
+        return partyRepository.createNewParty(leader);
     }
 
     public boolean isPlayerInParty(String playerName) {
-        return redisConnector.supplyFromJedis(jedis ->
-            jedis.exists(MEMBER_KEY + playerName.toLowerCase())
-        );
+        return partyRepository.isPlayerInParty(playerName);
     }
 
     private int getMaxPartySizeForGroup(PlayerAccount account) {
@@ -748,5 +665,22 @@ public class PartyService {
             case CHAMPION -> 10;
             default -> 5;
         };
+    }
+
+    private boolean requireLeader(Player player, PartyData party) {
+        if (!isLeader(player, party)) {
+            StringUtils.send(player, PartyMessages.ONLY_LEADER);
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isLeader(Player player, PartyData party) {
+        return party == null || !party.leader().name().equalsIgnoreCase(player.getName());
+    }
+
+    private void sendError(Player player, String logMessage, Throwable ex) {
+        StringUtils.send(player, PartyMessages.PROCESS_ERROR);
+        log.error("{}: {}", logMessage, ex.getMessage());
     }
 }

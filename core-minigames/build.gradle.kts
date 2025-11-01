@@ -39,6 +39,7 @@ repositories {
 dependencies {
     compileOnly(project(":core-minecraft"))
     compileOnly(project(":core-sdk"))
+    compileOnly("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
     implementation("net.kyori:adventure-platform-bukkit:4.4.1")
     implementation("net.kyori:adventure-text-minimessage:4.24.0")
