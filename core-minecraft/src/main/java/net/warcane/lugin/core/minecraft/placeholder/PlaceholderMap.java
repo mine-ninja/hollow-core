@@ -35,6 +35,15 @@ public class PlaceholderMap {
         cachePattern(textPlaceholder.getTag());
     }
 
+    protected static TextPlaceholder getPlaceholderByTag(@NotNull String tag) {
+        for (TextPlaceholder placeholder : TEXT_PLACEHOLDERS) {
+            if (placeholder.getTag().equals(tag)) {
+                return placeholder;
+            }
+        }
+        return null;
+    }
+
     /**
      * Desregistra um placeholder de texto do sistema.
      * Remove o placeholder throwable seu pattern do cache.

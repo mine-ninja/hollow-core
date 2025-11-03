@@ -17,6 +17,7 @@ import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException
 import net.warcane.lugin.core.minecraft.compat.PAPICompat;
 import net.warcane.lugin.core.minecraft.compat.VaultCompat;
 import net.warcane.lugin.core.minecraft.menu.input.SignInputListener;
+import net.warcane.lugin.core.minecraft.placeholder.LuginPapiExpansion;
 import net.warcane.lugin.core.minecraft.plugin.SimplePlugin;
 import net.warcane.lugin.core.minecraft.punish.api.PunishManager;
 import net.warcane.lugin.core.minecraft.task.Tasks;
@@ -74,6 +75,7 @@ public class BukkitPlatformPlugin extends SimplePlugin {
         
         if (manager.isPluginEnabled("PlaceholderAPI")) {
             new PAPICompat(this, bukkitPlatform.getNameTagResolver()).register();
+            new LuginPapiExpansion().register();
         }
         if (manager.isPluginEnabled("Vault")) {
             VaultCompat.register(this);
