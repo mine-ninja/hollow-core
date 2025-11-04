@@ -6,8 +6,10 @@ import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonIgnore;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,6 +24,9 @@ public class MailItem {
     private final UUID mailId;
     private final String serverId;
     private String serializedContents;
+
+    public static final NamespacedKey MENU_KEY = new NamespacedKey("factions-essentials", "menu_item");
+
 
     @BsonIgnore
     private ItemStack[] contents;
@@ -46,11 +51,17 @@ public class MailItem {
     }
 
     @BsonIgnore
-    public ItemStack getDisplayItem() {
+    public ItemStack getDisplayItem(boolean newVersion) {
         if (contents.length == 0 || contents[0] == null) {
             return new ItemStack(Material.BARRIER);
         }
-        return contents[0];
+        ItemStack clone = contents[0].clone();
+        if (newVersion) {
+            clone.editMeta(meta -> {
+                meta.getPersistentDataContainer().set(MENU_KEY, PersistentDataType.BOOLEAN, true);
+            });
+        }
+        return clone;
     }
 
     @BsonIgnore

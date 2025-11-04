@@ -50,15 +50,19 @@ public class MailboxMenu extends SimplePaginationMenu<MailItem> {
         if (mailData == null) {
             return false;
         }
-        // TODO: Rodrigo da uma olhada, por algum motivo ele só insere o pagination se estiver async
-        Tasks.runAsync(() -> ctx.setPagination('x', mailData.getMails(), (player, mail) -> mail.getDisplayItem(), (mail, event) -> {
+
+
+        boolean runningOnNewVersions = BukkitPlatform.getInstance().isRunningOnNewVersions();
+
+
+        Tasks.runAsync(() -> ctx.setPagination('x', mailData.getMails(), (player, mail) -> mail.getDisplayItem(runningOnNewVersions), (mail, event) -> {
+            event.setCancelled(true);
             if (!isAdmin) return;
             repository.removeMailItem(mailData.getUniqueId(), mail.getMailId());
             StringUtils.send(event.getWhoClicked(), "<l-success>Item removido com sucesso da caixa de correio do jogador.");
             ctx.close();
         }));
 
-        boolean runningOnNewVersions = BukkitPlatform.getInstance().isRunningOnNewVersions();
 
         ctx.setItem('r', runningOnNewVersions ? getNewRedeemItem() : getOldRedeemItem(), (event) -> {
 
@@ -160,7 +164,7 @@ public class MailboxMenu extends SimplePaginationMenu<MailItem> {
             () -> () ->  {
                 for (MailItem mailItem : mailItems) {
                     for (ItemStack itemStack : mailItem.getContents()) {
-                        CoreProtect.log(player, "Resgatou item da caixa de correio: " + itemStack.getType().name() + " x" + itemStack.getAmount());
+                        CoreProtect.log(player, "[MailBox] Resgatou item da caixa de correio: " + itemStack.getType().name() + " x" + itemStack.getAmount());
                     }
                 }
             }
