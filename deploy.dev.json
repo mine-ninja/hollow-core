@@ -1,5 +1,5 @@
 {
-	"servers": ["dffdf5a9", "13065d42", "5379f4eb"],
+	"servers": ["dffdf5a9", "13065d42", "5379f4eb", "3590a1b0"],
 	"source": "core-minecraft/build/libs/core-minecraft.jar",
 	"target": "plugins/"
 }
