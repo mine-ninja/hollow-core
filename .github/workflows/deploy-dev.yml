@@ -11,6 +11,8 @@ on:
 
 jobs:
   build-and-deploy:
+    if: "!contains(github.event.head_commit.message, '[NO-CI]')"
+
     runs-on: ubuntu-latest
     name: Build and Deploy to Pterodactyl
     environment: ${{ github.event.inputs.env }}

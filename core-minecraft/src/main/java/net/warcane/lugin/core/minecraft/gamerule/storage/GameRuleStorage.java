@@ -9,6 +9,7 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
 import net.warcane.lugin.core.database.MongoDbConnector;
 import net.warcane.lugin.core.database.RedisConnector;
+import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.gamerule.CustomGameRule;
 import net.warcane.lugin.core.minecraft.gamerule.GameRuleRegistry;
 import net.warcane.lugin.core.network.NetworkClient;
@@ -16,6 +17,8 @@ import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.gamerule.GameRuleUpdatePacket;
 import net.warcane.lugin.core.util.property.Property;
 import org.bson.Document;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import redis.clients.jedis.params.SetParams;
 
 import lombok.extern.slf4j.Slf4j;
@@ -79,14 +82,12 @@ public class GameRuleStorage {
     private final RedisConnector redisConnector;
     private final NetworkClient networkClient;
     private final ExecutorService executorService;
-    private final String serverId;
     
     public GameRuleStorage(@NotNull NetworkClient networkClient, @NotNull ExecutorService executorService) {
         this.redisConnector = RedisConnector.getInstance();
         this.collection = MongoDbConnector.getInstance().getCollection(MONGO_COLLECTION, Document.class);
         this.networkClient = networkClient;
         this.executorService = executorService;
-        this.serverId = Property.get("SERVER_ID", "default");
     }
     
     /**
@@ -102,7 +103,7 @@ public class GameRuleStorage {
         final String scope = worldName != null ? worldName : GLOBAL_SCOPE;
         return CompletableFuture.supplyAsync(() -> {
             try {
-                final String redisKey = buildRedisKey(scope);
+                final String redisKey = buildScopeKey(scope);
                 final String cached = redisConnector.supplyFromJedis(jedis -> jedis.get(redisKey));
                 if (cached != null && !cached.isEmpty()) {
                     log.debug("Loaded game rules for scope {} from Redis cache", scope);
@@ -152,29 +153,35 @@ public class GameRuleStorage {
      */
     public CompletableFuture<Void> saveGameRule(@Nullable String worldName, @NotNull String ruleName, @NotNull Object value) {
         final String scope = worldName != null ? worldName : GLOBAL_SCOPE;
+        if (value instanceof Location location) {
+            value = location.getWorld().getName() + ";" + location.getX() + ";" + location.getY() + ";" + location.getZ();
+        }
+        
+        final Object finalValue = value;
         return CompletableFuture.runAsync(() -> {
             try {
-                final Document filter = new Document("_id", scope);
+                final String scopeKey = buildScopeKey(scope);
+                
+                final Document filter = new Document("_id", scopeKey);
                 final Document update = new Document("$set",
-                    new Document("rules." + ruleName, value)
+                    new Document("rules." + ruleName, finalValue)
                         .append("updatedAt", System.currentTimeMillis())
                 );
                 collection.updateOne(filter, update, new UpdateOptions().upsert(true));
                 
-                final String redisKey = buildRedisKey(scope);
-                final String valueJson = MAPPER.writeValueAsString(value);
+                final String valueJson = MAPPER.writeValueAsString(finalValue);
                 
                 redisConnector.useJedis(jedis -> {
-                    Object result = jedis.eval(LUA_UPDATE_RULE, 1, redisKey, ruleName, valueJson, "3600");
+                    Object result = jedis.eval(LUA_UPDATE_RULE, 1, scopeKey, ruleName, valueJson, "3600");
                     if (result != null && ((Long) result) == 0L) {
                         try {
-                            log.debug("Cache for scope {} doesn't exist, creating with rule {}", scope, ruleName);
+                            log.debug("Cache for scope {} doesn't exist, creating with rule {}", scopeKey, ruleName);
                             
                             Map<String, Object> newCache = new HashMap<>();
-                            newCache.put(ruleName, value);
+                            newCache.put(ruleName, finalValue);
                             
                             String cacheJson = MAPPER.writeValueAsString(newCache);
-                            jedis.set(redisKey, cacheJson, SetParams.setParams().ex(3600));
+                            jedis.set(scopeKey, cacheJson, SetParams.setParams().ex(3600));
                         } catch (JsonProcessingException e) {
                             log.error("Failed to serialize game rule {} for Redis cache: {}", ruleName, e.getMessage(), e);
                             throw new RuntimeException(e);
@@ -182,8 +189,8 @@ public class GameRuleStorage {
                     }
                 });
                 
-                networkClient.sendNetworkPacket(NetworkChannel.OPERATION, new GameRuleUpdatePacket(worldName, ruleName, value));
-                log.debug("Saved game rule {} = {} for scope {} and published to network", ruleName, value, scope);
+                networkClient.sendNetworkPacket(NetworkChannel.OPERATION, new GameRuleUpdatePacket(worldName, ruleName, finalValue));
+                log.debug("Saved game rule {} = {} for scope {} and published to network", ruleName, finalValue, scopeKey);
             } catch (Exception e) {
                 log.error("Failed to save game rule {} for scope {}: {}", ruleName, scope, e.getMessage(), e);
                 throw new RuntimeException(e);
@@ -204,21 +211,21 @@ public class GameRuleStorage {
         final String scope = worldName != null ? worldName : GLOBAL_SCOPE;
         return CompletableFuture.runAsync(() -> {
             try {
-                final Document filter = new Document("_id", scope);
+                final String scopeKey = buildScopeKey(scope);
+                
+                final Document filter = new Document("_id", scopeKey);
                 final Document update = new Document("$unset", new Document("rules." + ruleName, ""));
                 collection.updateOne(filter, update);
                 
-                final String redisKey = buildRedisKey(scope);
-                
                 redisConnector.useJedis(jedis -> {
-                    Object result = jedis.eval(LUA_REMOVE_RULE, 1, redisKey, ruleName, "3600");
+                    Object result = jedis.eval(LUA_REMOVE_RULE, 1, scopeKey, ruleName, "3600");
                     if (result != null && ((Long) result) == 0L) {
-                        jedis.del(redisKey);
+                        jedis.del(scopeKey);
                     }
                 });
                 
                 networkClient.sendNetworkPacket(NetworkChannel.OPERATION, new GameRuleUpdatePacket(worldName, ruleName, null));
-                log.debug("Removed game rule {} for scope {}", ruleName, scope);
+                log.debug("Removed game rule {} for scope {}", ruleName, scopeKey);
             } catch (Exception e) {
                 log.error("Failed to remove game rule {} for scope {}: {}", ruleName, scope, e.getMessage(), e);
                 throw new RuntimeException(e);
@@ -234,11 +241,11 @@ public class GameRuleStorage {
      * @param scope the scope (_global_ or world name)
      * @return the Redis key
      */
-    private String buildRedisKey(@NotNull String scope) {
+    private String buildScopeKey(@NotNull String scope) {
         if (GLOBAL_SCOPE.equals(scope)) {
             return REDIS_KEY_PREFIX + SHARED_PREFIX + ":" + scope;
         } else {
-            return REDIS_KEY_PREFIX + serverId + ":" + scope;
+            return REDIS_KEY_PREFIX + BukkitPlatform.getInstance().getId() + ":" + scope;
         }
     }
     
@@ -267,16 +274,30 @@ public class GameRuleStorage {
                 } else if (value instanceof String) {
                     return Boolean.parseBoolean((String) value);
                 }
-            } else if (type == Integer.class && value instanceof Number) {
+            }
+            else if (type == Integer.class && value instanceof Number) {
                 return ((Number) value).intValue();
-            } else if (type == Double.class && value instanceof Number) {
+            }
+            else if (type == Double.class && value instanceof Number) {
                 return ((Number) value).doubleValue();
-            } else if (type == Long.class && value instanceof Number) {
+            }
+            else if (type == Long.class && value instanceof Number) {
                 return ((Number) value).longValue();
-            } else if (type == Float.class && value instanceof Number) {
+            }
+            else if (type == Float.class && value instanceof Number) {
                 return ((Number) value).floatValue();
-            } else if (type == String.class) {
+            }
+            else if (type == String.class) {
                 return value.toString();
+            }
+            else if (type == Location.class) {
+                String[] split = ((String) value).split(";");
+                return new Location(
+                    Bukkit.getWorld(split[0]),
+                    Double.parseDouble(split[1]),
+                    Double.parseDouble(split[2]),
+                    Double.parseDouble(split[3])
+                );
             }
         } catch (Exception e) {
             log.warn("Failed to parse value {} for game rule {}, using raw value", value, gameRule.name(), e);

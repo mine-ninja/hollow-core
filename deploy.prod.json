@@ -1,5 +1,5 @@
 {
-	"servers": ["e24387bc", "7fc5f572", "fe3d4847", "1ade222a", "8aa86c9d", "6e03102e"],
-	"source": "core-minecraft/build/libs/core-minecraft-dev-all.jar",
+	"servers": ["e24387bc", "7fc5f572", "fe3d4847", "1ade222a", "8aa86c9d", "6e03102e", "4e75ed8a", "42330d62", "72a6bef9", "bad9aae6", "4624a06c", "29af9c07", "4f880df6"],
+	"source": "core-minecraft/build/libs/core-minecraft.jar",
 	"target": "plugins/"
 }

@@ -10,8 +10,13 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.Style;
 import net.kyori.adventure.text.format.TextColor;
+import net.warcane.lugin.core.AbstractPlatform;
+import net.warcane.lugin.core.Platform;
+import net.warcane.lugin.core.group.GroupPermissionService;
+import net.warcane.lugin.core.group.GroupPermissionSet;
 import net.warcane.lugin.core.group.PlayerGroup;
 import net.warcane.lugin.core.player.account.data.ScopedData;
+import net.warcane.lugin.core.player.permissions.PermissionGraph;
 import net.warcane.lugin.core.player.permissions.PlayerPermission;
 import net.warcane.lugin.core.player.subscription.PlayerGroupSubscription;
 import net.warcane.lugin.core.player.subscription.SubscriptionCategoryType;
@@ -209,6 +214,46 @@ public record PlayerAccount(
         } catch (Exception e) {
             throw new IllegalStateException("Erro ao criar assinatura: " + e.getMessage(), e);
         }
+    }
+    
+    @JsonIgnore
+    public boolean hasPermission(String permission) {
+        for (var playerPermission : this.permissions) {
+            if (playerPermission.isExpired()) continue;
+            
+            String perm = playerPermission.permission();
+            if (perm.equalsIgnoreCase("*") || perm.equalsIgnoreCase(permission)) {
+                return true;
+            }
+        }
+        
+        GroupPermissionService groupService = AbstractPlatform.getInstance().getGroupPermissionService();
+        for (PlayerGroupSubscription subscription : getSubscriptions(SubscriptionCategoryType.GLOBAL)) {
+            final var group = subscription.group();
+            
+            final var permissionSet = groupService.getCachedPermissionsForGroupOrThrow(group);
+            if (permissionSet.hasPermission(permission) || permissionSet.hasPermission("*")) return true;
+            
+            
+            final PermissionGraph graph = PermissionGraph.getInstance();
+            final var highest = graph.findHighestPermissionNode(permission);
+            if (highest != null && permissionSet.hasPermission(highest)) {
+                return true;
+            }
+            
+            for (var subPermission : graph.getHigherPermissions(permission)) {
+                if (permissionSet.hasPermission(subPermission)) {
+                    return true;
+                }
+            }
+        }
+        
+        GroupPermissionSet defaultGroupPerms = groupService.getCachedPermissionsForGroup(PlayerGroup.DEFAULT);
+        if (defaultGroupPerms != null) {
+            return defaultGroupPerms.hasPermission(permission) || defaultGroupPerms.hasPermission("*");
+        }
+        
+        return false;
     }
     
     @JsonIgnore

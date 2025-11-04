@@ -20,6 +20,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -62,15 +63,26 @@ public class TeleportManager {
     public boolean hasPendingRequest(UUID userId) {
         return pendingRequests.containsKey(userId);
     }
-
+    
     public boolean connectToGameServer(
         Player player, ServerCategoryType categoryType,
         ServerSubCategoryType subCategory, ConnectionReason reason,
-        String fallbackMessage) {
-        var gameServer = platform.getGameServerService().queryServersByCategoryType(categoryType)
-            .stream()
-            .filter(server -> server.subCategory() == subCategory)
-            .min(Comparator.comparing(server -> server.serverPlayers().online()));
+        String fallbackMessage
+    ) {
+        boolean seen = false;
+        GameServer best = null;
+        
+        Comparator<GameServer> comparator = Comparator.comparing(server -> server.serverPlayers().online());
+        for (GameServer server1 : platform.getGameServerService().queryServersByCategoryType(categoryType)) {
+            if (server1.subCategory() == subCategory) {
+                if (!seen || comparator.compare(server1, best) < 0) {
+                    seen = true;
+                    best = server1;
+                }
+            }
+        }
+        
+        var gameServer = seen ? Optional.of(best) : Optional.<GameServer>empty();
         if (gameServer.isEmpty()) return false;
 
         sendConnectionRequest(ConnectionHandshakePacket.toServer(

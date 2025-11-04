@@ -36,6 +36,11 @@ repositories {
             password = repositoryPassword
         }
     }
+
+    maven {
+        name = "playpro-repo-core-protect"
+        url = uri("https://maven.playpro.com")
+    }
 }
 
 dependencies {
@@ -56,6 +61,8 @@ dependencies {
     compileOnlyApi("com.github.retrooper:packetevents-spigot:2.9.5")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7") { isTransitive = false }
     compileOnly("me.clip:placeholderapi:2.11.6") { isTransitive = false }
+
+    compileOnly("net.coreprotect:coreprotect:22.4")
 }
 
 java {
