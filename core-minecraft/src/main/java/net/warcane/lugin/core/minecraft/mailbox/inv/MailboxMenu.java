@@ -146,7 +146,7 @@ public class MailboxMenu extends SimplePaginationMenu<MailItem> {
     private ItemStack getNewRedeemItem() {
         ItemStack redeemItem = new ItemStack(Material.ECHO_SHARD);
         redeemItem.editMeta(meta -> {
-            meta.setCustomModelData(44);
+            meta.setCustomModelData(0);
             meta.displayName(StringUtils.formItemName("<l-green>RESGATAR"));
         });
         return redeemItem;
