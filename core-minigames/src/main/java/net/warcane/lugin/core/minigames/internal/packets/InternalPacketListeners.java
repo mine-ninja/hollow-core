@@ -7,7 +7,7 @@ import net.warcane.lugin.core.network.packet.impl.party.*;
 
 @Slf4j
 public record InternalPacketListeners(MinigamesPlatform platform) {
-    public void setup() {
+    public void internalPacketListeners() {
         final var networkClient = platform.getNetworkClient();
         networkClient.registerPacketListener(PartyExpiredInvitePacket.class, new PartyExpiredInvitePacketListener());
         networkClient.registerPacketListener(PartyInvitePacket.class, new PartyInvitePacketListener());

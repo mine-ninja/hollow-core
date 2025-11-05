@@ -8,6 +8,7 @@ import net.warcane.lugin.core.Platform;
 import net.warcane.lugin.core.minecraft.event.tick.AsyncServerTickEvent;
 import net.warcane.lugin.core.minecraft.util.message.AdventureFormatters;
 import net.warcane.lugin.core.minigames.internal.command.InternalCommandManager;
+import net.warcane.lugin.core.minigames.internal.listeners.InternalListener;
 import net.warcane.lugin.core.minigames.internal.packets.InternalPacketListeners;
 import net.warcane.lugin.core.minigames.party.PartyService;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
@@ -42,6 +43,7 @@ public class MinigamesPlatform extends AbstractPlatform implements MinecraftServ
 
     private final InternalCommandManager internalCommandManager;
     private final InternalPacketListeners internalPacketListeners;
+    private final InternalListener internalListeners;
 
     private final PartyService partyService;
 
@@ -54,6 +56,7 @@ public class MinigamesPlatform extends AbstractPlatform implements MinecraftServ
         this.serverSubCategoryType = Property.getEnum("SERVER_SUB_CATEGORY", ServerSubCategoryType.class, ServerSubCategoryType.NONE);
         this.internalCommandManager = new InternalCommandManager(this);
         this.internalPacketListeners = new InternalPacketListeners(this);
+        this.internalListeners = new InternalListener(this, plugin);
         this.partyService = new PartyService(this);
     }
 
@@ -99,7 +102,8 @@ public class MinigamesPlatform extends AbstractPlatform implements MinecraftServ
         log.info("Initializing Minigames Platform with category: {}", serverCategoryType.getDisplayName());
 
         internalCommandManager.registerInternalCommands();
-        internalPacketListeners.setup();
+        internalPacketListeners.internalPacketListeners();
+        internalListeners.registerListeners();
 
         networkClient.subscribeToChannels(channels);
 

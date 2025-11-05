@@ -11,13 +11,15 @@ public final class PartyMessages {
     public static final String PARTY_ALREADY_OPEN = "§cA party já está aberta.";
     public static final String PARTY_ALREADY_CLOSED = "§cA party já está fechada.";
     public static final String PARTY_CLOSED = "§cA party de %s §cestá fechada para novos membros.";
-    public static final String PARTY_DELETED = "§cVocê deletou a party.";
-    public static final String PARTY_LEADER_CANNOT_LEAVE = "§cO líder da party não pode sair da party. Transfira a liderança ou delete a party.";
+    public static final String PARTY_CLOSED_MSG = "%s §ctornou a party privada.";
+    public static final String PARTY_DELETED = "§cVocê excluiu a party.";
+    public static final String PARTY_LEADER_CANNOT_LEAVE = "§cO líder da party não pode sair da party. Transfira a liderança ou exclua a party.";
     public static final String PARTY_MEMBER_LEFT = "%s §csaiu da party.";
     public static final String PARTY_MEMBER_KICKED = "%s §cfoi expulso da party.";
     public static final String PARTY_MEMBER_JOINED = "%s §aentrou na party.";
     public static final String PARTY_LEADER_TRANSFERRED = "%s §eé o novo líder da party.";
     public static final String PARTY_OPENED = "%s §etornou a party pública.";
-    public static final String PARTY_CLOSED_MSG = "%s §ctornou a party privada.";
+    public static final String PARTY_LEADER_OFFLINE_WARNING = "§cO líder party está offline. A party será excluída em 2 minutos se ele não retornar.";
+    public static final String PARTY_DELETED_LEADER_OFFLINE = "§cA party foi excluída pois o líder está offline.";
 }
 

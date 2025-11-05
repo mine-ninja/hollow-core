@@ -16,7 +16,6 @@ public class PartyCommand extends SimpleCommand {
     public PartyCommand(MinigamesPlatform minigamesPlatform) {
         super("party");
         this.platform = minigamesPlatform;
-
         subCommands = List.of(
             new PartyInviteSubcommand(platform),
             new PartyAcceptSubcommand(platform),
