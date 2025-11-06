@@ -9,8 +9,10 @@ public class PartyLeaderMessagePacketListener implements PacketListener<PartyLea
     @Override
     public void onReceivePacket(@NotNull PartyLeaderMessagePacket packet, @NotNull Headers headers) {
         var player = Bukkit.getPlayer(packet.leaderUUID());
-        if (player != null) {
-            player.sendMessage(packet.message());
+        if (player == null) {
+            return;
         }
+
+        player.sendMessage(packet.message());
     }
 }

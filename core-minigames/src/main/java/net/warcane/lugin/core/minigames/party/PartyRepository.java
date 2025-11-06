@@ -24,7 +24,6 @@ public class PartyRepository {
         this.redisConnector = redisConnector;
     }
 
-
     private void updatePartyCache(PartyData party, PartyData oldParty) {
         var oldNames = new HashSet<String>();
         oldNames.add(oldParty.leader().name().toLowerCase());

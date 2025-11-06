@@ -5,7 +5,6 @@ import net.warcane.lugin.core.network.packet.impl.party.PartyMessagePacket;
 import net.warcane.lugin.core.network.packet.listener.PacketListener;
 import org.jetbrains.annotations.NotNull;
 
-
 public record PartyMessagePacketListener(MinigamesPlatform platform) implements PacketListener<PartyMessagePacket> {
     @Override
     public void onReceivePacket(@NotNull PartyMessagePacket packet, @NotNull Headers headers) {

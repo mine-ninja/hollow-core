@@ -125,7 +125,7 @@ public class TeleportManager {
         sendConnectionRequest(player, () -> {
             if (targetPlayer != null && targetPlayer.isOnline()) {
                 player.teleport(targetPlayer.getLocation());
-                StringUtils.send(player, "<l-green>" + fallbackMessage);
+                StringUtils.send(player, "<green>" + fallbackMessage);
                 return null;
             }
 
@@ -186,8 +186,6 @@ public class TeleportManager {
             RemoteServerLocation.z(),
             RemoteServerLocation.yaw(),
             RemoteServerLocation.pitch()));
-        if (fallbackMessage != null && !fallbackMessage.isEmpty()) {
-            StringUtils.send(player, "<l-green>" + fallbackMessage);
-        }
+        StringUtils.send(player, "<green>" + fallbackMessage);
     }
 }

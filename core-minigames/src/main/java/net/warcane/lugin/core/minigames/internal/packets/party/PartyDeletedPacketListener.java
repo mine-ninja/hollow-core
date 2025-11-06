@@ -10,9 +10,11 @@ public class PartyDeletedPacketListener implements PacketListener<PartyDeletedPa
     public void onReceivePacket(@NotNull PartyDeletedPacket packet, @NotNull Headers headers) {
         for (var name : packet.memberNames()) {
             var player = Bukkit.getPlayer(name);
-            if (player != null) {
-                player.sendMessage(packet.message());
+            if (player == null) {
+                return;
             }
+
+            player.sendMessage(packet.message());
         }
     }
 }

@@ -8,5 +8,5 @@ import java.util.UUID;
 public record PartyMember(
     @JsonProperty("n") String name,
     @JsonProperty("ui") UUID uniqueId,
-    @JsonProperty("r") String formattedDisplayName
+    @JsonProperty("fd") String formattedDisplayName
 ) implements Serializable { }
