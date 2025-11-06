@@ -74,7 +74,6 @@ public class PartyService {
                                 if (idStr[2].equalsIgnoreCase("invite")) {
                                     var senderName = idStr[3];
                                     var receiverName = idStr[4];
-//                                    party:exp:invite:srsheep_:bytcode
                                     Tasks.runSync(() -> processExpiredInviteParty(senderName, receiverName));
                                 }
 
@@ -159,12 +158,12 @@ public class PartyService {
 
                 networkClient.sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, new PartyExpiredInvitePacket(
                     senderAcc.uniqueId(),
-                    "§cO pedido de party enviado para " + senderAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + " §cexpirou."
+                    "\n§cO pedido de party enviado para " + senderAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + " §cexpirou.\n"
                 ));
 
                 networkClient.sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, new PartyExpiredInvitePacket(
                     receiverAcc.uniqueId(),
-                    "§eO pedido de party de " + receiverAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + " §eexpirou."
+                    "\n§eO pedido de party de " + receiverAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + " §eexpirou.\n"
                 ));
             });
     }
@@ -206,11 +205,13 @@ public class PartyService {
 
                 partyRepository.removePartyInvite(senderName, player.getName());
 
-                StringUtils.send(player, "§aVocê aceitou o pedido de party de " + senderAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + "§a.");
+                StringUtils.send(player, "\n§aVocê aceitou o pedido de party de " + senderAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + "§a.\n");
 
                 var targetBukkitPlayer = Bukkit.getPlayer(senderAcc.uniqueId());
                 var message = new ComponentBuilder()
-                    .simple(receiverAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + " §aaceitou seu pedido de party!");
+                    .newLine()
+                    .simple(receiverAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + " §aaceitou seu pedido de party!")
+                    .newLine();
 
                 if (targetBukkitPlayer != null) {
                     message.send(audiences.player(targetBukkitPlayer));
@@ -243,16 +244,16 @@ public class PartyService {
 
                 partyRepository.removePartyInvite(senderName, receiver.getName());
 
-                StringUtils.send(receiver, "§cVocê recusou o pedido de party de " + senderAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + "§c.");
+                StringUtils.send(receiver, "\n§cVocê recusou o pedido de party de " + senderAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + "§c.\n");
 
                 var targetBukkitPlayer = Bukkit.getPlayer(senderAcc.uniqueId());
 
                 if (targetBukkitPlayer != null) {
-                    StringUtils.send(targetBukkitPlayer, receiverAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + " §crecusou seu pedido de party!");
+                    StringUtils.send(targetBukkitPlayer, "\n" + receiverAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + " §crecusou seu pedido de party!\n");
                 } else {
                     networkClient.sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, new PartyLeaderMessagePacket(
                         senderAcc.uniqueId(),
-                        receiverAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + " §crecusou seu pedido de party!"
+                        "\n" + receiverAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + " §crecusou seu pedido de party!\n"
                     ));
                 }
             });
@@ -272,7 +273,7 @@ public class PartyService {
 
         var targetMember = party.members().stream().filter(member -> member.name().equalsIgnoreCase(targetName)).findFirst().orElse(null);
         if (targetMember == null) {
-            StringUtils.send(player, "§cO jogador " + targetName + " §cnão está na sua party.");
+            StringUtils.send(player, "\n§cO jogador " + targetName + " §cnão está na sua party.\n");
             return;
         }
 
@@ -282,7 +283,7 @@ public class PartyService {
             return;
         }
 
-        player.sendMessage("§aVocê transferiu a liderança da party para " + targetMember.formattedDisplayName() + "§a.");
+        player.sendMessage("\n§aVocê transferiu a liderança da party para " + targetMember.formattedDisplayName() + "§a.\n");
         networkClient.sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, PartyMessagePacket.create(party.partyId(),
             StringUtils.formatString(String.format(PartyMessages.PARTY_LEADER_TRANSFERRED, targetMember.formattedDisplayName()))
         ));
@@ -335,7 +336,7 @@ public class PartyService {
 
         partyRepository.deleteParty(party);
         StringUtils.send(player, PartyMessages.PARTY_DELETED);
-        var message = party.leader().formattedDisplayName() + " §cdesfez a party.";
+        var message = "\n"+ party.leader().formattedDisplayName() + " §cdesfez a party.\n";
         var memberNames = party.members().stream().map(PartyMember::name).toList();
         var memberNamesNotOnlineThisServer = new HashSet<String>();
 
@@ -507,7 +508,7 @@ public class PartyService {
 
         for (var onlinePlayer : Bukkit.getOnlinePlayers()) {
             if (party.members().stream().noneMatch(m -> m.name().equalsIgnoreCase(onlinePlayer.getName()))) {
-                StringUtils.send(onlinePlayer, party.leader().formattedDisplayName() + " §etornou a party pública. Utilize o comando /party entrar para entrar em sua party.");
+                StringUtils.send(onlinePlayer, "\n" + party.leader().formattedDisplayName() + " §etornou a party pública. Utilize o comando /party entrar para entrar em sua party.\n");
             }
         }
     }

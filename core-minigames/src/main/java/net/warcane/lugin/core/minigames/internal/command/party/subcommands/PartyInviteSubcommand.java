@@ -29,9 +29,6 @@ public class PartyInviteSubcommand extends SimpleSubCommand {
 
     @Override
     protected void performSubCommand(CommandContext ctx) throws CommandFailedException {
-        //TODO: Adicionar cooldown para evitar spam de convites.
-        //TODO: Verificar se o jogador alvo está com convites bloqueados nas configurações de privacidade.
-
         var player = ctx.getSenderAsPlayer();
         var targetName = ctx.getRawArgOrThrow(0, "§cVocê deve informar o nome de um jogador para convidar.");
         if (player.getName().equalsIgnoreCase(targetName)) {
@@ -75,19 +72,23 @@ public class PartyInviteSubcommand extends SimpleSubCommand {
                 }
 
                 new ComponentBuilder()
+                    .newLine()
                     .simple("§eVocê enviou um pedido de party para " + targetAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + "§e.")
                     .newLine()
                     .simple("§eEle tem 60 segundos para aceitar ou recusar.")
+                    .newLine()
                     .send(MinigamesPlatformPlugin.getInstance().adventure().player(player));
 
                 var targetBukkitPlayer = Bukkit.getPlayer(targetAcc.uniqueId());
                 var inviteMessage = new ComponentBuilder()
+                    .newLine()
                     .simple(senderAcc.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL) + " §econvidou você para a party!")
                     .newLine()
                     .simple("§eClique ")
                     .actionHover("§a§lAQUI §epara aceitar o convite ou ", ClickEvent.runCommand("/party aceitar " + player.getName()), "<l-gray>Clique para aceitar o convite da party.")
                     .actionHover("§c§lAQUI", ClickEvent.runCommand("/party negar " + player.getName()), "<l-gray>Clique para recusar o convite da party.")
-                    .simple(" §epara recusar.");
+                    .simple(" §epara recusar.")
+                    .newLine();
                 if (targetBukkitPlayer != null) {
                     inviteMessage.send(MinigamesPlatformPlugin.getInstance().adventure().player(targetBukkitPlayer));
                 } else {
