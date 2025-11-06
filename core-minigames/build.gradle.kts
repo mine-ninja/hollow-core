@@ -1,8 +1,12 @@
 plugins {
     `java-library`
     id("com.gradleup.shadow") version ("9.0.0-rc1")
-    id("io.papermc.paperweight.userdev") version ("1.7.1")
+    id("io.papermc.paperweight.userdev") version "2.0.0-beta.19"
     id("xyz.jpenilla.run-paper") version "2.3.1"
+}
+
+base {
+    archivesName.set("core-minigames")
 }
 
 repositories {
@@ -33,7 +37,13 @@ repositories {
 }
 
 dependencies {
-    api(project(":core-minecraft"))
+    compileOnly(project(":core-minecraft"))
+    compileOnly(project(":core-sdk"))
+    compileOnly("com.github.ben-manes.caffeine:caffeine:3.1.8")
+
+    implementation("net.kyori:adventure-platform-bukkit:4.4.1")
+    implementation("net.kyori:adventure-text-minimessage:4.24.0")
+
     paperweight.paperDevBundle("1.21-R0.1-SNAPSHOT")
 }
 
@@ -58,12 +68,33 @@ tasks.withType(xyz.jpenilla.runtask.task.AbstractRun::class) {
     jvmArgs("-XX:+AllowEnhancedClassRedefinition")
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
+
 tasks.shadowJar {
     archiveBaseName.set("core-minigames")
+
+    archiveClassifier.set("")
+    archiveVersion.set("")
     mergeServiceFiles()
     minimize()
 }
 
 tasks.build {
     dependsOn(tasks.shadowJar)
+}
+
+tasks.processResources {
+    val props = mapOf("version" to project.version)
+    inputs.properties(props)
+    filteringCharset = "UTF-8"
+    filesMatching("plugin.yml") {
+        expand(props)
+    }
 }
