@@ -1,5 +1,6 @@
 package net.warcane.lugin.core.punish.utils;
 
+import net.warcane.lugin.core.group.PlayerGroup;
 import net.warcane.lugin.core.punish.data.PunishTime;
 import net.warcane.lugin.core.punish.data.PunishedDTO;
 import net.warcane.lugin.core.punish.data.PunishmentType;
@@ -73,10 +74,10 @@ public class MessageUtils {
 
     public static String getFormattedPermission(String permission) {
         return switch (permission) {
-            case "lugin.helper" -> "<l-green>Ajudante";
-            case "lugin.moderator" -> "<l-green>Moderador";
-            case "lugin.admin" -> "<red>Admin";
-            case "lugin.gerente" -> "<l-red>Gerente";
+            case "lugin.helper" -> PlayerGroup.HELPER.getColoredDisplayName();
+            case "lugin.moderator" -> PlayerGroup.MODERATOR.getColoredDisplayName();
+            case "lugin.admin" -> PlayerGroup.ADMIN.getColoredDisplayName();
+            case "lugin.gerente" -> PlayerGroup.MANAGER.getColoredDisplayName();
             default -> permission;
         };
     }

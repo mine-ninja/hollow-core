@@ -72,7 +72,7 @@ public class RevokeManager {
                     "/revogar " + punishment.getId() + " " + value.name() + " ",
                     "<l-yellow>" + value.displayName, "<l-white>" + value.lore,
                     "",
-                "<l-white>Grupo mínimo: <l-green>" + MessageUtils.getFormattedPermission(value.permission));
+                "§fGrupo mínimo: " + MessageUtils.getFormattedPermission(value.permission));
             msg.newLine();
         }
 
@@ -92,7 +92,7 @@ public class RevokeManager {
 
         PunishManager.get().getPunishLogger().logRevoke(punishment, player.getName());
 
-        StringUtils.send(audience,"<l-confirm>Punição revogada com sucesso!");
+        StringUtils.send(audience," §aPunição revogada com sucesso!");
     }
 
 
@@ -138,7 +138,8 @@ public class RevokeManager {
         WRONG_APPLY("Punição aplicada incorretamente", "Utilize quando a punição for aplicada incorretamente.", "lugin.helper"),
         DUPLICATED("Punição duplicada", "Utilize quando já houver uma punição ativa por esse mesmo motivo.", "lugin.helper"),
         ACCEPTED("Revisão aceita", "Após uma análise da supervisão, foi constatado que a punição foi aplicada indevidamente.", "lugin.admin"),
-        NONE("Indefinido", "Nenhum motivo selecionado.", "");
+        NONE("Indefinido", "Nenhum motivo selecionado.", ""),
+        UNBAN("Unban adquirido", "Jogador adquiriu unban na loja", "lugin.gerente"),;
 
         private final String displayName;
         private final String lore;

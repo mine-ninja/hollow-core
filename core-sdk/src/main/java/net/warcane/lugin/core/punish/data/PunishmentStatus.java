@@ -9,7 +9,7 @@ import lombok.Getter;
 public enum PunishmentStatus {
 
     ACTIVE("Ativa", 'a', "<l-green>"),
-    REVOKED("Revogada", '8', "<l-gray>"),
+    REVOKED("Revogada", '7', "<l-gray>"),
     EXPIRED("Finalizada", 'c', "<l-red>");
     // TODO: Pendente status, fazer quando meialu voltar
 

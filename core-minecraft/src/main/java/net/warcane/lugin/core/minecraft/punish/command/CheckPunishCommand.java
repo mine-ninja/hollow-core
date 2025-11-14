@@ -81,7 +81,7 @@ public class CheckPunishCommand extends SimpleCommand {
                 "<l-gold>Duração: <l-gray>" + punishmentTimeType.a().getTitle(),
                 "<l-gold>Aplicada em: <l-gray>" + punishment.getAppliedAtFormatted(),
                 "<l-gold>Fim: <l-gray>" + punishment.getExpiresAtFormatted(),
-                "<l-gold>Status: <l-gray>" + punishment.getStatus().getModernColor() + punishment.getStatus().getTitle()
+                "§6Status: §" + punishment.getStatus().getColor() + punishment.getStatus().getTitle()
             ));
 
             if (punishment.getStatus() == PunishmentStatus.REVOKED) {
@@ -95,7 +95,7 @@ public class CheckPunishCommand extends SimpleCommand {
                 ));
             }
 
-            msg.hover(" <l-gray>• " + punishment.getStatus().getModernColor() + info.title(), lore.toArray(new String[0]));
+            msg.hover(" §7• §" + punishment.getStatus().getColor() + info.title(), lore.toArray(new String[0]));
 
             if (!punishment.getEvidence().startsWith("Não")) {
                 msg.actionHover(" <l-white>[Prova]", ClickEvent.openUrl(punishment.getEvidence()), "<l-gray>Clique para ver a prova.");
@@ -112,7 +112,7 @@ public class CheckPunishCommand extends SimpleCommand {
 
         msg.newLine()
             .simple("<l-yellow>Legenda: ")
-            .hover("<l-green>⬛ Ativa ", "<l-gray>O jogador está cumprindo o tempo da punição ainda, portanto, ela está ativa.")
+            .hover("§a⬛ Ativa ", "<l-gray>O jogador está cumprindo o tempo da punição ainda, portanto, ela está ativa.")
             .hover("<l-yellow>⬛ Pendente ", "<l-gray>O jogador ainda não entrou no servidor após a aplicação da punição, portanto, ela está pendente.")
             .hover("<l-red>⬛ Finalizada ", "<l-gray>O jogador já cumpriu o tempo da punição, portanto, ela já foi finalizada.")
             .hover("<l-gray>⬛ Revogada ", "<l-gray>A punição foi revogada por algum motivo.")

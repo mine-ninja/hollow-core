@@ -53,8 +53,8 @@ public record PunishMessagePubSub(UUID userKicked, String playerNick,
         list.add(" \n");
 
         if (punishment.getStatus().equals(PunishmentStatus.REVOKED)) {
-            list.add(" §e* A punição de " + playerNick + " foi revogada.");
-            list.add("\n §e* Motivo: " + punishment.getRevokeReason());
+            list.add("\n §e* A punição de " + playerNick + " foi revogada.");
+            list.add(" §e* Motivo: " + punishment.getRevokeReason());
             list.add("\n ");
             Bukkit.getOnlinePlayers().stream()
                 .filter((player) -> player.hasPermission(permission))
