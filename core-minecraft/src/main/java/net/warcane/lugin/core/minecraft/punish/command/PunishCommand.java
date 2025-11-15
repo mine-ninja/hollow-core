@@ -117,9 +117,7 @@ public class PunishCommand extends SimpleCommand {
             .whenComplete((playerAccount, throwable) -> {
             var builder = new ComponentBuilder()
                 .newLine()
-                .simple("<l-info>Punindo: " + target)
-                .newLine()
-                .simple("<l-info><l-yellow>Selecione um motivo:")
+                .simple("§eSelecione um motivo para punir " + target + ":")
                 .newLine()
                 .newLine();
 
@@ -141,7 +139,7 @@ public class PunishCommand extends SimpleCommand {
 
                 lore.addAll(List.of(
                     "",
-                    "<l-white>Grupo mínimo: <l-green>" + MessageUtils.getFormattedPermission(punishment.mustHavePermission())
+                    "§fGrupo mínimo: " + MessageUtils.getFormattedPermission(punishment.mustHavePermission())
                 ));
 
                 builder
