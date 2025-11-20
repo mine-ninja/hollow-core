@@ -21,15 +21,15 @@ public enum GameType {
     SKYWARS_SOLO(6, "Sky Wars Solo", ServerCategoryType.SKYWARS),
     SKYWARS_DOUBLES(7, "Sky Wars Duplas", ServerCategoryType.SKYWARS),
     FACTIONS_FIRE(8, "Factions Fire", ServerCategoryType.FACTIONS_FIRE),
-    ;
+    SEMI_ANARCHY(9, "Semi Anarquia", ServerCategoryType.SMP);
 
     public static final Int2ObjectMap<GameType> ID_MAP = Arrays.stream(values())
-      .collect(Collectors.toMap(
-        GameType::getId,
-        gameType -> gameType,
-        (v1, v2) -> v1,
-        Int2ObjectOpenHashMap::new
-      ));
+        .collect(Collectors.toMap(
+            GameType::getId,
+            gameType -> gameType,
+            (v1, v2) -> v1,
+            Int2ObjectOpenHashMap::new
+        ));
 
     private final int id;
     private final String displayName;
