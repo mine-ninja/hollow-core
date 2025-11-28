@@ -18,10 +18,14 @@ public enum ServerCategoryType {
     LOBBY("Lobby"),
     BEDWARS("BedWars"),
     SKYWARS("SkyWars"),
-    MINA("Mina", List.of(ServerSubCategoryType.MINA_1, ServerSubCategoryType.MINA_2, ServerSubCategoryType.MINA_3, ServerSubCategoryType.MINA_4)),
-    FACTIONS("Factions"),
-    FACTIONS_FIRE("Factions Fire"),
-    NETHER("Nether")
+    FACTIONS("Factions",
+        ServerSubCategoryType.OVERWORLD,
+        ServerSubCategoryType.NETHER,
+        ServerSubCategoryType.MINA_1,
+        ServerSubCategoryType.MINA_2,
+        ServerSubCategoryType.MINA_3,
+        ServerSubCategoryType.MINA_4),
+    FACTIONS_FIRE("Factions Fire", FACTIONS)
     ;
     
     private final String displayName;
@@ -29,6 +33,15 @@ public enum ServerCategoryType {
     
     ServerCategoryType(String displayName) {
         this(displayName, List.of());
+    }
+
+    ServerCategoryType(String displayName, ServerSubCategoryType... subCategoryTypes) {
+        this(displayName, Arrays.asList(subCategoryTypes));
+    }
+
+    ServerCategoryType(String displayName, ServerCategoryType copyOf) {
+        this.displayName = displayName;
+        this.subCategories = copyOf.getSubCategories();
     }
     
     public static final Map<String, ServerCategoryType> entries = Arrays.stream(values())
