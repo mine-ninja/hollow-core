@@ -59,7 +59,7 @@ public class MailboxMenu extends SimplePaginationMenu<MailItem> {
             event.setCancelled(true);
             if (!isAdmin) return;
             repository.removeMailItem(mailData.getUniqueId(), mail.getMailId());
-            StringUtils.send(event.getWhoClicked(), "<l-success>Item removido com sucesso da caixa de correio do jogador.");
+            StringUtils.send(event.getWhoClicked(), "<l-confirm>Item removido com sucesso da caixa de correio do jogador.");
             ctx.close();
         }));
 

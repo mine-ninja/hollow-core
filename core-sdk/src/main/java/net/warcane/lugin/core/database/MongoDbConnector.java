@@ -21,6 +21,8 @@ import java.util.*;
 
 public class MongoDbConnector {
 
+
+    private static String TABLE_PREFIX = "";
     private static MongoDbConnector instance;
 
     public static MongoDbConnector getInstance() {
@@ -33,6 +35,7 @@ public class MongoDbConnector {
     public static MongoDbConnector fromLocalProperty() {
         final var mongoUrl = Property.getOrThrow("MONGO_URL");
         final var databaseName = Property.get("MONGO_DATABASE", "warcane");
+        TABLE_PREFIX = Property.get("MONGO_TABLE_PREFIX", "");
         return new MongoDbConnector(mongoUrl, databaseName);
     }
 
@@ -89,6 +92,10 @@ public class MongoDbConnector {
 
     public <T> MongoCollection<T> getCollection(String collectionName, Class<T> documentClass) {
         return database.getCollection(collectionName, documentClass);
+    }
+
+    public <T> MongoCollection<T> getPrefixedCollection(String collectionName, Class<T> documentClass) {
+        return database.getCollection(TABLE_PREFIX + collectionName, documentClass);
     }
 
     public void close() {
