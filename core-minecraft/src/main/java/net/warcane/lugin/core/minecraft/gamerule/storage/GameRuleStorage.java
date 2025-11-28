@@ -85,7 +85,7 @@ public class GameRuleStorage {
     
     public GameRuleStorage(@NotNull NetworkClient networkClient, @NotNull ExecutorService executorService) {
         this.redisConnector = RedisConnector.getInstance();
-        this.collection = MongoDbConnector.getInstance().getCollection(MONGO_COLLECTION, Document.class);
+        this.collection = MongoDbConnector.getInstance().getPrefixedCollection(MONGO_COLLECTION, Document.class);
         this.networkClient = networkClient;
         this.executorService = executorService;
     }
