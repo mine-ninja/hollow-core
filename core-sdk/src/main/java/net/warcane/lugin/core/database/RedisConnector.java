@@ -1,6 +1,7 @@
 package net.warcane.lugin.core.database;
 
 import lombok.Data;
+import lombok.Getter;
 import net.warcane.lugin.core.util.property.Property;
 import org.jetbrains.annotations.NotNull;
 import redis.clients.jedis.*;
@@ -14,6 +15,9 @@ import java.util.function.Function;
 public class RedisConnector {
 
     private static RedisConnector instance;
+
+    @Getter
+    private static String TABLE_PREFIX;
 
     /**
      * Obtém a instância singleton do RedisConnector.
@@ -29,6 +33,7 @@ public class RedisConnector {
 
     public static @NotNull RedisConnector fromInternalProperties() {
         final var redisUrl = Property.getOrThrow("REDIS_URL");
+        TABLE_PREFIX = Property.get("REDIS_TABLE_PREFIX", "");
         return new RedisConnector(redisUrl);
     }
 
@@ -86,5 +91,9 @@ public class RedisConnector {
         } catch (Exception e) {
             throw new RuntimeException("Failed to use Jedis instance", e);
         }
+    }
+
+    public static String getKeyWithPrefix(String key) {
+        return TABLE_PREFIX + key;
     }
 }
