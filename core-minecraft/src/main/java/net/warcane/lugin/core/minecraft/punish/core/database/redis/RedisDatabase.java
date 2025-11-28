@@ -2,6 +2,7 @@ package net.warcane.lugin.core.minecraft.punish.core.database.redis;
 
 import lombok.Getter;
 import net.warcane.lugin.core.database.RedisConnector;
+import net.warcane.lugin.core.minecraft.task.Tasks;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import redis.clients.jedis.JedisPubSub;
@@ -15,6 +16,15 @@ public class RedisDatabase {
     private static RedisDatabase instance;
 
     public void subscribe(Plugin plugin, JedisPubSub jedisPubSub, String... channels) {
+        if (Tasks.isFolia()) {
+            Tasks.runAsync(() -> {
+                RedisConnector.getInstance().useJedis(jedis -> {
+                    jedis.subscribe(jedisPubSub, channels);
+                });
+            });
+            return;
+        }
+
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             RedisConnector.getInstance().useJedis(jedis -> {
                 jedis.subscribe(jedisPubSub, channels);

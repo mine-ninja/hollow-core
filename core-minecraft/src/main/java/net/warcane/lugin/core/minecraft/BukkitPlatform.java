@@ -22,6 +22,7 @@ import net.warcane.lugin.core.minecraft.nametag.ModernNameTagResolver;
 import net.warcane.lugin.core.minecraft.nametag.NameTagResolver;
 import net.warcane.lugin.core.minecraft.permission.PermissionInjector;
 import net.warcane.lugin.core.minecraft.punish.api.PunishManager;
+import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.teleport.TeleportManager;
 import net.warcane.lugin.core.minecraft.teleport.TeleportTrafficListener;
 import net.warcane.lugin.core.minecraft.util.message.AdventureFormatters;
@@ -209,7 +210,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         gameServerService.update(this.getGameServer().withOnlineStatus(true));
 
         log.info("Bukkit Platform is now online with ID: {}, Category: {} and SubCategory: {}", this.getId(), this.getServerCategoryType(), this.getServerSubCategoryType());
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::updateServerInfo, 20, 20 * 10);
+        Tasks.runAsyncRepeating(this::updateServerInfo, 20, 20 * 10);
         Bukkit.getConsoleSender().sendMessage("§aCarregando nomes de jogadores para o redis (para acesso rápido)");
     }
 

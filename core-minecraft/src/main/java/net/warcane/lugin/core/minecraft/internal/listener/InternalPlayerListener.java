@@ -248,7 +248,7 @@ public final class InternalPlayerListener implements Listener {
         });
 
         if (VersionChecker.isLegacyVersion()) {
-            Bukkit.getScheduler().runTaskLaterAsynchronously(BukkitPlatform.getInstance().getPlugin(), () -> {
+            Tasks.runAsyncLater(() -> {
                 if (PlayerUtil.isCracked(player)) {
                     SkinUtils.setPlayerSkin(player, "ewogICJ0aW1lc3RhbXAiIDogMTc1NzY1MTM5MTQ0NywKICAicHJvZmlsZUlkIiA6ICJmZDFhYjdjNTYwMTM0YzQ1YTA2YWZjZWY1OGViZDVkNCIsCiAgInByb2ZpbGVOYW1lIiA6ICJDbGF1MTA3IiwKICAic2lnbmF0dXJlUmVxdWlyZWQiIDogdHJ1ZSwKICAidGV4dHVyZXMiIDogewogICAgIlNLSU4iIDogewogICAgICAidXJsIiA6ICJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlL2ZlZjlhM2JkODY0ZmMxNmJlMzM0YzFmZDVjZmUwZDIxNTE2NTY2OTkxMGExYjU1YTQ5Yjg5NTk0ZTBjZjVhM2EiLAogICAgICAibWV0YWRhdGEiIDogewogICAgICAgICJtb2RlbCIgOiAic2xpbSIKICAgICAgfQogICAgfQogIH0KfQ==", "dDGv364IyP5jBYPgSyqZ0GkV0Lm3X019f3zF141ha3NJWO8PhjMwzQAArAqsGyTciCXzFHvLkdM6NsO/VZDv/Q8XFczMYSFokcxI3dpqKrwBGTrELM5WGqvJZBltmPovPUzexu0dUqvjHffRQhYCY82lbFYU24SugXbgQtIRqdRww/fN05Av3a6hLMm613ZEky1qs6WBsVJSJ7YsBhCVN42x69vRoB5w3bONdq6bw+B3VlqdKvT2JbVX17oBvAC/wGAlH5kF5K1+t4XKGkxMT7qd4g+e3Cx7Ze/681yY/oIeYKMF4V/KBA+A/m+cNqS2IPLhdlzBBKN5CLliF89s6LqtnGeRbBDMO7Gqm4g++DaOCC+D3HF/5YmE8DSyhV6rZO6e/N7smH93OZn4fvAwsbYSIb88Fpyn7UpZ7F751hJQJ9k1Kw8RYEdIk85Sw8f69D1ZTjd9ddJHV9tfgATJPQgJyjFHI5qNptYbbV/lFeCWGazg8XPoJe5Zbeja4Gi0veNM7LFH+vJUSpUQVKI9/4mQEUpYpFG5mZgHIEb+zqo0QWM5nUGYXu9PTt5KFxOGLsySzmTRg6ZjU82w+OiUShondvYIfKFRcozy0mFv/FQFosfx9fxm7dy1RfdwxhjPgstlnzuJBuXLZjbduSdAE6TLJVfKVKXUbfdM5oIe6xE=");
                 }

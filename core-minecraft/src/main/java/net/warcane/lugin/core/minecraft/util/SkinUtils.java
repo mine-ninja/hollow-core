@@ -4,6 +4,7 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import lombok.extern.log4j.Log4j2;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
+import net.warcane.lugin.core.minecraft.task.Tasks;
 import org.apache.commons.lang.reflect.FieldUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -38,6 +39,8 @@ public class SkinUtils {
     }
 
     public static void setPlayerSkin(Player player, String texture, String signature) {
+        if (Tasks.isFolia()) return; // pq isso aqui tá aqui tlg? nada haver...
+
         Bukkit.getScheduler().runTask(BukkitPlatform.getInstance().getPlugin(), () -> {
             try {
                 Object craftPlayer = getCbClass().cast(player);
@@ -55,31 +58,31 @@ public class SkinUtils {
                 Constructor<?> packetInfoCtor = packetInfoClass.getConstructor(enumPlayerInfoAction, Iterable.class);
 
                 Object removeInfo = packetInfoCtor.newInstance(
-                    enumPlayerInfoAction.getEnumConstants()[4],
-                    Collections.singletonList(entityPlayer)
+                  enumPlayerInfoAction.getEnumConstants()[4],
+                  Collections.singletonList(entityPlayer)
                 );
 
                 Object addInfo = packetInfoCtor.newInstance(
-                    enumPlayerInfoAction.getEnumConstants()[0],
-                    Collections.singletonList(entityPlayer)
+                  enumPlayerInfoAction.getEnumConstants()[0],
+                  Collections.singletonList(entityPlayer)
                 );
 
                 Constructor<?> destroyCtor = getNmsClass("PacketPlayOutEntityDestroy").getConstructor(int[].class);
                 Object destroy = destroyCtor.newInstance((Object) new int[]{(int) invokeExact(entity, "getId")});
 
                 Constructor<?> respawnCtor = getNmsClass("PacketPlayOutRespawn")
-                    .getConstructor(int.class,
-                        getNmsClass("EnumDifficulty"),
-                        getNmsClass("WorldType"),
-                        getNmsClass("WorldSettings$EnumGamemode"));
+                  .getConstructor(int.class,
+                    getNmsClass("EnumDifficulty"),
+                    getNmsClass("WorldType"),
+                    getNmsClass("WorldSettings$EnumGamemode"));
 
                 Object world = invokeExact(entityPlayer, "getWorld");
 
                 Object respawn = respawnCtor.newInstance(
-                    0,
-                    invokeExact(world, "getDifficulty"),
-                    invokeExact(FieldUtils.readField(world, "worldData", true), "getType"),
-                    FieldUtils.readField(entityPlayer, "playerInteractManager", true).getClass().getMethod("getGameMode").invoke(FieldUtils.readField(entityPlayer, "playerInteractManager", true))
+                  0,
+                  invokeExact(world, "getDifficulty"),
+                  invokeExact(FieldUtils.readField(world, "worldData", true), "getType"),
+                  FieldUtils.readField(entityPlayer, "playerInteractManager", true).getClass().getMethod("getGameMode").invoke(FieldUtils.readField(entityPlayer, "playerInteractManager", true))
                 );
 
                 Location loc = player.getLocation();
@@ -125,19 +128,22 @@ public class SkinUtils {
             }
         });
 
-        Bukkit.getScheduler().runTaskLater(BukkitPlatform.getInstance().getPlugin(), () -> {
-            if (!PlayerUtil.isOnline(player)) {
-                try {
-                    Constructor<?> destroyCtor = getNmsClass("PacketPlayOutEntityDestroy").getConstructor(int[].class);
-                    Object destroy = destroyCtor.newInstance((Object) new int[]{player.getEntityId()});
 
-                    for (Player target : Bukkit.getOnlinePlayers())
-                        sendPacket(target, destroy);
-                } catch (Exception exception) {
-                    log.error(Arrays.toString(exception.getStackTrace()));
+        if (!Tasks.isFolia()) { // pqp
+            Bukkit.getScheduler().runTaskLater(BukkitPlatform.getInstance().getPlugin(), () -> {
+                if (!PlayerUtil.isOnline(player)) {
+                    try {
+                        Constructor<?> destroyCtor = getNmsClass("PacketPlayOutEntityDestroy").getConstructor(int[].class);
+                        Object destroy = destroyCtor.newInstance((Object) new int[]{player.getEntityId()});
+
+                        for (Player target : Bukkit.getOnlinePlayers())
+                            sendPacket(target, destroy);
+                    } catch (Exception exception) {
+                        log.error(Arrays.toString(exception.getStackTrace()));
+                    }
                 }
-            }
-        }, 500L);
+            }, 500L);
+        }
     }
 
     private static void invoke(Object target, String methodName, Object... args) throws Exception {
