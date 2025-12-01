@@ -32,7 +32,7 @@ import net.warcane.lugin.core.network.packet.impl.connection.ConnectionHandshake
 import net.warcane.lugin.core.network.packet.impl.player.PlayerConnectToServerPacket;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDirectPlayGameCategoryPacket;
 import net.warcane.lugin.core.network.packet.impl.player.SendSoundToPlayerPacket;
-import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerConnectToSubCategoryPacket;
+import net.warcane.lugin.core.network.packet.impl.player.PlayerConnectToSubCategoryPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerUnregisterPacket;
 import net.warcane.lugin.core.player.state.PlayerNetworkStateManager;
@@ -296,6 +296,11 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
     public void tryConnectPlayerToServerCategory(@NotNull UUID player, @NotNull ServerCategoryType categoryType) {
         final var packet = new PlayerDirectPlayGameCategoryPacket(player, categoryType);
+        networkClient.sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, packet);
+    }
+    
+    public void tryConnectPlayerToServerCategorySpecific(@NotNull UUID player, @NotNull ServerCategoryType category, ServerSubCategoryType subCategory) {
+        final var packet = new PlayerDirectPlayGameCategoryPacket(player, category, subCategory);
         networkClient.sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, packet);
     }
     

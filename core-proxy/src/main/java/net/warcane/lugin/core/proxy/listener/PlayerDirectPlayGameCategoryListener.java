@@ -5,6 +5,8 @@ import net.warcane.lugin.core.network.packet.impl.player.PlayerDirectPlayGameCat
 import net.warcane.lugin.core.network.packet.listener.PacketListener;
 import net.warcane.lugin.core.proxy.VelocityPlatform;
 import net.warcane.lugin.core.server.GameServer;
+import net.warcane.lugin.core.server.type.ServerSubCategoryType;
+
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -20,7 +22,13 @@ public class PlayerDirectPlayGameCategoryListener implements PacketListener<Play
         final var categoryToSendPlayer = packet.categoryType();
         List<GameServer> servers = platform.getGameServerService().queryServersByCategoryType(categoryToSendPlayer)
           .stream()
-          .filter(gameServer -> !gameServer.serverPlayers().isFull())
+          .filter(gameServer -> {
+              boolean full = !gameServer.serverPlayers().isFull();
+              if (packet.subCategoryType() == ServerSubCategoryType.NONE) {
+                  return full;
+              }
+              return full && gameServer.subCategory() == packet.subCategoryType();
+          })
           .toList();
 
         if (servers.isEmpty()) {

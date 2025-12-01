@@ -1,7 +1,7 @@
 package net.warcane.lugin.core.proxy.listener;
 
 import com.velocitypowered.api.proxy.server.RegisteredServer;
-import net.warcane.lugin.core.network.packet.impl.player.permission.PlayerConnectToSubCategoryPacket;
+import net.warcane.lugin.core.network.packet.impl.player.PlayerConnectToSubCategoryPacket;
 import net.warcane.lugin.core.network.packet.listener.PacketListener;
 import net.warcane.lugin.core.proxy.VelocityPlatform;
 import net.warcane.lugin.core.server.GameServer;
