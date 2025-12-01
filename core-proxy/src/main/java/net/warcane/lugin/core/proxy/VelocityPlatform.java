@@ -2,7 +2,6 @@ package net.warcane.lugin.core.proxy;
 
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
-import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.AbstractPlatform;
 import net.warcane.lugin.core.ProxyPlatform;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
@@ -19,6 +18,8 @@ import net.warcane.lugin.core.proxy.listener.connection.ConnectionHandshakePacke
 import net.warcane.lugin.core.server.GameServer;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
 import net.warcane.lugin.core.util.address.HostAddress;
+
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ThreadLocalRandom;

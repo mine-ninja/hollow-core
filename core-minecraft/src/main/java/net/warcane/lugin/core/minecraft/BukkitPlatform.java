@@ -13,9 +13,13 @@ import net.warcane.lugin.core.minecraft.event.tick.AsyncServerTickEvent;
 import net.warcane.lugin.core.minecraft.gamerule.GameRuleManager;
 import net.warcane.lugin.core.minecraft.gamerule.listener.WorldLoadListener;
 import net.warcane.lugin.core.minecraft.internal.command.InternalCommandManager;
-import net.warcane.lugin.core.minecraft.internal.listener.*;
-import net.warcane.lugin.core.minecraft.mailbox.MailManager;
+import net.warcane.lugin.core.minecraft.internal.listener.InternalPacketListeners;
+import net.warcane.lugin.core.minecraft.internal.listener.InternalPlayerListener;
+import net.warcane.lugin.core.minecraft.internal.listener.PlayerGroupUpdatingListener;
+import net.warcane.lugin.core.minecraft.internal.listener.PlayerPermissionUpdatingListener;
+import net.warcane.lugin.core.minecraft.internal.listener.StaffTrackingListener;
 import net.warcane.lugin.core.minecraft.internal.listener.connection.ConnectionHandshakePacketListener;
+import net.warcane.lugin.core.minecraft.mailbox.MailManager;
 import net.warcane.lugin.core.minecraft.menu.SimpleMenuManager;
 import net.warcane.lugin.core.minecraft.nametag.LegacyNameTagResolver;
 import net.warcane.lugin.core.minecraft.nametag.ModernNameTagResolver;
@@ -30,9 +34,9 @@ import net.warcane.lugin.core.minecraft.whitelist.WhitelistService;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
 import net.warcane.lugin.core.network.packet.impl.connection.ConnectionHandshakePacket;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerConnectToServerPacket;
+import net.warcane.lugin.core.network.packet.impl.player.PlayerConnectToSubCategoryPacket;
 import net.warcane.lugin.core.network.packet.impl.player.PlayerDirectPlayGameCategoryPacket;
 import net.warcane.lugin.core.network.packet.impl.player.SendSoundToPlayerPacket;
-import net.warcane.lugin.core.network.packet.impl.player.PlayerConnectToSubCategoryPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
 import net.warcane.lugin.core.network.packet.impl.server.ServerUnregisterPacket;
 import net.warcane.lugin.core.player.state.PlayerNetworkStateManager;
@@ -296,11 +300,6 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
     public void tryConnectPlayerToServerCategory(@NotNull UUID player, @NotNull ServerCategoryType categoryType) {
         final var packet = new PlayerDirectPlayGameCategoryPacket(player, categoryType);
-        networkClient.sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, packet);
-    }
-    
-    public void tryConnectPlayerToServerCategorySpecific(@NotNull UUID player, @NotNull ServerCategoryType category, ServerSubCategoryType subCategory) {
-        final var packet = new PlayerDirectPlayGameCategoryPacket(player, category, subCategory);
         networkClient.sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, packet);
     }
     
