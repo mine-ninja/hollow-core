@@ -7,6 +7,6 @@ import net.warcane.lugin.core.server.type.ServerCategoryType;
 import java.util.UUID;
 
 public record PlayerDirectPlayGameCategoryPacket(
-  @JsonProperty("i") UUID playerId,
-  @JsonProperty("g") ServerCategoryType categoryType
-) implements NetworkPacket {}
+    @JsonProperty("i") UUID playerId,
+    @JsonProperty("g") ServerCategoryType categoryType
+) implements NetworkPacket { }

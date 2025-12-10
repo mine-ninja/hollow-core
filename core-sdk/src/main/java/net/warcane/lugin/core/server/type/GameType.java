@@ -16,7 +16,7 @@ public enum GameType {
     BEDWARS_SOLO(1, "Bed Wars Solo", ServerCategoryType.BEDWARS),
     BEDWARS_DOUBLES(2, "Bed Wars Duplas", ServerCategoryType.BEDWARS),
     BEDWARS_QUARTER(3, "Bed Wars Quarteto", ServerCategoryType.BEDWARS),
-    FACTIONS_ICE(4, "Factions Ice", ServerCategoryType.FACTIONS),
+    FACTIONS(4, "Factions", ServerCategoryType.FACTIONS),
     SKYWARS(5, "Sky Wars", ServerCategoryType.SKYWARS),
     SKYWARS_SOLO(6, "Sky Wars Solo", ServerCategoryType.SKYWARS),
     SKYWARS_DOUBLES(7, "Sky Wars Duplas", ServerCategoryType.SKYWARS),

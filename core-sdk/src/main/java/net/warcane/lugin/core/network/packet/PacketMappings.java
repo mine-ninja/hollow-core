@@ -17,9 +17,7 @@ import net.warcane.lugin.core.network.packet.impl.player.discord.PlayerUnlinkedD
 import net.warcane.lugin.core.network.packet.impl.player.permission.*;
 import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleportToLocationPacket;
 import net.warcane.lugin.core.network.packet.impl.player.teleport.PlayerTeleportToTargetPacket;
-import net.warcane.lugin.core.network.packet.impl.server.BroadcastMessagePacket;
-import net.warcane.lugin.core.network.packet.impl.server.ServerRegisterPacket;
-import net.warcane.lugin.core.network.packet.impl.server.ServerUnregisterPacket;
+import net.warcane.lugin.core.network.packet.impl.server.*;
 import net.warcane.lugin.core.network.packet.impl.staff.GoCachePacket;
 import net.warcane.lugin.core.network.packet.impl.staff.GoCommandPacket;
 import net.warcane.lugin.core.network.packet.impl.staff.StaffMessagePacket;
@@ -55,7 +53,9 @@ final class PacketMappings {
             entry(8, SendMessageToPlayerPacket.class),
             entry(9, StaffMessagePacket.class),
             entry(77, SendSoundToPlayerPacket.class),
-            entry(99, BroadcastMessagePacket.class),
+            entry(97, ServerCategoryMessagePacket.class),
+            entry(98, GlobalBroadcastLegacyMessagePacket.class),
+            entry(99, GlobalBroadcastMessagePacket.class),
             entry(10, PlayerReceiveGroupPacket.class),
             entry(11, PlayerLoseGroupPacket.class),
 
