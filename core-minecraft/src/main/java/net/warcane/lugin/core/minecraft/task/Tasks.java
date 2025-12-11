@@ -5,24 +5,26 @@ import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-
 public class Tasks {
 
     private static Plugin plugin;
     private static FoliaLib foliaLib;
+    private static boolean initialized = false;
 
     public static void initialize(@NotNull Plugin plugin) {
-        plugin = Arrays.stream(Bukkit.getPluginManager().getPlugins())
-          .filter(Plugin::isEnabled)
-          .findFirst()
-          .orElseThrow(() -> new IllegalStateException("No enabled plugin found."));
-
-        foliaLib = new FoliaLib(plugin);
+        Tasks.plugin = plugin;
+        foliaLib = new FoliaLib(Tasks.plugin);
+        initialized = true;
     }
 
+    private static void checkInit() {
+        if (!initialized) {
+            throw new IllegalStateException("Tasks not initialized. Call Tasks.initialize(plugin) from your plugin's onEnable.");
+        }
+    }
 
     public static void runSyncLater(@NotNull Runnable runnable, long delay) {
+        checkInit();
         if (foliaLib.isFolia()) {
             foliaLib.getScheduler().runLater(runnable, delay);
         } else {
@@ -31,6 +33,7 @@ public class Tasks {
     }
 
     public static void runSync(@NotNull Runnable runnable) {
+        checkInit();
         if (foliaLib.isFolia()) {
             foliaLib.getScheduler().runNextTick(task -> runnable.run());
         } else {
@@ -39,6 +42,7 @@ public class Tasks {
     }
 
     public static void runSyncRepeating(@NotNull Runnable runnable, long delay, long period) {
+        checkInit();
         if (foliaLib.isFolia()) {
             foliaLib.getScheduler().runTimer(runnable, delay, period);
         } else {
@@ -47,6 +51,7 @@ public class Tasks {
     }
 
     public static void runAsync(@NotNull Runnable runnable) {
+        checkInit();
         if (foliaLib.isFolia()) {
             foliaLib.getScheduler().runAsync(task -> runnable.run());
         } else {
@@ -55,6 +60,7 @@ public class Tasks {
     }
 
     public static void runAsyncLater(@NotNull Runnable runnable, long delay) {
+        checkInit();
         if (foliaLib.isFolia()) {
             foliaLib.getScheduler().runLaterAsync(runnable, delay);
         } else {
@@ -63,6 +69,7 @@ public class Tasks {
     }
 
     public static void runAsyncRepeating(@NotNull Runnable runnable, long delay, long period) {
+        checkInit();
         if (foliaLib.isFolia()) {
             foliaLib.getScheduler().runTimerAsync(runnable, delay, period);
         } else {
@@ -72,6 +79,6 @@ public class Tasks {
 
 
     public static boolean isFolia() {
-        return foliaLib.isFolia();
+        return foliaLib != null && foliaLib.isFolia();
     }
 }
