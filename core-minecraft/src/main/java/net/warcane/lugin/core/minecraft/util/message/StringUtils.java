@@ -23,8 +23,6 @@ import java.util.List;
  * @project BrPacks
  */
 public class StringUtils {
-
-
     private static final Logger LOGGER = LogManager.getLogger();
 
     /**
@@ -139,7 +137,6 @@ public class StringUtils {
     public static void send(Player player, String message, boolean logError, boolean forceSerialization) {
         send(BukkitPlatformPlugin.getInstance().adventure().player(player), message, logError, forceSerialization);
     }
-
 
     @NotNull
     public static TextReplacementConfig replace(@NotNull String a, @NotNull String b) {

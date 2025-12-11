@@ -1,7 +1,9 @@
 package net.warcane.lugin.core.minecraft.util.message;
 
 import lombok.RequiredArgsConstructor;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.ParserDirective;
 import net.kyori.adventure.text.minimessage.tag.Tag;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 
@@ -79,6 +81,17 @@ public enum AdventureFormatters {
                 }
                 t.resolver(resolver);
             }
+
+            // convert everything thas insite <small-caps> Text Here </small-caps> using SmallCpasMapping.toSmallCaps(String)
+            TagResolver smallCapsResolver = TagResolver.resolver(
+                "small-caps", (args, ctx) -> {
+                    String content = ctx.deserialize(args.popOr("").value()).toString();
+
+                    String smallCapsText = SmallCapsMapping.toSmallCaps(content);
+
+                    return Tag.selfClosingInserting(Component.text(smallCapsText));
+                }
+            );
         });
         miniMessage = builder.build();
         consumer.accept(miniMessage);
