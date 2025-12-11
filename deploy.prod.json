@@ -1,6 +1,6 @@
 {
   "old-servers": ["e2076e32", "7973d4d0", "11c1017f", "6f5f8517", "5af472e1", "e3993c42"],
-  "servers": ["86a7e269"],
+  "servers": ["86a7e269", "b85e05e9"],
 	"source": "core-minecraft/build/libs/core-minecraft.jar",
 	"target": "plugins/"
 }
