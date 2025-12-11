@@ -58,7 +58,7 @@ public class InternalCommandManager {
         }
         commandMap.register("lugin", new StaffMessageCommand(platform));
         commandMap.register("lugin", new PlayerInfoCommand(platform));
-        commandMap.register("lugin" , new ServerCommand());
+        commandMap.register("lugin" , new ServerCommand(platform));
         commandMap.register("lugin", new EconomyCommand(platform));
         commandMap.register("lugin", new TestMenuCommand(platform));
         commandMap.register("lugin", new TestTimeCommand());
