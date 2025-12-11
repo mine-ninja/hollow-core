@@ -36,10 +36,10 @@ public class SignInputContext extends PlayerMenuContext {
     
     public SignInputContext(Player player, Map<String, Object> rawData, MenuConfig menuConfig, SimpleMenu menu, SimpleMenuManager manager) {
         super(player, rawData, menuConfig, menu, manager);
-        Location origin = player.getLocation().clone();
+        Location origin = player.getEyeLocation().clone();
         Vector direction = origin.getDirection();
         direction = direction.setY(0);
-        direction = direction.normalize().multiply(5);
+        direction = direction.normalize().multiply(1);
         this.location = origin.subtract(direction);
         
         if (!rawData.containsKey("lines")) {

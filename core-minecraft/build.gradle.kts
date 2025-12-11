@@ -98,11 +98,15 @@ tasks.withType(xyz.jpenilla.runtask.task.AbstractRun::class) {
 
 tasks.shadowJar {
     relocate("okhttp3", "net.warcane.lugin.core.libs.okhttp3")
+    relocate("com.tcoded.folialib", "net.warcane.lugin.core.libs.folialib")
+    relocate("com.fasterxml.jackson", "net.warcane.lugin.core.libs.jackson")
 
     archiveClassifier.set("")
     archiveVersion.set("")
     mergeServiceFiles()
-    minimize()
+    minimize {
+        exclude("com.tcoded:FoliaLib:.*")
+    }
 }
 
 tasks.build {
