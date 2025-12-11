@@ -2,6 +2,7 @@ name: BukkitPlatformPlugin
 main: net.warcane.lugin.core.minecraft.BukkitPlatformPlugin
 version: 1.0.0
 author: sasuked
+folia-supported: true
 api-version: 1.13
 depend: [ packetevents ]
 softdepend: ["Vault", "PlaceholderAPI", "CoreProtect"]

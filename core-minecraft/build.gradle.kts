@@ -47,6 +47,7 @@ dependencies {
     paperweight.paperDevBundle("1.21.4-R0.1-SNAPSHOT")
     api(project(":core-sdk"))
     api("fr.mrmicky:fastboard:2.1.5")
+    api("com.github.TechnicallyCoded:FoliaLib:0.4.4")
 
     implementation("net.kyori:adventure-platform-bukkit:4.4.1")
     implementation("net.kyori:adventure-text-minimessage:4.24.0")

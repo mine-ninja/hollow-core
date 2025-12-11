@@ -69,6 +69,8 @@ public class BukkitPlatformPlugin extends SimplePlugin {
 		instance = this;
 		saveDefaultConfig();
 
+		Tasks.initialize(this);
+
 		if (!NBT.preloadApi()) {
 			this.getLogger().severe("Não foi possível carregar o NBT-API. O plugin será desativado.");
 		}

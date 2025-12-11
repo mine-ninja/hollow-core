@@ -1,5 +1,6 @@
 package net.warcane.lugin.core.minecraft.task;
 
+import com.tcoded.folialib.FoliaLib;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
@@ -9,70 +10,68 @@ import java.util.Arrays;
 public class Tasks {
 
     private static Plugin plugin;
+    private static FoliaLib foliaLib;
 
-    // todo achar uma forma de fazer isso de uma forma menos nojenta.
-    private static Plugin findFirstPlugin() {
-        if (plugin != null) {
-            return plugin;
-        }
-
-        return plugin = Arrays.stream(Bukkit.getPluginManager().getPlugins())
+    public static void initialize(@NotNull Plugin plugin) {
+        plugin = Arrays.stream(Bukkit.getPluginManager().getPlugins())
           .filter(Plugin::isEnabled)
           .findFirst()
-          .orElse(null);
+          .orElseThrow(() -> new IllegalStateException("No enabled plugin found."));
+
+        foliaLib = new FoliaLib(plugin);
     }
 
+
     public static void runSyncLater(@NotNull Runnable runnable, long delay) {
-        Plugin plugin = findFirstPlugin();
-        if (plugin != null) {
-            Bukkit.getScheduler().runTaskLater(plugin, runnable, delay);
+        if (foliaLib.isFolia()) {
+            foliaLib.getScheduler().runLater(runnable, delay);
         } else {
-            throw new IllegalStateException("No enabled plugin found to run the task later.");
+            Bukkit.getScheduler().runTaskLater(plugin, runnable, delay);
         }
     }
 
     public static void runSync(@NotNull Runnable runnable) {
-        Plugin plugin = findFirstPlugin();
-        if (plugin != null) {
-            Bukkit.getScheduler().runTask(plugin, runnable);
+        if (foliaLib.isFolia()) {
+            foliaLib.getScheduler().runNextTick(task -> runnable.run());
         } else {
-            throw new IllegalStateException("No enabled plugin found to run the task synchronously.");
+            Bukkit.getScheduler().runTask(plugin, runnable);
         }
     }
 
     public static void runSyncRepeating(@NotNull Runnable runnable, long delay, long period) {
-        Plugin plugin = findFirstPlugin();
-        if (plugin != null) {
-            Bukkit.getScheduler().runTaskTimer(plugin, runnable, delay, period);
+        if (foliaLib.isFolia()) {
+            foliaLib.getScheduler().runTimer(runnable, delay, period);
         } else {
-            throw new IllegalStateException("No enabled plugin found to run the repeating task synchronously.");
+            Bukkit.getScheduler().runTaskTimer(plugin, runnable, delay, period);
         }
     }
 
     public static void runAsync(@NotNull Runnable runnable) {
-        Plugin plugin = findFirstPlugin();
-        if (plugin != null) {
-            Bukkit.getScheduler().runTaskAsynchronously(plugin, runnable);
+        if (foliaLib.isFolia()) {
+            foliaLib.getScheduler().runAsync(task -> runnable.run());
         } else {
-            throw new IllegalStateException("No enabled plugin found to run the task asynchronously.");
+            Bukkit.getScheduler().runTaskAsynchronously(plugin, runnable);
         }
     }
 
     public static void runAsyncLater(@NotNull Runnable runnable, long delay) {
-        Plugin plugin = findFirstPlugin();
-        if (plugin != null) {
-            Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, runnable, delay);
+        if (foliaLib.isFolia()) {
+            foliaLib.getScheduler().runLaterAsync(runnable, delay);
         } else {
-            throw new IllegalStateException("No enabled plugin found to run the task asynchronously later.");
+            Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, runnable, delay);
         }
     }
 
     public static void runAsyncRepeating(@NotNull Runnable runnable, long delay, long period) {
-        Plugin plugin = findFirstPlugin();
-        if (plugin != null) {
-            Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, runnable, delay, period);
+        if (foliaLib.isFolia()) {
+            foliaLib.getScheduler().runTimerAsync(runnable, delay, period);
         } else {
-            throw new IllegalStateException("No enabled plugin found to run the repeating task asynchronously.");
+            Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, runnable, delay, period);
         }
+    }
+
+
+    public static boolean isFolia() {
+        return foliaLib.isFolia();
     }
 }
