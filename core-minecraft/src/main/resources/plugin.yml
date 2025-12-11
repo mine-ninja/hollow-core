@@ -5,3 +5,5 @@ author: sasuked
 api-version: 1.13
 depend: [ packetevents ]
 softdepend: ["Vault", "PlaceholderAPI", "CoreProtect"]
+
+folia-supported: true
