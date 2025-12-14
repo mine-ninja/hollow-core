@@ -1,11 +1,15 @@
 package net.warcane.lugin.core.util.data;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.warcane.lugin.core.database.RedisConnector;
 
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 /**
@@ -15,7 +19,7 @@ import java.util.function.Supplier;
  */
 public class RedisCache<O> {
     protected final RedisConnector connector;
-    protected final GenericSerializer<O> serializer;
+    @Getter protected final GenericSerializer<O> serializer;
     
     private volatile String setAndGetSha;
     private volatile String dualCacheSha;
@@ -125,6 +129,13 @@ public class RedisCache<O> {
             set(key, defaultValue);
         }
         return defaultValue;
+    }
+    
+    public void hset(String key, Map<String, O> fieldValues) {
+        Map<String, String> result = new Object2ObjectOpenHashMap<>();
+        fieldValues.forEach((field, value) -> result.put(field, serializer.serialize(value)));
+        
+        connector.useJedis(jedis -> jedis.hset(key, result));
     }
     
     public void hset(@NotNull String key, @NotNull String field, @NotNull O value) {
