@@ -24,6 +24,7 @@ import net.warcane.lugin.core.minecraft.punish.command.RevokeCommand;
 import net.warcane.lugin.core.minecraft.tell.ReplyCommand;
 import net.warcane.lugin.core.minecraft.tell.TellCommand;
 import net.warcane.lugin.core.minecraft.tell.ToggleTellCommand;
+import net.warcane.lugin.core.minecraft.util.commands.TextTestCommand;
 import net.warcane.lugin.core.util.property.Property;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandMap;
@@ -69,6 +70,7 @@ public class InternalCommandManager {
         commandMap.register("punish", new CheckPunishCommand());
         commandMap.register("punish", new RevokeCommand());
         commandMap.register("lugin", new GameRuleCommand(platform));
+        commandMap.register("lugin", new TextTestCommand());
         commandMap.register("lugin", new LinkCommand(platform));
         commandMap.register("lugin", new UnlinkCommand(platform));
 

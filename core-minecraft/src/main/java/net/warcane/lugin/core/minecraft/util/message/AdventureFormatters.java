@@ -89,7 +89,7 @@ public enum AdventureFormatters {
 
                     String smallCapsText = SmallCapsMapping.toSmallCaps(content);
 
-                    return Tag.selfClosingInserting(Component.text(smallCapsText));
+                    return Tag.inserting(Component.text(smallCapsText));
                 }
             );
         });
