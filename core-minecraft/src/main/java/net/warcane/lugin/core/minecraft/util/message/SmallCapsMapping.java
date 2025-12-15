@@ -49,23 +49,10 @@ public class SmallCapsMapping {
 
     public static Component toSmallCaps(Component component) {
         if (!(component instanceof TextComponent textComp)) {
-            Component result = component;
-            if (!component.children().isEmpty()) {
-                result = component.children(component.children().stream()
-                    .map(SmallCapsMapping::toSmallCaps)
-                    .toList());
-            }
-            return result;
+            return component;
         }
-
-        Component result = Component.text(SmallCapsMapping.toSmallCaps(textComp.content()))
+        return Component.text(SmallCapsMapping.toSmallCaps(textComp.content()))
             .style(textComp.style());
-
-        for (Component child : component.children()) {
-            result = result.append(toSmallCaps(child));
-        }
-
-        return result;
     }
 
     private static char convertCharToSmallCaps(char c) {
