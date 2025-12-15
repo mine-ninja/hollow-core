@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 public class TextTestCommand extends SimpleCommand {
 
     public TextTestCommand() {
-        super("font-test");
+        super("text-test");
         setRequiredPermission("lugin.master");
         playersOnly = true;
     }
@@ -26,7 +26,7 @@ public class TextTestCommand extends SimpleCommand {
             throw new CommandFailedException("Por favor, escreva um texto para testar a fonte.");
         }
         StringBuilder sb = new StringBuilder();
-        for (int i = 1; i < ctx.getArgs().length; i++) {
+        for (int i = 0; i < ctx.getArgs().length; i++) {
             String arg = ctx.getArgs()[i];
             sb.append(arg);
             if (i < ctx.getArgs().length - 1) {

@@ -1,6 +1,9 @@
 package net.warcane.lugin.core.minecraft.util.message;
 
 import it.unimi.dsi.fastutil.chars.Char2CharArrayMap;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+
 
 /**
  * @author Rok, Pedro Lucas nmm. Created on 04/08/2025
@@ -42,6 +45,27 @@ public class SmallCapsMapping {
         for (char c : text.toCharArray())
             result.append(convertCharToSmallCaps(c));
         return result.toString();
+    }
+
+    public static Component toSmallCaps(Component component) {
+        if (!(component instanceof TextComponent textComp)) {
+            Component result = component;
+            if (!component.children().isEmpty()) {
+                result = component.children(component.children().stream()
+                    .map(SmallCapsMapping::toSmallCaps)
+                    .toList());
+            }
+            return result;
+        }
+
+        Component result = Component.text(SmallCapsMapping.toSmallCaps(textComp.content()))
+            .style(textComp.style());
+
+        for (Component child : component.children()) {
+            result = result.append(toSmallCaps(child));
+        }
+
+        return result;
     }
 
     private static char convertCharToSmallCaps(char c) {

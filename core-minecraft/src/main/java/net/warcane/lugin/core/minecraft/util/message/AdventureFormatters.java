@@ -84,13 +84,7 @@ public enum AdventureFormatters {
 
             // convert everything thas insite <small-caps> Text Here </small-caps> using SmallCpasMapping.toSmallCaps(String)
             TagResolver smallCapsResolver = TagResolver.resolver(
-                "small-caps", (args, ctx) -> {
-                    String content = ctx.deserialize(args.popOr("").value()).toString();
-
-                    String smallCapsText = SmallCapsMapping.toSmallCaps(content);
-
-                    return Tag.inserting(Component.text(smallCapsText));
-                }
+                "small-caps", (args, ctx) -> new SmallCapsTag()
             );
             t.resolver(smallCapsResolver);
         });
