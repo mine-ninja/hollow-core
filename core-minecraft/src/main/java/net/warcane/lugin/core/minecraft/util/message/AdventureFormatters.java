@@ -92,6 +92,7 @@ public enum AdventureFormatters {
                     return Tag.inserting(Component.text(smallCapsText));
                 }
             );
+            t.resolver(smallCapsResolver);
         });
         miniMessage = builder.build();
         consumer.accept(miniMessage);
