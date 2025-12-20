@@ -21,7 +21,7 @@ public enum GameType {
     SKYWARS_SOLO(6, "Sky Wars Solo", ServerCategoryType.SKYWARS),
     SKYWARS_DOUBLES(7, "Sky Wars Duplas", ServerCategoryType.SKYWARS),
     FACTIONS_FIRE(8, "Factions Fire", ServerCategoryType.FACTIONS_FIRE),
-    SEMI_ANARCHY(9, "Semi Anarquia", ServerCategoryType.SMP);
+    SMP(9, "SMP", ServerCategoryType.SMP);
 
     public static final Int2ObjectMap<GameType> ID_MAP = Arrays.stream(values())
         .collect(Collectors.toMap(
