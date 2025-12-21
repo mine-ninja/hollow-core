@@ -67,7 +67,7 @@ public class TeleportTrafficListener implements Listener {
             return;
         }
 
-        Location bukkitLocation = new Location(
+        var bukkitLocation = new Location(
             world,
             position.x(),
             position.y(),
@@ -76,7 +76,12 @@ public class TeleportTrafficListener implements Listener {
             position.pitch()
         );
 
-        player.teleport(bukkitLocation);
+        if (Tasks.isFolia()) {
+            player.teleportAsync(bukkitLocation);
+        } else {
+            player.teleport(bukkitLocation);
+        }
+
         StringUtils.send(player, "<green>" + fallbackMessage, false, true);
     }
 

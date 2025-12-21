@@ -124,8 +124,12 @@ public class TeleportManager {
 
         sendConnectionRequest(player, () -> {
             if (targetPlayer != null && targetPlayer.isOnline()) {
-                player.teleport(targetPlayer.getLocation());
-                StringUtils.send(player, "<green>" + fallbackMessage);
+                if (Tasks.isFolia()) {
+                    player.teleportAsync(targetPlayer.getLocation());
+                } else {
+                    player.teleport(targetPlayer.getLocation());
+                }
+                StringUtils.send(player, fallbackMessage);
                 return null;
             }
 
@@ -175,7 +179,7 @@ public class TeleportManager {
     private void handleLocalTeleport(Player player, @NonNull RemoteServerLocation RemoteServerLocation, String fallbackMessage) {
         var world = Bukkit.getWorld(RemoteServerLocation.worldName());
         if (world == null) {
-            StringUtils.send(player, "<red>O mundo em que você quer se teleportar não foi encontrado.");
+            StringUtils.send(player, "§cO mundo em que você quer se teleportar não foi encontrado.");
             return;
         }
 
@@ -186,6 +190,6 @@ public class TeleportManager {
             RemoteServerLocation.z(),
             RemoteServerLocation.yaw(),
             RemoteServerLocation.pitch()));
-        StringUtils.send(player, "<green>" + fallbackMessage);
+        StringUtils.send(player, fallbackMessage);
     }
 }
