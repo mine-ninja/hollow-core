@@ -112,6 +112,7 @@ public class Tasks {
     }
 
     public static void runLocationTask(Location location, @NotNull Runnable runnable) {
+        checkInit();
         if (isFolia() && location != null && location.getWorld() != null) {
             try {
                 foliaLib.getScheduler().runAtLocation(location, scheduledTask -> runnable.run());
@@ -126,6 +127,7 @@ public class Tasks {
     }
 
     public static void runLocationTaskLater(Location location, @NotNull Runnable runnable, long delayTicks) {
+        checkInit();
         if (isFolia() && location != null && location.getWorld() != null) {
             try {
                 foliaLib.getScheduler().runAtLocationLater(location, runnable, delayTicks);
@@ -140,6 +142,7 @@ public class Tasks {
     }
 
     public static void runLocationTaskTimer(Location location, @NotNull Runnable runnable, long delayTicks, long periodTicks) {
+        checkInit();
         if (isFolia() && location != null && location.getWorld() != null) {
             try {
                 foliaLib.getScheduler().runAtLocationTimer(location, runnable, delayTicks, periodTicks);
@@ -154,6 +157,7 @@ public class Tasks {
     }
 
     public static void runEntityTask(Entity entity, @NotNull Runnable runnable) {
+        checkInit();
         if (isFolia() && entity != null) {
             try {
                 foliaLib.getScheduler().runAtEntity(entity, scheduledTask -> runnable.run());
@@ -168,6 +172,7 @@ public class Tasks {
     }
 
     public static void runEntityTaskLater(Entity entity, @NotNull Runnable runnable, long delayTicks) {
+        checkInit();
         if (isFolia() && entity != null) {
             try {
                 foliaLib.getScheduler().runAtEntityLater(entity, runnable, delayTicks);
@@ -182,6 +187,7 @@ public class Tasks {
     }
 
     public static void runEntityTaskTimer(Entity entity, @NotNull Runnable runnable, long delayTicks, long periodTicks) {
+        checkInit();
         if (isFolia() && entity != null) {
             try {
                 foliaLib.getScheduler().runAtEntityTimer(entity, runnable, delayTicks, periodTicks);
