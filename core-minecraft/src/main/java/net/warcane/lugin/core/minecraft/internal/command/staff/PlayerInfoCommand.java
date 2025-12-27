@@ -17,6 +17,7 @@ public class PlayerInfoCommand extends SimpleCommand {
 
     public PlayerInfoCommand(BukkitPlatform platform) {
         super("playerinfo", "lugin.staff");
+        setAliases(List.of("find", "pinfo"));
         this.platform = platform;
     }
 

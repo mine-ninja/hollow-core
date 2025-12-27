@@ -82,10 +82,7 @@ public class PlayerPermissionCommand extends SimpleCommand {
                     if (targetPlayer != null && targetPlayer.isOnline()) {
                         platform.getPermissionInjector().injectPermissions(targetPlayer);
                     } else {
-                        platform.getNetworkClient().sendNetworkPacket(
-                            NetworkChannel.SERVER_STATUS,
-                            new PlayerReceivePermissionPacket(updatedAccount.uniqueId(), permission)
-                        );
+                        platform.getNetworkClient().sendNetworkPacket(NetworkChannel.SERVER_STATUS, new PlayerReceivePermissionPacket(updatedAccount.uniqueId(), permission));
                     }
 
                     ctx.sendMessage("§aPermissão %s adicionado ao jogador %s com sucesso. Expira em: %s"

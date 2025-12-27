@@ -95,7 +95,7 @@ public class InternalPacketListeners {
                         log.debug("Refreshing permissions for player {} from database", localPlayer.getName());
                         Tasks.runAsyncLater(() -> platform.getPermissionInjector().injectPermissions(localPlayer), 1);
                     } else if (error != null) {
-                        log.error("Failed to load player account for uuid " + playerId, error);
+                        log.error("Failed to load player account for uuid {}", playerId, error);
                     } else {
                         log.warn("Could not find player account for uuid " + playerId);
                     }

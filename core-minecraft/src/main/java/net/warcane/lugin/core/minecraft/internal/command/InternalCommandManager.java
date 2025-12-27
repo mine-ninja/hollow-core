@@ -47,7 +47,7 @@ public class InternalCommandManager {
      */
     public void registerInternalCommands() {
         CommandMap commandMap = Bukkit.getCommandMap();
-        commandMap.register("lugin", new GroupPermissionCommand(platform));
+        commandMap.register("lugin", new GroupPermissionCommand());
         commandMap.register("lugin", new TestPermission());
         commandMap.register("lugin", new PlayerGroupCommand(platform));
         commandMap.register("lugin", new GameModeCommand());
