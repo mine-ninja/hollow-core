@@ -6,8 +6,6 @@ import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import com.google.common.collect.Lists;
 import de.tr7zw.changeme.nbtapi.NBT;
 import de.tr7zw.changeme.nbtapi.utils.MinecraftVersion;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.warcane.lugin.core.minecraft.centralcart.CentralCart;
@@ -34,8 +32,10 @@ import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.PluginManager;
-import org.jetbrains.annotations.NotNull;
 
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -68,8 +68,6 @@ public class BukkitPlatformPlugin extends SimplePlugin {
 	public void onEnable() {
 		instance = this;
 		saveDefaultConfig();
-
-		Tasks.initialize(this);
 
 		if (!NBT.preloadApi()) {
 			this.getLogger().severe("Não foi possível carregar o NBT-API. O plugin será desativado.");

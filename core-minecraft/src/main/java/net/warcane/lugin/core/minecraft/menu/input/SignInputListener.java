@@ -21,7 +21,7 @@ public class SignInputListener implements PacketListener {
         context.put("input", wrapper.getTextLines());
         context.accept();
         
-        Tasks.runSyncAt(() -> {
+        Tasks.runAtLocation(() -> {
             Vector3i pos = new Vector3i(context.getLocation().getBlockX(), context.getLocation().getBlockY(), context.getLocation().getBlockZ());
             event.getUser().sendPacket(new WrapperPlayServerBlockChange(pos, SpigotConversionUtil.fromBukkitBlockData(context.getLocation().getBlock().getBlockData())));
         }, context.getLocation());

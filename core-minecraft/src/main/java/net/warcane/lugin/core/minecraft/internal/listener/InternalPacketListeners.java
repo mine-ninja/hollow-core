@@ -1,7 +1,5 @@
 package net.warcane.lugin.core.minecraft.internal.listener;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.event.account.PlayerAccountLoadEvent;
 import net.warcane.lugin.core.minecraft.gamerule.listener.GameRuleUpdateListener;
@@ -32,8 +30,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.jetbrains.annotations.NotNull;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.UUID;
 

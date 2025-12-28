@@ -8,7 +8,6 @@ import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.warcane.lugin.core.proxy.VelocityPlatform;
-import net.warcane.lugin.core.proxy.restart.RestartManager;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
 
 import java.util.HashSet;
@@ -39,7 +38,8 @@ public class RestartCommand {
     };
 
     private static final SuggestionProvider<CommandSource> RESTART_ID_SUGGESTION = (ctx, builder) -> {
-        RestartManager.get().getScheduledRestartIds().forEach(builder::suggest);
+        //TODO: FIX
+        // RestartManager.get().getScheduledRestartIds().forEach(builder::suggest);
         return builder.buildFuture();
     };
 

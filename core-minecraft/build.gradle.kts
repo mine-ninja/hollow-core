@@ -1,5 +1,3 @@
-import org.gradle.kotlin.dsl.invoke
-
 plugins {
     `java-library`
     id("com.gradleup.shadow") version ("9.0.0-rc1")
@@ -19,10 +17,8 @@ repositories {
     maven { url = uri("https://repo.dmulloy2.net/repository/public/") }
     maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
     maven { url = uri("https://repo.extendedclip.com/releases/") }
-    maven {
-        name = "papermc"
-        url = uri("https://repo.papermc.io/repository/maven-public/")
-    }
+    maven("https://repo.papermc.io/repository/maven-public/")
+    maven("https://repo.tcoded.com/releases")
 
     val repositoryUser = (project.findProperty("luginUser") ?: "lugin") as String
     val repositoryPassword = (project.findProperty("luginPassword") ?: "lugin") as String
@@ -47,7 +43,6 @@ dependencies {
     paperweight.paperDevBundle("1.21.4-R0.1-SNAPSHOT")
     api(project(":core-sdk"))
     api("fr.mrmicky:fastboard:2.1.5")
-    api("com.github.TechnicallyCoded:FoliaLib:0.4.4")
 
     implementation("net.kyori:adventure-platform-bukkit:4.4.1")
     implementation("net.kyori:adventure-text-minimessage:4.24.0")
@@ -98,14 +93,12 @@ tasks.withType(xyz.jpenilla.runtask.task.AbstractRun::class) {
 
 tasks.shadowJar {
     relocate("okhttp3", "net.warcane.lugin.core.libs.okhttp3")
-    relocate("com.tcoded.folialib", "net.warcane.lugin.core.libs.folialib")
 
     archiveClassifier.set("")
     archiveVersion.set("")
+
     mergeServiceFiles()
-    minimize {
-        exclude("com.tcoded:FoliaLib:.*")
-    }
+    minimize()
 }
 
 tasks.build {
