@@ -6,23 +6,12 @@ import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
 import net.warcane.lugin.core.minecraft.currency.Currency;
 import net.warcane.lugin.core.player.wallet.WalletService;
+import net.warcane.lugin.core.player.wallet.log.WalletBalanceLog;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class EconomyCommand extends SimpleCommand {
-
-    private static final String SUBCOMMAND_ERROR = "§cVocê deve especificar um subcomando: ver, pagar, adicionar, remover ou listar.";
-    private static final String PLAYER_NAME_ERROR = "§cVocê deve especificar o nome do jogador.";
-    private static final String CURRENCY_ID_ERROR = "§cVocê deve especificar o ID da moeda.";
-    private static final String INVALID_CURRENCY_ERROR = "§cMoeda inválida: %s. Use uma das seguintes: %s";
-    private static final String INVALID_SUBCOMMAND_ERROR = "§cSubcomando inválido. Use: set, add, remove, view ou list.";
-    private static final String WALLET_ERROR = "§cErro ao buscar a carteira do jogador: %s";
-    private static final String PLAYER_NOT_FOUND = "§cJogador não encontrado ou não possui uma carteira.";
-    private static final String BALANCE_AMOUNT_ERROR = "§cVocê deve especificar a quantidade a ser %s na carteira do jogador.";
-    private static final String UPDATE_WALLET_ERROR = "§cErro ao atualizar a carteira do jogador: %s";
-    private static final String VIEW_BALANCE_MESSAGE = "§aO saldo de §b%s§a é §b%s§a.";
-    private static final String OPERATION_SUCCESS_MESSAGE = "§aOperação %s realizada com sucesso na carteira de §b%s§a. Novo saldo: §b%s§a.";
 
     private final BukkitPlatform platform;
     private final WalletService walletService;
@@ -38,104 +27,94 @@ public class EconomyCommand extends SimpleCommand {
     public void performCommand(@NotNull CommandContext ctx) throws CommandFailedException {
         final var subCommand = ctx.getRawArgOrNull(0);
         if (subCommand == null) {
-            ctx.sendMessage(SUBCOMMAND_ERROR);
+            ctx.sendMessage("§cVocê deve especificar um subcomando: view, add, remove, set, list");
             return;
         }
 
         if (subCommand.equalsIgnoreCase("list")) {
-            handleListCurrenciesCommand(ctx);
+            handleListCurrencies(ctx);
             return;
         }
 
-        final var playerName = ctx.getRawArgOrThrow(1, PLAYER_NAME_ERROR);
-        final var currencyId = ctx.getRawArgOrThrow(2, CURRENCY_ID_ERROR);
+        final var playerName = ctx.getRawArgOrThrow(1, "§cEspecifique o nome do jogador");
+        final var currencyId = ctx.getRawArgOrThrow(2, "§cEspecifique o ID da moeda");
         final var currency = platform.getCurrencyManager().getCurrency(currencyId);
-        if (currency == null) throw new CommandFailedException(INVALID_CURRENCY_ERROR.formatted(currencyId, String.join(", ", platform.getCurrencyManager().getAllCurrencyIds())));
 
+        if (currency == null) {
+            ctx.sendMessage("§cMoeda inválida: " + currencyId);
+            return;
+        }
 
-        final var commandCtx = new EconomyCommandContext(ctx, playerName, currency);
         switch (subCommand.toLowerCase()) {
-            case "set" -> handleBalanceOperation(commandCtx, BalanceOperation.SET);
-            case "add" -> handleBalanceOperation(commandCtx, BalanceOperation.ADD);
-            case "remove" -> handleBalanceOperation(commandCtx, BalanceOperation.REMOVE);
-            case "view" -> handleViewBalanceCommand(commandCtx);
-            default -> throw new CommandFailedException(INVALID_SUBCOMMAND_ERROR);
+            case "view" -> handleView(ctx, playerName, currency);
+            case "add" -> handleOperation(ctx, playerName, currency, BalanceOperation.ADD);
+            case "remove" -> handleOperation(ctx, playerName, currency, BalanceOperation.REMOVE);
+            case "set" -> handleOperation(ctx, playerName, currency, BalanceOperation.SET);
+            default -> ctx.sendMessage("§cSubcomando inválido");
         }
     }
 
-    private void handleViewBalanceCommand(@NotNull EconomyCommandContext ctx) {
-        walletService.getOrLoadWallet(ctx.playerName())
-          .whenComplete((found, error) -> {
-              if (error != null) {
-                  throw new CommandFailedException(WALLET_ERROR.formatted(error.getMessage()));
-              }
-              if (found == null) {
-                  ctx.sendMessage(PLAYER_NOT_FOUND);
-                  return;
-              }
-              final var amount = found.getCurrencyAmount(ctx.currency().id());
-              final var formattedAmount = ctx.currency().formatAmount(amount);
-              ctx.sendMessage(VIEW_BALANCE_MESSAGE.formatted(ctx.playerName(), formattedAmount));
-          });
+    private void handleView(CommandContext ctx, String playerName, Currency currency) {
+        walletService.getOrLoadWallet(playerName).whenComplete((wallet, error) -> {
+            if (error != null || wallet == null) {
+                ctx.sendMessage("§cCarteira não encontrada");
+                return;
+            }
+
+            final var amount = wallet.getCurrencyAmount(currency.id());
+            final var formatted = currency.formatAmount(amount);
+            ctx.sendMessage("§aSaldo de §b" + playerName + "§a: §b" + formatted);
+        });
     }
 
-    private void handleBalanceOperation(@NotNull EconomyCommandContext ctx, @NotNull BalanceOperation operation) {
-        final var amount = ctx.commandContext().getBigDecimalOrThrow(
-          3,
-          BALANCE_AMOUNT_ERROR.formatted(operation.name().toLowerCase())
-        );
+    private void handleOperation(CommandContext ctx, String playerName, Currency currency, BalanceOperation op) {
+        final var amount = ctx.getBigDecimalOrThrow(3, "§cEspecifique a quantidade");
 
-        walletService.getOrLoadWallet(ctx.playerName())
-          .whenComplete((found, error) -> {
-              if (error != null) {
-                  throw new CommandFailedException(WALLET_ERROR.formatted(error.getMessage()));
-              }
-              if (found == null) {
-                  ctx.sendMessage(PLAYER_NOT_FOUND);
-                  return;
-              }
+        walletService.getOrLoadWallet(playerName).whenComplete((wallet, error) -> {
+            if (error != null || wallet == null) {
+                ctx.sendMessage("§cCarteira não encontrada");
+                return;
+            }
 
-              final var changed = switch (operation) {
-                  case ADD -> found.addCurrencyAmount(ctx.currency().id(), amount);
-                  case REMOVE -> found.subtractCurrencyAmount(ctx.currency().id(), amount);
-                  case SET -> found.updateCurrencyAmount(ctx.currency().id(), amount);
-              };
+            final var modified = switch (op) {
+                case ADD -> wallet.addCurrencyAmount(currency.id(), amount);
+                case REMOVE -> wallet.subtractCurrencyAmount(currency.id(), amount);
+                case SET -> wallet.updateCurrencyAmount(currency.id(), amount);
+            };
 
-              walletService.saveWallet(changed)
-                .whenComplete((updated, updateError) -> {
-                    if (updateError != null) {
-                        error.printStackTrace();
-                        return;
-                    }
+            final var logType = switch (op) {
+                case ADD -> WalletBalanceLog.WalletBalanceLogType.ADDITION;
+                case REMOVE -> WalletBalanceLog.WalletBalanceLogType.SUBTRACTION;
+                case SET -> WalletBalanceLog.WalletBalanceLogType.UPDATE;
+            };
 
-                    final var formattedAmount = ctx.currency().formatAmount(amount);
-                    ctx.sendMessage(OPERATION_SUCCESS_MESSAGE.formatted(operation.name().toLowerCase(), ctx.playerName(), formattedAmount));
-                });
-          });
+            final var log = WalletBalanceLog.createLog(wallet.uniqueId(), currency.id(), amount, logType);
+            walletService.addLogToContainer(wallet.uniqueId(), log);
+
+            walletService.saveWallet(modified).whenComplete((saved, saveError) -> {
+                if (saveError != null) {
+                    ctx.sendMessage("§cErro ao salvar carteira");
+                    return;
+                }
+
+                final var newAmount = saved.getCurrencyAmount(currency.id());
+                final var formatted = currency.formatAmount(newAmount);
+                ctx.sendMessage("§aOperação realizada! Novo saldo: §b" + formatted);
+            });
+        });
     }
 
-    private void handleListCurrenciesCommand(@NotNull CommandContext ctx) {
+    private void handleListCurrencies(CommandContext ctx) {
         final var currencies = platform.getCurrencyManager().getCurrencies().values();
         if (currencies.isEmpty()) {
-            ctx.sendMessage("§cNenhuma moeda registrada.");
+            ctx.sendMessage("§cNenhuma moeda registrada");
             return;
         }
 
         ctx.sendMessage("§aMoedas registradas:");
-        for (var currency : currencies) {
-            final var allowPlayerPayments = currency.allowPlayerPayments() ? "§aSim" : "§cNão";
-            ctx.sendMessage(" - §b" + currency.id() + "§a: " + currency.displayName() + " §7(" + currency.symbol() + "§7) " + " - Pagamentos entre jogadores: " + allowPlayerPayments);
-        }
-    }
-
-    private record EconomyCommandContext(
-      @NotNull CommandContext commandContext,
-      @NotNull String playerName,
-      @NotNull Currency currency
-    ) {
-        public void sendMessage(@NotNull String... msg) {
-            commandContext.sendMessage(msg);
-        }
+        currencies.forEach(currency -> {
+            ctx.sendMessage(" §7- §b" + currency.id() + "§7: " + currency.displayName());
+        });
     }
 
     enum BalanceOperation {
