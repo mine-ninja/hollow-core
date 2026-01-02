@@ -9,8 +9,12 @@ import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.command.SimpleCommand;
 import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
+import net.warcane.lugin.core.minecraft.currency.Currency;
 import net.warcane.lugin.core.player.wallet.WalletService;
 import net.warcane.lugin.core.player.wallet.log.WalletBalanceLog;
+import net.warcane.lugin.core.player.wallet.log.WalletBalanceLogType;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
@@ -25,21 +29,21 @@ public class AuditCommand extends SimpleCommand {
     private static final int LOGS_PER_PAGE = 8;
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yy HH:mm");
     private final WalletService walletService;
+    private final BukkitPlatform platform;
 
     public AuditCommand(BukkitPlatform platform) {
-        super("audit", "lugin.master");
+        super("audit", "lugin.core.command.economy.audit");
+        this.platform = platform;
         this.setAliases(List.of("auditoria"));
         this.walletService = platform.getWalletService();
     }
 
     @Override
     public void performCommand(@NotNull CommandContext ctx) throws CommandFailedException {
-        // /audit <Player> <moeda ou "all"> [pagina]
         final var playerName = ctx.getRawArgOrThrow(0, "§cUso: /audit <jogador> <moeda|all> [página]");
         final var currencyArg = ctx.getRawArgOrThrow(1, "§cUso: /audit <jogador> <moeda|all> [página]");
         final var page = ctx.getIntOrDefault(2, 1);
 
-        // Se for "all", não filtra por moeda
         final var currencyFilter = currencyArg.equalsIgnoreCase("all") ? null : currencyArg;
 
         walletService.getOrLoadWallet(playerName).whenComplete((wallet, error) -> {
@@ -81,9 +85,7 @@ public class AuditCommand extends SimpleCommand {
 
         // Se currencyFilter é null, mostra todos
         if (currencyFilter != null) {
-            filtered = logs.stream()
-              .filter(log -> log.currencyId().equalsIgnoreCase(currencyFilter))
-              .toList();
+            filtered = logs.stream().filter(log -> log.currencyId().equalsIgnoreCase(currencyFilter)).toList();
         } else {
             filtered = new ArrayList<>(logs);
         }
@@ -117,9 +119,7 @@ public class AuditCommand extends SimpleCommand {
     }
 
     private void buildHeader(CommandContext ctx, String player, int page, int total, int count, String filter) {
-        var line = Component.text("Auditoria", NamedTextColor.WHITE, TextDecoration.BOLD)
-          .append(Component.text(" » ", NamedTextColor.DARK_GRAY))
-          .append(Component.text(player, NamedTextColor.AQUA));
+        var line = Component.text("Auditoria", NamedTextColor.WHITE).append(Component.text(" » ", NamedTextColor.DARK_GRAY)).append(Component.text(player, NamedTextColor.AQUA));
 
         if (filter != null) {
             line = line.append(Component.text(" [" + filter + "]", NamedTextColor.YELLOW));
@@ -142,27 +142,22 @@ public class AuditCommand extends SimpleCommand {
         var date = DATE_FORMAT.format(new Date(log.timestamp()));
 
         var line = Component.text(String.format("#%03d", num), NamedTextColor.DARK_GRAY)
-          .append(Component.text("  ", NamedTextColor.WHITE))
-          .append(type)
-          .append(Component.text("  ", NamedTextColor.WHITE))
-          .append(amount)
-          .append(Component.text(" ", NamedTextColor.WHITE))
-          .append(Component.text(log.currencyId(), NamedTextColor.AQUA))
-          .append(Component.text("  ", NamedTextColor.WHITE))
-          .append(Component.text(date, NamedTextColor.DARK_GRAY))
-          .hoverEvent(HoverEvent.showText(Component.text("Clique para copiar ID", NamedTextColor.YELLOW)))
-          .clickEvent(ClickEvent.copyToClipboard(log.logId().toString()));
+            .append(Component.text("  ", NamedTextColor.WHITE))
+            .append(type).append(Component.text("  ", NamedTextColor.WHITE))
+            .append(amount).append(Component.text(" ", NamedTextColor.WHITE))
+            .append(Component.text(log.currencyId(), NamedTextColor.AQUA))
+            .append(Component.text("  ", NamedTextColor.WHITE))
+            .append(Component.text(date, NamedTextColor.DARK_GRAY))
+            .hoverEvent(HoverEvent.showText(Component.text("§7Reason: §f" + log.reason() + "\n\n§eClique para copiar ID")))
+            .clickEvent(ClickEvent.copyToClipboard(log.logId().toString()));
 
         ctx.sendMessage(line);
     }
 
-    private Component formatAmount(BigDecimal amount, WalletBalanceLog.WalletBalanceLogType type) {
-        String prefix = type == WalletBalanceLog.WalletBalanceLogType.ADDITION ? "+" :
-          type == WalletBalanceLog.WalletBalanceLogType.SUBTRACTION ? "-" : "";
+    private Component formatAmount(BigDecimal amount, WalletBalanceLogType type) {
+        String prefix = type == WalletBalanceLogType.ADDITION ? "+" : type == WalletBalanceLogType.SUBTRACTION ? "-" : "";
 
-        NamedTextColor color = type == WalletBalanceLog.WalletBalanceLogType.ADDITION ? NamedTextColor.GREEN :
-          type == WalletBalanceLog.WalletBalanceLogType.SUBTRACTION ? NamedTextColor.RED :
-            NamedTextColor.YELLOW;
+        NamedTextColor color = type == WalletBalanceLogType.ADDITION ? NamedTextColor.GREEN : type == WalletBalanceLogType.SUBTRACTION ? NamedTextColor.RED : NamedTextColor.YELLOW;
 
         return Component.text(prefix + amount.toPlainString(), color);
     }
@@ -205,8 +200,33 @@ public class AuditCommand extends SimpleCommand {
         // /audit <player> <moeda|all> [página]
         String cmd = "/audit " + player + " " + currencyArg + " " + page;
 
-        return Component.text(text, color)
-          .hoverEvent(HoverEvent.showText(Component.text("Página " + page, NamedTextColor.AQUA)))
-          .clickEvent(ClickEvent.runCommand(cmd));
+        return Component.text(text, color).hoverEvent(HoverEvent.showText(Component.text("Página " + page, NamedTextColor.AQUA))).clickEvent(ClickEvent.runCommand(cmd));
+    }
+
+    @Override
+    public List<String> performTabComplete(@NotNull CommandContext ctx) {
+        if (ctx.isArgsLength(1)) {
+            final var input = ctx.getRawArgOrNull(1);
+            return Bukkit.getOnlinePlayers().stream()
+                .map(Player::getName)
+                .filter(name -> input == null || name.toLowerCase().startsWith(input.toLowerCase()))
+                .sorted()
+                .toList();
+        }
+
+        if (ctx.isArgsLength(2)) {
+            final var input = ctx.getRawArgOrNull(2);
+            return platform.getCurrencyManager().getCurrencies().values().stream()
+                .map(Currency::id)
+                .filter(id -> input == null || id.toLowerCase().startsWith(input.toLowerCase()))
+                .sorted()
+                .collect(() -> {
+                    List<String> list = new ArrayList<>();
+                    list.add("all");
+                    return list;
+                }, List::add, List::addAll);
+        }
+
+        return List.of();
     }
 }

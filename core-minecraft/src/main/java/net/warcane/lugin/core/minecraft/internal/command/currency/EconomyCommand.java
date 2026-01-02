@@ -5,10 +5,16 @@ import net.warcane.lugin.core.minecraft.command.SimpleCommand;
 import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
 import net.warcane.lugin.core.minecraft.currency.Currency;
+import net.warcane.lugin.core.minecraft.util.message.StringUtils;
 import net.warcane.lugin.core.player.wallet.WalletService;
 import net.warcane.lugin.core.player.wallet.log.WalletBalanceLog;
+import net.warcane.lugin.core.player.wallet.log.WalletBalanceLogConstants;
+import net.warcane.lugin.core.player.wallet.log.WalletBalanceLogType;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class EconomyCommand extends SimpleCommand {
@@ -17,7 +23,7 @@ public class EconomyCommand extends SimpleCommand {
     private final WalletService walletService;
 
     public EconomyCommand(BukkitPlatform platform) {
-        super("economy", "lugin.master");
+        super("economy", "lugin.core.command.economy");
         this.setAliases(List.of("eco"));
         this.platform = platform;
         this.walletService = platform.getWalletService();
@@ -83,12 +89,16 @@ public class EconomyCommand extends SimpleCommand {
             };
 
             final var logType = switch (op) {
-                case ADD -> WalletBalanceLog.WalletBalanceLogType.ADDITION;
-                case REMOVE -> WalletBalanceLog.WalletBalanceLogType.SUBTRACTION;
-                case SET -> WalletBalanceLog.WalletBalanceLogType.UPDATE;
+                case ADD -> WalletBalanceLogType.ADDITION;
+                case REMOVE -> WalletBalanceLogType.SUBTRACTION;
+                case SET -> WalletBalanceLogType.UPDATE;
             };
 
-            final var log = WalletBalanceLog.createLog(wallet.uniqueId(), currency.id(), amount, logType);
+            var args = Arrays.stream(ctx.getArgs()).toList().subList(4, ctx.getArgs().length);
+            var reason = String.join(" ", args).isEmpty() ? WalletBalanceLogConstants.NO_REASON :
+                String.join(" ", args).toUpperCase();
+
+            final var log = WalletBalanceLog.createLog(wallet.uniqueId(), currency.id(), amount, logType, reason);
             walletService.addLogToContainer(wallet.uniqueId(), log);
 
             walletService.saveWallet(modified).whenComplete((saved, saveError) -> {
@@ -112,9 +122,44 @@ public class EconomyCommand extends SimpleCommand {
         }
 
         ctx.sendMessage("§aMoedas registradas:");
-        currencies.forEach(currency -> {
-            ctx.sendMessage(" §7- §b" + currency.id() + "§7: " + currency.displayName());
-        });
+        currencies.forEach(currency -> ctx.sendMessage(" §7- §b" + currency.id() + "§7: " + currency.displayName()));
+    }
+
+    @Override
+    public List<String> performTabComplete(@NotNull CommandContext ctx) {
+        if (ctx.isArgsLength(1)) {
+            return List.of("view", "add", "remove", "set", "list");
+        }
+
+        if (ctx.isArgsLength(2)) {
+            final var input = ctx.getRawArgOrNull(1);
+            return Bukkit.getOnlinePlayers().stream()
+                .map(Player::getName)
+                .filter(name -> input == null || name.toLowerCase().startsWith(input.toLowerCase()))
+                .sorted()
+                .toList();
+        }
+
+        if (ctx.isArgsLength(3)) {
+            final var subCommand = ctx.getRawArgOrNull(0);
+            if (subCommand == null) {
+                return List.of();
+            }
+
+            return switch (subCommand.toLowerCase()) {
+                case "add", "remove", "set", "view" -> {
+                    final var input = ctx.getRawArgOrNull(2);
+                    yield platform.getCurrencyManager().getCurrencies().values().stream()
+                        .map(Currency::id)
+                        .filter(id -> input == null || id.toLowerCase().startsWith(input.toLowerCase()))
+                        .sorted()
+                        .toList();
+                }
+                default -> List.of();
+            };
+        }
+
+        return List.of();
     }
 
     enum BalanceOperation {

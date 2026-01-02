@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.UUID;
 
 public record WalletBalanceLogContainer(
-  @NotNull @BsonId UUID playerId,
-  @NotNull List<WalletBalanceLog> logs
+    @NotNull @BsonId UUID playerId,
+    @NotNull List<WalletBalanceLog> logs
 ) {
 
     public static WalletBalanceLogContainer createEmpty(@NotNull UUID playerId) {
