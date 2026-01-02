@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.currency.Currency;
 import net.warcane.lugin.core.minecraft.gamerule.command.GameRuleCommand;
+import net.warcane.lugin.core.minecraft.internal.command.currency.AuditCommand;
 import net.warcane.lugin.core.minecraft.internal.command.currency.CurrencyBasedCommand;
 import net.warcane.lugin.core.minecraft.internal.command.currency.EconomyCommand;
 import net.warcane.lugin.core.minecraft.internal.command.discord.LinkCommand;
@@ -61,6 +62,7 @@ public class InternalCommandManager {
         commandMap.register("lugin", new PlayerInfoCommand(platform));
         commandMap.register("lugin" , new ServerCommand(platform));
         commandMap.register("lugin", new EconomyCommand(platform));
+        commandMap.register("lugin", new AuditCommand(platform));
         commandMap.register("lugin", new TestMenuCommand(platform));
         commandMap.register("lugin", new TestTimeCommand());
         commandMap.register("lugin", new VanishCommand(platform));
