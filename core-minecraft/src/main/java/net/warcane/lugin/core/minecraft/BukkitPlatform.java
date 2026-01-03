@@ -26,6 +26,7 @@ import net.warcane.lugin.core.minecraft.nametag.ModernNameTagResolver;
 import net.warcane.lugin.core.minecraft.nametag.NameTagResolver;
 import net.warcane.lugin.core.minecraft.permission.PermissionInjector;
 import net.warcane.lugin.core.minecraft.punish.api.PunishManager;
+import net.warcane.lugin.core.minecraft.punish.reports.ReportManager;
 import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.teleport.TeleportManager;
 import net.warcane.lugin.core.minecraft.teleport.TeleportTrafficListener;
@@ -202,6 +203,8 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         MailManager.init(plugin);
 
         PunishManager.init(plugin, getExecutorService());
+        ReportManager.init(plugin);
+
         AdventureFormatters.init();
 
         final var internalPackets = new InternalPacketListeners(this);
