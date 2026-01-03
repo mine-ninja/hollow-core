@@ -45,7 +45,9 @@ public class ReportManager {
     }
 
     public void reportPlayer(PlayerAccount reportedPlayer, Player reporter, PunishmentInfo reportReason, String evidenceLink) {
+        var audience = BukkitPlatformPlugin.getInstance().adventure().player(reporter);
         reportLogger.logReport(reporter.getName(), reportReason, reportedPlayer.playerName(), reportedPlayer.uniqueId(), evidenceLink);
+        StringUtils.send(audience, "<l-confirm>Você reportou <l-yellow>" + reportedPlayer.playerName() + " <l-green> com sucesso!");
     }
 
     public static void init(Plugin plugin) {
