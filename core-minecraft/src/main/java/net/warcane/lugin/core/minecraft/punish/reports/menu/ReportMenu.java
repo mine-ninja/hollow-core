@@ -2,6 +2,7 @@ package net.warcane.lugin.core.minecraft.punish.reports.menu;
 
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.audience.Audience;
+import net.warcane.lugin.core.minecraft.BukkitPlatform;
 import net.warcane.lugin.core.minecraft.BukkitPlatformPlugin;
 import net.warcane.lugin.core.minecraft.menu.PlayerMenuContext;
 import net.warcane.lugin.core.minecraft.menu.SimpleMenu;
@@ -14,8 +15,10 @@ import net.warcane.lugin.core.minecraft.util.message.input.ChatInput;
 import net.warcane.lugin.core.player.account.PlayerAccount;
 import net.warcane.lugin.core.punish.data.PunishmentInfo;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -29,6 +32,9 @@ import java.util.Map;
  */
 @Slf4j
 public class ReportMenu extends SimpleMenu {
+
+    public static final NamespacedKey MENU_KEY = new NamespacedKey("lugin-core", "menu_item");
+    public static final NamespacedKey NO_PRICE_KEY = new NamespacedKey("lugin-core", "no_price");
 
     public static final String EVIDENCE_KEY = "evidence";
     public static final String REASON_KEY = "reason";
@@ -75,7 +81,7 @@ public class ReportMenu extends SimpleMenu {
 
             builder.renderer(player -> {
                 boolean isSelected = reason != null && reason.equals(report);
-                ItemStack itemStack = ItemStack.of(isSelected ? Material.EMERALD : Material.PAPER);
+                ItemStack itemStack = getItem(isSelected ? Material.EMERALD : Material.PAPER);
                 ItemMeta itemMeta = itemStack.getItemMeta();
 
                 String displayText =
@@ -105,7 +111,7 @@ public class ReportMenu extends SimpleMenu {
 
         ctx.setItem('C', (index, builder) -> {
             builder.renderer(player -> {
-                ItemStack itemStack = ItemStack.of(Material.BARRIER);
+                ItemStack itemStack = getItem(Material.BARRIER);
                 ItemMeta itemMeta = itemStack.getItemMeta();
                 itemMeta.setDisplayName("§c§lCancelar Report");
                 itemMeta.setLore(List.of("", "§7Clique para cancelar o report e fechar este menu."));
@@ -121,7 +127,7 @@ public class ReportMenu extends SimpleMenu {
         ctx.setItem('S', (index, builder) -> {
             builder.renderer(player -> {
                 boolean emptyReason = reason == null;
-                ItemStack itemStack = ItemStack.of(emptyReason ? Material.GRAY_STAINED_GLASS_PANE : Material.LIME_STAINED_GLASS_PANE);
+                ItemStack itemStack = getItem(emptyReason ? Material.GRAY_STAINED_GLASS_PANE : Material.LIME_STAINED_GLASS_PANE);
                 ItemMeta itemMeta = itemStack.getItemMeta();
                 itemMeta.setDisplayName("§a§lEnviar Report");
                 if (emptyReason) {
@@ -152,7 +158,8 @@ public class ReportMenu extends SimpleMenu {
         ctx.setItem('E', (index, builder) -> {
             builder.renderer(player -> {
                 boolean emptyEvidence = evidence == null;
-                ItemStack itemStack = ItemStack.of(emptyEvidence ? Material.FEATHER : Material.PAPER);
+                ItemStack itemStack = getItem(emptyEvidence ? Material.FEATHER : Material.PAPER);
+
                 ItemMeta itemMeta = itemStack.getItemMeta();
                 itemMeta.setDisplayName("§e§lEvidência");
                 if (emptyEvidence) {
@@ -180,5 +187,17 @@ public class ReportMenu extends SimpleMenu {
                     "<l-info>Insira o link da evidência para o report. (30 segundos...)");
             });
         });
+    }
+
+
+    private static ItemStack getItem(Material material) {
+        ItemStack itemStack = new ItemStack(material);
+        if (BukkitPlatform.getInstance().isRunningOnNewVersions()) {
+            itemStack.editMeta(meta -> {
+                meta.getPersistentDataContainer().set(NO_PRICE_KEY, PersistentDataType.BOOLEAN, true);
+                meta.getPersistentDataContainer().set(MENU_KEY, PersistentDataType.BOOLEAN, true);
+            });
+        }
+        return itemStack;
     }
 }
