@@ -12,6 +12,7 @@ import net.warcane.lugin.core.minecraft.punish.core.database.redis.MessageManage
 import net.warcane.lugin.core.minecraft.punish.core.database.redis.RedisDatabase;
 import net.warcane.lugin.core.minecraft.punish.events.PlayerPunishEvents;
 import net.warcane.lugin.core.minecraft.punish.reports.core.ReportLogger;
+import net.warcane.lugin.core.minecraft.util.Cooldown;
 import net.warcane.lugin.core.minecraft.util.message.StringUtils;
 import net.warcane.lugin.core.player.account.PlayerAccount;
 import net.warcane.lugin.core.punish.data.PunishedDTO;
@@ -21,6 +22,7 @@ import net.warcane.lugin.core.punish.utils.MessageUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -44,8 +46,18 @@ public class ReportManager {
         this.reportLogger = new ReportLogger(plugin.getDataFolder());
     }
 
-    public void reportPlayer(PlayerAccount reportedPlayer, Player reporter, PunishmentInfo reportReason, String evidenceLink) {
+    public void reportPlayer(PlayerAccount reportedPlayer, Player reporter, PunishmentInfo reportReason, @Nullable String evidenceLink) {
         var audience = BukkitPlatformPlugin.getInstance().adventure().player(reporter);
+
+        if (Cooldown.isInCooldown(reporter.getUniqueId(), "report-" + reporter.getUniqueId() + "-" + reportedPlayer.uniqueId())) {
+            StringUtils.send(audience, "<l-error>Você já reportou esse jogador recentemente. Aguarde antes de reportar novamente.");
+            return;
+        }
+        Cooldown.setCooldownSec(reporter.getUniqueId(), 60 * 5L, "report-" + reporter.getUniqueId() + "-" + reportedPlayer.uniqueId()); // 5 minutes
+
+
+        if (evidenceLink == null) evidenceLink = "Não fornecido";
+
         reportLogger.logReport(reporter.getName(), reportReason, reportedPlayer.playerName(), reportedPlayer.uniqueId(), evidenceLink);
         StringUtils.send(audience, "<l-confirm>Você reportou <l-yellow>" + reportedPlayer.playerName() + " <l-green> com sucesso!");
     }

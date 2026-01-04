@@ -7,6 +7,7 @@ import net.warcane.lugin.core.minecraft.command.context.CommandContext;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
 import net.warcane.lugin.core.minecraft.punish.api.PunishManager;
 import net.warcane.lugin.core.minecraft.punish.reports.ReportManager;
+import net.warcane.lugin.core.minecraft.punish.reports.menu.ReportMenu;
 import net.warcane.lugin.core.minecraft.util.Cooldown;
 import net.warcane.lugin.core.minecraft.util.message.StringUtils;
 import net.warcane.lugin.core.player.account.PlayerAccount;
@@ -15,7 +16,9 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -32,7 +35,7 @@ public class ReportCommand extends SimpleCommand {
 
     @Override
     public void performCommand(CommandContext ctx) throws CommandFailedException {
-        if (ctx.isArgsLength(1) || ctx.isArgsLength(2)) {
+        if (ctx.isArgsLength(0) || ctx.isArgsLength(2)) {
             throw new CommandFailedException("§cUso correto: /reportar <player> <id-motivo> [link-prova]");
         }
 
@@ -43,11 +46,6 @@ public class ReportCommand extends SimpleCommand {
         var target = ctx.getRawArgOrNull(0);
         if (target == null) {
             StringUtils.send(player, "<l-error>Ocorreu um erro...");
-            return;
-        }
-
-        String id = ctx.getRawArgOrNull(1);
-        if (!checkReportRequest(player, id, ctx)) {
             return;
         }
 
@@ -62,14 +60,23 @@ public class ReportCommand extends SimpleCommand {
                 return;
             }
 
-            if (Cooldown.isInCooldown(playerAccount.uniqueId(), "report-" + player.getUniqueId() + "-" + playerAccount.uniqueId())) {
-                StringUtils.send(audience, "<l-error>Você já reportou esse jogador recentemente. Aguarde antes de reportar novamente.");
+            HashMap<String, Object> reportMenuParams = new HashMap<>();
+            reportMenuParams.put(ReportMenu.REPORTED_ACCOUNT_KEY, playerAccount);
+            if (ctx.isArgsLength(1)) {
+                BukkitPlatform.getInstance().getMenuManager().openToPlayer(player, ReportMenu.class, reportMenuParams);
                 return;
             }
 
-            //PunishManager.get().punishPlayer(playerAccount, player, PunishmentInfo.getPunishmentById(id), ctx.getRawArgOrNull(2));
-            ReportManager.get().reportPlayer(playerAccount, player, PunishmentInfo.getPunishmentByModernId(id), ctx.getRawArgOrNull(2));
-            Cooldown.setCooldownSec(playerAccount.uniqueId(), 60 * 5L, "report-" + player.getUniqueId() + "-" + playerAccount.uniqueId()); // 5 minutes
+            String id = ctx.getRawArgOrNull(1);
+            if (!checkReportRequest(player, id, ctx)) {
+                return;
+            }
+            reportMenuParams.put(ReportMenu.REASON_KEY, PunishmentInfo.getPunishmentByModernId(id));
+
+            if (ctx.getRawArgOrNull(2) != null && PunishManager.checkLink(ctx.getRawArgOrNull(2))) {
+                reportMenuParams.put(ReportMenu.EVIDENCE_KEY, ctx.getRawArgOrNull(2));
+            }
+            BukkitPlatform.getInstance().getMenuManager().openToPlayer(player, ReportMenu.class, reportMenuParams);
         });
     }
 

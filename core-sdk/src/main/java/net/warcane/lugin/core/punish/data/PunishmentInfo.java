@@ -33,6 +33,7 @@ public record PunishmentInfo(@Deprecated int id,
             .addPunishment(PunishTime.HALF_MONTH, PunishmentType.TEMP)
             .addPunishment(PunishTime.ONE_MONTH, PunishmentType.TEMP)
             .addNeededPermissions("moderator")
+            .reportable()
             .build());
 
         PUNISHMENTS.add(builder()
@@ -44,13 +45,13 @@ public record PunishmentInfo(@Deprecated int id,
             .addPunishment(PunishTime.ONE_WEEK, PunishmentType.TEMP)
             .addPunishment(PunishTime.HALF_MONTH, PunishmentType.TEMP)
             .addNeededPermissions("helper")
+            .reportable()
             .build());
 
         PUNISHMENTS.add(builder()
             .id(3)
             .title("Discurso de Ódio")
             .modernId("discurso_de_odio")
-            .description("Descrição do discurso de ódio")
             .addPunishment(PunishTime.ONE_MONTH, PunishmentType.TEMP)
             .addPunishment(PunishTime.TWO_MONTHS, PunishmentType.TEMP)
             .addPunishment(PunishTime.THREE_MONTHS, PunishmentType.TEMP)
@@ -133,6 +134,7 @@ public record PunishmentInfo(@Deprecated int id,
             .addPunishment(PunishTime.HALF_YEAR, PunishmentType.TEMP)
             .addPunishment(PunishTime.PERMANENT, PunishmentType.PERM)
             .addNeededPermissions("admin")
+            .reportable()
             .build());
 
         PUNISHMENTS.add(builder()
@@ -145,6 +147,7 @@ public record PunishmentInfo(@Deprecated int id,
             .addPunishment(PunishTime.ONE_DAY, PunishmentType.TEMP)
             .addPunishment(PunishTime.THREE_DAYS, PunishmentType.TEMP)
             .addNeededPermissions("helper")
+            .reportable()
             .build());
 
         PUNISHMENTS.add(builder()
@@ -155,6 +158,7 @@ public record PunishmentInfo(@Deprecated int id,
             .addPunishment(PunishTime.HALF_YEAR, PunishmentType.TEMP)
             .addPunishment(PunishTime.PERMANENT, PunishmentType.TEMP)
             .addNeededPermissions("moderator")
+            .reportable()
             .build());
 
         PUNISHMENTS.add(builder()
@@ -185,6 +189,7 @@ public record PunishmentInfo(@Deprecated int id,
             .addPunishment(PunishTime.ONE_WEEK, PunishmentType.TEMP)
             .addPunishment(PunishTime.HALF_MONTH, PunishmentType.TEMP)
             .addNeededPermissions("helper")
+            .reportable()
             .build());
 
         PUNISHMENTS.add(builder()
@@ -210,6 +215,7 @@ public record PunishmentInfo(@Deprecated int id,
             .addPunishment(PunishTime.HALF_MONTH, PunishmentType.TEMP)
             .addPunishment(PunishTime.PERMANENT, PunishmentType.PERM)
             .addNeededPermissions("moderator")
+            .reportable()
             .build());
 
         PUNISHMENTS.add(builder()
@@ -221,6 +227,7 @@ public record PunishmentInfo(@Deprecated int id,
             .addPunishment(PunishTime.THREE_DAYS, PunishmentType.TEMP)
             .addPunishment(PunishTime.ONE_WEEK, PunishmentType.TEMP)
             .addNeededPermissions("moderator")
+            .reportable()
             .build());
         PUNISHMENTS.add(builder()
             .id(19)
@@ -230,6 +237,7 @@ public record PunishmentInfo(@Deprecated int id,
             .addPunishment(PunishTime.HALF_MONTH, PunishmentType.TEMP)
             .addPunishment(PunishTime.PERMANENT, PunishmentType.PERM)
             .addNeededPermissions("admin")
+            .reportable()
             .build());
         PUNISHMENTS.add(builder()
             .id(20)
@@ -264,6 +272,7 @@ public record PunishmentInfo(@Deprecated int id,
             .addPunishment(PunishTime.THREE_DAYS, PunishmentType.TEMP)
             .addPunishment(PunishTime.ONE_WEEK, PunishmentType.TEMP)
             .addNeededPermissions("moderator")
+            .reportable()
             .build());
     }
 
@@ -328,8 +337,8 @@ public record PunishmentInfo(@Deprecated int id,
             return this;
         }
 
-        public PunishmentsBuilder reportable(boolean reportable) {
-            this.reportable = reportable;
+        public PunishmentsBuilder reportable() {
+            this.reportable = true;
             return this;
         }
 
