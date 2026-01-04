@@ -50,6 +50,7 @@ public class ReportMenu extends SimpleMenu {
             "         ",
             " C  E  S "
         );
+        openHandler.setTitle("§7Reportando §l"+((PlayerAccount) target).playerName());
 
         setupReportReasonItems(ctx, (PlayerAccount) target);
         setupActionItems(ctx, (PlayerAccount) target);
