@@ -8,6 +8,7 @@ import net.warcane.lugin.core.minecraft.menu.SimpleMenu;
 import net.warcane.lugin.core.minecraft.menu.config.MenuConfig;
 import net.warcane.lugin.core.minecraft.punish.api.PunishManager;
 import net.warcane.lugin.core.minecraft.punish.reports.ReportManager;
+import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.util.message.StringUtils;
 import net.warcane.lugin.core.minecraft.util.message.input.ChatInput;
 import net.warcane.lugin.core.player.account.PlayerAccount;
@@ -171,8 +172,10 @@ public class ReportMenu extends SimpleMenu {
                             ctx.openMenu(ReportMenu.class, true);
                             return;
                         }
-                        Map<String, Object> data = new HashMap<>(Map.of(EVIDENCE_KEY, link));
-                        ctx.openMenu(ReportMenu.class, true, data);
+                        Tasks.runSync(() -> {
+                            Map<String, Object> data = new HashMap<>(Map.of(EVIDENCE_KEY, link));
+                            ctx.openMenu(ReportMenu.class, true, data);
+                        });
                     },
                     "<l-info>Insira o link da evidência para o report. (30 segundos...)");
             });
