@@ -35,7 +35,7 @@ public class ReportCommand extends SimpleCommand {
 
     @Override
     public void performCommand(CommandContext ctx) throws CommandFailedException {
-        if (ctx.isArgsLength(0) || ctx.isArgsLength(2)) {
+        if (ctx.isArgsLength(0)) {
             throw new CommandFailedException("§cUso correto: /reportar <player> <id-motivo> [link-prova]");
         }
 

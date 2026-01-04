@@ -73,7 +73,7 @@ public class ReportMenu extends SimpleMenu {
 
             builder.renderer(player -> {
                 boolean isSelected = reason != null && reason.equals(report);
-                ItemStack itemStack = ItemStack.of(isSelected ? Material.EMERALD : Material.FEATHER);
+                ItemStack itemStack = ItemStack.of(isSelected ? Material.EMERALD : Material.PAPER);
                 ItemMeta itemMeta = itemStack.getItemMeta();
 
                 String displayText =
@@ -119,7 +119,7 @@ public class ReportMenu extends SimpleMenu {
         ctx.setItem('S', (index, builder) -> {
             builder.renderer(player -> {
                 boolean emptyReason = reason == null;
-                ItemStack itemStack = ItemStack.of(emptyReason ? Material.GRAY_STAINED_GLASS_PANE : Material.GREEN_STAINED_GLASS_PANE);
+                ItemStack itemStack = ItemStack.of(emptyReason ? Material.GRAY_STAINED_GLASS_PANE : Material.LIME_STAINED_GLASS_PANE);
                 ItemMeta itemMeta = itemStack.getItemMeta();
                 itemMeta.setDisplayName("§a§lEnviar Report");
                 if (emptyReason) {

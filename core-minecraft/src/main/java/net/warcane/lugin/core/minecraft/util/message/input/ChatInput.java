@@ -8,7 +8,9 @@ import net.warcane.lugin.core.minecraft.util.message.StringUtils;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 /**
@@ -17,7 +19,7 @@ import java.util.function.Consumer;
  */
 public class ChatInput {
 
-    private static final Object2ObjectMap<UUID, InputSession> inputs = new Object2ObjectArrayMap<>();
+    private static final Map<UUID, InputSession> inputs = new ConcurrentHashMap<>();
 
     public static void init(Plugin plugin) {
         plugin.getServer().getPluginManager().registerEvents(new ChatInputEvents(), plugin);
