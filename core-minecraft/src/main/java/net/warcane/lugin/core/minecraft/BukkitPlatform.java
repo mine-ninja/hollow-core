@@ -31,6 +31,7 @@ import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.teleport.TeleportManager;
 import net.warcane.lugin.core.minecraft.teleport.TeleportTrafficListener;
 import net.warcane.lugin.core.minecraft.util.message.AdventureFormatters;
+import net.warcane.lugin.core.minecraft.util.message.input.ChatInput;
 import net.warcane.lugin.core.minecraft.vanish.VanishManager;
 import net.warcane.lugin.core.minecraft.whitelist.WhitelistService;
 import net.warcane.lugin.core.network.channel.NetworkChannel;
@@ -199,6 +200,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         Bukkit.getPluginManager().registerEvents(new PlayerPermissionUpdatingListener(this), plugin);
         Bukkit.getPluginManager().registerEvents(new TeleportTrafficListener(this), plugin);
 
+        ChatInput.init(plugin);
 
         MailManager.init(plugin);
 
