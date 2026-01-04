@@ -18,6 +18,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -170,7 +171,7 @@ public class ReportMenu extends SimpleMenu {
                             ctx.openMenu(ReportMenu.class, true);
                             return;
                         }
-                        Map<String, Object> data = Map.of(EVIDENCE_KEY, link);
+                        Map<String, Object> data = new HashMap<>(Map.of(EVIDENCE_KEY, link));
                         ctx.openMenu(ReportMenu.class, true, data);
                     },
                     "<l-info>Insira o link da evidência para o report. (30 segundos...)");
