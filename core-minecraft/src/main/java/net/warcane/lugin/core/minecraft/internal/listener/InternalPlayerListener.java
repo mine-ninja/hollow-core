@@ -261,18 +261,22 @@ public final class InternalPlayerListener implements Listener {
         final var player = event.getPlayer();
         final var currentServerId = platform.getId();
 
-        final var wallet = platform.getWalletService().getCachedWalletOrThrow(player.getUniqueId());
-        platform.getWalletService()
-            .unloadWallet(wallet, new WalletService.UnloadWalletOptions(true))
-            .whenComplete((unloadedWallet, walletError) -> {
-                if (walletError != null) {
-                    log.error("Failed to unload wallet for {}: {}", player.getName(), walletError.getMessage(), walletError);
-                } else if (unloadedWallet == null) {
-                    log.info("Wallet not found for {} during unload", player.getName());
-                } else {
-                    log.info("Wallet unloaded for {}: {}", player.getName(), unloadedWallet);
-                }
-            });
+        final var walletService = platform.getWalletService();
+        final var wallet = walletService.getCachedWallet(player.getUniqueId());
+        if (wallet != null) {
+            walletService.unloadWallet(wallet, new WalletService.UnloadWalletOptions(true))
+                .whenComplete((unloadedWallet, walletError) -> {
+                    if (walletError != null) {
+                        log.error("Failed to unload wallet for {}: {}", player.getName(), walletError.getMessage(), walletError);
+                    } else if (unloadedWallet == null) {
+                        log.info("Wallet not found for {} during unload", player.getName());
+                    } else {
+                        log.info("Wallet unloaded for {}: {}", player.getName(), unloadedWallet);
+                    }
+                });
+        } else {
+            log.warn("Wallet not found in cache for player: {}", player.getUniqueId());
+        }
 
         // Envia o pacote de desconexão do jogador para o servidor, mesmo que não tenha a conta atualizada.
         final var packet = new PlayerDisconnectedFromServerPacket(player.getUniqueId(), currentServerId);
