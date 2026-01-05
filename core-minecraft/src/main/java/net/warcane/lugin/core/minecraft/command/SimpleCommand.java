@@ -64,7 +64,8 @@ public abstract class SimpleCommand extends Command {
             if (subCommands.isEmpty()) {
                 try {
                     this.performCommand(new CommandContext(commandSender, args));
-                } catch (CommandFailedException e) {
+                }
+                catch (CommandFailedException e) {
                     commandSender.sendMessage("§cErro ao executar o comando: " + e.getMessage());
                 } catch (Exception e) {
                     commandSender.sendMessage("§cOcorreu um erro inesperado ao executar o comando.");
@@ -100,10 +101,16 @@ public abstract class SimpleCommand extends Command {
             return performTabComplete(new CommandContext(sender, args));
         } else {
             if (args.length == 1) {
-                return subCommands.stream()
-                  .filter(subCommand -> subCommand.matchesWith(args[0]))
-                  .map(SimpleSubCommand::getSubCommandName)
-                  .toList();
+                List<String> results = new ArrayList<>();
+                for (SimpleSubCommand sc : subCommands) {
+                    if (!sc.hasPermission(sender)) continue;
+                    for (String name : sc.getAllNames()) {
+                        if (StringUtil.startsWithIgnoreCase(name, args[0])) {
+                            results.add(name);
+                        }
+                    }
+                }
+                return results;
             } else {
                 SimpleSubCommand subCommand = getSubCommand(args[0]);
                 if (subCommand != null) {

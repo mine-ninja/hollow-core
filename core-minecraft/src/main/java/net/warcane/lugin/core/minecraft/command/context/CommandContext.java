@@ -1,7 +1,5 @@
 package net.warcane.lugin.core.minecraft.command.context;
 
-import lombok.Data;
-
 import net.kyori.adventure.text.Component;
 import net.warcane.lugin.core.minecraft.BukkitPlatformPlugin;
 import net.warcane.lugin.core.minecraft.command.exception.CommandFailedException;
@@ -10,9 +8,10 @@ import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+
+import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.function.Function;
@@ -30,7 +29,15 @@ public class CommandContext {
     public boolean isArgsLength(int length) {
         return args.length == length;
     }
-
+    
+    public boolean isArgsLengthLessThan(int length) {
+        return args.length < length;
+    }
+    
+    public boolean isArgsLengthGreaterThan(int length) {
+        return args.length > length;
+    }
+    
     public void sendMessage(@NotNull String message) {
         sender.sendMessage(message);
     }
