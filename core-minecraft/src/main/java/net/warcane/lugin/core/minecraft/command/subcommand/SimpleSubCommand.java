@@ -8,6 +8,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.util.StringUtil;
 
 import org.jetbrains.annotations.NotNull;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public abstract class SimpleSubCommand {
@@ -74,6 +76,17 @@ public abstract class SimpleSubCommand {
         }
         
         return false;
+    }
+    
+    protected List<String> filterStartingWith(Collection<String> list, String prefix) {
+        if (prefix == null || prefix.isEmpty()) { return List.copyOf(list); }
+        List<String> result = new ArrayList<>();
+        for (String s : list) {
+            if (StringUtil.startsWithIgnoreCase(s, prefix)) {
+                result.add(s);
+            }
+        }
+        return result;
     }
     
     @NotNull
