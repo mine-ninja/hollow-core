@@ -1,6 +1,8 @@
 package net.warcane.lugin.core.proxy;
 
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import com.velocitypowered.api.event.Continuation;
 import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
@@ -15,14 +17,17 @@ import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
-import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
 import net.warcane.lugin.core.database.MongoDbConnector;
+import net.warcane.lugin.core.player.account.PlayerAccount;
+import net.warcane.lugin.core.player.account.PlayerAccountService;
 import net.warcane.lugin.core.player.state.PlayerNetworkStateManager;
 import net.warcane.lugin.core.proxy.punishment.PlayerListener;
 import net.warcane.lugin.core.punish.api.PunishManager;
 import net.warcane.lugin.core.server.GameServer;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Plugin(
   id = "lugin-core-proxy",
@@ -32,9 +37,6 @@ import net.warcane.lugin.core.server.type.ServerCategoryType;
 )
 @Slf4j
 public class VelocityPlatformPlugin {
-
-    private static final PermissionProvider DEFAULT_PERMISSION_PROVIDER = new PlayerPermissionsListener.DefaultPermissionProvider();
-
     private final ProxyServer proxyServer;
 
     private VelocityPlatform velocityPlatform;
@@ -50,7 +52,6 @@ public class VelocityPlatformPlugin {
     public void onInit(ProxyInitializeEvent event) {
         proxyServer.getEventManager().register(this, new PlayerListener());
         new PunishManager(MongoDbConnector.getInstance(), velocityPlatform.getExecutorService());
-
     }
 
     @Subscribe
@@ -59,10 +60,21 @@ public class VelocityPlatformPlugin {
     }
 
     @Subscribe(order = PostOrder.LATE)
-    public void onPermissionsSetup(PermissionsSetupEvent event) {
-        if (!(event.getSubject() instanceof Player)) return;
-
-        event.setProvider(DEFAULT_PERMISSION_PROVIDER);
+    public void onPermissionsSetup(PermissionsSetupEvent event, Continuation continuation) {
+        if (!(event.getSubject() instanceof Player p)) {
+            continuation.resume();
+            return;
+        }
+        
+        PlayerAccountService service = this.velocityPlatform.getPlayerAccountService();
+        service.getPlayerAccount(p.getUniqueId())
+            .thenAccept(playerAccount -> {
+                try {
+                    event.setProvider(new PlayerPermissionsProvider(p, playerAccount));
+                } finally {
+                    continuation.resume();
+                }
+            });
     }
 
     @Subscribe
@@ -121,19 +133,28 @@ public class VelocityPlatformPlugin {
 
         event.setInitialServer(query.get());
     }
-
-    public final class PlayerPermissionsListener {
-        private static class DefaultPermissionProvider implements PermissionProvider, PermissionFunction {
-
-            @Override
-            public PermissionFunction createFunction(PermissionSubject subject) {
-                return this;
+    
+    public static final class PlayerPermissionsProvider implements PermissionProvider, PermissionFunction {
+        private final Player player;
+        private final PlayerAccount account;
+        
+        public PlayerPermissionsProvider(Player player, PlayerAccount account) {
+            this.player = player;
+            this.account = account;
+        }
+        
+        @Override
+        public PermissionFunction createFunction(PermissionSubject subject) {
+            Preconditions.checkState(subject == this.player, "createFunction called with different argument");
+            return this;
+        }
+        
+        @Override
+        public Tristate getPermissionValue(String permission) {
+            if (permission.equals("velocity.command.server")) {
+                return Tristate.FALSE;
             }
-
-            @Override
-            public Tristate getPermissionValue(String permission) {
-                return permission.equals("velocity.command.server") ? Tristate.FALSE : Tristate.UNDEFINED;
-            }
+            return this.account.hasPermission(permission) ? Tristate.TRUE : Tristate.UNDEFINED;
         }
     }
 }
