@@ -2,6 +2,7 @@ package net.warcane.lugin.core.minecraft.punish.core;
 
 import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.minecraft.util.DiscordWebhook;
+import net.warcane.lugin.core.minecraft.util.Logger;
 import net.warcane.lugin.core.punish.data.PunishedDTO;
 import net.warcane.lugin.core.punish.data.PunishmentInfo;
 
@@ -17,22 +18,10 @@ import java.util.UUID;
 /**
  * @author Rok, Pedro Lucas nmm. Created on 10/09/2025
  */
-public class PunishLogger {
-    private final File logFile;
-
-    private final LocalDateTime localDateTime;
+public class PunishLogger extends Logger {
 
     public PunishLogger(File dataFolder) {
-        if (!dataFolder.exists() && !dataFolder.mkdir())
-            throw new IllegalStateException("Failed to create data folder: " + dataFolder.getAbsolutePath());
-        this.localDateTime = LocalDateTime.now();
-        this.logFile = new File(dataFolder, this.localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + ".log");
-        if (this.logFile.exists()) return;
-        try {
-            this.logFile.createNewFile();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        super(dataFolder, "https://discord.com/api/webhooks/1415314834953601095/f830Vo2mR4AU8v0MPgRhxlZCGfiRRYm1WOT8KJCOkds7e3tLnfn8ANXoBaLVF4cxGGIA");
     }
 
     public void logRevoke(PunishedDTO.Punishment punishment, String revokerName) {
@@ -51,36 +40,6 @@ public class PunishLogger {
             writeFile(logEntry);
             sendEmbed(embed);
         });
-    }
-
-    private void writeFile(String logEntry) {
-        try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(this.logFile, true));
-            try {
-                writer.write(logEntry);
-                writer.newLine();
-                writer.close();
-            } catch (Throwable throwable) {
-                try {
-                    writer.close();
-                } catch (Throwable throwable1) {
-                    throwable.addSuppressed(throwable1);
-                }
-                throw throwable;
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void sendEmbed(DiscordWebhook.EmbedObject embed) {
-        try {
-            var discordWebhook = new DiscordWebhook("https://discord.com/api/webhooks/1415314834953601095/f830Vo2mR4AU8v0MPgRhxlZCGfiRRYm1WOT8KJCOkds7e3tLnfn8ANXoBaLVF4cxGGIA");
-            discordWebhook.addEmbed(embed);
-            discordWebhook.execute();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     private String punishmentToLog(PunishedDTO.Punishment punishment, String punisherName, PunishmentInfo info, String name, UUID uuid) {

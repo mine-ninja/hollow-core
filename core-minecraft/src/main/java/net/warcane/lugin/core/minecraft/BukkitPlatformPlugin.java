@@ -19,6 +19,7 @@ import net.warcane.lugin.core.minecraft.compat.VaultCompat;
 import net.warcane.lugin.core.minecraft.menu.input.SignInputListener;
 import net.warcane.lugin.core.minecraft.placeholder.LuginPapiExpansion;
 import net.warcane.lugin.core.minecraft.plugin.SimplePlugin;
+import net.warcane.lugin.core.minecraft.punish.reports.command.ReportCommand;
 import net.warcane.lugin.core.minecraft.task.Tasks;
 import net.warcane.lugin.core.server.GameServer;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
@@ -78,7 +79,7 @@ public class BukkitPlatformPlugin extends SimplePlugin {
 
 		this.adventure = BukkitAudiences.create(this);
 
-		registerCommands("lugin", new ListServersCommand(), new ListPlayersCommand(), new ServerInfo(), new DebugCommand());
+		registerCommands("lugin", new ListServersCommand(), new ListPlayersCommand(), new ServerInfo(), new DebugCommand(), new ReportCommand());
 		PluginManager manager = Bukkit.getPluginManager();
 
 		if (manager.isPluginEnabled("PlaceholderAPI")) {
