@@ -17,6 +17,7 @@ import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.util.GameProfile;
 import net.kyori.adventure.text.Component;
 import net.warcane.lugin.core.database.MongoDbConnector;
 import net.warcane.lugin.core.player.account.PlayerAccount;
@@ -28,6 +29,11 @@ import net.warcane.lugin.core.server.GameServer;
 import net.warcane.lugin.core.server.type.ServerCategoryType;
 
 import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.UUID;
+
+import static net.warcane.lugin.core.player.account.PlayerAccount.createDefaultAccount;
+import static net.warcane.lugin.core.player.account.PlayerAccountService.AccountLoadOptions.withDefaultAccount;
 
 @Plugin(
   id = "lugin-core-proxy",
@@ -67,10 +73,21 @@ public class VelocityPlatformPlugin {
         }
         
         PlayerAccountService service = this.velocityPlatform.getPlayerAccountService();
-        service.getPlayerAccount(p.getUniqueId())
-            .thenAccept(playerAccount -> {
+        UUID playerId = p.getUniqueId();
+        
+        String skin = null;
+        List<GameProfile.Property> properties = p.getGameProfile().getProperties();
+        for (var property : properties) {
+            if (property.getName().equals("textures")) {
+                skin = property.getValue();
+                break;
+            }
+        }
+        
+        service.loadPlayerAccount(playerId, withDefaultAccount(createDefaultAccount(playerId, p.getUsername(), skin), true))
+            .thenAccept(account -> {
                 try {
-                    event.setProvider(new PlayerPermissionsProvider(p, playerAccount));
+                    event.setProvider(new PlayerPermissionsProvider(p, account));
                 } finally {
                     continuation.resume();
                 }
@@ -151,7 +168,7 @@ public class VelocityPlatformPlugin {
         
         @Override
         public Tristate getPermissionValue(String permission) {
-            if (permission.equals("velocity.command.server")) {
+            if (this.account == null || permission.equals("velocity.command.server")) {
                 return Tristate.FALSE;
             }
             return this.account.hasPermission(permission) ? Tristate.TRUE : Tristate.UNDEFINED;
