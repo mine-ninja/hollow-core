@@ -25,7 +25,7 @@ repositories {
 
     maven {
         name = "reposiliteRepositoryReleases"
-        url = uri("http://node.luginbr.net:19133/private")
+        url = uri("https://repo.luginbr.net/private")
         isAllowInsecureProtocol = true
         credentials {
             username = repositoryUser

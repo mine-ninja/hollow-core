@@ -38,7 +38,7 @@ subprojects {
         repositories {
             maven {
                 name = "Private"
-                url = uri("http://node.luginbr.net:19133/private")
+                url = uri("https://repo.luginbr.net/private")
                 credentials {
                     username = repositoryUser
                     password = repositoryPassword
@@ -47,7 +47,7 @@ subprojects {
             }
             maven {
                 name = "Snapshots"
-                url = uri("http://node.luginbr.net:19133/snapshots")
+                url = uri("https://repo.luginbr.net/snapshots")
                 credentials {
                     username = repositoryUser
                     password = repositoryPassword
