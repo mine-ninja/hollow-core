@@ -65,34 +65,34 @@ public class VelocityPlatformPlugin {
 
     }
 
-    @Subscribe(order = PostOrder.LATE)
-    public void onPermissionsSetup(PermissionsSetupEvent event, Continuation continuation) {
-        if (!(event.getSubject() instanceof Player p)) {
-            continuation.resume();
-            return;
-        }
-        
-        PlayerAccountService service = this.velocityPlatform.getPlayerAccountService();
-        UUID playerId = p.getUniqueId();
-        
-        String skin = null;
-        List<GameProfile.Property> properties = p.getGameProfile().getProperties();
-        for (var property : properties) {
-            if (property.getName().equals("textures")) {
-                skin = property.getValue();
-                break;
-            }
-        }
-        
-        service.loadPlayerAccount(playerId, withDefaultAccount(createDefaultAccount(playerId, p.getUsername(), skin), true))
-            .thenAccept(account -> {
-                try {
-                    event.setProvider(new PlayerPermissionsProvider(p, account));
-                } finally {
-                    continuation.resume();
-                }
-            });
-    }
+//    @Subscribe(order = PostOrder.LATE)
+//    public void onPermissionsSetup(PermissionsSetupEvent event, Continuation continuation) {
+//        if (!(event.getSubject() instanceof Player p)) {
+//            continuation.resume();
+//            return;
+//        }
+//
+//        PlayerAccountService service = this.velocityPlatform.getPlayerAccountService();
+//        UUID playerId = p.getUniqueId();
+//
+//        String skin = null;
+//        List<GameProfile.Property> properties = p.getGameProfile().getProperties();
+//        for (var property : properties) {
+//            if (property.getName().equals("textures")) {
+//                skin = property.getValue();
+//                break;
+//            }
+//        }
+//
+//        service.loadPlayerAccount(playerId, withDefaultAccount(createDefaultAccount(playerId, p.getUsername(), skin), true))
+//            .thenAccept(account -> {
+//                try {
+//                    event.setProvider(new PlayerPermissionsProvider(p, account));
+//                } finally {
+//                    continuation.resume();
+//                }
+//            });
+//    }
 
     @Subscribe
     public void onPlayerDisconnect(DisconnectEvent event) {
