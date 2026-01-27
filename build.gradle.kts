@@ -4,17 +4,15 @@ plugins {
 }
 
 allprojects {
-    group = "net.warcane.core"
-    version = "0.9.23-alpha"
+    group = "io.github.minehollow"
+    version = "0.1.1-alpha"
 }
 
 subprojects {
     apply(plugin = "java-library")
     apply(plugin = "maven-publish")
 
-    val artifactIdValue = "lugin-${project.name}"
-    val repositoryUser = (project.findProperty("luginUser") ?: "lugin") as String
-    val repositoryPassword = (project.findProperty("luginPassword") ?: "lugin") as String
+    val artifactIdValue = "hollow-${project.name}"
 
     java {
         sourceCompatibility = JavaVersion.VERSION_21
@@ -35,26 +33,7 @@ subprojects {
     }
 
     publishing {
-        repositories {
-            maven {
-                name = "Private"
-                url = uri("https://repo.luginbr.net/private")
-                credentials {
-                    username = repositoryUser
-                    password = repositoryPassword
-                }
-                isAllowInsecureProtocol = true
-            }
-            maven {
-                name = "Snapshots"
-                url = uri("https://repo.luginbr.net/snapshots")
-                credentials {
-                    username = repositoryUser
-                    password = repositoryPassword
-                }
-                isAllowInsecureProtocol = true
-            }
-        }
+
         publications {
             create<MavenPublication>("mavenJava") {
                 from(components["java"])

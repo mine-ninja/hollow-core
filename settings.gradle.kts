@@ -1,12 +1,12 @@
 plugins {
   id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
 }
-rootProject.name = "lugin-core"
+rootProject.name = "hollow-core"
 
 
 include(
   "core-sdk",
   "core-proxy",
   "core-minecraft",
-  "core-minigames"
+  "plugins:skills"
 )

@@ -1,5 +1,6 @@
 plugins {
     `java-library`
+    kotlin("jvm") version "2.3.0" // Kotlin version to use
 }
 
 // Configuração explícita do Java 21

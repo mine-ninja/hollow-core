@@ -1,0 +1,7 @@
+name: SkillsPlugin
+main: io.github.minehollow.skills.SkillsPlugin
+version: 1.0.0
+author: sasuked
+folia-supported: true
+api-version: 1.13
+depend: [ packetevents ]

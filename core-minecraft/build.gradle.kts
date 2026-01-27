@@ -11,36 +11,20 @@ base {
 
 repositories {
     mavenCentral()
+    maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
     maven { url = uri("https://jitpack.io") }
     maven { url = uri("https://oss.sonatype.org/content/groups/public/") }
     maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots") }
     maven { url = uri("https://repo.dmulloy2.net/repository/public/") }
-    maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
     maven { url = uri("https://repo.extendedclip.com/releases/") }
     maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://repo.tcoded.com/releases")
 
-    val repositoryUser = (project.findProperty("luginUser") ?: "lugin") as String
-    val repositoryPassword = (project.findProperty("luginPassword") ?: "lugin") as String
-
-    maven {
-        name = "reposiliteRepositoryReleases"
-        url = uri("https://repo.luginbr.net/private")
-        isAllowInsecureProtocol = true
-        credentials {
-            username = repositoryUser
-            password = repositoryPassword
-        }
-    }
-
-    maven {
-        name = "playpro-repo-core-protect"
-        url = uri("https://maven.playpro.com")
-    }
 }
 
 dependencies {
     paperweight.paperDevBundle("1.21.4-R0.1-SNAPSHOT")
+
     api(project(":core-sdk"))
     api("fr.mrmicky:fastboard:2.1.5")
 
@@ -54,11 +38,9 @@ dependencies {
         exclude("com.squareup.okhttp3", "okhttp")
     }
 
-    compileOnlyApi("com.github.retrooper:packetevents-spigot:2.9.5")
+    compileOnlyApi("com.github.retrooper:packetevents-spigot:2.11.1")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7") { isTransitive = false }
     compileOnly("me.clip:placeholderapi:2.11.6") { isTransitive = false }
-
-    compileOnly("net.coreprotect:coreprotect:22.4")
 }
 
 java {
@@ -92,7 +74,7 @@ tasks.withType(xyz.jpenilla.runtask.task.AbstractRun::class) {
 }
 
 tasks.shadowJar {
-    relocate("okhttp3", "net.warcane.lugin.core.libs.okhttp3")
+    relocate("okhttp3", "io.github.minehollow.core.libs.okhttp3")
 
     archiveClassifier.set("")
     archiveVersion.set("")
