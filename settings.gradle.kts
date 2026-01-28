@@ -8,5 +8,6 @@ include(
   "core-sdk",
   "core-proxy",
   "core-minecraft",
-  "plugins:skills"
+  "plugins:skills",
+  "plugins:kits"
 )
