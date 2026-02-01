@@ -14,11 +14,11 @@ import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
-import io.github.minehollow.sdk.database.MongoDbConnector;
 import io.github.minehollow.sdk.player.account.PlayerAccount;
 import io.github.minehollow.sdk.player.state.PlayerNetworkStateManager;
 import io.github.minehollow.sdk.server.GameServer;
 import io.github.minehollow.sdk.server.type.ServerCategoryType;
+import io.github.minehollow.sdk.util.property.Property;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
 
@@ -118,6 +118,11 @@ public class VelocityPlatformPlugin {
 
     @Subscribe
     public void onProxyChooseServer(PlayerChooseInitialServerEvent event) {
+        final boolean searchForLobbyOnJoin = Property.getBoolean("SEARCH_FOR_LOBBY_ON_JOIN", false);
+        if (!searchForLobbyOnJoin) {
+            return;
+        }
+
         final var player = event.getPlayer();
         final var lobbyServer = velocityPlatform.getRandomLobby();
         if (lobbyServer == null) {

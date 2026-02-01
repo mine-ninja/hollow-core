@@ -1,4 +1,4 @@
-package io.github.minehollow.minecraft.nametag;
+package io.github.minehollow.minecraft.nametag.resolver;
 
 import com.github.retrooper.packetevents.util.ColorUtil;
 import io.github.minehollow.minecraft.BukkitPlatform;

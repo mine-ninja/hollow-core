@@ -1,4 +1,4 @@
-package io.github.minehollow.minecraft.nametag;
+package io.github.minehollow.minecraft.nametag.resolver;
 
 import org.bukkit.entity.Player;
 
@@ -28,5 +28,9 @@ public abstract class NameTagResolver {
     
     public String getTagColor(@NotNull Player player) {
         return this.tagColor.apply(player);
+    }
+
+    public void applyToPlayer(@NotNull Player player) {
+
     }
 }

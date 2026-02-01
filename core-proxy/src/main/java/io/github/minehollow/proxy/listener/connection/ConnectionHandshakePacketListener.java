@@ -34,6 +34,5 @@ public class ConnectionHandshakePacketListener implements PacketListener<Connect
         } else {
             player.createConnectionRequest(server.get()).fireAndForget();
         }
-
     }
 }

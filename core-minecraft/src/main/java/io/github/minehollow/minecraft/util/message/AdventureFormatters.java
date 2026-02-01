@@ -1,11 +1,11 @@
 package io.github.minehollow.minecraft.util.message;
 
 import lombok.RequiredArgsConstructor;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.Tag;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
-
-import java.util.function.Consumer;
+import net.kyori.adventure.text.minimessage.tag.standard.StandardTags;
 
 
 @RequiredArgsConstructor
@@ -54,36 +54,37 @@ public enum AdventureFormatters {
     }
 
     public static void init() {
-        init(StringUtils.miniMessage, mm -> StringUtils.miniMessage = mm);
-    }
+        try {
+            MiniMessage.Builder builder = MiniMessage.builder();
 
-    private static void init(MiniMessage miniMessage, Consumer<MiniMessage> consumer) {
-        MiniMessage.Builder builder = MiniMessage.builder();
-        builder.tags(miniMessage.tags());
+            builder.tags(TagResolver.builder()
+              .resolver(StandardTags.color())
+              .resolver(StandardTags.decorations())
+              .resolver(StandardTags.gradient())
+              .build()
+            ).postProcessor(component -> component.decoration(TextDecoration.ITALIC, false));
 
-
-        MiniMessage finalMiniMessage = miniMessage;
-        builder.editTags(t -> {
-            for (AdventureFormatters keyObject : AdventureFormatters.values()) {
-                String key = keyObject.key;
-                String val = keyObject.value;
-                if (finalMiniMessage.tags().has(key)) continue;
-                TagResolver resolver;
-                if (keyObject.selfClosing) {
-                    resolver = TagResolver.resolver(key, (arg, ctx) -> Tag.selfClosingInserting(StringUtils.formatString(val)));
-                } else {
-                    resolver = TagResolver.resolver(key, (arg, ctx) -> Tag.preProcessParsed(val));
+            builder.editTags(t -> {
+                for (AdventureFormatters formatter : AdventureFormatters.values()) {
+                    TagResolver resolver;
+                    if (formatter.selfClosing) {
+                        resolver = TagResolver.resolver(formatter.key, (arg, ctx) ->
+                          Tag.selfClosingInserting(StringUtils.formatString(formatter.value)));
+                    } else {
+                        resolver = TagResolver.resolver(formatter.key, (arg, ctx) ->
+                          Tag.preProcessParsed(formatter.value));
+                    }
+                    t.resolver(resolver);
                 }
-                t.resolver(resolver);
-            }
 
-            // convert everything thas insite <small-caps> Text Here </small-caps> using SmallCpasMapping.toSmallCaps(String)
-            TagResolver smallCapsResolver = TagResolver.resolver(
-                "small-caps", (args, ctx) -> new SmallCapsTag()
-            );
-            t.resolver(smallCapsResolver);
-        });
-        miniMessage = builder.build();
-        consumer.accept(miniMessage);
+                t.resolver(TagResolver.resolver("small-caps", (args, ctx) -> new SmallCapsTag()));
+            });
+
+            StringUtils.setMiniMessage(builder.build());
+        } catch (Exception e) {
+            // Log do erro real
+            e.printStackTrace();
+            throw new RuntimeException("Failed to initialize AdventureFormatters", e);
+        }
     }
 }

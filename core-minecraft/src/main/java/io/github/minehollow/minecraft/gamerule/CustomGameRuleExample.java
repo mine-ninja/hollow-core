@@ -70,7 +70,6 @@ public class CustomGameRuleExample {
      */
     public static void exampleUsage(BukkitPlatform platform, World world) {
         final GameRuleManager manager = platform.getGameRuleManager();
-        
         // Get a custom game rule value (checks local cache, then loads from DB if needed)
         Boolean disableHunger = manager.getCustomGameRule(world, "disableHunger");
         if (disableHunger != null && disableHunger) {

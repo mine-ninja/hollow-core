@@ -59,6 +59,13 @@ public class MenuPaginationContext<T> extends PlayerMenuContext {
         }
     }
 
+    public void setPagination(char key, List<T> listObjects, @NotNull BiFunction<Player, T, ItemStack> itemRenderer) {
+        if (menuConfig.getLayout() == null) {
+            throw new IllegalStateException("Menu layout is not defined.");
+        }
+        this.setPagination(menuConfig.getLayout().get(key), listObjects, itemRenderer, (t, e) -> e.setCancelled(true));
+    }
+
     public void setPagination(char key, List<T> listObjects, @NotNull BiFunction<Player, T, ItemStack> itemRenderer, @NotNull BiConsumer<T, InventoryClickEvent> clickHandler) {
         if (menuConfig.getLayout() == null) {
             throw new IllegalStateException("Menu layout is not defined.");

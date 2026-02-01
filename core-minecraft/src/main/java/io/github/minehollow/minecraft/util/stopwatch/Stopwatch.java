@@ -8,6 +8,30 @@ public class Stopwatch {
         start = System.currentTimeMillis();
     }
 
+    public boolean resetIfElapsed(long millis) {
+        if (hasElapsed(millis)) {
+            reset();
+            return true;
+        }
+        return false;
+    }
+
+    public boolean resetIfElapsedSeconds(double seconds) {
+        if (hasElapsedSeconds(seconds)) {
+            reset();
+            return true;
+        }
+        return false;
+    }
+
+    public boolean hasElapsed(long millis) {
+        return elapsedTimeInMillis() >= millis;
+    }
+
+    public boolean hasElapsedSeconds(double seconds) {
+        return elapsedTimeInSeconds() >= seconds;
+    }
+
     public long elapsedTimeInMillis() {
         return System.currentTimeMillis() - start;
     }

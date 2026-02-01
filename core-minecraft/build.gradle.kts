@@ -1,3 +1,4 @@
+// core-minecraft build.gradle.kts
 plugins {
     `java-library`
     id("com.gradleup.shadow") version ("9.0.0-rc1")
@@ -19,7 +20,16 @@ repositories {
     maven { url = uri("https://repo.extendedclip.com/releases/") }
     maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://repo.tcoded.com/releases")
+}
 
+configurations.all {
+    resolutionStrategy {
+        force("com.fasterxml.jackson.core:jackson-core:2.19.1")
+        force("com.fasterxml.jackson.core:jackson-databind:2.19.1")
+        force("com.fasterxml.jackson.core:jackson-annotations:2.19.1")
+        force("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.1")
+        force("com.fasterxml.jackson.module:jackson-module-parameter-names:2.19.1")
+    }
 }
 
 dependencies {
@@ -28,16 +38,34 @@ dependencies {
     api(project(":core-sdk"))
     api("fr.mrmicky:fastboard:2.1.5")
 
-    implementation("net.kyori:adventure-platform-bukkit:4.4.1")
-    implementation("net.kyori:adventure-text-minimessage:4.24.0")
-
-    implementation("com.squareup.okhttp3:okhttp:5.1.0")
-    implementation("de.tr7zw:item-nbt-api:2.15.3")
-    implementation("io.socket:socket.io-client:2.1.1") {
-        exclude("org.json", "json")
-        exclude("com.squareup.okhttp3", "okhttp")
+    implementation("net.kyori:adventure-platform-bukkit:4.4.1") {
+        exclude(group = "com.fasterxml.jackson.core")
+        exclude(group = "com.fasterxml.jackson.datatype")
+    }
+    implementation("net.kyori:adventure-text-minimessage:4.24.0") {
+        exclude(group = "com.fasterxml.jackson.core")
+        exclude(group = "com.fasterxml.jackson.datatype")
     }
 
+    implementation("com.squareup.okhttp3:okhttp:5.1.0") {
+        exclude(group = "com.fasterxml.jackson.core")
+        exclude(group = "com.fasterxml.jackson.datatype")
+    }
+
+    implementation("de.tr7zw:item-nbt-api:2.15.3") {
+        exclude(group = "com.fasterxml.jackson.core")
+        exclude(group = "com.fasterxml.jackson.datatype")
+    }
+
+    // Socket.IO client - atualizado para versão mais recente
+    implementation("io.socket:socket.io-client:2.1.1") {
+        exclude(group = "org.json", module = "json")
+        exclude(group = "com.squareup.okhttp3", module = "okhttp")
+        exclude(group = "com.fasterxml.jackson.core")
+        exclude(group = "com.fasterxml.jackson.datatype")
+    }
+
+    compileOnly("com.github.NEZNAMY", "TAB-API", "5.5.0")
     compileOnlyApi("com.github.retrooper:packetevents-spigot:2.11.1")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7") { isTransitive = false }
     compileOnly("me.clip:placeholderapi:2.11.6") { isTransitive = false }
@@ -75,6 +103,7 @@ tasks.withType(xyz.jpenilla.runtask.task.AbstractRun::class) {
 
 tasks.shadowJar {
     relocate("okhttp3", "io.github.minehollow.core.libs.okhttp3")
+    relocate("com.fasterxml.jackson", "io.github.minehollow.core.libs.jackson")
 
     archiveClassifier.set("")
     archiveVersion.set("")

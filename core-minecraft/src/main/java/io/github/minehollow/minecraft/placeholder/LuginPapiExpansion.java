@@ -15,7 +15,7 @@ public class LuginPapiExpansion extends PlaceholderExpansion {
 
     @Override
     public String getIdentifier() {
-        return "hollow"; // %lugin_<key>%
+        return "hollow"; // %hollow_<key>%
     }
 
     @Override

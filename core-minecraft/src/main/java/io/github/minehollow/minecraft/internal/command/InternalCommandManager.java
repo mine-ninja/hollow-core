@@ -11,7 +11,7 @@ import io.github.minehollow.minecraft.internal.command.discord.UnlinkCommand;
 import io.github.minehollow.minecraft.internal.command.gamemode.GameModeCommand;
 import io.github.minehollow.minecraft.internal.command.lobby.LobbyCommand;
 import io.github.minehollow.minecraft.internal.command.permission.GroupPermissionCommand;
-import io.github.minehollow.minecraft.internal.command.permission.PlayerGroupCommand;
+import io.github.minehollow.minecraft.internal.command.permission.GroupsCommand;
 import io.github.minehollow.minecraft.internal.command.permission.PlayerPermissionCommand;
 import io.github.minehollow.minecraft.internal.command.permission.TestPermission;
 import io.github.minehollow.minecraft.internal.command.server.ServerCommand;
@@ -47,7 +47,7 @@ public class InternalCommandManager {
         CommandMap commandMap = Bukkit.getCommandMap();
         commandMap.register("hollow", new GroupPermissionCommand());
         commandMap.register("hollow", new TestPermission());
-        commandMap.register("hollow", new PlayerGroupCommand(platform));
+        commandMap.register("hollow", new GroupsCommand(platform));
         commandMap.register("hollow", new GameModeCommand());
         commandMap.register("hollow", new PlayerPermissionCommand(platform));
 

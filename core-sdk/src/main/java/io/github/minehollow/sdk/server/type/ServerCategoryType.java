@@ -17,17 +17,9 @@ import static java.util.stream.Collectors.toMap;
 public enum ServerCategoryType {
     LOGIN("Servidor de Login"),
     LOBBY("Lobby"),
-    BEDWARS("BedWars"),
-    SKYWARS("SkyWars"),
-    FACTIONS("Factions",
-      ServerSubCategoryType.OVERWORLD,
-      ServerSubCategoryType.NETHER,
-      ServerSubCategoryType.MINA_1,
-      ServerSubCategoryType.MINA_2,
-      ServerSubCategoryType.MINA_3,
-      ServerSubCategoryType.MINA_4),
-    FACTIONS_FIRE("Factions Fire", FACTIONS),
-    SMP("SMP");
+    MEGA("Mega"),
+    MINI("Mini"),
+    UNKNOWN("Unknown");
 
     private final String displayName;
     private final List<ServerSubCategoryType> subCategories;

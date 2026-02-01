@@ -83,7 +83,8 @@ public class BukkitPlatformPlugin extends SimplePlugin {
           new ListServersCommand(),
           new ListPlayersCommand(),
           new ServerInfo(),
-          new DebugCommand()
+          new DebugCommand(),
+          new ShowJacksonVersionCommand()
         );
         PluginManager manager = Bukkit.getPluginManager();
 
@@ -134,6 +135,25 @@ public class BukkitPlatformPlugin extends SimplePlugin {
             throw new IllegalStateException("Tried to access Adventure when the plugin was disabled!");
         }
         return this.adventure;
+    }
+
+
+    final class ShowJacksonVersionCommand extends SimpleCommand {
+
+        public ShowJacksonVersionCommand() {
+            super("jacksonversion", "hollow.manager");
+
+        }
+
+        @Override
+        public void performCommand(@NotNull CommandContext ctx) throws CommandFailedException {
+            final var string = com.fasterxml.jackson.core.Version.class
+              .getPackage().getImplementationVersion();
+
+            ctx.sendMessage(
+                "§aVersão do Jackson: §b" + string
+            );
+        }
     }
 
     final class ListServersCommand extends SimpleCommand {

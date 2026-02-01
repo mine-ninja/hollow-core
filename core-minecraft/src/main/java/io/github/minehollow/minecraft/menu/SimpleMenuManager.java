@@ -22,6 +22,11 @@ import java.util.Map;
 
 public class SimpleMenuManager implements Listener {
 
+
+
+
+
+
     private final BukkitPlatform platform;
     private final Map<Class<? extends SimpleMenu>, SimpleMenu> menus = new LinkedHashMap<>();
 

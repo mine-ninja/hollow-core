@@ -12,9 +12,10 @@ import io.github.minehollow.minecraft.internal.command.InternalCommandManager;
 import io.github.minehollow.minecraft.internal.listener.*;
 import io.github.minehollow.minecraft.internal.listener.connection.ConnectionHandshakePacketListener;
 import io.github.minehollow.minecraft.menu.SimpleMenuManager;
-import io.github.minehollow.minecraft.nametag.LegacyNameTagResolver;
-import io.github.minehollow.minecraft.nametag.ModernNameTagResolver;
-import io.github.minehollow.minecraft.nametag.NameTagResolver;
+import io.github.minehollow.minecraft.nametag.NameTagHandler;
+import io.github.minehollow.minecraft.nametag.resolver.LegacyNameTagResolver;
+import io.github.minehollow.minecraft.nametag.resolver.ModernNameTagResolver;
+import io.github.minehollow.minecraft.nametag.resolver.NameTagResolver;
 import io.github.minehollow.minecraft.permission.PermissionInjector;
 import io.github.minehollow.minecraft.task.Tasks;
 import io.github.minehollow.minecraft.teleport.TeleportManager;
@@ -44,6 +45,9 @@ import io.github.minehollow.sdk.util.address.HostAddress;
 import io.github.minehollow.sdk.util.property.Property;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import me.neznamy.tab.api.TabAPI;
+import me.neznamy.tab.api.event.EventBus;
+import me.neznamy.tab.api.event.plugin.TabLoadEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.plugin.Plugin;
@@ -73,7 +77,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
      * @return a instância de BukkitPlatform.
      */
     public static BukkitPlatform provide(@NotNull JavaPlugin plugin) {
-        final var rawType = Property.getOrThrow("SERVER_TYPE");
+        final var rawType = Property.get("SERVER_TYPE", "UNKNOWN");
         final var categoryType = ServerCategoryType.fromName(rawType);
         if (!isInitialized()) {
             return new BukkitPlatform(plugin, categoryType);
@@ -123,6 +127,9 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     private final TeleportManager teleportManager;
 
     @Getter
+    private final NameTagHandler nameTagHandler;
+
+    @Getter
     private NameTagResolver nameTagResolver;
     @Getter
     private CentralCart centralCart;
@@ -159,6 +166,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         }
 
         this.discordService = new DiscordService(this);
+        this.nameTagHandler = new NameTagHandler(this);
 
         this.loadGroupPermissions();
         Bukkit.getServicesManager().register(Platform.class, this, plugin, ServicePriority.Normal);
@@ -194,7 +202,6 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
         ChatInput.init(plugin);
 
-
         AdventureFormatters.init();
 
         final var internalPackets = new InternalPacketListeners(this);
@@ -205,10 +212,22 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         this.online = true;
 
         gameServerService.update(this.getGameServer().withOnlineStatus(true));
-
         log.info("Bukkit Platform is now online with ID: {}, Category: {} and SubCategory: {}", this.getId(), this.getServerCategoryType(), this.getServerSubCategoryType());
         Tasks.runAsyncRepeating(this::updateServerInfo, 20, 20 * 10);
         Bukkit.getConsoleSender().sendMessage("§aCarregando nomes de jogadores para o redis (para acesso rápido)");
+
+
+        Tasks.runAsyncLater(() -> {
+            EventBus eventBus = TabAPI.getInstance().getEventBus();
+            if (eventBus == null) {
+                return;
+            }
+
+            eventBus.register(
+              TabLoadEvent.class,
+              event -> Tasks.runAsyncLater(nameTagHandler::updateAll, 5)
+            );
+        }, 20);
     }
 
     @Override

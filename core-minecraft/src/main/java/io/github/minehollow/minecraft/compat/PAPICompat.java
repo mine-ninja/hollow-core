@@ -2,7 +2,7 @@ package io.github.minehollow.minecraft.compat;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import io.github.minehollow.minecraft.BukkitPlatformPlugin;
-import io.github.minehollow.minecraft.nametag.NameTagResolver;
+import io.github.minehollow.minecraft.nametag.resolver.NameTagResolver;
 import org.bukkit.entity.Player;
 
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +41,7 @@ public class PAPICompat extends PlaceholderExpansion {
     
     @Override @NotNull
     public String getIdentifier() {
-        return "hollow-core";
+        return "hollow";
     }
     
     @Override @NotNull

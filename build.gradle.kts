@@ -1,3 +1,4 @@
+// root build.gradle.kts
 plugins {
     java
     id("maven-publish")
@@ -30,16 +31,6 @@ subprojects {
 
         compileOnly("org.jetbrains:annotations:26.0.0")
         annotationProcessor("org.jetbrains:annotations:26.0.0")
-    }
-
-    publishing {
-
-        publications {
-            create<MavenPublication>("mavenJava") {
-                from(components["java"])
-                artifactId = artifactIdValue
-            }
-        }
     }
 
     tasks.jar {

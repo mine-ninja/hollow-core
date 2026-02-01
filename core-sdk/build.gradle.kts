@@ -1,3 +1,4 @@
+// core-sdk build.gradle.kts
 plugins {
     `java-library`
     kotlin("jvm") version "2.3.0" // Kotlin version to use

@@ -1,5 +1,8 @@
 package io.github.minehollow.minecraft.util.message;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import io.github.minehollow.minecraft.BukkitPlatformPlugin;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextReplacementConfig;
@@ -7,7 +10,6 @@ import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.title.Title;
-import io.github.minehollow.minecraft.BukkitPlatformPlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bukkit.entity.Player;
@@ -16,10 +18,23 @@ import org.jetbrains.annotations.NotNull;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 
 public class StringUtils {
+
     private static final Logger LOGGER = LogManager.getLogger();
+
+    private static final Cache<@NotNull String, Component> CACHED_COMPONENTS = Caffeine.newBuilder()
+      .expireAfterWrite(1, TimeUnit.SECONDS)
+      .build();
+
+    public static MiniMessage miniMessage = MiniMessage.builder().build();
+
+
+    public static void setMiniMessage(MiniMessage miniMessage) {
+        StringUtils.miniMessage = miniMessage;
+    }
 
     /**
      * Transforma uma String com as formatações de <a href="https://docs.advntr.dev/minimessage/format.html">MiniMessage</a> para {@link Component}.
@@ -92,7 +107,6 @@ public class StringUtils {
         return format(input, logError, forceSerialization).decoration(TextDecoration.ITALIC, false);
     }
 
-    public static MiniMessage miniMessage = MiniMessage.miniMessage();
 
     /**
      * Transforma uma String com as formatações de <a href="https://docs.advntr.dev/minimessage/format.html">MiniMessage</a> para {@link Component}
@@ -102,8 +116,15 @@ public class StringUtils {
      * @return {@link Component} formatado.
      */
     private static Component format(String input, boolean logError, boolean forceSerialization) {
+        final var cached = CACHED_COMPONENTS.getIfPresent(input);
+        if (cached != null) {
+            return cached;
+        }
+
+
+        Component component;
         try {
-            return miniMessage.deserialize(input);
+            component = miniMessage.deserialize(input);
         } catch (Exception e) {
             if (logError) {
                 LOGGER.error("Error while formatting string: {}", input);
@@ -112,10 +133,15 @@ public class StringUtils {
             if (forceSerialization) {
                 input = input.replace("§", "&");
                 Component deserialize = miniMessage.deserialize(input);
-                return LEGACY_SERIALIZER.deserialize(LEGACY_SERIALIZER.serialize(deserialize));
+                component = LEGACY_SERIALIZER.deserialize(LEGACY_SERIALIZER.serialize(deserialize));
             }
-            return Component.text(input);
+
+
+            component = Component.text(input);
         }
+
+        CACHED_COMPONENTS.put(input, component);
+        return component;
     }
 
     public static void send(Audience audience, String message) {
@@ -156,11 +182,11 @@ public class StringUtils {
      */
     public static Title title(Component title, Component subTitle, long fadeIn, long stay, long fadeOut) {
         return Title.title(
-                title,
-                subTitle,
-                Title.Times.times(Duration.ofMillis(fadeIn),
-                        Duration.ofMillis(stay),
-                        Duration.ofMillis(fadeOut)));
+          title,
+          subTitle,
+          Title.Times.times(Duration.ofMillis(fadeIn),
+            Duration.ofMillis(stay),
+            Duration.ofMillis(fadeOut)));
     }
 
     /**
@@ -184,14 +210,14 @@ public class StringUtils {
     public static List<String> matchPartial(String toMatch, List<String> options) {
         String lowerToMatch = toMatch.toLowerCase();
         return options.stream()
-                .filter(option -> option.toLowerCase().startsWith(lowerToMatch))
-                .toList();
+          .filter(option -> option.toLowerCase().startsWith(lowerToMatch))
+          .toList();
     }
 
 
     private static final LegacyComponentSerializer LEGACY_SERIALIZER = LegacyComponentSerializer.builder()
-            .character('&')
-            .hexColors()
-            .useUnusualXRepeatedCharacterHexFormat() //&x&f&f&f&f&f&f
-            .build();
+      .character('&')
+      .hexColors()
+      .useUnusualXRepeatedCharacterHexFormat() //&x&f&f&f&f&f&f
+      .build();
 }

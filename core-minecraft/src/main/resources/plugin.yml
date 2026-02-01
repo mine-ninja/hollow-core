@@ -5,3 +5,4 @@ author: sasuked
 folia-supported: true
 api-version: 1.13
 depend: [ packetevents ]
+soft-depend: [ PlaceholderAPI, Vault, TAB ]

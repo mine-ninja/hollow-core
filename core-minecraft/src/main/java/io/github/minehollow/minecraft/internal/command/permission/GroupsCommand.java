@@ -11,7 +11,6 @@ import io.github.minehollow.sdk.network.packet.impl.player.permission.PlayerLose
 import io.github.minehollow.sdk.network.packet.impl.player.permission.PlayerReceiveGroupPacket;
 import io.github.minehollow.sdk.player.account.PlayerAccountService;
 import io.github.minehollow.sdk.player.subscription.SubscriptionCategoryType;
-import io.github.minehollow.sdk.punish.utils.MessageUtils;
 import io.github.minehollow.sdk.util.time.Time;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -22,7 +21,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Slf4j
-public class PlayerGroupCommand extends SimpleCommand {
+public class GroupsCommand extends SimpleCommand {
     /**
      * Aliases para indicar que o grupo é permanente (a prova de burros).
      */
@@ -32,8 +31,8 @@ public class PlayerGroupCommand extends SimpleCommand {
     private final BukkitPlatform platform;
     private final PlayerAccountService playerAccountService;
 
-    public PlayerGroupCommand(@NotNull BukkitPlatform platform) {
-        super("playergroup", "hollow.master");
+    public GroupsCommand(@NotNull BukkitPlatform platform) {
+        super("groups", "hollow.master");
         setAliases(List.of("group", "grupo"));
         this.platform = platform;
         this.playerAccountService = platform.getPlayerAccountService();
@@ -112,7 +111,7 @@ public class PlayerGroupCommand extends SimpleCommand {
                         ctx.sendMessage("§aGrupo %s§afoi adicionado ao jogador %s com sucesso.".formatted(group.getPrefix(), playerName));
                         return;
                     }
-                    ctx.sendMessage("§aGrupo %s§afoi adicionado ao jogador %s com sucesso. Ele expira em: %s".formatted(group.getPrefix(), playerName, MessageUtils.formatDate(updatedSubscription.subscriptionEnd(), DATE_TIME_FORMATTER)));
+                    ctx.sendMessage("§aGrupo %s§afoi adicionado ao jogador %s com sucesso. Ele expira em: %s".formatted(group.getPrefix(), playerName, updatedSubscription.subscriptionEnd(), DATE_TIME_FORMATTER));
                 } else {
                     ctx.sendMessage("§cErro ao adicionar grupo ao jogador: %s. Verifique se o grupo e a categoria estão corretos.".formatted(playerName));
                     ctx.sendMessage(
@@ -193,7 +192,7 @@ public class PlayerGroupCommand extends SimpleCommand {
                             ctx.sendMessage("  §8• %s §7permanente".formatted(group.getColoredDisplayName()));
                         } else {
                             var endTime = subscription.subscriptionEnd();
-                            ctx.sendMessage("  §8• %s §7até %s".formatted(group.getColoredDisplayName(), MessageUtils.formatDate(endTime, DATE_TIME_FORMATTER)));
+                            ctx.sendMessage("  §8• %s §7até %s".formatted(group.getColoredDisplayName(), endTime, DATE_TIME_FORMATTER));
                         }
                     }
 

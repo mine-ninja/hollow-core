@@ -14,17 +14,27 @@ public class LeveledProgress {
     }
 
     private int level;
-    private int experience;
+    private double experience;
 
-    public void addExperience(int experienceToAdd) {
+    public void addExperience(double experienceToAdd) {
         this.experience += experienceToAdd;
     }
 
-    public void removeExperience(int experienceToRemove) {
+    public void removeExperience(double experienceToRemove) {
         this.experience = Math.max(0, this.experience - experienceToRemove);
     }
 
-    public boolean canLevelUp(int experienceNeeded) {
+    public boolean canLevelUp(double experienceNeeded) {
         return this.experience >= experienceNeeded;
     }
+
+    public void addLevels(int levels) {
+        this.level += levels;
+    }
+
+    public void removeLevels(int levels) {
+        this.level = Math.max(1, this.level - levels);
+    }
 }
+
+

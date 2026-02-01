@@ -13,7 +13,6 @@ import io.github.minehollow.sdk.network.packet.impl.player.permission.PlayerLose
 import io.github.minehollow.sdk.network.packet.impl.player.permission.PlayerReceivePermissionPacket;
 import io.github.minehollow.sdk.player.account.PlayerAccount;
 import io.github.minehollow.sdk.player.account.PlayerAccountService;
-import io.github.minehollow.sdk.punish.utils.MessageUtils;
 import io.github.minehollow.sdk.util.time.Time;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -86,7 +85,7 @@ public class PlayerPermissionCommand extends SimpleCommand {
                     }
 
                     ctx.sendMessage("§aPermissão %s adicionado ao jogador %s com sucesso. Expira em: %s"
-                        .formatted(permission, playerName, MessageUtils.formatDate(updatedPermission.permissionEnd(), DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm"))));
+                        .formatted(permission, playerName, updatedPermission.permissionEnd(), DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm")));
                 } else {
                     ctx.sendMessage("§cErro a adicionar permissão ao jogador: %s.".formatted(playerName));
                 }
@@ -143,7 +142,7 @@ public class PlayerPermissionCommand extends SimpleCommand {
                 .newLine();
 
             playerPermissions.forEach(permission -> {
-                msg.simple("  <l-gray>• " + permission.permission() + (permission.isPermanent() ? " - permanente" : " até " + MessageUtils.formatDate(permission.permissionEnd(), DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm"))))
+                msg.simple("  <l-gray>• " + permission.permission() + (permission.isPermanent() ? " - permanente" : " até " + DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm").format(permission.permissionEnd())))
                     .actionHover(" <l-red>[✗]", ClickEvent.runCommand("/pperm remove " + playerName + " " + permission.permission()), "<l-gray>Clique para remover essa permissão.")
                     .newLine();
             });

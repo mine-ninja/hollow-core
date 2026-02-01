@@ -3,8 +3,8 @@ package io.github.minehollow.sdk.util.data;
 import com.mongodb.Function;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.*;
-import lombok.extern.slf4j.Slf4j;
 import io.github.minehollow.sdk.database.MongoDbConnector;
+import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.jetbrains.annotations.NotNull;
@@ -18,23 +18,23 @@ import java.util.function.Supplier;
 public class MongoRepository<ID, O> {
 
     private static final FindOneAndReplaceOptions FIND_ONE_AND_REPLACE_OPTIONS = new FindOneAndReplaceOptions()
-        .upsert(true)
-        .returnDocument(ReturnDocument.AFTER);
+      .upsert(true)
+      .returnDocument(ReturnDocument.AFTER);
 
     private static final FindOneAndUpdateOptions FIND_ONE_AND_UPDATE_OPTIONS = new FindOneAndUpdateOptions()
-        .upsert(true)
-        .returnDocument(ReturnDocument.AFTER);
+      .upsert(true)
+      .returnDocument(ReturnDocument.AFTER);
 
     private final MongoCollection<O> collection;
     private final MongoCollection<Document> rawCollection;
     private final String idFieldName;
 
-    public MongoRepository(@NotNull Class<O> clazz){
+    public MongoRepository(@NotNull Class<O> clazz) {
         this(clazz, "_id");
     }
 
     public MongoRepository(@NotNull Class<O> clazz, @NotNull String idFieldName) {
-        this(MongoDbConnector.getInstance(), MongoDbConnector.getInstance().getCollection(clazz.getSimpleName(), clazz), idFieldName);
+        this(MongoDbConnector.getInstance(), MongoDbConnector.getInstance().getCollection(clazz.getSimpleName().toLowerCase(), clazz), idFieldName);
     }
 
     public MongoRepository(@NotNull Class<O> clazz, @NotNull String idFieldName, @NotNull String collectionName) {
@@ -42,7 +42,7 @@ public class MongoRepository<ID, O> {
     }
 
     public MongoRepository(@NotNull MongoDbConnector connector, @NotNull Class<O> clazz, @NotNull String idFieldName) {
-        this(connector, connector.getCollection(clazz.getSimpleName(), clazz), idFieldName);
+        this(connector, connector.getCollection(clazz.getSimpleName().toLowerCase(), clazz), idFieldName);
     }
 
     public MongoRepository(@NotNull MongoDbConnector connector, @NotNull Class<O> clazz, @NotNull String idFieldName, @NotNull String collectionName) {
@@ -57,9 +57,9 @@ public class MongoRepository<ID, O> {
 
     public MongoRepository(@NotNull MongoDbConnector.Builder builder, @NotNull Class<O> clazz, @NotNull String idFieldName) {
         this(
-            builder.build(),
-            clazz,
-            idFieldName
+          builder.build(),
+          clazz,
+          idFieldName
         );
     }
 
@@ -68,24 +68,28 @@ public class MongoRepository<ID, O> {
     }
 
     public static <ID, O> MongoRepository<ID, O> create(
-        @NotNull Class<O> clazz,
-        @NotNull String idFieldName
+      @NotNull Class<O> clazz,
+      @NotNull String idFieldName
     ) {
         return new MongoRepository<>(clazz, idFieldName);
     }
 
     public static <ID, O> MongoRepository<ID, O> createWithPrefix(
-        @NotNull Class<O> clazz,
-        @NotNull String idFieldName
+      @NotNull Class<O> clazz,
+      @NotNull String idFieldName
     ) {
-        return new MongoRepository<>(MongoDbConnector.getInstance(), MongoDbConnector.getInstance().getPrefixedCollection(clazz.getSimpleName(), clazz), idFieldName);
+        return new MongoRepository<>(
+          MongoDbConnector.getInstance(),
+          MongoDbConnector.getInstance().getPrefixedCollection(clazz.getSimpleName().toLowerCase(), clazz),
+          idFieldName
+        );
     }
 
 
     public void removeDuplicates(@NotNull String key) {
         final var documents = rawCollection.aggregate(List.of(
-            Aggregates.group("$" + key, Accumulators.push("ids", "$_id"), Accumulators.sum("count", 1)),
-            Aggregates.match(Filters.gt("count", 1))
+          Aggregates.group("$" + key, Accumulators.push("ids", "$_id"), Accumulators.sum("count", 1)),
+          Aggregates.match(Filters.gt("count", 1))
         )).into(new ArrayList<>());
 
         for (Document document : documents) {
@@ -115,6 +119,15 @@ public class MongoRepository<ID, O> {
     public O save(O object, Function<O, ID> idExtractor) {
         final var id = idExtractor.apply(object);
         return collection.findOneAndReplace(Filters.eq(idFieldName, id), object, FIND_ONE_AND_REPLACE_OPTIONS);
+    }
+
+
+    public O save(ID id, O object) {
+        return collection.findOneAndReplace(
+          Filters.eq(idFieldName, id),
+          object,
+          FIND_ONE_AND_REPLACE_OPTIONS
+        );
     }
 
     public O set(@NotNull Bson filter, @NotNull String key, @NotNull Object value) {
