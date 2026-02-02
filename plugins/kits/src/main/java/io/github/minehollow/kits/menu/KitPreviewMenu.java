@@ -17,22 +17,18 @@ import java.util.List;
 import java.util.Map;
 
 public class KitPreviewMenu extends SimpleMenu {
-    private static final ItemStack BORDER = ItemBuilder.of(Material.BLACK_STAINED_GLASS_PANE)
-        .name(" ")
-        .build();
-
     private static final ItemStack BACK_BUTTON = ItemBuilder.of(Material.ARROW)
-        .name("<gray>Voltar")
-        .lore("", "<dark_gray>Clique para voltar", "<dark_gray>à lista de kits.")
-        .build();
+            .name("<gray>Voltar")
+            .lore("", "<dark_gray>Clique para voltar", "<dark_gray>à lista de kits.")
+            .build();
 
     public KitPreviewMenu() {
         defaultConfig.setLayout(
-            "XXXXXXXXX",
-            "XIIIIIIIX",
-            "XIIIIIIIX",
-            "XIIIIIIIX",
-            "XXXXBXXXX");
+                "XXXXXXXXX",
+                "XIIIIIIIX",
+                "XIIIIIIIX",
+                "XIIIIIIIX",
+                "XXXXBXXXX");
         defaultConfig.setClickSound(new PredefinedSound(Sound.UI_BUTTON_CLICK, 0.5f, 1f));
     }
 
@@ -46,8 +42,7 @@ public class KitPreviewMenu extends SimpleMenu {
             return false;
         }
 
-        config.setTitle(StringUtils.text("<gradient:#E0AAFF:#9D4EDD><bold>Preview: " + kit.getDisplayName()));
-        ctx.setItem('X', BORDER);
+        config.setTitle(StringUtils.text("Visualizando kit: " + kit.getDisplayName()));
 
         List<ItemStack> items = kit.getItems();
         int[] slots = config.getLayout().get('I');

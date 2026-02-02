@@ -2,22 +2,20 @@ package io.github.minehollow.kits.menu;
 
 import io.github.minehollow.kits.KitService;
 import io.github.minehollow.kits.model.Kit;
-import io.github.minehollow.minecraft.BukkitPlatform;
 import io.github.minehollow.minecraft.menu.PlayerMenuContext;
 import io.github.minehollow.minecraft.menu.SimpleMenu;
 import io.github.minehollow.minecraft.menu.config.MenuConfig;
+import io.github.minehollow.minecraft.task.Tasks;
 import io.github.minehollow.minecraft.util.item.ItemBuilder;
 import io.github.minehollow.minecraft.util.message.StringUtils;
 import io.github.minehollow.minecraft.util.sound.PredefinedSound;
 import io.github.minehollow.sdk.util.time.Time;
 import net.kyori.adventure.text.Component;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -25,20 +23,16 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class KitEditorMenu extends SimpleMenu {
-    private static final ItemStack BORDER = ItemBuilder.of(Material.BLACK_STAINED_GLASS_PANE)
-        .name(" ")
-        .build();
-
     private static final ItemStack SAVE_BUTTON = ItemBuilder.of(Material.LIME_DYE)
-        .name("<green><bold>Salvar Kit")
-        .lore("", "<gray>Clique para salvar", "<gray>todas as alterações.")
-        .build();
+            .name("<green>Salvar Kit")
+            .lore("", "<gray>Clique para salvar", "<gray>todas as alterações.")
+            .build();
 
     private static final ItemStack DELETE_BUTTON = ItemBuilder.of(Material.RED_DYE)
-        .name("<red><bold>Deletar Kit")
-        .lore("", "<gray>Clique para deletar", "<gray>este kit permanentemente!", "",
-            "<dark_red>Esta ação é irreversível!")
-        .build();
+            .name("<red>Deletar Kit")
+            .lore("", "<gray>Clique para deletar", "<gray>este kit permanentemente!", "",
+                    "<dark_red>Esta ação é irreversível!")
+            .build();
 
     private final KitService kitService;
 
@@ -77,20 +71,17 @@ public class KitEditorMenu extends SimpleMenu {
         final Kit currentKit = kit;
 
         config.setTitle(StringUtils.text(isNew
-            ? "<gradient:#E0AAFF:#9D4EDD><bold>Criar Kit: " + currentKit.getId()
-            : "<gradient:#E0AAFF:#9D4EDD><bold>Editar Kit: " + currentKit.getDisplayName()));
+                ? "Criando Kit: " + currentKit.getId()
+                : "Editando Kit: " + currentKit.getId()));
         config.setLayout(
-            "XXXXXXXXX",
-            "XIIIIIIIX",
-            "XIIIIIIIX",
-            "XIIIIIIIX",
-            "XNCOXXXSX",
-            "XXXXXXXDX");
+                "XXXXXXXXX",
+                "XIIIIIIIX",
+                "XIIIIIIIX",
+                "XIIIIIIIX",
+                "XNCOXXXSX",
+                "XXXXXXXDX");
         config.setGlobalClickCancelled(false);
         config.setClickSound(new PredefinedSound(Sound.UI_BUTTON_CLICK, 0.5f, 1f));
-
-        ctx.setItem('X', BORDER);
-        loadKitItems(ctx, currentKit);
 
         // NAME
         ctx.setItem('N', p -> createNameButton(currentKit), e -> {
@@ -112,14 +103,15 @@ public class KitEditorMenu extends SimpleMenu {
             ItemStack cursor = e.getCursor();
             if (cursor != null && cursor.getType() != Material.AIR) {
                 currentKit.setIcon(cursor.getType());
-                player.sendMessage(StringUtils.text("<green>Ícone alterado para: <white>" + cursor.getType().name()));
+                player.sendMessage(
+                        StringUtils.text("<green>Ícone do kit alterado para: <white>" + cursor.getType().name()));
                 int[] iconSlots = ctx.getMenuConfig().getLayout().get('O');
                 if (iconSlots != null && iconSlots.length > 0) {
                     ctx.getInventory().setItem(iconSlots[0], createIconButton(currentKit));
                 }
             } else {
                 player.sendMessage(
-                    StringUtils.text("<gray>Coloque um item no cursor e clique aqui para alterar o ícone."));
+                        StringUtils.text("<gray>Coloque um item no cursor e clique aqui para alterar o ícone."));
             }
         });
 
@@ -133,11 +125,17 @@ public class KitEditorMenu extends SimpleMenu {
                 e.setCancelled(true);
                 deleteKit(ctx, currentKit);
             });
-        } else {
-            ctx.setItem('D', BORDER);
         }
 
         return true;
+    }
+
+    @Override
+    public void onPostOpen(@NotNull PlayerMenuContext ctx, @NotNull MenuConfig config) {
+        Kit kit = ctx.get("kit");
+        if (kit != null) {
+            loadKitItems(ctx, kit);
+        }
     }
 
     @Override
@@ -164,8 +162,9 @@ public class KitEditorMenu extends SimpleMenu {
         List<ItemStack> items = kit.getItems();
         int[] slots = ctx.getMenuConfig().getLayout().get('I');
         for (int i = 0; i < slots.length && i < items.size(); i++) {
-            if (items.get(i) != null)
-                ctx.setItem(slots[i], items.get(i).clone());
+            if (items.get(i) != null) {
+                ctx.getInventory().setItem(slots[i], items.get(i).clone());
+            }
         }
     }
 
@@ -192,14 +191,14 @@ public class KitEditorMenu extends SimpleMenu {
             if (k != null && input != null && !input.isBlank()) {
                 k.setDisplayName(input.trim());
                 signCtx.getPlayer()
-                    .sendMessage(StringUtils.text("<green>Nome alterado para: <white>" + k.getDisplayName()));
+                        .sendMessage(StringUtils.text("<green>Nome alterado para: <white>" + k.getDisplayName()));
             }
             signCtx.openMenu(KitEditorMenu.class, true);
-        }, new Component[]{
-            Component.empty(),
-            Component.text("^^^^^^^^^^^^^^^"),
-            Component.text("Digite o nome"),
-            Component.text("do kit acima")
+        }, new Component[] {
+                null,
+                Component.text("^^^^^^^^^^^^^^^"),
+                Component.text("Digite o nome"),
+                Component.text("do kit acima")
         }, true);
     }
 
@@ -222,11 +221,11 @@ public class KitEditorMenu extends SimpleMenu {
                 }
             }
             signCtx.openMenu(KitEditorMenu.class, true);
-        }, new Component[]{
-            null,
-            Component.text("^^^^^^^^^^^^^^^"),
-            Component.text("Digite o cooldown"),
-            Component.text("Ex: 1h30m, 2d")
+        }, new Component[] {
+                null,
+                Component.text("^^^^^^^^^^^^^^^"),
+                Component.text("Digite o cooldown"),
+                Component.text("Ex: 1h30m, 2d")
         }, true);
     }
 
@@ -238,15 +237,12 @@ public class KitEditorMenu extends SimpleMenu {
 
         saveItemsFromInventory(ctx, kit);
 
-        kitService.saveKit(kit).thenAccept(saved -> {
-            Plugin plugin = BukkitPlatform.getInstance().getPlugin();
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                player.closeInventory();
-                player.sendMessage(
+        kitService.saveKit(kit).thenAccept(saved -> Tasks.runSync(() -> {
+            player.closeInventory();
+            player.sendMessage(
                     StringUtils.text("<green>Kit <white>" + saved.getDisplayName() + " <green>salvo com sucesso!"));
-                player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1.5f);
-            });
-        }).exceptionally(ex -> {
+            player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1.5f);
+        })).exceptionally(ex -> {
             player.sendMessage(StringUtils.text("<red>Erro ao salvar: " + ex.getMessage()));
             return null;
         });
@@ -254,14 +250,11 @@ public class KitEditorMenu extends SimpleMenu {
 
     private void deleteKit(PlayerMenuContext ctx, Kit kit) {
         Player player = ctx.getPlayer();
-        kitService.deleteKit(kit.getId()).thenAccept(v -> {
-            Plugin plugin = BukkitPlatform.getInstance().getPlugin();
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                player.closeInventory();
-                player.sendMessage(StringUtils.text("<green>Kit <white>" + kit.getDisplayName() + " <green>deletado!"));
-                player.playSound(player.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 0.5f, 1f);
-            });
-        }).exceptionally(ex -> {
+        kitService.deleteKit(kit.getId()).thenAccept(v -> Tasks.runSync(() -> {
+            player.closeInventory();
+            player.sendMessage(StringUtils.text("<green>Kit <white>" + kit.getDisplayName() + " <green>deletado!"));
+            player.playSound(player.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 0.5f, 1f);
+        })).exceptionally(ex -> {
             player.sendMessage(StringUtils.text("<red>Erro ao deletar: " + ex.getMessage()));
             return null;
         });
@@ -269,24 +262,24 @@ public class KitEditorMenu extends SimpleMenu {
 
     private ItemStack createNameButton(Kit kit) {
         return ItemBuilder.of(Material.NAME_TAG)
-            .name("<white><bold>Editar Nome")
-            .lore("<gray>Nome atual: <white>" + kit.getDisplayName(), "", "<dark_gray>Clique para editar")
-            .build();
+                .name("<white>Editar Nome")
+                .lore("<gray>Nome atual: <white>" + kit.getDisplayName(), "", "<dark_gray>Clique para editar")
+                .build();
     }
 
     private ItemStack createCooldownButton(Kit kit) {
         String cooldown = kit.hasCooldown() ? new Time(kit.getCooldown(), TimeUnit.SECONDS).toString() : "Nenhum";
         return ItemBuilder.of(Material.CLOCK)
-            .name("<white><bold>Editar Cooldown")
-            .lore("<gray>Cooldown atual: <yellow>" + cooldown, "", "<dark_gray>Clique para editar")
-            .build();
+                .name("<white>Editar Cooldown")
+                .lore("<gray>Cooldown atual: <yellow>" + cooldown, "", "<dark_gray>Clique para editar")
+                .build();
     }
 
     private ItemStack createIconButton(Kit kit) {
         Material icon = kit.getIcon() != null ? kit.getIcon() : Material.CHEST;
         return ItemBuilder.of(icon)
-            .name("<white><bold>Alterar Ícone")
-            .lore("<gray>Ícone atual: <white>" + icon.name(), "", "<dark_gray>Segure um item e clique aqui")
-            .build();
+                .name("<white>Alterar Ícone")
+                .lore("<gray>Ícone atual: <white>" + icon.name(), "", "<dark_gray>Segure um item e clique aqui")
+                .build();
     }
 }
