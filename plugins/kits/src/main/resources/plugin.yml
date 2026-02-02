@@ -4,4 +4,4 @@ version: 1.0.0
 author: devbalafini
 folia-supported: true
 api-version: 1.21
-depend: [ BukkitPlatformPlugin, packetevents ]
+depend: [ BukkitPlatformPlugin ]
