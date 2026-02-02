@@ -24,6 +24,7 @@ public class ExcavationSkill extends BlockBreakingSkill {
     public ExcavationSkill() {
         super("excavation", "Escavação");
         this.icon = Material.IRON_SHOVEL;
+        this.textIcon = "⚒";
 
 
         addExperienceForMaterial(Material.DIRT, 1.0);

@@ -6,33 +6,24 @@ plugins {
 }
 
 base {
-    archivesName.set("mines")
+    archivesName.set("skills")
 }
 
 repositories {
+    mavenCentral()
     maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
+    maven { url = uri("https://jitpack.io") }
     maven { url = uri("https://oss.sonatype.org/content/groups/public/") }
     maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots") }
     maven { url = uri("https://repo.dmulloy2.net/repository/public/") }
     maven { url = uri("https://repo.extendedclip.com/releases/") }
-
     maven("https://repo.papermc.io/repository/maven-public/")
-    maven("https://maven.enginehub.org/repo/")
     maven("https://repo.tcoded.com/releases")
-    maven("https://repo.papermc.io/repository/maven-public/")
 
-    mavenCentral()
-    maven { url = uri("https://jitpack.io") }
 }
-
 
 dependencies {
     compileOnly(project(":core-minecraft"))
-
-    implementation(platform("com.intellectualsites.bom:bom-newest:1.55")) // Ref: https://github.com/IntellectualSites/bom
-    compileOnly("com.fastasyncworldedit:FastAsyncWorldEdit-Core")
-    compileOnly("com.fastasyncworldedit:FastAsyncWorldEdit-Bukkit") { isTransitive = false }
-
     paperweight.paperDevBundle("1.21.4-R0.1-SNAPSHOT")
 }
 

@@ -4,6 +4,7 @@ import io.github.minehollow.minecraft.menu.MenuUtil;
 import io.github.minehollow.minecraft.plugin.SimplePlugin;
 import io.github.minehollow.skills.command.SkillsAdminCommand;
 import io.github.minehollow.skills.command.SkillsCommand;
+import io.github.minehollow.skills.listener.PlayerSkillsNotificationListener;
 import io.github.minehollow.skills.menu.SkillLevelListMenu;
 import io.github.minehollow.skills.menu.SkillsMainMenu;
 import io.github.minehollow.skills.player.PlayerSkillsProgressController;
@@ -26,7 +27,7 @@ public class SkillsPlugin extends SimplePlugin {
 
     @Override
     public void onEnable() {
-        playerSkillsProgressService = new PlayerSkillsProgressService();
+        playerSkillsProgressService = new PlayerSkillsProgressService(this);
 
         skillManager = new SkillManager(this);
         skillManager.registerSkills(
@@ -52,6 +53,10 @@ public class SkillsPlugin extends SimplePlugin {
         MenuUtil.registerMenus(
           new SkillsMainMenu(this),
           new SkillLevelListMenu(this)
+        );
+
+        registerListeners(
+          new PlayerSkillsNotificationListener(this)
         );
     }
 }

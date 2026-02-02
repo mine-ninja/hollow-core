@@ -16,6 +16,7 @@ public class SwordSkill extends WeaponUsageSkill {
     public SwordSkill() {
         super("sword", "Espada", 1.1);
         this.icon = Material.DIAMOND_SWORD;
+        this.textIcon = "🗡️";
 
         IntStream.range(1, MAX_SKILL_LEVEL)
           .forEach(level -> registerNewReward(level, SkillReward.common(

@@ -9,5 +9,6 @@ include(
   "core-proxy",
   "core-minecraft",
   "plugins:skills",
-  "plugins:kits"
+  "plugins:kits",
+  "plugins:mines"
 )

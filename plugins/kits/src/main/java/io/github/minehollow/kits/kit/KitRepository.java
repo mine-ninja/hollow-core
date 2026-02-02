@@ -74,7 +74,7 @@ public class KitRepository implements Closeable {
         }, executor);
     }
 
-    public CompletableFuture<@Nullable Kit> findKitById(String id) {
+    public CompletableFuture<Kit> findKitById(String id) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 return kitsCollection.find(Filters.eq("_id", id)).first();

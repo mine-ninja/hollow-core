@@ -16,6 +16,7 @@ public class AxeSkill extends WeaponUsageSkill {
     public AxeSkill() {
         super("axe", "Machado", 0.6);
         this.icon = Material.DIAMOND_AXE;
+        this.textIcon = "🪓";
         IntStream.range(1, MAX_SKILL_LEVEL)
           .forEach(level -> registerNewReward(level, SkillReward.common(level + "% de dano adicional com machados.")));
     }

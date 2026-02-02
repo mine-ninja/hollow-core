@@ -1,11 +1,15 @@
 package io.github.minehollow.skills.player;
 
+import io.github.minehollow.minecraft.task.Tasks;
 import io.github.minehollow.minecraft.util.exception.MainThreadViolationError;
 import io.github.minehollow.sdk.util.data.MongoRepository;
+import io.github.minehollow.skills.SkillsPlugin;
+import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -19,9 +23,11 @@ public class PlayerSkillsProgressService implements Listener {
     private final Map<UUID, PlayerSkillsProgress> playerSkillsProgressMap;
     private final MongoRepository<UUID, PlayerSkillsProgress> repository;
 
-    public PlayerSkillsProgressService() {
+    public PlayerSkillsProgressService(@NotNull SkillsPlugin plugin) {
         this.playerSkillsProgressMap = new ConcurrentHashMap<>();
-        this.repository = new MongoRepository<>(PlayerSkillsProgress.class);
+        this.repository = new MongoRepository<>(PlayerSkillsProgress.class, "_id");
+
+        Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
     public PlayerSkillsProgress getCachedPlayerProgress(@NotNull UUID playerId) {
@@ -81,11 +87,13 @@ public class PlayerSkillsProgressService implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void handleJoin(PlayerJoinEvent event) {
-        fetchPlayerProgress(event.getPlayer().getUniqueId(), true, true);
+        Tasks.runAsync(() -> {
+            fetchPlayerProgress(event.getPlayer().getUniqueId(), true, true);
+        });
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
-    public void saveOnQuit(PlayerJoinEvent event) {
-        unloadPlayerProgress(event.getPlayer().getUniqueId());
+    public void saveOnQuit(PlayerQuitEvent event) {
+        Tasks.runAsync(() -> unloadPlayerProgress(event.getPlayer().getUniqueId()));
     }
 }

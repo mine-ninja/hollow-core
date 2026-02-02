@@ -15,7 +15,7 @@ import java.util.function.DoubleUnaryOperator;
 public abstract class Skill implements Listener {
 
 
-    public static final int MAX_SKILL_LEVEL = 100;
+    public static final int MAX_SKILL_LEVEL = 99;
 
     private static final ThreadLocalRandom RANDOM = ThreadLocalRandom.current();
 
@@ -32,6 +32,7 @@ public abstract class Skill implements Listener {
 
     protected DoubleUnaryOperator levelUpExperienceFunction;
     protected Material icon = Material.BOOK;
+    protected String textIcon = " ";
 
     public Skill(@NotNull String id, @NotNull String displayName) {
         this.plugin = JavaPlugin.getPlugin(SkillsPlugin.class);
@@ -88,5 +89,10 @@ public abstract class Skill implements Listener {
     @NotNull
     public Material getIcon() {
         return icon;
+    }
+
+    @NotNull
+    public String getTextIcon() {
+        return textIcon;
     }
 }

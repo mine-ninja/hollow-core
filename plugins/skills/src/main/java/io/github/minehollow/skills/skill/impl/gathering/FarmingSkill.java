@@ -18,6 +18,7 @@ public class FarmingSkill extends BlockBreakingSkill {
     public FarmingSkill() {
         super("farming", "Farming");
         this.icon = Material.WHEAT;
+        this.textIcon = "⚒";
 
         addExperienceForMaterial(Material.CACTUS, 1);
         addExperienceForMaterial(Material.WHEAT, 3);

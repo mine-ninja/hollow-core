@@ -18,6 +18,7 @@ public class MiningSkill extends BlockBreakingSkill {
     public MiningSkill() {
         super("mining", "Mineração");
         this.icon = Material.DIAMOND_PICKAXE;
+        this.textIcon = "⛏";
 
         IntStream.range(1, MAX_SKILL_LEVEL)
           .forEach(level -> registerNewReward(level, SkillReward.common((level / 2) + "% de chance de dropar o dobro ao minerar.")));

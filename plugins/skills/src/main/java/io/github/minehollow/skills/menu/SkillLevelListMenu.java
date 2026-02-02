@@ -1,5 +1,6 @@
 package io.github.minehollow.skills.menu;
 
+import io.github.minehollow.minecraft.menu.PlayerMenuContext;
 import io.github.minehollow.minecraft.menu.config.MenuConfig;
 import io.github.minehollow.minecraft.menu.pagination.DynamicPaginationContext;
 import io.github.minehollow.minecraft.menu.pagination.DynamicPaginationMenu;
@@ -15,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +46,7 @@ public class SkillLevelListMenu extends DynamicPaginationMenu<Integer> {
       .build();
 
     private static final IntArrayList LEVELS = IntArrayList.wrap(
-      IntStream.range(1, Skill.MAX_SKILL_LEVEL).toArray()
+      IntStream.rangeClosed(1, Skill.MAX_SKILL_LEVEL).toArray()
     );
 
     private final SkillsPlugin plugin;
@@ -63,6 +65,7 @@ public class SkillLevelListMenu extends DynamicPaginationMenu<Integer> {
           "  LLLLL  ",
           "P LLLLL N",
           "  LLLLL  ",
+          "         ",
           "    M    "
         );
 
@@ -81,6 +84,10 @@ public class SkillLevelListMenu extends DynamicPaginationMenu<Integer> {
         return true;
     }
 
+    @Override
+    protected void onClick(@NotNull PlayerMenuContext ctx, @NotNull InventoryClickEvent event) {
+        super.onClick(ctx, event);
+    }
 
     private @NotNull ItemStack generateSkillLevelIcon(
       @NotNull Player player,
@@ -92,8 +99,8 @@ public class SkillLevelListMenu extends DynamicPaginationMenu<Integer> {
         final Material material;
         final String color;
         if (level > currentPlayerLevel) {
-            material = Material.GREEN_STAINED_GLASS_PANE;
-            color = "<green>";
+            material = Material.RED_STAINED_GLASS_PANE;
+            color = "<red>";
         } else if (level == currentPlayerLevel) {
             material = Material.YELLOW_STAINED_GLASS_PANE;
             color = "<yellow>";
@@ -115,6 +122,8 @@ public class SkillLevelListMenu extends DynamicPaginationMenu<Integer> {
             .map(desc -> "<gray>○ <white>" + desc)
             .toList()
           )
+          .meta(meta -> meta.setMaxStackSize(99))
+          .amount(Math.min(level, 99))
           .build();
     }
 }

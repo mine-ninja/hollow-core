@@ -15,7 +15,7 @@ import io.github.minehollow.minecraft.command.exception.CommandFailedException;
 import io.github.minehollow.minecraft.compat.PAPICompat;
 import io.github.minehollow.minecraft.compat.VaultCompat;
 import io.github.minehollow.minecraft.menu.input.SignInputListener;
-import io.github.minehollow.minecraft.placeholder.LuginPapiExpansion;
+import io.github.minehollow.minecraft.placeholder.HollowPapiExtension;
 import io.github.minehollow.minecraft.plugin.SimplePlugin;
 import io.github.minehollow.minecraft.task.Tasks;
 import io.github.minehollow.sdk.server.GameServer;
@@ -86,15 +86,8 @@ public class BukkitPlatformPlugin extends SimplePlugin {
           new DebugCommand(),
           new ShowJacksonVersionCommand()
         );
-        PluginManager manager = Bukkit.getPluginManager();
 
-        if (manager.isPluginEnabled("PlaceholderAPI")) {
-            new PAPICompat(this, bukkitPlatform.getNameTagResolver()).register();
-            new LuginPapiExpansion().register();
-        }
-        if (manager.isPluginEnabled("Vault")) {
-            VaultCompat.register(this);
-        }
+        PluginManager manager = Bukkit.getPluginManager();
 
         if (bukkitPlatform.getServerCategoryType() == ServerCategoryType.LOGIN) {
             Bukkit.getWorlds().forEach(world -> {
@@ -116,6 +109,21 @@ public class BukkitPlatformPlugin extends SimplePlugin {
 
             manager.registerEvents(new MapOrderListener(this), this);
             this.getLogger().info("Central Cart habilitado com sucesso.");
+        }
+
+        if (manager.getPlugin("PlaceholderAPI") != null) {
+            this.getLogger().info("PlaceholderAPI integrado com sucesso.");
+            if (!new PAPICompat(this, bukkitPlatform.getNameTagResolver()).register()) {
+                throw new IllegalStateException("Não foi possível registrar a compatibilidade com PlaceholderAPI.");
+            }
+
+            if (!new HollowPapiExtension().register()) {
+                throw new IllegalStateException("Não foi possível registrar a extensão HollowPapiExtension com PlaceholderAPI.");
+            }
+        }
+
+        if (manager.isPluginEnabled("Vault")) {
+            VaultCompat.register(this);
         }
     }
 
@@ -151,7 +159,7 @@ public class BukkitPlatformPlugin extends SimplePlugin {
               .getPackage().getImplementationVersion();
 
             ctx.sendMessage(
-                "§aVersão do Jackson: §b" + string
+              "§aVersão do Jackson: §b" + string
             );
         }
     }

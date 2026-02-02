@@ -5,7 +5,6 @@ import io.github.minehollow.minecraft.BukkitPlatform;
 import io.github.minehollow.minecraft.event.account.AsyncPlayerNickUpdateEvent;
 import io.github.minehollow.minecraft.event.account.PlayerAccountLoadEvent;
 import io.github.minehollow.minecraft.event.account.PlayerAccountUpdateEvent;
-import io.github.minehollow.minecraft.event.tick.AsyncServerTickEvent;
 import io.github.minehollow.minecraft.task.Tasks;
 import io.github.minehollow.minecraft.util.LocationUtil;
 import io.github.minehollow.minecraft.util.stopwatch.Stopwatch;
@@ -205,7 +204,6 @@ public final class InternalPlayerListener implements Listener {
 
                   runAsyncLater(() -> {
                       Bukkit.getPluginManager().callEvent(new PlayerAccountLoadEvent(playerAccount));
-                      platform.getNameTagHandler().updateTagForPlayer(player);
                   }, 1);
 
               } catch (Exception e) {
@@ -234,23 +232,11 @@ public final class InternalPlayerListener implements Listener {
 //          });
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void handleTick(AsyncServerTickEvent event) {
-        if (platform.getPlayerAccountService().getCachedAccounts().isEmpty()) {
-            return;
-        }
-
-        if (TIMER.resetIfElapsedSeconds(1)) {
-            platform.getNameTagHandler().updateAll();
-        }
-    }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerQuit(PlayerQuitEvent event) {
         final var player = event.getPlayer();
         final var currentServerId = platform.getId();
-
-        platform.getNameTagHandler().clearCacheForPlayer(player);
 
         final var walletService = platform.getWalletService();
         final var wallet = walletService.getCachedWallet(player.getUniqueId());

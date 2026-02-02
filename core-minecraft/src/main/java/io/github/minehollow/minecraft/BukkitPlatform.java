@@ -12,7 +12,6 @@ import io.github.minehollow.minecraft.internal.command.InternalCommandManager;
 import io.github.minehollow.minecraft.internal.listener.*;
 import io.github.minehollow.minecraft.internal.listener.connection.ConnectionHandshakePacketListener;
 import io.github.minehollow.minecraft.menu.SimpleMenuManager;
-import io.github.minehollow.minecraft.nametag.NameTagHandler;
 import io.github.minehollow.minecraft.nametag.resolver.LegacyNameTagResolver;
 import io.github.minehollow.minecraft.nametag.resolver.ModernNameTagResolver;
 import io.github.minehollow.minecraft.nametag.resolver.NameTagResolver;
@@ -126,8 +125,6 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     private final GameRuleManager gameRuleManager;
     private final TeleportManager teleportManager;
 
-    @Getter
-    private final NameTagHandler nameTagHandler;
 
     @Getter
     private NameTagResolver nameTagResolver;
@@ -166,7 +163,6 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         }
 
         this.discordService = new DiscordService(this);
-        this.nameTagHandler = new NameTagHandler(this);
 
         this.loadGroupPermissions();
         Bukkit.getServicesManager().register(Platform.class, this, plugin, ServicePriority.Normal);
@@ -215,19 +211,6 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         log.info("Bukkit Platform is now online with ID: {}, Category: {} and SubCategory: {}", this.getId(), this.getServerCategoryType(), this.getServerSubCategoryType());
         Tasks.runAsyncRepeating(this::updateServerInfo, 20, 20 * 10);
         Bukkit.getConsoleSender().sendMessage("§aCarregando nomes de jogadores para o redis (para acesso rápido)");
-
-
-        Tasks.runAsyncLater(() -> {
-            EventBus eventBus = TabAPI.getInstance().getEventBus();
-            if (eventBus == null) {
-                return;
-            }
-
-            eventBus.register(
-              TabLoadEvent.class,
-              event -> Tasks.runAsyncLater(nameTagHandler::updateAll, 5)
-            );
-        }, 20);
     }
 
     @Override

@@ -2,13 +2,17 @@ package io.github.minehollow.sdk.group;
 
 import lombok.Getter;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.util.stream.Collectors.toMap;
 
@@ -40,6 +44,14 @@ public enum PlayerGroup {
 
     private static final int MAX_PRIORITY_VALUE = 90;
 
+    // Patterns compilados uma única vez
+    private static final Pattern NAMED_COLOR_PATTERN = Pattern.compile("<(dark_red|dark_green|dark_blue|dark_aqua|dark_purple|dark_gray|gold|gray|blue|green|aqua|red|light_purple|yellow|white|black)>");
+    private static final Pattern GRADIENT_PATTERN = Pattern.compile("<gradient:(#[0-9A-Fa-f]{6}):(#[0-9A-Fa-f]{6})>");
+    private static final Pattern HEX_PATTERN = Pattern.compile("<#([0-9A-Fa-f]{6})>");
+
+    // Cache das cores já calculadas
+    private static final Map<PlayerGroup, TextColor> LAST_COLOR_CACHE = new EnumMap<>(PlayerGroup.class);
+
     private final String id;
     private final String prefix;
     private final char modernTag;
@@ -55,7 +67,7 @@ public enum PlayerGroup {
         this.displayName = displayName;
         this.namedTextColor = namedTextColor;
         this.powerLevel = powerLevel;
-        this.teamName = "HL-" + id + "-" + (MAX_PRIORITY_VALUE - powerLevel); // HL-[group id]-[priority value]
+        this.teamName = "HL-" + id + "-" + (MAX_PRIORITY_VALUE - powerLevel);
     }
 
     @Nullable
@@ -75,6 +87,48 @@ public enum PlayerGroup {
         return this.getPrefix() + playerName;
     }
 
+    /**
+     * Retorna a última cor usada na tag MiniMessage do grupo
+     * Útil para manter consistência de cor em formatações
+     */
+    public TextColor getLastTagColor() {
+        return LAST_COLOR_CACHE.computeIfAbsent(this, PlayerGroup::calculateLastColor);
+    }
+
+    private static TextColor calculateLastColor(PlayerGroup group) {
+        String tag = group.prefix;
+        TextColor lastColor = null;
+        int lastIndex = -1;
+
+        // Procura cores nomeadas
+        Matcher namedMatcher = NAMED_COLOR_PATTERN.matcher(tag);
+        while (namedMatcher.find()) {
+            if (namedMatcher.start() > lastIndex) {
+                lastIndex = namedMatcher.start();
+                lastColor = NamedTextColor.NAMES.value(namedMatcher.group(1));
+            }
+        }
+
+        // Procura gradientes (pega a cor final)
+        Matcher gradientMatcher = GRADIENT_PATTERN.matcher(tag);
+        while (gradientMatcher.find()) {
+            if (gradientMatcher.start() > lastIndex) {
+                lastIndex = gradientMatcher.start();
+                lastColor = TextColor.fromHexString(gradientMatcher.group(2));
+            }
+        }
+
+        // Procura cores hex
+        Matcher hexMatcher = HEX_PATTERN.matcher(tag);
+        while (hexMatcher.find()) {
+            if (hexMatcher.start() > lastIndex) {
+                lastIndex = hexMatcher.start();
+                lastColor = TextColor.fromHexString("#" + hexMatcher.group(1));
+            }
+        }
+
+        return lastColor != null ? lastColor : group.namedTextColor;
+    }
 
     /**
      * Retorna o código de cor legacy para compatibilidade reversa
@@ -132,5 +186,4 @@ public enum PlayerGroup {
     public boolean isSpecialGroup() {
         return isGreaterOrEqualTo(INFLUENCER);
     }
-
 }

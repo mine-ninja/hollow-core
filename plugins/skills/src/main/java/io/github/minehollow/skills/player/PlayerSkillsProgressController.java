@@ -88,7 +88,7 @@ public class PlayerSkillsProgressController {
       @NotNull Skill skill,
       double experience
     ) {
-        final var event = SkillExperienceGainEvent.call(player, skill, (int) experience);
+        final var event = SkillExperienceGainEvent.call(player, skill, experience);
         if (event.isCancelled()) {
             return;
         }
@@ -100,7 +100,22 @@ public class PlayerSkillsProgressController {
 
         final var skillProgress = progress.getSkillProgressOrCreate(skill.getId());
         skillProgress.addExperience(event.getExperienceGain());
-        service.saveProgress(progress, true);
+
+        var experienceToLevel = skill.getExperienceToReachLevel(skillProgress.getLevel());
+        while (skillProgress.getExperience() >= experienceToLevel) {
+            SkillLevelUpEvent.call(
+              player,
+              skill,
+              skillProgress.getLevel(),
+              skillProgress.getLevel() + 1
+            );
+
+            skillProgress.addLevels(1);
+            skillProgress.removeExperience(experienceToLevel);
+            experienceToLevel = skill.getExperienceToReachLevel(skillProgress.getLevel());
+        }
+
+        service.saveProgress(progress);
     }
 
     public void addLevel(
