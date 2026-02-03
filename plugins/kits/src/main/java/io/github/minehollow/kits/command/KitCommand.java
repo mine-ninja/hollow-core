@@ -24,10 +24,11 @@ public class KitCommand extends SimpleCommand {
 
     public KitCommand(KitService kitService, BukkitPlatform platform) {
         super("kit");
+        setAliases(List.of("kits"));
         this.kitService = kitService;
         this.platform = platform;
 
-        subCommands.add(new CategorySubCommand(kitService));
+        subCommands.add(new CategorySubCommand(kitService, platform));
         subCommands.add(new CreateSubCommand(kitService, platform));
         subCommands.add(new DeleteSubCommand(kitService));
         subCommands.add(new EditSubCommand(kitService, platform));
@@ -79,31 +80,31 @@ public class KitCommand extends SimpleCommand {
         kitService.claimKit(player, kit).thenAccept(result -> {
             switch (result.status()) {
                 case SUCCESS -> player.sendMessage(StringUtils.text(
-                    "<green>Você coletou o kit <white>" + kit.getDisplayName() + "<green>!"));
+                        "<green>Você coletou o kit <white>" + kit.getDisplayName() + "<green>!"));
                 case ON_COOLDOWN -> player.sendMessage(StringUtils.text(
-                    "<gray>Este kit estará disponível em: <yellow>" + result.getFormattedRemainingTime()));
+                        "<gray>Este kit estará disponível em: <yellow>" + result.getFormattedRemainingTime()));
                 case NO_SPACE -> player.sendMessage(StringUtils.text(
-                    "<red>Você não tem espaço suficiente no inventário!"));
+                        "<red>Você não tem espaço suficiente no inventário!"));
                 case NO_PERMISSION -> player.sendMessage(StringUtils.text(
-                    "<red>Você não tem permissão para usar este kit!"));
+                        "<red>Você não tem permissão para usar este kit!"));
                 case NOT_FOUND -> player.sendMessage(StringUtils.text(
-                    "<red>Kit não encontrado!"));
+                        "<red>Kit não encontrado!"));
             }
         });
     }
 
     private void showHelp(CommandContext ctx) {
-        ctx.sendMessage(StringUtils.text("<gradient:#E0AAFF:#9D4EDD><bold>Kit Commands"));
+        ctx.sendMessage(StringUtils.text("<gradient:#E0AAFF:#9D4EDD>Kit Commands"));
         ctx.sendMessage(StringUtils.text("<white>/kit <gray>- Abre o menu de kits"));
         ctx.sendMessage(StringUtils.text("<white>/kit <nome> <gray>- Usa um kit"));
         ctx.sendMessage(StringUtils.text("<white>/kit preview <nome> <gray>- Visualiza um kit"));
 
         if (ctx.getSender().hasPermission("kit.admin")) {
             ctx.sendMessage("");
-            ctx.sendMessage(StringUtils.text("<gradient:#E0AAFF:#9D4EDD><bold>Admin Commands"));
+            ctx.sendMessage(StringUtils.text("<gradient:#E0AAFF:#9D4EDD>Admin Commands"));
             ctx.sendMessage(StringUtils.text("<white>/kit category <gray>- Gerenciar categorias"));
             ctx.sendMessage(
-                StringUtils.text("<white>/kit create <id> <categoria> <cooldown> <gray>- Cria um novo kit"));
+                    StringUtils.text("<white>/kit create <id> <categoria> <cooldown> <gray>- Cria um novo kit"));
             ctx.sendMessage(StringUtils.text("<white>/kit edit <nome> <gray>- Edita um kit"));
             ctx.sendMessage(StringUtils.text("<white>/kit delete <nome> <gray>- Deleta um kit"));
             ctx.sendMessage(StringUtils.text("<white>/kit give <jogador> <kit> <gray>- Dá um kit a um jogador"));

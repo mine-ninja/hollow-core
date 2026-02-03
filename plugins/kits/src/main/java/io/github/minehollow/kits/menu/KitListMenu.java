@@ -106,7 +106,10 @@ public class KitListMenu extends SimpleMenu {
 
     private String getDisplayName(String categoryId) {
         var category = kitService.getCategory(categoryId);
-        return category != null ? category.getDisplayName() : categoryId;
+        if (category == null)
+            return categoryId;
+        // Remove MiniMessage tags like <red>, <bold>, etc.
+        return category.getDisplayName().replaceAll("<[^>]+>", "");
     }
 
     private ItemStack renderKitIcon(Player player, Kit kit) {
@@ -138,7 +141,7 @@ public class KitListMenu extends SimpleMenu {
                         "",
                         "<dark_gray>Esquerdo: <gray>Coletar",
                         "<dark_gray>Direito: <gray>Preview")
-                .flags(ItemFlag.values())
+                .flags(ItemFlag.HIDE_ATTRIBUTES)
                 .build();
     }
 

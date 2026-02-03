@@ -22,13 +22,17 @@ public class KitPreviewMenu extends SimpleMenu {
             .lore("", "<dark_gray>Clique para voltar", "<dark_gray>à lista de kits.")
             .build();
 
+    private static final ItemStack SEPARATOR = ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE)
+            .name(" ")
+            .build();
+
     public KitPreviewMenu() {
         defaultConfig.setLayout(
-                "XXXXXXXXX",
-                "XIIIIIIIX",
-                "XIIIIIIIX",
-                "XIIIIIIIX",
-                "XXXXBXXXX");
+                "IIIIIIIII",
+                "IIIIIIIII",
+                "IIIIIIIII",
+                "IIIIIIIII",
+                "----B----");
         defaultConfig.setClickSound(new PredefinedSound(Sound.UI_BUTTON_CLICK, 0.5f, 1f));
     }
 
@@ -53,6 +57,10 @@ public class KitPreviewMenu extends SimpleMenu {
             }
         }
 
+        // SEPARATOR
+        ctx.setItem('-', SEPARATOR, e -> e.setCancelled(true));
+
+        // BACK
         ctx.setItem('B', BACK_BUTTON, e -> {
             String categoryId = kit.getCategoryId();
             if (categoryId != null) {

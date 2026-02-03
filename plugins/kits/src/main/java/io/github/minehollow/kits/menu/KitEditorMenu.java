@@ -34,6 +34,10 @@ public class KitEditorMenu extends SimpleMenu {
                     "<dark_red>Esta ação é irreversível!")
             .build();
 
+    private static final ItemStack SEPARATOR = ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE)
+            .name(" ")
+            .build();
+
     private final KitService kitService;
 
     public KitEditorMenu(KitService kitService) {
@@ -74,14 +78,17 @@ public class KitEditorMenu extends SimpleMenu {
                 ? "Criando Kit: " + currentKit.getId()
                 : "Editando Kit: " + currentKit.getId()));
         config.setLayout(
-                "XXXXXXXXX",
-                "XIIIIIIIX",
-                "XIIIIIIIX",
-                "XIIIIIIIX",
-                "XNCOXXXSX",
-                "XXXXXXXDX");
+                "IIIIIIIII",
+                "IIIIIIIII",
+                "IIIIIIIII",
+                "IIIIIIIII",
+                "---------",
+                "-NC-O-SD-");
         config.setGlobalClickCancelled(false);
         config.setClickSound(new PredefinedSound(Sound.UI_BUTTON_CLICK, 0.5f, 1f));
+
+        // SEPARATOR
+        ctx.setItem('-', SEPARATOR, e -> e.setCancelled(true));
 
         // NAME
         ctx.setItem('N', p -> createNameButton(currentKit), e -> {
@@ -115,11 +122,13 @@ public class KitEditorMenu extends SimpleMenu {
             }
         });
 
+        // SAVE
         ctx.setItem('S', SAVE_BUTTON, e -> {
             e.setCancelled(true);
             saveKit(ctx);
         });
 
+        // DELETE
         if (!isNew) {
             ctx.setItem('D', DELETE_BUTTON, e -> {
                 e.setCancelled(true);
