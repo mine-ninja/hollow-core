@@ -3,6 +3,7 @@ package io.github.minehollow.kits;
 import io.github.minehollow.kits.command.KitCommand;
 import io.github.minehollow.kits.listener.PlayerJoinListener;
 import io.github.minehollow.kits.listener.PlayerQuitListener;
+import io.github.minehollow.kits.menu.KitCategoryEditorMenu;
 import io.github.minehollow.kits.menu.KitCategoryMenu;
 import io.github.minehollow.kits.menu.KitEditorMenu;
 import io.github.minehollow.kits.menu.KitListMenu;
@@ -35,11 +36,12 @@ public class KitsPlugin extends SimplePlugin {
 
         BukkitPlatform platform = BukkitPlatform.getInstance();
         platform.getMenuManager().register(
-            new SignInputMenu(),
-            new KitCategoryMenu(kitService),
-            new KitListMenu(kitService),
-            new KitPreviewMenu(),
-            new KitEditorMenu(kitService));
+                new SignInputMenu(),
+                new KitCategoryMenu(kitService),
+                new KitCategoryEditorMenu(kitService),
+                new KitListMenu(kitService),
+                new KitPreviewMenu(),
+                new KitEditorMenu(kitService));
 
         registerCommands("kits", new KitCommand(kitService, platform));
 
