@@ -25,7 +25,7 @@ public class CurrencyManager {
         }
 
         currencies.put(currency.id(), currency);
-        log.info("Registered currency: {}", currency.id());
+        log.debug("Registered currency: {}", currency.id());
 
         platform.getInternalCommandManager().registerCurrencyCommand(currency);
     }

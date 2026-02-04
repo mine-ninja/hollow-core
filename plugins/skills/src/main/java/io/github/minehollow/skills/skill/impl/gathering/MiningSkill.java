@@ -7,7 +7,6 @@ import io.github.minehollow.skills.skill.impl.base.BlockBreakingSkill;
 import io.github.minehollow.skills.skill.reward.SkillReward;
 import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.inventory.ItemStack;
 
@@ -15,13 +14,18 @@ import java.util.stream.IntStream;
 
 public class MiningSkill extends BlockBreakingSkill {
 
+    private static final double DOUBLE_DROP_CHANCE_MULTIPLIER = 0.5;
+
     public MiningSkill() {
         super("mining", "Mineração");
         this.icon = Material.DIAMOND_PICKAXE;
         this.textIcon = "⛏";
 
-        IntStream.range(1, MAX_SKILL_LEVEL)
-          .forEach(level -> registerNewReward(level, SkillReward.common((level / 2) + "% de chance de dropar o dobro ao minerar.")));
+        IntStream.rangeClosed(1, MAX_SKILL_LEVEL + 1)
+          .forEach(level -> registerNewReward(level, SkillReward.common(
+//            level * 0.5 + "% de chance de dropar o dobro ao minerar."
+            String.format("%.1f%% de chance de dropar o dobro ao minerar.", level * DOUBLE_DROP_CHANCE_MULTIPLIER)
+          )));
 
         addExperienceForMaterial(Material.COAL_ORE, 5.0);
         addExperienceForMaterial(Material.IRON_ORE, 7.0);
@@ -32,7 +36,7 @@ public class MiningSkill extends BlockBreakingSkill {
         addExperienceForMaterial(Material.NETHER_GOLD_ORE, 12.0);
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(ignoreCancelled = true)
     public void handleBlockBreaking(BlockBreakEvent event) {
         final var player = event.getPlayer();
         final var itemInHand = player.getInventory().getItemInMainHand();

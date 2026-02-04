@@ -22,6 +22,8 @@ import io.github.minehollow.sdk.server.GameServer;
 import io.github.minehollow.sdk.server.type.ServerCategoryType;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import me.neznamy.tab.api.TabAPI;
+import me.neznamy.tab.api.tablist.SortingManager;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;

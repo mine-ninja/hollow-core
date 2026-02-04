@@ -98,7 +98,7 @@ public class PlayerAccountServiceImpl implements PlayerAccountService {
     public CompletableFuture<@Nullable PlayerAccount> getPlayerAccountByName(@NotNull String playerName) {
         final var local = getCachedAccountByName(playerName);
         if (local != null) {
-            log.info("Found player account for {} in local cache.", playerName);
+            log.debug("Found player account for {} in local cache.", playerName);
             return CompletableFuture.completedFuture(local);
         }
 
@@ -112,13 +112,13 @@ public class PlayerAccountServiceImpl implements PlayerAccountService {
             
             final var fromMongo = repository.findFirstFromPropertyIgnoreCase("playerName", playerName);
             if (fromMongo != null) {
-                log.info("Found player account for {} in MongoDB: {}", playerName, fromMongo);
+                log.debug("Found player account for {} in MongoDB: {}", playerName, fromMongo);
                 localCache.put(fromMongo.uniqueId(), fromMongo);
                 redisCache.hset(CACHE_KEY, fromMongo.uniqueId().toString(), fromMongo);
                 return fromMongo;
             }
 
-            log.info("Player account for {} not found in local cache or MongoDB, fetching UUID.", playerName);
+            log.debug("Player account for {} not found in local cache or MongoDB, fetching UUID.", playerName);
             return null;
         });
     }
@@ -132,7 +132,7 @@ public class PlayerAccountServiceImpl implements PlayerAccountService {
     public CompletableFuture<@NotNull PlayerAccount> updatePlayerAccount(@NotNull PlayerAccount toUpdate, @NotNull AccountUpdateOptions options) {
         return supply(() -> {
             try {
-                log.info("Updating player account for {}: {}", toUpdate.uniqueId(), toUpdate);
+                log.debug("Updating player account for {}: {}", toUpdate.uniqueId(), toUpdate);
 
                 final var updated = repository.save(toUpdate, PlayerAccount::uniqueId);
                 if (updated == null) {
@@ -140,7 +140,7 @@ public class PlayerAccountServiceImpl implements PlayerAccountService {
                 }
                 
                 if (options.updateCaches()) {
-                    log.info("Updating caches for player account: {}", updated);
+                    log.debug("Updating caches for player account: {}", updated);
                     updateCaches(updated);
                 }
 

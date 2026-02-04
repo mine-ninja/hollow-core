@@ -70,16 +70,16 @@ public class GroupPermissionService {
     public CompletableFuture<@NotNull GroupPermissionSet> getGroupPermissionSet(@NotNull PlayerGroup group) {
         final var locallyCached = this.getCachedPermissionsForGroup(group);
         if (locallyCached != null) {
-            log.info("Returning locally cached permissions for group: {}", group.getId());
+            log.debug("Returning locally cached permissions for group: {}", group.getId());
             return CompletableFuture.completedFuture(locallyCached);
         }
 
         return supplyAsync(() -> {
-            log.info("Permissions for group {} not found in Redis, checking MongoDB...", group.getId());
+            log.debug("Permissions for group {} not found in Redis, checking MongoDB...", group.getId());
             var fromMongo = permissionsRepository.findById(group.getId());
             if (fromMongo != null) {
                 localCache.put(group.getId(), fromMongo);
-                log.info("Loaded permissions for group {} from MongoDB and updated caches: {}", group.getId(), fromMongo.permissions());
+                log.debug("Loaded permissions for group {} from MongoDB and updated caches: {}", group.getId(), fromMongo.permissions());
                 return fromMongo;
             }
 
@@ -100,27 +100,27 @@ public class GroupPermissionService {
 
             var fromDb = permissionsRepository.findById(group.getId());
                 if(fromDb != null){
-                    log.info("Loaded permissions for group {} from MongoDB: {}", group.getId(), fromDb.permissions());
+                    log.debug("Loaded permissions for group {} from MongoDB: {}", group.getId(), fromDb.permissions());
                 } else {
-                    log.info("No permissions found for group {} in MongoDB.", group.getId());
+                    log.debug("No permissions found for group {} in MongoDB.", group.getId());
                 }
 
 
             if (fromDb != null) {
-                log.info("Loaded permissions for group: {}", group.getId());
+                log.debug("Loaded permissions for group: {}", group.getId());
                 localCache.put(group.getId(), fromDb);
-                log.info("Permissions for group {}: {}", group.getId(), fromDb.permissions());
+                log.debug("Permissions for group {}: {}", group.getId(), fromDb.permissions());
                 return fromDb;
             }
 
             if (createIfNotExists) {
-                log.info("Creating new permissions for group: {}", group.getId());
+                log.debug("Creating new permissions for group: {}", group.getId());
 
                 final var newPermissions = GroupPermissionSet.create(group);
                 permissionsRepository.save(newPermissions, GroupPermissionSet::groupId);
                 localCache.put(group.getId(), newPermissions);
 
-                log.info("Created new permissions for group {} and permissions {}", group.getId(), newPermissions.permissions());
+                log.debug("Created new permissions for group {} and permissions {}", group.getId(), newPermissions.permissions());
                 return newPermissions;
             }
 
@@ -154,10 +154,10 @@ public class GroupPermissionService {
                 throw new IllegalStateException("Failed to update group permissions: " + permissionSet.groupId());
             }
 
-            log.info("Updated group permissions for group: {}", permissionSet.groupId());
+            log.debug("Updated group permissions for group: {}", permissionSet.groupId());
             localCache.put(permissionSet.groupId(), updated);
 
-            log.info("Updated local cache for group: {} with permissions: {}", permissionSet.groupId(), updated.permissions());
+            log.debug("Updated local cache for group: {} with permissions: {}", permissionSet.groupId(), updated.permissions());
             return updated;
         }, executorService);
     }

@@ -26,7 +26,6 @@ public record Currency(
   @NotNull String pluralDisplayName,
   @NotNull String commandName,
   @NotNull List<String> commandAliases,
-  @NotNull List<ServerCategoryType> allowedCategories,
   boolean allowPlayerPayments
 ) {
 

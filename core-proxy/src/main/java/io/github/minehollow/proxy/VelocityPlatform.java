@@ -56,7 +56,7 @@ public class VelocityPlatform extends AbstractPlatform implements ProxyPlatform 
             serverCount++;
         }
 
-        log.info("Registered {} servers in the proxy platform.", serverCount);
+        log.debug("Registered {} servers in the proxy platform.", serverCount);
     }
 
     @Override
@@ -67,21 +67,21 @@ public class VelocityPlatform extends AbstractPlatform implements ProxyPlatform 
     @Override
     public void registerServer(@NotNull String serverId, @NotNull HostAddress address) {
         proxyServer.registerServer(new ServerInfo(serverId, address.asInetAddress()));
-        log.info("Registered server: {} at address: {}", serverId, address);
+        log.debug("Registered server: {} at address: {}", serverId, address);
     }
 
     @Override
     public void unregisterServer(@NotNull String serverId) {
         final var query = proxyServer.getServer(serverId);
         if (query.isEmpty()) {
-            log.info("Server with ID {} is not registered in the proxy, skipping unregistration.", serverId);
+            log.debug("Server with ID {} is not registered in the proxy, skipping unregistration.", serverId);
             return;
         }
 
         final var serverInfo = query.get();
         proxyServer.unregisterServer(serverInfo.getServerInfo());
         gameServerService.unregister(serverId);
-        log.info("Unregistered server: {}", serverId);
+        log.debug("Unregistered server: {}", serverId);
     }
 
     public ProxyServer getProxyServer() {

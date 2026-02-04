@@ -1,5 +1,5 @@
 name: MinesPlugin
-main: io.github.minehollow.skills.MinesPlugin
+main: io.github.minehollow.mines.MinesPlugin
 version: 1.0.0
 author: sasuked
 folia-supported: true

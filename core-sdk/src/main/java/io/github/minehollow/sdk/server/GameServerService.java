@@ -158,7 +158,7 @@ public class GameServerService {
                 jedis.srem(CATEGORY_IDX_KEY + server.categoryType().name(), serverId);
                 jedis.srem(SUB_CATEGORY_IDX_KEY + server.subCategory().name(), serverId);
 
-                log.info("Servidor {} desregistrado da rede com sucesso.", serverId);
+                log.debug("Servidor {} desregistrado da rede com sucesso.", serverId);
             }
         });
     }

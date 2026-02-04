@@ -5,7 +5,6 @@ import io.github.minehollow.minecraft.util.message.StringUtils;
 import io.github.minehollow.skills.skill.impl.base.BlockBreakingSkill;
 import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,6 +13,8 @@ import java.util.stream.IntStream;
 import static io.github.minehollow.skills.skill.reward.SkillReward.common;
 
 public class FarmingSkill extends BlockBreakingSkill {
+
+    private static final double DOUBLE_DROP_CHANCE_MULTIPLIER = 0.5;
 
     public FarmingSkill() {
         super("farming", "Farming");
@@ -38,15 +39,17 @@ public class FarmingSkill extends BlockBreakingSkill {
         addExperienceForMaterial(Material.SUGAR_CANE, 20);
         addExperienceForMaterial(Material.NETHER_WART, 40);
 
-        IntStream.rangeClosed(1, MAX_SKILL_LEVEL)
+        IntStream.rangeClosed(1, MAX_SKILL_LEVEL + 1)
           .forEach(level -> {
-              registerNewReward(level, common(level + "% chance de dropar o dobro ao colher."));
-
+              registerNewReward(level, common(
+//                level + "% chance de dropar o dobro ao colher."
+                String.format("%.1f%% chance de dropar o dobro ao colher.", level * DOUBLE_DROP_CHANCE_MULTIPLIER)
+              ));
           });
     }
 
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(ignoreCancelled = true)
     public void handleBlockBreak(@NotNull BlockBreakEvent event) {
         final var player = event.getPlayer();
         final double experience = getExperienceForMaterial(event.getBlock().getType());

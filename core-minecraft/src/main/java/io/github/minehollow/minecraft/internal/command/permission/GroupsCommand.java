@@ -83,7 +83,7 @@ public class GroupsCommand extends SimpleCommand {
                 return;
             }
 
-            log.info("Adicionando grupo {} ao jogador {} com tempo: {} e categoria: {}", group.name(), playerName, rawTime, categoryType.name());
+            log.debug("Adicionando grupo {} ao jogador {} com tempo: {} e categoria: {}", group.name(), playerName, rawTime, categoryType.name());
 
             ctx.sendMessage("§7§oAdicionando grupo %s ao jogador %s...".formatted(group.name(), playerName));
 

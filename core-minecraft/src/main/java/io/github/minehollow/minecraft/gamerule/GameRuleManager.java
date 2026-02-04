@@ -44,15 +44,15 @@ public class GameRuleManager {
      * This method does not block the main thread and will continue even on timeout.
      */
     public void initialize() {
-        log.info("Initializing GameRuleManager with multi-server support...");
+        log.debug("Initializing GameRuleManager with multi-server support...");
         try {
             List<CompletableFuture<Void>> loadingTasks = new ArrayList<>();
             CompletableFuture<Void> globalTask = storage.loadGameRules(null).thenAccept(globalRules -> {
                 if (!globalRules.isEmpty()) {
                     globalGameRules.putAll(globalRules);
-                    log.info("Loaded {} global game rules", globalRules.size());
+                    log.debug("Loaded {} global game rules", globalRules.size());
                 } else {
-                    log.info("No global game rules found, using defaults");
+                    log.debug("No global game rules found, using defaults");
                 }
             }).exceptionally(ex -> {
                 log.error("Failed to load global game rules: {}", ex.getMessage(), ex);
@@ -71,7 +71,7 @@ public class GameRuleManager {
             CompletableFuture<Void> allTasks = CompletableFuture.allOf(loadingTasks.toArray(new CompletableFuture[0]));
             try {
                 allTasks.get(10, TimeUnit.SECONDS);
-                log.info("GameRuleManager initialized successfully with {} registered game rules", GameRuleRegistry.getAllGameRules().size());
+                log.debug("GameRuleManager initialized successfully with {} registered game rules", GameRuleRegistry.getAllGameRules().size());
                 initialized = true;
             } catch (Exception timeout) {
                 log.warn("GameRuleManager initialization timed out after 10s, continuing with partial data");
@@ -109,7 +109,7 @@ public class GameRuleManager {
         return storage.loadGameRules(worldName).thenAccept(rules -> {
             if (!rules.isEmpty()) {
                 worldGameRules.get(worldName).putAll(rules);
-                log.info("Loaded {} persisted game rules for world {}", rules.size(), worldName);
+                log.debug("Loaded {} persisted game rules for world {}", rules.size(), worldName);
             } else {
                 log.debug("No persisted game rules found for world {}, using defaults", worldName);
             }

@@ -6,7 +6,7 @@ plugins {
 }
 
 base {
-    archivesName.set("skills")
+    archivesName.set("mines")
 }
 
 repositories {
@@ -23,6 +23,10 @@ repositories {
 }
 
 dependencies {
+    implementation(platform("com.intellectualsites.bom:bom-newest:1.55")) // Ref: https://github.com/IntellectualSites/bom
+    compileOnly("com.fastasyncworldedit:FastAsyncWorldEdit-Core")
+    compileOnly("com.fastasyncworldedit:FastAsyncWorldEdit-Bukkit") { isTransitive = false }
+
     compileOnly(project(":core-minecraft"))
     paperweight.paperDevBundle("1.21.4-R0.1-SNAPSHOT")
 }

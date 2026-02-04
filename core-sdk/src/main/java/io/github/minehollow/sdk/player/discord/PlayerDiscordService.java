@@ -59,7 +59,7 @@ public class PlayerDiscordService implements IPlayerDiscordService {
     public CompletableFuture<@NotNull PlayerDiscord> updatePlayerDiscord(@NotNull PlayerDiscord toUpdate) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                log.info("Updating player discord for {}: {}", toUpdate.playerId(), toUpdate);
+                log.debug("Updating player discord for {}: {}", toUpdate.playerId(), toUpdate);
 
                 final var updated = repository.save(toUpdate, PlayerDiscord::playerId);
                 if (updated == null) {

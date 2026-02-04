@@ -3,6 +3,7 @@ package io.github.minehollow.minecraft;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import io.github.minehollow.minecraft.centralcart.CentralCart;
+import io.github.minehollow.minecraft.currency.Currency;
 import io.github.minehollow.minecraft.currency.CurrencyManager;
 import io.github.minehollow.minecraft.discord.DiscordService;
 import io.github.minehollow.minecraft.event.tick.AsyncServerTickEvent;
@@ -44,9 +45,6 @@ import io.github.minehollow.sdk.util.address.HostAddress;
 import io.github.minehollow.sdk.util.property.Property;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import me.neznamy.tab.api.TabAPI;
-import me.neznamy.tab.api.event.EventBus;
-import me.neznamy.tab.api.event.plugin.TabLoadEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.plugin.Plugin;
@@ -56,6 +54,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -164,6 +163,16 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
         this.discordService = new DiscordService(this);
 
+        currencyManager.registerCurrency(new Currency(
+          "rankup_coins",
+          "Coin",
+          "$",
+          "Coins",
+          "money",
+          List.of("coins", "coin", "bal"),
+          true
+        ));
+
         this.loadGroupPermissions();
         Bukkit.getServicesManager().register(Platform.class, this, plugin, ServicePriority.Normal);
     }
@@ -182,10 +191,10 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         gameRuleManager.initialize();
         Bukkit.getPluginManager().registerEvents(new WorldLoadListener(this), plugin);
 
-        log.info("Initializing Bukkit Platform with category: {}", serverCategoryType.getDisplayName());
+        log.debug("Initializing Bukkit Platform with category: {}", serverCategoryType.getDisplayName());
 
         networkClient.subscribeToChannels(channels);
-        log.info("Bukkit Platform initialized with channels: {}", Arrays.toString(channels));
+        log.debug("Bukkit Platform initialized with channels: {}", Arrays.toString(channels));
 
         final var serverRegisterPacket = new ServerRegisterPacket(this.getId(), serverCategoryType, hostAddress);
         networkClient.sendNetworkPacket(NetworkChannel.SERVER_STATUS, serverRegisterPacket);
@@ -208,14 +217,14 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         this.online = true;
 
         gameServerService.update(this.getGameServer().withOnlineStatus(true));
-        log.info("Bukkit Platform is now online with ID: {}, Category: {} and SubCategory: {}", this.getId(), this.getServerCategoryType(), this.getServerSubCategoryType());
+        log.debug("Bukkit Platform is now online with ID: {}, Category: {} and SubCategory: {}", this.getId(), this.getServerCategoryType(), this.getServerSubCategoryType());
         Tasks.runAsyncRepeating(this::updateServerInfo, 20, 20 * 10);
         Bukkit.getConsoleSender().sendMessage("§aCarregando nomes de jogadores para o redis (para acesso rápido)");
     }
 
     @Override
     public void close() {
-        log.info("Closing Bukkit Platform with category: {}", serverCategoryType.getDisplayName());
+        log.debug("Closing Bukkit Platform with category: {}", serverCategoryType.getDisplayName());
         networkClient.sendNetworkPacket(NetworkChannel.SERVER_STATUS, new ServerUnregisterPacket(this.getId()));
 
         PlayerNetworkStateManager stateManager = PlayerNetworkStateManager.getInstance();

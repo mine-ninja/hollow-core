@@ -27,6 +27,6 @@ public class LegacyPermissionInjector implements PermissionInjector {
           platform.getGroupPermissionService()
         ));
 
-        log.info("Injected permissions for player: {}", player.getName());
+        log.debug("Injected permissions for player: {}", player.getName());
     }
 }

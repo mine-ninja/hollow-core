@@ -6,7 +6,7 @@ plugins {
 }
 
 base {
-    archivesName.set("mines")
+    archivesName.set("skills")
 }
 
 repositories {

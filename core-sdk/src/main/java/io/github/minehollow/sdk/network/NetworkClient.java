@@ -58,7 +58,7 @@ public class NetworkClient {
     }
 
     public void sendNetworkPacket(@NotNull NetworkChannel channel, @NotNull NetworkPacket packet) {
-        log.info("Sending packet {}", NetworkPacket.idOf(packet.getClass()));
+        log.debug("Sending packet {}", NetworkPacket.idOf(packet.getClass()));
         executorService.execute(() -> packetSender.sendPacket(channel, packet));
     }
 

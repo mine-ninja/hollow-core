@@ -1,6 +1,5 @@
 package io.github.minehollow.minecraft.internal.command.currency;
 
-import lombok.extern.slf4j.Slf4j;
 import io.github.minehollow.minecraft.BukkitPlatform;
 import io.github.minehollow.minecraft.command.SimpleCommand;
 import io.github.minehollow.minecraft.command.context.CommandContext;
@@ -8,10 +7,8 @@ import io.github.minehollow.minecraft.command.exception.CommandFailedException;
 import io.github.minehollow.minecraft.currency.Currency;
 import io.github.minehollow.minecraft.task.Tasks;
 import io.github.minehollow.minecraft.util.Cooldown;
-import io.github.minehollow.minecraft.util.version.VersionChecker;
-import io.github.minehollow.sdk.player.wallet.transaction.TransactionResult;
+import lombok.extern.slf4j.Slf4j;
 import org.bukkit.Bukkit;
-import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -23,29 +20,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 @Slf4j
 public class CurrencyBasedCommand extends SimpleCommand implements Listener {
 
-    private static final Pattern BIG_DECIMAL_PATTERN = Pattern.compile("^-?\\d+(\\.\\d+)?$");
-    private static final List<String> INVALID_AMOUNT_TOKENS = List.of("nan", "inf", "-inf", "null", "undefined");
-
-//    private static final NamespacedKey RECEIVE_PAYMENTS_KEY = new NamespacedKey("hollow", "money_receive_toggle");
-
     private final BukkitPlatform platform;
     private final Currency currency;
-    private final boolean allowPayments;
-
     private final Map<UUID, Long> cooldownMap = new ConcurrentHashMap<>();
 
     public CurrencyBasedCommand(BukkitPlatform platform, Currency currency, boolean allowPayments) {
         super(currency.commandName());
         this.platform = platform;
         this.currency = currency;
-        this.allowPayments = allowPayments;
-
         Bukkit.getPluginManager().registerEvents(this, platform.getPlugin());
     }
 
@@ -56,265 +43,134 @@ public class CurrencyBasedCommand extends SimpleCommand implements Listener {
 
     @Override
     public void performCommand(@NotNull CommandContext ctx) throws CommandFailedException {
-        final var subCommand = ctx.getRawArgOrNull(0);
-        if (subCommand == null) {
-            final var sender = ctx.getSender();
-            if (!(sender instanceof Player player)) {
-                ctx.sendMessage("§cEste comando só pode ser usado por jogadores.");
-                return;
-            }
-            final var balance = platform.getWalletService().getCachedWalletOrThrow(player.getUniqueId()).getCurrencyAmount(currency.id());
-            ctx.sendMessage("§aVocê tem §b" + currency.formatAmountSimple(balance) + "§a.");
+        String sub = ctx.getRawArgOrNull(0);
+        if (sub == null) {
+            Player p = ctx.getSenderAsPlayer();
+            BigDecimal bal = platform.getWalletService().getCachedWalletOrThrow(p.getUniqueId()).getCurrencyAmount(currency.id());
+            ctx.sendMessage("§fVocê tem §a" + currency.formatAmountSimple(bal) + "§f.");
             return;
         }
 
-        switch (subCommand.toLowerCase()) {
-            case "ver" ->
-                handleViewBalanceCommand(ctx, ctx.getRawArgOrThrow(1, "§cVocê deve especificar o nome do jogador."));
+        switch (sub.toLowerCase()) {
+            case "ver" -> handleViewBalance(ctx, ctx.getRawArgOrThrow(1, "§cEspecifique o jogador."));
             case "pagar", "pay" -> {
-                if (!currency.allowPlayerPayments()) {
-                    ctx.sendMessage("§cEste comando não está disponível para pagamentos de jogadores.");
-                    return;
-                }
-
-                this.handlePayCommand(ctx, ctx.getRawArgOrThrow(1, "§cVocê deve especificar o nome do jogador para pagar."));
-
+                if (!currency.allowPlayerPayments()) throw new CommandFailedException("§cPagamentos desabilitados.");
+                handlePay(ctx, ctx.getRawArgOrThrow(1, "§cEspecifique o jogador."), ctx.getRawArgOrThrow(2, "§cEspecifique a quantia."));
             }
-            case "top" -> handleTopCommand(ctx);
-            default -> throw new CommandFailedException("§cSubcomando inválido. Use: ver, pagar ou top.");
+            case "top" -> handleTop(ctx);
+            default -> throw new CommandFailedException("§cUse: ver, pagar ou top.");
         }
     }
 
-    private void handleViewBalanceCommand(@NotNull CommandContext ctx, @NotNull String playerName) {
-        ctx.sendMessage("§7§oCarregando informações...");
-
-        platform.getWalletService()
-            .getOrLoadWallet(playerName)
-            .orTimeout(3, TimeUnit.SECONDS)
-            .whenComplete((found, error) -> {
-                if (error != null) {
-                    log.error("Erro ao buscar o saldo do jogador {}: {}", playerName, error.getMessage());
+    private void handleViewBalance(CommandContext ctx, String targetName) {
+        Tasks.runAsync(() -> {
+            try {
+                var wallet = platform.getWalletService().getOrLoadWallet(targetName);
+                if (wallet == null) {
+                    ctx.sendMessage("§cJogador não encontrado.");
                     return;
                 }
-
-                if (found == null) {
-                    ctx.sendMessage("§cUm erro ocorreu ao buscar o saldo do jogador " + playerName + ". O jogador pode não ter uma carteira.");
-                    return;
-                }
-
-                ctx.sendMessage("§aO saldo de §b" + playerName + "§a é §b" + currency.formatAmount(found.getCurrencyAmount(currency.id())) + "§a.");
-            });
+                ctx.sendMessage("§fSaldo de §a" + targetName + "§f: §a" + currency.formatAmountSimple(wallet.getCurrencyAmount(currency.id())));
+            } catch (Exception e) {
+                ctx.sendMessage("§cErro ao buscar saldo.");
+            }
+        });
     }
 
-    private final Map<String, Long> payCommandCooldowns = new ConcurrentHashMap<>();
-
-    private void handlePayCommand(@NotNull CommandContext ctx, @NotNull String playerName) {
-        if (ctx.getSenderAsPlayer().getName().equalsIgnoreCase(playerName)) {
+    private void handlePay(CommandContext ctx, String targetName, String amountStr) {
+        Player sender = ctx.getSenderAsPlayer();
+        if (sender.getName().equalsIgnoreCase(targetName)) {
             throw new CommandFailedException("§cVocê não pode pagar a si mesmo.");
         }
 
-        final var localPlayer = Bukkit.getOnlinePlayers().stream()
-            .filter(p -> p.getName().equalsIgnoreCase(playerName))
-            .findFirst()
-            .orElse(null);
+        Player target = Bukkit.getPlayer(targetName);
+        if (target == null) throw new CommandFailedException("§cJogador offline.");
 
-        if(localPlayer == null) {
-            throw new CommandFailedException("§cO jogador " + playerName + " não está online no mesmo servidor que você.");
+        BigDecimal amount;
+        try {
+            amount = new BigDecimal(amountStr);
+            if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new Exception("§cQuantia inválida.");
+            }
+        } catch (Exception e) {
+            throw new CommandFailedException("§cQuantia inválida.");
         }
 
-        final var targetWallet = platform.getWalletService().getCachedWallet(localPlayer.getUniqueId());
-        if (targetWallet == null)
-            throw new CommandFailedException("§cJogador não encontrado ou não possui uma carteira.");
-
-        final var localTargetPlayer = Bukkit.getPlayer(playerName);
-        if (localTargetPlayer == null || !localTargetPlayer.isOnline()) {
-            throw new CommandFailedException("§cO jogador " + playerName + " não está online no mesmo servidor que você.");
+        if (!Cooldown.setIfNotInCooldown(sender.getUniqueId(), 5000L, "pay-" + currency.id())) {
+            throw new CommandFailedException("§cAguarde para pagar novamente.");
         }
 
-//        PersistentDataContainer pdc = localTargetPlayer.getPersistentDataContainer();
-//        if (pdc.has(RECEIVE_PAYMENTS_KEY) && !pdc.get(RECEIVE_PAYMENTS_KEY, PersistentDataType.BOOLEAN)) {
-//            throw new CommandFailedException("§cO jogador " + playerName + " não está aceitando pagamentos no momento.");
-//        }
+        Tasks.runAsync(() -> {
+            try {
+                var source = platform.getWalletService().getCachedWallet(sender.getUniqueId());
+                if (source == null || !source.hasAmount(currency.id(), amount)) {
+                    ctx.sendMessage("§cSaldo insuficiente.");
+                    return;
+                }
 
-        final var sender = ctx.getSender();
-        if (!(sender instanceof Player player))
-            throw new CommandFailedException("§cEste comando só pode ser usado por jogadores.");
+                final var updatedSource = platform.getWalletService().decrementCurrencyValue(sender.getUniqueId(), currency.id(), amount, true);
+                final var targetSource = platform.getWalletService().incrementCurrencyValue(target.getUniqueId(), currency.id(), amount, true);
 
-        final var sourceWallet = platform.getWalletService().getCachedWallet(player.getUniqueId());
-        if (sourceWallet == null)
-            throw new CommandFailedException("§cVocê não possui uma carteira para realizar pagamentos.");
+                ctx.sendMessage(
+                  "§fVocê pagou §a" + currency.formatAmountSimple(amount) + " §fa §a" + target.getName() + "§f. " +
+                  "Seu novo saldo é §a" + currency.formatAmountSimple(updatedSource.getCurrencyAmount(currency.id())) + "§f."
+                );
 
-        final var amountToPay = ctx.getRawArgOrThrow(2, "§cEspecifique uma quantia para pagar");
-        if (!BIG_DECIMAL_PATTERN.matcher(amountToPay).matches() || amountToPay.startsWith("-") || INVALID_AMOUNT_TOKENS.contains(amountToPay.toLowerCase())) {
-            throw new CommandFailedException("§cQuantia inválida. Use um número válido.");
-        }
+                target.sendMessage(
+                  "§fVocê recebeu §a" + currency.formatAmountSimple(amount) + " §fde §a" + sender.getName() + "§f. " +
+                  "Seu novo saldo é §a" + currency.formatAmountSimple(targetSource.getCurrencyAmount(currency.id())) + "§f."
+                );
 
-        final var amount = new BigDecimal(amountToPay);
-        // checkar se é zero ou menor antes...
-        if (amount.equals(BigDecimal.ZERO) || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new CommandFailedException("§cVocê não pode pagar uma quantia menor ou igual a zero.");
-        }
+                Cooldown.removeCooldown(sender.getUniqueId(), "pay-" + currency.id());
+            } catch (Exception e) {
+                log.error("Erro no pagamento", e);
+                ctx.sendMessage("§cErro interno na transação.");
+            }
+        });
+    }
 
-        if (!sourceWallet.hasAmount(currency.id(), amount)) {
-            throw new CommandFailedException("§cVocê não possui saldo suficiente para pagar " + currency.formatAmount(amount) + ".");
-        }
-
-        if (!Cooldown.setIfNotInCooldown(player.getUniqueId(), 7_000L, "money-pay")) {
-            ctx.sendMessage("§cAguarde um pouco antes de tentar pagar novamente.");
-            return;
-        }
-
-        platform.getExecutorService().execute(() -> {
-            if (platform.getWalletService().isLocked(sourceWallet.uniqueId())) {
-                ctx.sendMessage("§cSua carteira está ocupada com outra transação. Tente novamente em alguns instantes.");
+    private void handleTop(CommandContext ctx) {
+        Tasks.runAsync(() -> {
+            var top = platform.getWalletService().getTopWalletsByCurrency(currency.id(), 10);
+            if (top.isEmpty()) {
+                ctx.sendMessage("§cRanking vazio.");
                 return;
             }
 
-            if (platform.getWalletService().isLocked(targetWallet.uniqueId())) {
-                ctx.sendMessage("§cA carteira do jogador " + playerName + " está ocupada com outra transação. Tente novamente em alguns instantes.");
+            ctx.sendMessage("§6Ranking " + currency.pluralDisplayName() + ":");
+            for (int i = 0; i < top.size(); i++) {
+                var e = top.get(i);
+                ctx.sendMessage("§e" + (i + 1) + ". §f" + e.playerName() + " §7- §f" + currency.formatAmount(e.amount()));
             }
 
-
-            platform.getWalletService().lock(sourceWallet.uniqueId());
-            platform.getWalletService().lock(targetWallet.uniqueId());
-
-            try {
-                TransactionResult result = platform.getWalletService()
-                    .transferCurrency(sourceWallet.uniqueId(), targetWallet.uniqueId(), currency.id(), amount);
-
-                switch (result) {
-                    case TransactionResult.Success ignored -> {
-                        final var bukkitSound = VersionChecker.isModernVersion()
-                            ? Sound.BLOCK_NOTE_BLOCK_PLING
-                            : Sound.valueOf("NOTE_PLING");
-
-                        player.playSound(player.getLocation(), bukkitSound, 1.0f, 1.0f);
-                        ctx.sendMessage("§aPagamento de " + currency.formatAmount(amount) + " realizado com sucesso para " + playerName + ".");
-                        platform.sendMessageToPlayer(targetWallet.uniqueId(), "§aVocê recebeu um pagamento de %s de %s.".formatted(currency.formatAmount(amount), player.getName()));
-                    }
-
-                    case TransactionResult.Failure(Throwable throwable) ->
-                        throw new CommandFailedException("§cErro ao realizar o pagamento: " + throwable);
-                    case TransactionResult.InsufficientFunds(
-                        String currencyId, BigDecimal requiredAmount, BigDecimal providedAmount
-                    ) ->
-                        throw new CommandFailedException("§cSaldo insuficiente para pagar " + currency.formatAmount(requiredAmount) + ". §cVocê tem apenas " + currency.formatAmount(providedAmount) + ".");
-                    case TransactionResult.InvalidCurrency ignored ->
-                        throw new CommandFailedException("§cMoeda inválida especificada para o pagamento.");
-                    case TransactionResult.WalletNotFound ignored ->
-                        throw new CommandFailedException("§cCarteira do jogador não encontrada.");
-                    case null, default ->
-                        throw new CommandFailedException("§cErro desconhecido ao realizar o pagamento.");
-                }
-            } catch (Exception e) {
-                log.error("Erro ao processar pagamento de {} para {}: {}", player.getName(), playerName, e.getMessage());
-                ctx.sendMessage("§cUm erro interno ocorreu ao processar o pagamento. Tente novamente mais tarde.");
-            } finally {
-                Tasks.runAsyncLater(() -> {
-                    platform.getWalletService().unlock(sourceWallet.uniqueId());
-                    platform.getWalletService().unlock(targetWallet.uniqueId());
-                }, 20 * 3);
+            if (ctx.getSender() instanceof Player p) {
+                long pos = platform.getWalletService().getWalletPositionInCurrencyRanking(p.getUniqueId(), currency.id());
+                ctx.sendMessage("§fSua posição: §a#" + pos);
             }
         });
-
-    }
-
-    private void handleTopCommand(@NotNull CommandContext ctx) {
-        platform.getWalletService()
-            .getTopWalletsByCurrencyBalance(currency.id(), 10)
-            .whenCompleteAsync((list, error) -> {
-                if (error != null) {
-                    error.printStackTrace();
-                    log.error("Erro ao buscar o top de carteiras: ", error);
-                    ctx.sendMessage("§cUm erro interno ocorreu ao obter o top, tente novamente mais tarde.");
-                    return;
-                }
-
-                if (list.isEmpty()) {
-                    ctx.sendMessage("§cNenhum jogador encontrado com saldo na moeda " + currency.id() + ".");
-                    return;
-                }
-
-                ctx.sendMessage("§aJogadores mais ricos em " + currency.pluralDisplayName() + ":");
-                for (int i = 0; i < list.size(); i++) {
-                    final var wallet = list.get(i);
-                    ctx.sendMessage("§e" + (i + 1) + ". §b" + wallet.playerName() + "§a - " + currency.formatAmount(wallet.balance()));
-                }
-            });
     }
 
     @Override
     public List<String> performTabComplete(@NotNull CommandContext ctx) {
-        if (ctx.isArgsLength(0) || ctx.isArgsLength(1)) {
-            final var input = ctx.getRawArgOrNull(0);
-            final var subcommands = List.of("ver", "pagar", "pay", "top");
+        final String arg0 = ctx.getRawArgOrNull(0);
+        if (ctx.isArgsLength(1))
+            return Stream.of("ver", "pagar", "top")
+              .filter(s -> arg0 == null || s.startsWith(arg0))
+              .toList();
 
-            if (input == null) {
-                return subcommands;
-            }
-
-            return subcommands.stream()
-                .filter(cmd -> cmd.toLowerCase().startsWith(input.toLowerCase()))
-                .toList();
-        }
-
-        final var subCommand = ctx.getRawArgOrNull(0);
-        if (subCommand == null) {
-            return List.of();
-        }
-
-        switch (subCommand.toLowerCase()) {
-            case "ver" -> {
-                if (ctx.isArgsLength(2)) {
-                    final var input = ctx.getRawArgOrNull(1);
-                    return Bukkit.getOnlinePlayers().stream()
-                        .map(Player::getName)
-                        .filter(name -> input == null || name.toLowerCase().startsWith(input.toLowerCase()))
-                        .sorted()
-                        .toList();
-                }
-            }
-
-            case "pagar", "pay" -> {
-                if (!currency.allowPlayerPayments()) {
-                    return List.of();
-                }
-
-                if (ctx.isArgsLength(2)) {
-                    final var input = ctx.getRawArgOrNull(1);
-                    final var sender = ctx.getSender();
-                    final var senderName = sender instanceof Player player ? player.getName() : null;
-
-                    return Bukkit.getOnlinePlayers().stream()
-                        .map(Player::getName)
-                        .filter(name -> !name.equals(senderName)) // Excluir o próprio jogador
-                        .filter(name -> input == null || name.toLowerCase().startsWith(input.toLowerCase()))
-                        .sorted()
-                        .toList();
-                } else if (ctx.isArgsLength(3)) {
-                    // Terceiro argumento: sugerir algumas quantias comuns
-                    final var input = ctx.getRawArgOrNull(2);
-                    final var suggestions = List.of("1", "5", "10", "50", "100", "500", "1000");
-
-                    if (input == null || input.isEmpty()) {
-                        return suggestions;
-                    }
-
-                    if (BIG_DECIMAL_PATTERN.matcher(input).matches()) {
-                        return List.of();
-                    }
-
-                    return suggestions.stream()
-                        .filter(suggestion -> suggestion.startsWith(input))
-                        .toList();
-                }
-            }
-
-            case "top" -> {
-                return List.of();
-            }
+        final String sub = arg0 == null ? "" : arg0.toLowerCase();
+        if ((sub.equals("ver") || sub.equals("pagar") || sub.equals("pay")) && ctx.isArgsLength(2)) {
+            String arg1 = ctx.getRawArgOrNull(1);
+            return Bukkit.getOnlinePlayers()
+              .stream()
+              .map(Player::getName)
+              .filter(n -> filter(ctx, n, arg1)).toList();
         }
 
         return List.of();
+    }
+
+    private boolean filter(@NotNull CommandContext ctx, String n, String arg1) {
+        return !n.equalsIgnoreCase(ctx.getSender().getName()) && (arg1 == null || n.toLowerCase().startsWith(arg1.toLowerCase()));
     }
 }

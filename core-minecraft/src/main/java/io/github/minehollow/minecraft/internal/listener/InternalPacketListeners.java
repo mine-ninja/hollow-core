@@ -107,34 +107,7 @@ public class InternalPacketListeners {
 
         @Override
         public void onReceivePacket(@NotNull WalletRefreshRequestPacket packet, @NotNull Headers headers) {
-            final var origin = headers.serverOriginId();
-            final var serverId = BukkitPlatform.getInstance().getId();
-            final var platform = BukkitPlatform.getInstance();
-            if (origin.equals(serverId)) {
-                log.debug("Ignoring wallet refresh request for wallet id {} from same server {}", packet.walletId(), serverId);
-                return;
-            }
 
-            final var walletFromRedis = platform.getWalletService().getWalletFromRedis(packet.walletId());
-            if (walletFromRedis != null) {
-                platform.getWalletService().updateCaches(walletFromRedis);
-                log.info("Updated wallet with id {} from redis cache {}", packet.walletId(), walletFromRedis);
-                return;
-            }
-
-            BukkitPlatform.getInstance().getExecutorService().execute(() -> {
-                try {
-                    final var wallet = platform.getWalletService().loadPlayerWallet(packet.walletId()).join();
-                    if (wallet != null) {
-                        platform.getWalletService().updateCaches(wallet);
-                        log.info("Loaded and updated wallet with id {} from database {}", packet.walletId(), wallet);
-                    } else {
-                        log.warn("Could not find wallet with id {} to update", packet.walletId());
-                    }
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            });
         }
     }
 
@@ -224,7 +197,7 @@ public class InternalPacketListeners {
             Player player = Bukkit.getPlayer(packet.playerId());
 
             if (player == null) {
-                log.info("Player is null for received simple message packet {}", packet);
+                log.debug("Player is null for received simple message packet {}", packet);
                 return;
             }
             if (!new PlayerReceiveMessageEvent(player, null, packet.message(), packet.key()).callEvent()) {
@@ -318,7 +291,7 @@ public class InternalPacketListeners {
             Player player = Bukkit.getPlayer(packet.playerId());
 
             if (player == null) {
-                log.info("Player is null for received linked discord packet packet {}", packet);
+                log.debug("Player is null for received linked discord packet packet {}", packet);
                 return;
             }
 
@@ -336,7 +309,7 @@ public class InternalPacketListeners {
             Player player = Bukkit.getPlayer(packet.playerId());
 
             if (player == null) {
-                log.info("Player is null for received unlinked discord packet packet {}", packet);
+                log.debug("Player is null for received unlinked discord packet packet {}", packet);
                 return;
             }
 

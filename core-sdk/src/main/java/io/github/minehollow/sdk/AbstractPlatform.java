@@ -53,7 +53,7 @@ public abstract class AbstractPlatform implements Platform {
         this.gameServerService = new GameServerService(redisConnector);
         this.playerAccountService = PlayerAccountService.of(executorService);
         this.groupPermissionService = new GroupPermissionService(executorService);
-        this.walletService = new WalletService(this, executorService);
+        this.walletService = new WalletService();
         this.playerDiscordService = new PlayerDiscordService(executorService);
     }
 
@@ -65,7 +65,7 @@ public abstract class AbstractPlatform implements Platform {
                 } else if (found == null) {
                     throw new IllegalStateException("Permissões do grupo " + group.name() + " não encontradas, verifique se o grupo foi criado corretamente.");
                 } else {
-                    log.info("Permissões do grupo {} carregadas com sucesso.", group.name());
+                    log.debug("Permissões do grupo {} carregadas com sucesso.", group.name());
                 }
             });
         }

@@ -3,27 +3,24 @@ package io.github.minehollow.minecraft.command;
 import io.github.minehollow.minecraft.command.context.CommandContext;
 import io.github.minehollow.minecraft.command.exception.CommandFailedException;
 import io.github.minehollow.minecraft.command.subcommand.SimpleSubCommand;
+import io.github.minehollow.minecraft.util.message.StringUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.util.StringUtil;
-
 import org.jetbrains.annotations.NotNull;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+
+import java.util.*;
 
 public abstract class SimpleCommand extends Command {
     public static final List<String> NONE_ARGS = Collections.emptyList();
-    
+
     /**
      * @deprecated Use {@link #setRequiredPermission(String)} instead.
      */
     @Deprecated(since = "1.0.0", forRemoval = true)
     protected String requiredPermission = null;
     protected String noPermissionMessage = "§cVocê não tem permissão para executar este comando.";
-    
+
     protected boolean playersOnly = false;
     protected String playersOnlyMessage = "§cEste comando só pode ser executado por jogadores.";
 
@@ -32,12 +29,12 @@ public abstract class SimpleCommand extends Command {
     public SimpleCommand(String name) {
         super(name);
     }
-    
+
     public SimpleCommand(@NotNull String name, String requiredPermission) {
         super(name);
         this.setRequiredPermission(requiredPermission);
     }
-    
+
     protected void setRequiredPermission(String requiredPermission) {
         this.requiredPermission = requiredPermission;
         super.setPermission(requiredPermission);
@@ -64,8 +61,7 @@ public abstract class SimpleCommand extends Command {
             if (subCommands.isEmpty()) {
                 try {
                     this.performCommand(new CommandContext(commandSender, args));
-                }
-                catch (CommandFailedException e) {
+                } catch (CommandFailedException e) {
                     commandSender.sendMessage("§cErro ao executar o comando: " + e.getMessage());
                 } catch (Exception e) {
                     commandSender.sendMessage("§cOcorreu um erro inesperado ao executar o comando.");
@@ -85,8 +81,7 @@ public abstract class SimpleCommand extends Command {
             subCommand.handleSubCommand(new CommandContext(commandSender, newArguments));
             return true;
         } catch (CommandFailedException e) {
-
-            commandSender.sendMessage(e.getMessage());
+            commandSender.sendMessage(StringUtils.formatString(e.getMessage()));
             return false;
         } catch (Exception e) {
             e.printStackTrace();
@@ -127,9 +122,11 @@ public abstract class SimpleCommand extends Command {
     public List<String> performTabComplete(@NotNull CommandContext ctx) {
         return NONE_ARGS;
     }
-    
+
     protected List<String> filterStartingWith(Collection<String> list, String prefix) {
-        if (prefix == null || prefix.isEmpty()) { return List.copyOf(list); }
+        if (prefix == null || prefix.isEmpty()) {
+            return List.copyOf(list);
+        }
         List<String> result = new ArrayList<>();
         for (String s : list) {
             if (StringUtil.startsWithIgnoreCase(s, prefix)) {
@@ -138,7 +135,7 @@ public abstract class SimpleCommand extends Command {
         }
         return result;
     }
-    
+
     private SimpleSubCommand getSubCommand(String name) {
         if (subCommands.isEmpty()) return null;
         for (SimpleSubCommand subCommand : subCommands) {

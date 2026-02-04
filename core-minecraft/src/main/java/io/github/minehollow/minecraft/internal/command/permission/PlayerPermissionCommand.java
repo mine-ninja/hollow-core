@@ -65,7 +65,7 @@ public class PlayerPermissionCommand extends SimpleCommand {
         playerAccountService.getPlayerAccountByName(playerName).whenComplete((account, error) -> {
             if (handleError(ctx, playerName, account, error)) return;
 
-            log.info("Adicionando a permissão {} ao jogador {} com tempo: {}", permission, playerName, rawTime);
+            log.debug("Adicionando a permissão {} ao jogador {} com tempo: {}", permission, playerName, rawTime);
             ctx.sendMessage("§7§oAdicionando a permissão %s ao jogador %s...".formatted(permission, playerName));
 
             var updatedAccountFuture = isPermanent || parsedTime == null

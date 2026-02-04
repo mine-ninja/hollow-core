@@ -56,7 +56,7 @@ public class PlayerGroupUpdatingListener implements Listener {
                   final var playerLoseGroupPacket = new PlayerLoseGroupPacket(updatedAccount.uniqueId(), subscription.group(), subscription.type());
                   platform.getNetworkClient().sendNetworkPacket(NetworkChannel.SERVER_STATUS, playerLoseGroupPacket);
 
-                  log.info("Player subscription expired for account {}: {}", account.uniqueId(), subscription.group().getDisplayName());
+                  log.debug("Player subscription expired for account {}: {}", account.uniqueId(), subscription.group().getDisplayName());
               });
         }
     }

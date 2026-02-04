@@ -3,7 +3,6 @@ package io.github.minehollow.minecraft.internal.command;
 import io.github.minehollow.minecraft.BukkitPlatform;
 import io.github.minehollow.minecraft.currency.Currency;
 import io.github.minehollow.minecraft.gamerule.command.GameRuleCommand;
-import io.github.minehollow.minecraft.internal.command.currency.AuditCommand;
 import io.github.minehollow.minecraft.internal.command.currency.CurrencyBasedCommand;
 import io.github.minehollow.minecraft.internal.command.currency.EconomyCommand;
 import io.github.minehollow.minecraft.internal.command.discord.LinkCommand;
@@ -58,8 +57,6 @@ public class InternalCommandManager {
         commandMap.register("hollow", new StaffMessageCommand(platform));
         commandMap.register("hollow", new PlayerInfoCommand(platform));
         commandMap.register("hollow", new ServerCommand(platform));
-        commandMap.register("hollow", new EconomyCommand(platform));
-        commandMap.register("hollow", new AuditCommand(platform));
         commandMap.register("hollow", new TestMenuCommand(platform));
         commandMap.register("hollow", new TestTimeCommand());
         commandMap.register("hollow", new VanishCommand(platform));
@@ -73,9 +70,11 @@ public class InternalCommandManager {
         commandMap.register("hollow", new TellCommand(platform));
         commandMap.register("hollow", new ReplyCommand(platform));
         commandMap.register("hollow", new ToggleTellCommand(platform));
+        commandMap.register("holow", new EconomyCommand(platform));
     }
 
     public void registerCurrencyCommand(@NotNull Currency currency) {
-        Bukkit.getCommandMap().register("hollow", new CurrencyBasedCommand(platform, currency, currency.allowPlayerPayments()));
+        final var command = new CurrencyBasedCommand(platform, currency, currency.allowPlayerPayments());
+        Bukkit.getCommandMap().register("hollow", command);
     }
 }

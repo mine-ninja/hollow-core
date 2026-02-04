@@ -102,13 +102,13 @@ public class VelocityPlatformPlugin {
 
         final var lobbyServer = velocityPlatform.getRandomLobby();
         if (lobbyServer == null) {
-            log.info("Player {} was kicked but no lobby server is available.", player.getUsername());
+            log.debug("Player {} was kicked but no lobby server is available.", player.getUsername());
             return;
         }
 
         final var query = proxyServer.getServer(lobbyServer.serverId());
         if (query.isEmpty()) {
-            log.info("Player {} was kicked but the lobby server {} was not found.", player.getUsername(), lobbyServer.serverId());
+            log.debug("Player {} was kicked but the lobby server {} was not found.", player.getUsername(), lobbyServer.serverId());
             player.disconnect(Component.text("§cServidor de lobby não encontrado. Tente novamente mais tarde."));
             return;
         }
@@ -126,14 +126,14 @@ public class VelocityPlatformPlugin {
         final var player = event.getPlayer();
         final var lobbyServer = velocityPlatform.getRandomLobby();
         if (lobbyServer == null) {
-            log.info("Player {} attempted to join but no lobby server is available.", player.getUsername());
+            log.debug("Player {} attempted to join but no lobby server is available.", player.getUsername());
             player.disconnect(Component.text("§cNenhum servidor de lobby disponível no momento. Tente novamente mais tarde."));
             return;
         }
 
         final var query = proxyServer.getServer(lobbyServer.serverId());
         if (query.isEmpty()) {
-            log.info("Player {} attempted to join but the lobby server {} was not found.", player.getUsername(), lobbyServer.serverId());
+            log.debug("Player {} attempted to join but the lobby server {} was not found.", player.getUsername(), lobbyServer.serverId());
             player.disconnect(Component.text("§cServidor de lobby não encontrado. Tente novamente mais tarde."));
             return;
         }

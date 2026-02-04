@@ -56,7 +56,7 @@ public class PlayerPermissionUpdatingListener implements Listener {
                     final var playerLosePermissionPacket = new PlayerLosePermissionPacket(updatedAccount.uniqueId(), playerPermission.permission());
                     platform.getNetworkClient().sendNetworkPacket(NetworkChannel.SERVER_STATUS, playerLosePermissionPacket);
 
-                    log.info("Player permission expired for account {}: {}", account.uniqueId(), playerPermission.permission());
+                    log.debug("Player permission expired for account {}: {}", account.uniqueId(), playerPermission.permission());
                 });
         }
     }

@@ -47,7 +47,7 @@ public class ExcavationSkill extends BlockBreakingSkill {
           });
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(ignoreCancelled = true)
     public void handleBlockBreak(@NotNull BlockBreakEvent event) {
         final var player = event.getPlayer();
         final var block = event.getBlock();

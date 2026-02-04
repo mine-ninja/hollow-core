@@ -100,7 +100,7 @@ public class MongoRepository<ID, O> {
             rawCollection.deleteMany(Filters.in("_id", idsToRemove));
         }
 
-        log.info("Removed {} duplicate documents based on key '{}'", documents.size(), key);
+        log.debug("Removed {} duplicate documents based on key '{}'", documents.size(), key);
         rawCollection.createIndex(Indexes.ascending(key), new IndexOptions().unique(true));
     }
 

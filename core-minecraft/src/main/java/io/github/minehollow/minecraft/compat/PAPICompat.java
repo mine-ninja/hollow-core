@@ -93,7 +93,7 @@ public class PAPICompat extends PlaceholderExpansion {
                     return String.valueOf(0);
                 }
 
-                return String.valueOf(cachedAccount.getHighestSubscription().group().getPriorityValue());
+                return String.valueOf(cachedAccount.getHighestSubscription().group().getPowerLevel());
             }
             case "player_name" -> {
                 final var prefix = this.resolver.getTagPrefix(player);

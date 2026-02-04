@@ -164,7 +164,7 @@ public class ItemBuilder {
     }
 
     public ItemBuilder flags(@NotNull ItemFlag... flags) {
-        itemStack.addItemFlags();
+        itemStack.addItemFlags(flags);
         return this;
     }
 
