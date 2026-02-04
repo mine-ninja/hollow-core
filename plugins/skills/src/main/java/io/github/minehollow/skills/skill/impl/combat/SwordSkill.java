@@ -20,7 +20,7 @@ public class SwordSkill extends WeaponUsageSkill {
 
         IntStream.range(1, MAX_SKILL_LEVEL)
           .forEach(level -> registerNewReward(level, SkillReward.common(
-            (level / 2) + "% de dano adicional com machados."
+            (level / 2) + "% de dano adicional com espadas."
           )));
     }
 

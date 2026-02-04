@@ -2,6 +2,7 @@ package io.github.minehollow.mines.model;
 
 import io.github.minehollow.minecraft.util.ChunkUtil;
 import io.github.minehollow.mines.MinesPlugin;
+import io.github.minehollow.mines.filler.MineFiller;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongIterator;
@@ -9,13 +10,16 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 @Slf4j
 @Getter
@@ -32,6 +36,7 @@ public class MineManager {
     public void initializeMines() {
         mines.clear();
         blockToMineIdMap.clear();
+        MineFiller.clearPatternCache();
 
         final var config = plugin.getConfig();
         this.mineWorldName = config.getString("mine-world-name", "world");
@@ -86,22 +91,56 @@ public class MineManager {
         }
     }
 
-    @Nullable
-    public Mine getMineAt(@NotNull Block block) {
-        if (mineWorldName == null || !block.getWorld().getName().equals(mineWorldName)) {
-            return null;
+    public void forEachPlayersInsideMine(@NotNull Consumer<Player> action) {
+        final var bukkitWorld = Bukkit.getWorld(mineWorldName);
+        if (bukkitWorld == null) {
+            log.warn("Mundo das minas não encontrado: " + mineWorldName);
+            return;
         }
 
-        final int chunkX = block.getX() >> 4; // x dividido por 16
-        final int chunkZ = block.getZ() >> 4;
+        for (Player player : bukkitWorld.getPlayers()) {
+            Mine mine = getMineAt(player.getLocation().getBlock());
+            if (mine != null) {
+                action.accept(player);
+            }
+        }
+    }
+
+    @Nullable
+    public Mine getMineAt(int x, int y, int z) {
+        final int chunkX = x >> 4; // x dividido por 16
+        final int chunkZ = z >> 4;
 
         final long hash = ChunkUtil.pack(chunkX, chunkZ);
         final String mineId = blockToMineIdMap.get(hash);
         if (mineId == null) {
             return null;
-        } else {
-            return mines.get(mineId);
         }
+
+        final var mine = mines.get(mineId);
+        if (mine != null && mine.isInsideArea(x, y, z)) {
+            return mine;
+        }
+
+        return null;
+    }
+
+    @Nullable
+    public Mine getMineAt(@NotNull Block block) {
+        return getMineAt(block.getLocation());
+    }
+
+    @Nullable
+    public Mine getMineAt(@NotNull Location location) {
+        if (!location.getWorld().getName().equals(mineWorldName)) {
+            return null;
+        }
+
+        return getMineAt(
+          location.getBlockX(),
+          location.getBlockY(),
+          location.getBlockZ()
+        );
     }
 
     @Nullable

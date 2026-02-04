@@ -22,7 +22,6 @@ public record MinePreSelection(@NotNull Location pos1, @NotNull Location pos2) {
 
         for (int x = Math.min(x1, x2); x <= Math.max(x1, x2); x++) {
             for (int z = Math.min(z1, z2); z <= Math.max(z1, z2); z++) {
-                // ✅ CORRIGIDO: Usar ChunkUtil.pack() para manter consistência
                 long chunkKey = ChunkUtil.pack(x, z);
                 chunks.add(chunkKey);
             }
@@ -30,12 +29,29 @@ public record MinePreSelection(@NotNull Location pos1, @NotNull Location pos2) {
         return chunks;
     }
 
+
+    public int getMinX() {
+        return Math.min(pos1.getBlockX(), pos2.getBlockX());
+    }
+
     public int getMinY() {
         return Math.min(pos1.getBlockY(), pos2.getBlockY());
     }
 
+    public int getMinZ() {
+        return Math.min(pos1.getBlockZ(), pos2.getBlockZ());
+    }
+
+    public int getMaxX() {
+        return Math.max(pos1.getBlockX(), pos2.getBlockX());
+    }
+
     public int getMaxY() {
         return Math.max(pos1.getBlockY(), pos2.getBlockY());
+    }
+
+    public int getMaxZ() {
+        return Math.max(pos1.getBlockZ(), pos2.getBlockZ());
     }
 
 

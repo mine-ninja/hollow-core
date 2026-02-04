@@ -1,18 +1,27 @@
 package io.github.minehollow.mines.listener;
 
+import io.github.minehollow.minecraft.BukkitPlatform;
 import io.github.minehollow.minecraft.util.PlayerUtil;
 import io.github.minehollow.minecraft.util.message.StringUtils;
 import io.github.minehollow.minecraft.util.sound.PredefinedSound;
 import io.github.minehollow.mines.MinesPlugin;
+import io.github.minehollow.mines.filler.MineFiller;
+import io.github.minehollow.sdk.player.wallet.Wallet;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import org.bukkit.GameMode;
 import org.bukkit.Sound;
+import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+
+import java.math.BigDecimal;
+import java.util.concurrent.ThreadLocalRandom;
 
 @RequiredArgsConstructor
 public class BlockBreakListener implements Listener {
@@ -24,13 +33,18 @@ public class BlockBreakListener implements Listener {
 
     private final MinesPlugin minesPlugin;
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void handleMineBlockBreak(@NotNull BlockBreakEvent event) {
-        final var player = event.getPlayer();
+        final Player player = event.getPlayer();
         if (player.getGameMode() == GameMode.CREATIVE) return;
 
-        final var block = event.getBlock();
-        final var mine = minesPlugin.getMineManager().getMineAt(block);
+        final Block block = event.getBlock();
+
+        if (!minesPlugin.getMineManager().getMineWorldName().equalsIgnoreCase(block.getWorld().getName())) {
+            return;
+        }
+
+        final var mine = minesPlugin.getMineManager().getMineAt(block.getX(), block.getY(), block.getZ());
         if (mine == null) return;
 
         final var blockConfig = mine.getBlockConfigs().get(block.getType());
@@ -39,42 +53,67 @@ public class BlockBreakListener implements Listener {
             return;
         }
 
-        double minExperienceReward = blockConfig.getMinExperienceReward();
-        double maxExperienceReward = blockConfig.getMaxExperienceReward();
+        mine.incrementAirBlocks(1);
+        mine.updateLastBlockBreakTime();
 
-        blockConfig.getCurrencyValues().forEach((currency, value) -> {
+        final ThreadLocalRandom random = ThreadLocalRandom.current();
 
-        });
+        double minExp = blockConfig.getMinExperienceReward();
+        double maxExp = blockConfig.getMaxExperienceReward();
+
+        if (maxExp > 0) {
+            double experienceGain = random.nextDouble(minExp, maxExp);
+            if (experienceGain > 0) {
+                event.setExpToDrop((int) (experienceGain + 0.5));
+                player.playSound(player.getLocation(),
+                  Sound.ENTITY_EXPERIENCE_ORB_PICKUP,
+                  0.7f + random.nextFloat() * 0.3f,
+                  0.9f + random.nextFloat() * 0.2f
+                );
+            }
+        }
+
+        final var platform = BukkitPlatform.getInstance();
+        final Wallet playerWallet = platform.getWalletService().getCachedWalletOrThrow(player.getUniqueId());
+        final var currencyManager = platform.getCurrencyManager();
+
+        for (final var entry : blockConfig.getCurrencyValues().entrySet()) {
+            if (currencyManager.getCurrency(entry.getKey()) != null) {
+                playerWallet.incrementCurrencyAmount(entry.getKey(), BigDecimal.valueOf(entry.getValue()));
+            }
+        }
+
+        if (mine.canReset()) {
+            MineFiller.fillMine(minesPlugin.getMineManager(), mine, null);
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void handleBlockEvent(@NotNull BlockBreakEvent event) {
-        final var player = event.getPlayer();
-        final var block = event.getBlock();
+        final int exp = event.getExpToDrop();
+        final Player player = event.getPlayer();
 
         event.setDropItems(false);
 
-        final int experienceToDrop = event.getExpToDrop();
-        if (experienceToDrop > 0) {
-            player.giveExp(experienceToDrop);
+        if (exp > 0) {
+            player.giveExp(exp);
             event.setExpToDrop(0);
         }
 
-        final var playerItemInHand = player.getInventory().getItemInMainHand();
-        final var dropsForThisItem = block.getDrops(playerItemInHand, player);
-        if (dropsForThisItem.isEmpty()) {
-            return;
-        }
+        final var block = event.getBlock();
+        final var tool = player.getInventory().getItemInMainHand();
+        final var drops = block.getDrops(tool, player);
 
-        for (var drop : dropsForThisItem) {
-            if (!PlayerUtil.hasSpace(player, drop, drop.getAmount())) {
+        if (drops.isEmpty()) return;
+
+        for (ItemStack drop : drops) {
+            int amount = drop.getAmount();
+            if (!PlayerUtil.hasSpace(player, drop, amount)) {
                 player.sendMessage(NO_SPACE_MESSAGE);
+                NO_SPACE_SOUND.play(player);
                 return;
             }
-
             player.getInventory().addItem(drop);
         }
     }
-
-
 }

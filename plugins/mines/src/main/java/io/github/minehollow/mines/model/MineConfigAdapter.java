@@ -24,8 +24,14 @@ public class MineConfigAdapter {
         mine.getMenuIcon().toMap().forEach(menuIconSection::set);
 
         mineRootSection.set("chunks", mine.serializeChunks());
+
+        mineRootSection.set("min-x", mine.getMinX());
         mineRootSection.set("min-y", mine.getMinY());
+        mineRootSection.set("min-z", mine.getMinZ());
+
+        mineRootSection.set("max-x", mine.getMaxX());
         mineRootSection.set("max-y", mine.getMaxY());
+        mineRootSection.set("max-z", mine.getMaxZ());
 
         final var blocksSection = getOrCreateSection(mineRootSection, "blocks");
         mine.getBlockConfigs().forEach((material, cfg) -> {
@@ -47,8 +53,14 @@ public class MineConfigAdapter {
           .mapToLong(Long::parseLong)
           .toArray());
 
+        final int minX = section.getInt("min-x");
         final int minY = section.getInt("min-y");
+        final int minZ = section.getInt("min-z");
+
+        final int maxX = section.getInt("max-x");
         final int maxY = section.getInt("max-y");
+        final int maxZ = section.getInt("max-z");
+
         final Map<Material, MineBlockConfig> blockConfigs = MineBlockConfig.readAllFromSection(
           getSectionOrThrow(section, "blocks")
         );
@@ -59,7 +71,20 @@ public class MineConfigAdapter {
             metadata = metadataSection.getValues(false);
         }
 
-        return new Mine(id, spawnPosition, menuIcon, chunks, minY, maxY, blockConfigs, metadata);
+        return Mine.builder()
+          .id(id)
+          .spawnPosition(spawnPosition)
+          .menuIcon(menuIcon)
+          .chunks(chunks)
+          .minX(minX)
+          .minY(minY)
+          .minZ(minZ)
+          .maxX(maxX)
+          .maxY(maxY)
+          .maxZ(maxZ)
+          .blockConfigs(blockConfigs)
+          .metadata(metadata)
+          .build();
     }
 
 

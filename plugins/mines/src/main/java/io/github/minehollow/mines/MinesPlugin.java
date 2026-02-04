@@ -3,7 +3,7 @@ package io.github.minehollow.mines;
 import io.github.minehollow.minecraft.plugin.SimplePlugin;
 import io.github.minehollow.mines.command.MinesCommand;
 import io.github.minehollow.mines.listener.BlockBreakListener;
-import io.github.minehollow.mines.listener.MineFillerTaskListener;
+import io.github.minehollow.mines.listener.MineResetTaskListener;
 import io.github.minehollow.mines.model.MineManager;
 import lombok.Getter;
 
@@ -20,8 +20,8 @@ public class MinesPlugin extends SimplePlugin {
         this.mineManager.initializeMines();
 
         registerListeners(
-          new MineFillerTaskListener(this),
-          new BlockBreakListener(this)
+          new BlockBreakListener(this),
+          new MineResetTaskListener(this)
         );
 
         registerCommands("skills", new MinesCommand(this));

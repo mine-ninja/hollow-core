@@ -10,5 +10,6 @@ include(
   "core-minecraft",
   "plugins:skills",
   "plugins:kits",
-  "plugins:mines"
+  "plugins:mines",
+  "plugins:rank"
 )
