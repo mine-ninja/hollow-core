@@ -35,11 +35,6 @@ public class KitPlayerData {
     }
 
     @BsonIgnore
-    public boolean isOnCooldown() {
-        return System.currentTimeMillis() < cooldownExpiry;
-    }
-
-    @BsonIgnore
     public long getRemainingSeconds() {
         return Math.max(0, (cooldownExpiry - System.currentTimeMillis()) / 1000);
     }

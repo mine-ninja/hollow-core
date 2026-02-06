@@ -2,14 +2,15 @@ package io.github.minehollow.kits.menu;
 
 import io.github.minehollow.kits.KitService;
 import io.github.minehollow.kits.model.KitCategory;
+import io.github.minehollow.kits.util.MenuItemsUtil;
 import io.github.minehollow.minecraft.menu.PlayerMenuContext;
 import io.github.minehollow.minecraft.menu.SimpleMenu;
 import io.github.minehollow.minecraft.menu.config.MenuConfig;
 import io.github.minehollow.minecraft.task.Tasks;
 import io.github.minehollow.minecraft.util.item.ItemBuilder;
 import io.github.minehollow.minecraft.util.message.StringUtils;
+import io.github.minehollow.minecraft.util.message.input.ChatInput;
 import io.github.minehollow.minecraft.util.sound.PredefinedSound;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -18,21 +19,6 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 public class KitCategoryEditorMenu extends SimpleMenu {
-    private static final ItemStack SAVE_BUTTON = ItemBuilder.of(Material.LIME_DYE)
-            .name("<green>Salvar Categoria")
-            .lore("", "<gray>Clique para salvar", "<gray>todas as alterações.")
-            .build();
-
-    private static final ItemStack DELETE_BUTTON = ItemBuilder.of(Material.RED_DYE)
-            .name("<red>Deletar Categoria")
-            .lore("", "<gray>Clique para deletar", "<gray>esta categoria.", "",
-                    "<dark_red>Esta ação é irreversível!")
-            .build();
-
-    private static final ItemStack SEPARATOR = ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE)
-            .name(" ")
-            .build();
-
     private final KitService kitService;
 
     public KitCategoryEditorMenu(KitService kitService) {
@@ -70,8 +56,8 @@ public class KitCategoryEditorMenu extends SimpleMenu {
         final KitCategory currentCategory = category;
 
         config.setTitle(StringUtils.text(isNew
-                ? "Criando Categoria: " + currentCategory.getId()
-                : "Editando: " + currentCategory.getId()));
+                ? "Criando Categoria: " + currentCategory.getDisplayName()
+                : "Editando: " + currentCategory.getDisplayName()));
         config.setLayout(
                 "---------",
                 "-N-O-P-S-",
@@ -79,7 +65,7 @@ public class KitCategoryEditorMenu extends SimpleMenu {
         config.setClickSound(new PredefinedSound(Sound.UI_BUTTON_CLICK, 0.5f, 1f));
 
         // SEPARATOR
-        ctx.setItem('-', SEPARATOR, e -> e.setCancelled(true));
+        ctx.setItem('-', MenuItemsUtil.SEPARATOR, e -> e.setCancelled(true));
 
         // NAME
         ctx.setItem('N', p -> createNameButton(currentCategory), e -> {
@@ -90,7 +76,7 @@ public class KitCategoryEditorMenu extends SimpleMenu {
         // ICON
         ctx.setItem('O', p -> createIconButton(currentCategory), e -> {
             ItemStack cursor = e.getCursor();
-            if (cursor != null && cursor.getType() != Material.AIR) {
+            if (cursor.getType() != Material.AIR) {
                 currentCategory.setIcon(cursor.getType());
                 player.sendMessage(
                         StringUtils.text("<green>Ícone da categoria alterado para: <white>" + cursor.getType().name()));
@@ -112,13 +98,13 @@ public class KitCategoryEditorMenu extends SimpleMenu {
         });
 
         // SAVE
-        ctx.setItem('S', SAVE_BUTTON, e -> {
+        ctx.setItem('S', MenuItemsUtil.SAVE_BUTTON, e -> {
             e.setCancelled(true);
             saveCategory(ctx);
         });
 
         if (!isNew) {
-            ctx.setItem('D', DELETE_BUTTON, e -> {
+            ctx.setItem('D', MenuItemsUtil.DELETE_BUTTON, e -> {
                 e.setCancelled(true);
                 deleteCategory(ctx, currentCategory);
             });
@@ -129,7 +115,6 @@ public class KitCategoryEditorMenu extends SimpleMenu {
 
     @Override
     protected void onClick(@NotNull PlayerMenuContext ctx, @NotNull InventoryClickEvent event) {
-        // Allow player inventory clicks (bottom slots) for picking up items
         if (event.getRawSlot() >= ctx.getInventory().getSize()) {
             return;
         }
@@ -141,22 +126,17 @@ public class KitCategoryEditorMenu extends SimpleMenu {
         if (category == null)
             return;
 
-        ctx.openSignInput(signCtx -> {
-            KitCategory cat = signCtx.get("category");
-            String[] lines = signCtx.get("input");
-            String input = lines != null && lines.length > 0 ? lines[0] : null;
-            if (cat != null && input != null && !input.isBlank()) {
-                cat.setDisplayName(input.trim());
-                signCtx.getPlayer()
-                        .sendMessage(StringUtils.text("<green>Nome alterado para: <white>" + cat.getDisplayName()));
+        Player player = ctx.getPlayer();
+        player.closeInventory();
+        ChatInput.waitInput(player, input -> {
+            if (!input.equalsIgnoreCase("cancelar") && !input.isBlank()) {
+                category.setDisplayName(input.trim());
+                ctx.getPlayer().sendMessage(StringUtils.text("<green>Nome da categoria alterado para: " + category.getDisplayName()));
+            } else {
+                ctx.getPlayer().sendMessage(StringUtils.text("<red>Edição cancelada."));
             }
-            signCtx.openMenu(KitCategoryEditorMenu.class, true);
-        }, new Component[] {
-                Component.empty(),
-                Component.text("^^^^^^^^^^^^^^^"),
-                Component.text("Digite o nome"),
-                Component.text("da categoria")
-        }, true);
+            Tasks.runSync(() -> ctx.openMenu(KitCategoryEditorMenu.class, true));
+        }, 30000L, "<green>Digite o nome da categoria no chat.\n\n\n<gray>Digite <red>cancelar <gray>para voltar.");
     }
 
     private void openPriorityInput(PlayerMenuContext ctx) {
@@ -164,27 +144,23 @@ public class KitCategoryEditorMenu extends SimpleMenu {
         if (category == null)
             return;
 
-        ctx.openSignInput(signCtx -> {
-            KitCategory cat = signCtx.get("category");
-            String[] lines = signCtx.get("input");
-            String input = lines != null && lines.length > 0 ? lines[0] : null;
-            if (cat != null && input != null && !input.isBlank()) {
-                try {
-                    int priority = Integer.parseInt(input.trim());
-                    cat.setPriority(priority);
-                    signCtx.getPlayer()
-                            .sendMessage(StringUtils.text("<green>Prioridade alterada para: <yellow>" + priority));
-                } catch (NumberFormatException e) {
-                    signCtx.getPlayer().sendMessage(StringUtils.text("<red>Número inválido!"));
-                }
-            }
-            signCtx.openMenu(KitCategoryEditorMenu.class, true);
-        }, new Component[] {
-                null,
-                Component.text("^^^^^^^^^^^^^^^"),
-                Component.text("Digite a prioridade"),
-                Component.text("(número inteiro)")
-        }, true);
+        Player player = ctx.getPlayer();
+        player.closeInventory();
+        ChatInput.waitInput(player, input -> {
+                    if (!input.equalsIgnoreCase("cancelar") && !input.isBlank()) {
+                        try {
+                            int priority = Integer.parseInt(input.trim());
+                            category.setPriority(priority);
+                            ctx.getPlayer().sendMessage(StringUtils.text("<green>Prioridade alterada para: <yellow>" + priority));
+                        } catch (NumberFormatException  e) {
+                            ctx.getPlayer().sendMessage(StringUtils.text("<red>Número inválido! Alteração cancelada."));
+                        }
+                    } else {
+                        ctx.getPlayer().sendMessage(StringUtils.text("<red>Edição cancelada."));
+                    }
+                    Tasks.runSync(() -> ctx.openMenu(KitCategoryEditorMenu.class, true));
+                }, 30000L,
+                "<green>Digite a prioridade (número) no chat.\n<gray>Digite <red>cancelar <gray>para voltar.");
     }
 
     private void saveCategory(PlayerMenuContext ctx) {

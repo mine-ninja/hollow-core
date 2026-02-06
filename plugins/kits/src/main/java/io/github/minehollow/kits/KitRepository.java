@@ -130,11 +130,6 @@ public class KitRepository implements Closeable {
         }, executor);
     }
 
-    public CompletableFuture<DeleteResult> deleteAllDataForPlayer(UUID playerId) {
-        return CompletableFuture.supplyAsync(() -> playerDataCollection.deleteMany(Filters.eq("playerId", playerId)),
-            executor);
-    }
-
     public CompletableFuture<DeleteResult> deleteAllPlayerDataForKit(String kitId) {
         return CompletableFuture.supplyAsync(() -> playerDataCollection.deleteMany(Filters.eq("kitId", kitId)),
             executor);
@@ -145,10 +140,6 @@ public class KitRepository implements Closeable {
             Filters.eq("_id", category.getId()),
             category,
             new ReplaceOptions().upsert(true)), executor);
-    }
-
-    public CompletableFuture<KitCategory> findCategoryById(String id) {
-        return CompletableFuture.supplyAsync(() -> categoriesCollection.find(Filters.eq("_id", id)).first(), executor);
     }
 
     public CompletableFuture<List<KitCategory>> findAllCategories() {

@@ -3,13 +3,8 @@ package io.github.minehollow.kits;
 import io.github.minehollow.kits.command.KitCommand;
 import io.github.minehollow.kits.listener.PlayerJoinListener;
 import io.github.minehollow.kits.listener.PlayerQuitListener;
-import io.github.minehollow.kits.menu.KitCategoryEditorMenu;
-import io.github.minehollow.kits.menu.KitCategoryMenu;
-import io.github.minehollow.kits.menu.KitEditorMenu;
-import io.github.minehollow.kits.menu.KitListMenu;
-import io.github.minehollow.kits.menu.KitPreviewMenu;
+import io.github.minehollow.kits.menu.*;
 import io.github.minehollow.minecraft.BukkitPlatform;
-import io.github.minehollow.minecraft.menu.input.SignInputMenu;
 import io.github.minehollow.minecraft.plugin.SimplePlugin;
 import lombok.Getter;
 
@@ -27,7 +22,7 @@ public class KitsPlugin extends SimplePlugin {
             this.kitRepository.connect();
             this.kitService.loadAllCategories();
             this.kitService.loadAllKits();
-            getLogger().info("Successfully loaded kits and categories into cache.");
+            getLogger().info("Connected to MongoDB and loaded kit data successfully!");
         } catch (Exception e) {
             getLogger().severe("Disabling plugin due to MongoDB connection failure!");
             getServer().getPluginManager().disablePlugin(this);
@@ -36,7 +31,6 @@ public class KitsPlugin extends SimplePlugin {
 
         BukkitPlatform platform = BukkitPlatform.getInstance();
         platform.getMenuManager().register(
-                new SignInputMenu(),
                 new KitCategoryMenu(kitService),
                 new KitCategoryEditorMenu(kitService),
                 new KitListMenu(kitService),

@@ -1,13 +1,12 @@
 package io.github.minehollow.kits.menu;
 
 import io.github.minehollow.kits.model.Kit;
+import io.github.minehollow.kits.util.MenuItemsUtil;
 import io.github.minehollow.minecraft.menu.PlayerMenuContext;
 import io.github.minehollow.minecraft.menu.SimpleMenu;
 import io.github.minehollow.minecraft.menu.config.MenuConfig;
-import io.github.minehollow.minecraft.util.item.ItemBuilder;
 import io.github.minehollow.minecraft.util.message.StringUtils;
 import io.github.minehollow.minecraft.util.sound.PredefinedSound;
-import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -17,14 +16,6 @@ import java.util.List;
 import java.util.Map;
 
 public class KitPreviewMenu extends SimpleMenu {
-    private static final ItemStack BACK_BUTTON = ItemBuilder.of(Material.ARROW)
-            .name("<gray>Voltar")
-            .lore("", "<dark_gray>Clique para voltar", "<dark_gray>à lista de kits.")
-            .build();
-
-    private static final ItemStack SEPARATOR = ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE)
-            .name(" ")
-            .build();
 
     public KitPreviewMenu() {
         defaultConfig.setLayout(
@@ -58,10 +49,10 @@ public class KitPreviewMenu extends SimpleMenu {
         }
 
         // SEPARATOR
-        ctx.setItem('-', SEPARATOR, e -> e.setCancelled(true));
+        ctx.setItem('-', MenuItemsUtil.SEPARATOR, e -> e.setCancelled(true));
 
         // BACK
-        ctx.setItem('B', BACK_BUTTON, e -> {
+        ctx.setItem('B', MenuItemsUtil.BACK_BUTTON, e -> {
             String categoryId = kit.getCategoryId();
             if (categoryId != null) {
                 ctx.openMenu(KitListMenu.class, Map.of("categoryId", categoryId));

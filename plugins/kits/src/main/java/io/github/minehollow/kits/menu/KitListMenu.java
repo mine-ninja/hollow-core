@@ -2,6 +2,7 @@ package io.github.minehollow.kits.menu;
 
 import io.github.minehollow.kits.KitService;
 import io.github.minehollow.kits.model.Kit;
+import io.github.minehollow.kits.util.MenuItemsUtil;
 import io.github.minehollow.minecraft.menu.MenuContext;
 import io.github.minehollow.minecraft.menu.PlayerMenuContext;
 import io.github.minehollow.minecraft.menu.SimpleMenu;
@@ -24,16 +25,12 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class KitListMenu extends SimpleMenu {
-    private static final ItemStack BACK_BUTTON = ItemBuilder.of(Material.ARROW)
-            .name("<gray>Voltar")
-            .lore("", "<dark_gray>Voltar às categorias")
-            .build();
-
     private final KitService kitService;
 
     public KitListMenu(KitService kitService) {
         this.kitService = kitService;
         this.defaultConfig.setTickUpdateEnabled(true);
+        this.defaultConfig.setUpdateIntervalMillis(1, TimeUnit.SECONDS);
     }
 
     @Override
@@ -47,14 +44,13 @@ public class KitListMenu extends SimpleMenu {
         config.setLayout(
                 "XXXXXXXXX",
                 "XXKXKXKXX",
-                "XXXXBXXXX");
+                "XXKXKXKXX",
+                "BXXXXXXXX");
         config.setClickSound(new PredefinedSound(Sound.UI_BUTTON_CLICK, 0.5f, 1f));
 
-        Player player = ctx.getPlayer();
         List<Kit> kits = categoryId != null
                 ? kitService.getKitsByCategory(categoryId)
-                : kitService.getAllKits().join();
-        kitService.loadPlayerData(player.getUniqueId()).join();
+                : kitService.getAllKitsSync();
 
         ctx.put("kits", kits);
 
@@ -72,7 +68,7 @@ public class KitListMenu extends SimpleMenu {
         }
 
         if (categoryId != null) {
-            ctx.setItem('B', BACK_BUTTON, e -> {
+            ctx.setItem('B', MenuItemsUtil.BACK_BUTTON, e -> {
                 e.setCancelled(true);
                 ctx.openMenu(KitCategoryMenu.class);
             });
@@ -131,8 +127,7 @@ public class KitListMenu extends SimpleMenu {
             statusLine = "<green>Clique para coletar";
         }
 
-        return ItemBuilder.of(icon)
-                .name(nameColor + kit.getDisplayName())
+        return ItemBuilder.of(icon).name(nameColor + kit.getDisplayName())
                 .lore(
                         "",
                         "<gray>Cooldown: <white>" + cooldownText,
@@ -141,7 +136,7 @@ public class KitListMenu extends SimpleMenu {
                         "",
                         "<dark_gray>Esquerdo: <gray>Coletar",
                         "<dark_gray>Direito: <gray>Preview")
-                .flags(ItemFlag.HIDE_ATTRIBUTES)
+                .flags(ItemFlag.values())
                 .build();
     }
 

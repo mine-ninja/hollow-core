@@ -2,15 +2,16 @@ package io.github.minehollow.kits.menu;
 
 import io.github.minehollow.kits.KitService;
 import io.github.minehollow.kits.model.Kit;
+import io.github.minehollow.kits.util.MenuItemsUtil;
 import io.github.minehollow.minecraft.menu.PlayerMenuContext;
 import io.github.minehollow.minecraft.menu.SimpleMenu;
 import io.github.minehollow.minecraft.menu.config.MenuConfig;
 import io.github.minehollow.minecraft.task.Tasks;
 import io.github.minehollow.minecraft.util.item.ItemBuilder;
 import io.github.minehollow.minecraft.util.message.StringUtils;
+import io.github.minehollow.minecraft.util.message.input.ChatInput;
 import io.github.minehollow.minecraft.util.sound.PredefinedSound;
 import io.github.minehollow.sdk.util.time.Time;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -23,21 +24,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class KitEditorMenu extends SimpleMenu {
-    private static final ItemStack SAVE_BUTTON = ItemBuilder.of(Material.LIME_DYE)
-            .name("<green>Salvar Kit")
-            .lore("", "<gray>Clique para salvar", "<gray>todas as alterações.")
-            .build();
-
-    private static final ItemStack DELETE_BUTTON = ItemBuilder.of(Material.RED_DYE)
-            .name("<red>Deletar Kit")
-            .lore("", "<gray>Clique para deletar", "<gray>este kit permanentemente!", "",
-                    "<dark_red>Esta ação é irreversível!")
-            .build();
-
-    private static final ItemStack SEPARATOR = ItemBuilder.of(Material.GRAY_STAINED_GLASS_PANE)
-            .name(" ")
-            .build();
-
     private final KitService kitService;
 
     public KitEditorMenu(KitService kitService) {
@@ -75,8 +61,8 @@ public class KitEditorMenu extends SimpleMenu {
         final Kit currentKit = kit;
 
         config.setTitle(StringUtils.text(isNew
-                ? "Criando Kit: " + currentKit.getId()
-                : "Editando Kit: " + currentKit.getId()));
+                ? "Criando Kit: " + currentKit.getDisplayName()
+                : "Editando Kit: " + currentKit.getDisplayName()));
         config.setLayout(
                 "IIIIIIIII",
                 "IIIIIIIII",
@@ -88,7 +74,7 @@ public class KitEditorMenu extends SimpleMenu {
         config.setClickSound(new PredefinedSound(Sound.UI_BUTTON_CLICK, 0.5f, 1f));
 
         // SEPARATOR
-        ctx.setItem('-', SEPARATOR, e -> e.setCancelled(true));
+        ctx.setItem('-', MenuItemsUtil.SEPARATOR, e -> e.setCancelled(true));
 
         // NAME
         ctx.setItem('N', p -> createNameButton(currentKit), e -> {
@@ -108,7 +94,7 @@ public class KitEditorMenu extends SimpleMenu {
         ctx.setItem('O', p -> createIconButton(currentKit), e -> {
             e.setCancelled(true);
             ItemStack cursor = e.getCursor();
-            if (cursor != null && cursor.getType() != Material.AIR) {
+            if (cursor.getType() != Material.AIR) {
                 currentKit.setIcon(cursor.getType());
                 player.sendMessage(
                         StringUtils.text("<green>Ícone do kit alterado para: <white>" + cursor.getType().name()));
@@ -123,14 +109,14 @@ public class KitEditorMenu extends SimpleMenu {
         });
 
         // SAVE
-        ctx.setItem('S', SAVE_BUTTON, e -> {
+        ctx.setItem('S', MenuItemsUtil.SAVE_BUTTON, e -> {
             e.setCancelled(true);
             saveKit(ctx);
         });
 
         // DELETE
         if (!isNew) {
-            ctx.setItem('D', DELETE_BUTTON, e -> {
+            ctx.setItem('D', MenuItemsUtil.DELETE_BUTTON, e -> {
                 e.setCancelled(true);
                 deleteKit(ctx, currentKit);
             });
@@ -188,27 +174,22 @@ public class KitEditorMenu extends SimpleMenu {
         kit.setItems(items);
     }
 
+
     private void openNameInput(PlayerMenuContext ctx) {
         Kit kit = ctx.get("kit");
-        if (kit == null)
-            return;
+        if (kit == null) return;
 
-        ctx.openSignInput(signCtx -> {
-            Kit k = signCtx.get("kit");
-            String[] lines = signCtx.get("input");
-            String input = lines != null && lines.length > 0 ? lines[0] : null;
-            if (k != null && input != null && !input.isBlank()) {
-                k.setDisplayName(input.trim());
-                signCtx.getPlayer()
-                        .sendMessage(StringUtils.text("<green>Nome alterado para: <white>" + k.getDisplayName()));
+        Player player = ctx.getPlayer();
+        player.closeInventory();
+        ChatInput.waitInput(player, input -> {
+            if (!input.equalsIgnoreCase("cancelar") && !input.isBlank()) {
+                kit.setDisplayName(input.trim());
+                ctx.getPlayer().sendMessage(StringUtils.text("<green>Nome do kit alterado para: " + kit.getDisplayName()));
+            } else {
+                ctx.getPlayer().sendMessage(StringUtils.text("<red>Edição cancelada."));
             }
-            signCtx.openMenu(KitEditorMenu.class, true);
-        }, new Component[] {
-                null,
-                Component.text("^^^^^^^^^^^^^^^"),
-                Component.text("Digite o nome"),
-                Component.text("do kit acima")
-        }, true);
+            Tasks.runSync(() -> ctx.openMenu(KitEditorMenu.class, true));
+        }, 30000L, "<green>Digite o novo nome do kit no chat.\n\n\n<gray>Digite <red>cancelar <gray>para voltar.");
     }
 
     private void openCooldownInput(PlayerMenuContext ctx) {
@@ -216,26 +197,23 @@ public class KitEditorMenu extends SimpleMenu {
         if (kit == null)
             return;
 
-        ctx.openSignInput(signCtx -> {
-            Kit k = signCtx.get("kit");
-            String[] lines = signCtx.get("input");
-            String input = lines != null && lines.length > 0 ? lines[0] : null;
-            if (k != null && input != null && !input.isBlank()) {
-                try {
-                    Time time = Time.parseString(input.trim());
-                    k.setCooldown((long) time.toSeconds());
-                    signCtx.getPlayer().sendMessage(StringUtils.text("<green>Cooldown alterado para: <yellow>" + time));
-                } catch (Exception e) {
-                    signCtx.getPlayer().sendMessage(StringUtils.text("<red>Formato inválido! Use: 1h30m, 2d, 30s"));
-                }
-            }
-            signCtx.openMenu(KitEditorMenu.class, true);
-        }, new Component[] {
-                null,
-                Component.text("^^^^^^^^^^^^^^^"),
-                Component.text("Digite o cooldown"),
-                Component.text("Ex: 1h30m, 2d")
-        }, true);
+        Player player = ctx.getPlayer();
+        player.closeInventory();
+        ChatInput.waitInput(player, input -> {
+                    if (!input.equalsIgnoreCase("cancelar") && !input.isBlank()) {
+                        try {
+                            Time time = Time.parseString(input.trim());
+                            kit.setCooldown((long) time.toSeconds());
+                            ctx.getPlayer().sendMessage(StringUtils.text("<green>Cooldown alterado para: <yellow>" + time));
+                        } catch (Exception e) {
+                            ctx.getPlayer().sendMessage(StringUtils.text("<red>Formato inválido! Use: 1h30m, 2d, 30s. Alteração cancelada."));
+                        }
+                    } else {
+                        ctx.getPlayer().sendMessage(StringUtils.text("<red>Edição cancelada."));
+                    }
+                    Tasks.runSync(() -> ctx.openMenu(KitEditorMenu.class, true));
+                }, 30000L,
+                "<green>Digite o cooldown (Ex: 10m, 1h) no chat.\n\n\n<gray>Digite <red>cancelar <gray>para voltar.");
     }
 
     private void saveKit(PlayerMenuContext ctx) {

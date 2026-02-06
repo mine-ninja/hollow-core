@@ -29,7 +29,7 @@ public class KitService {
         repository.findAllCategories().thenAccept(categories -> {
             cachedCategories.clear();
             categories.forEach(c -> cachedCategories.put(c.getId(), c));
-        }).join();
+        });
     }
 
     public List<KitCategory> getAllCategories() {
@@ -53,28 +53,32 @@ public class KitService {
 
     public List<Kit> getKitsByCategory(String categoryId) {
         return cachedKits.values().stream()
-            .filter(k -> categoryId.equals(k.getCategoryId()))
-            .toList();
+                .filter(k -> categoryId.equals(k.getCategoryId()))
+                .toList();
     }
 
     public Kit findKitByName(String name) {
         return cachedKits.values().stream()
-            .filter(k -> k.getId().equalsIgnoreCase(name) || k.getDisplayName().equalsIgnoreCase(name))
-            .findFirst()
-            .orElse(null);
+                .filter(k -> k.getId().equalsIgnoreCase(name) || k.getDisplayName().equalsIgnoreCase(name))
+                .findFirst()
+                .orElse(null);
     }
 
     public List<String> getKitNames() {
         return cachedKits.values().stream()
-            .map(Kit::getId)
-            .toList();
+                .map(Kit::getId)
+                .toList();
     }
 
     public void loadAllKits() {
         repository.findAllKits().thenAccept(kits -> {
             cachedKits.clear();
             kits.forEach(kit -> cachedKits.put(kit.getId(), kit));
-        }).join();
+        });
+    }
+
+    public List<Kit> getAllKitsSync() {
+        return List.copyOf(cachedKits.values());
     }
 
     public CompletableFuture<Kit> saveKit(Kit kit) {
@@ -86,8 +90,8 @@ public class KitService {
 
     public CompletableFuture<Void> deleteKit(String id) {
         return repository.deleteKit(id)
-            .thenCompose(res -> repository.deleteAllPlayerDataForKit(id))
-            .thenAccept(res -> cachedKits.remove(id));
+                .thenCompose(res -> repository.deleteAllPlayerDataForKit(id))
+                .thenAccept(res -> cachedKits.remove(id));
     }
 
     public CompletableFuture<Kit> getKit(String id) {
@@ -131,8 +135,22 @@ public class KitService {
     }
 
     public CompletableFuture<Long> getRemainingTime(UUID playerId, String kitId) {
+        if (playerDataCache.containsKey(playerId)) {
+            Map<String, KitPlayerData> playerMap = playerDataCache.get(playerId);
+            if (playerMap.containsKey(kitId)) {
+                return CompletableFuture.completedFuture(playerMap.get(kitId).getRemainingSeconds());
+            }
+            return CompletableFuture.completedFuture(0L);
+        }
         return repository.findPlayerData(playerId, kitId)
-            .thenApply(data -> data == null ? 0L : data.getRemainingSeconds());
+                .thenApply(data -> {
+                    if (data != null) {
+                        playerDataCache.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>())
+                                .put(kitId, data);
+                        return data.getRemainingSeconds();
+                    }
+                    return 0L;
+                });
     }
 
     public CompletableFuture<Void> removeCooldown(UUID playerId, String kitId) {
@@ -190,7 +208,7 @@ public class KitService {
             InventoryUtil.give(player, false, items);
 
             return setCooldown(playerId, kitId, kit.getCooldown())
-                .thenApply(v -> new ClaimResult(KitResult.SUCCESS, 0));
+                    .thenApply(v -> new ClaimResult(KitResult.SUCCESS, 0));
         });
     }
 
