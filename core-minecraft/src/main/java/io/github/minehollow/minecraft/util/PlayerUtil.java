@@ -92,6 +92,10 @@ public class PlayerUtil {
         return cursor.getType() == Material.AIR;
     }
 
+    public static boolean hasSpace(@NotNull Player player, @NotNull ItemStack itemStack) {
+        return hasSpace(player, itemStack, itemStack.getAmount());
+    }
+
     /**
      * Checks if the player has space in the inventory.
      *

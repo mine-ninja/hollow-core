@@ -1,10 +1,10 @@
 package io.github.minehollow.minecraft.util.message.input;
 
 import io.papermc.paper.event.player.AsyncChatEvent;
+import net.kyori.adventure.text.TextComponent;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 
@@ -22,7 +22,13 @@ public class ChatInputEvents implements Listener {
         if (!ChatInput.contains(event.getPlayer())) return;
         event.setCancelled(true);
 
-        ChatInput.playerReply(event.getPlayer(), event.message().toString());
+        final var message = event.message();
+        String msg = "cancelar";
+        if (message instanceof TextComponent text) {
+            msg = text.content();
+        }
+
+        ChatInput.playerReply(event.getPlayer(), msg);
     }
 
     @EventHandler

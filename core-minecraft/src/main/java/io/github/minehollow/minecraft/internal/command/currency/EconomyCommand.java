@@ -57,12 +57,11 @@ public class EconomyCommand extends SimpleCommand {
 
                 switch (sub.toLowerCase()) {
                     case "add" ->
-                      platform.getWalletService().incrementCurrencyValue(wallet.uniqueId(), currencyId, amount, true);
+                      platform.getPlayerWalletService().addCurrencyValue(wallet.uniqueId(), currencyId, amount);
                     case "remove" ->
-                      platform.getWalletService().decrementCurrencyValue(wallet.uniqueId(), currencyId, amount, true);
+                      platform.getPlayerWalletService().subtractCurrencyValue(wallet.uniqueId(), currencyId, amount);
                     case "set" -> {
-                        wallet.setCurrencyAmount(currencyId, amount);
-                        platform.getWalletService().updateWallet(wallet);
+                        platform.getPlayerWalletService().setCurrencyValue(wallet.uniqueId(), currencyId, amount);
                     }
                     default -> {
                         ctx.sendMessage("§cSubcomando inválido: " + sub);

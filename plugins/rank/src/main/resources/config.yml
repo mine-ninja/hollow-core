@@ -1,0 +1,10 @@
+
+# Define uma formula para calcular o XP necessário para subir de nível
+# Na formula padrão, o XP necessário para subir de nível aumenta exponencialmente
+# Ex:
+# Nível 1 -> 100 XP
+# Nível 2 -> 282 XP
+# Nível 3 -> 519 XP
+# Nível 4 -> 800 XP
+# Nível 5 -> 1118 XP...
+level-up-formula: "100 * (level ^ 1.5)"

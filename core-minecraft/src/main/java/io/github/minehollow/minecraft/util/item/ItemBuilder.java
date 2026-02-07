@@ -1,10 +1,13 @@
 package io.github.minehollow.minecraft.util.item;
 
+import com.destroystokyo.paper.profile.PlayerProfile;
+import com.destroystokyo.paper.profile.ProfileProperty;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import io.github.minehollow.minecraft.BukkitPlatform;
 import io.github.minehollow.minecraft.util.message.StringUtils;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
@@ -182,16 +185,7 @@ public class ItemBuilder {
     }
 
     public ItemBuilder customSkull(@NotNull Player player) {
-        itemStack.editMeta(SkullMeta.class, meta ->
-          meta.setOwningPlayer(player)
-        );
-        return this;
-    }
-
-    public ItemBuilder customSkull(@NotNull String value) {
-        GameProfile profile = new GameProfile(UUID.randomUUID(), value);
-        profile.getProperties().put("textures", new Property("textures", value));
-        return this.customSkull(profile);
+        return this.customSkull(player.getPlayerProfile());
     }
 
     public ItemBuilder customSkullUrl(@NotNull String url) {
@@ -199,27 +193,31 @@ public class ItemBuilder {
             url = "http://textures.minecraft.net/texture/" + url;
         }
 
-        GameProfile profile = new GameProfile(UUID.randomUUID(), url);
-        byte[] encodedData = Base64.getEncoder().encode(String.format("{textures:{SKIN:{url:\"%s\"}}}", url).getBytes());
-        profile.getProperties().put("textures", new Property("textures", new String(encodedData)));
+        String textureJson = String.format("{textures:{SKIN:{url:\"%s\"}}}", url);
+        String encodedData = Base64.getEncoder().encodeToString(textureJson.getBytes());
+        UUID skinUuid = UUID.nameUUIDFromBytes(url.getBytes());
+        PlayerProfile profile = Bukkit.createProfile(skinUuid);
+        profile.setProperty(new ProfileProperty("textures", encodedData));
+
         return this.customSkull(profile);
     }
 
-    private ItemBuilder customSkull(@NotNull GameProfile profile) {
-        //SkullMeta meta = (SkullMeta) this.itemStack.getItemMeta();
-//
-        //try {
-        //    Field profileField = meta.getClass().getDeclaredField("profile");
-        //    profileField.setAccessible(true);
-        //    profileField.set(meta, profile);
-        //} catch (IllegalAccessException | NoSuchFieldException | SecurityException |
-        //         IllegalArgumentException exception) {
-        //    ((Exception) exception).printStackTrace();
-        //}
+    public ItemBuilder customSkull(@NotNull PlayerProfile profile) {
+        // Garante que o item é uma cabeça
+        if (this.itemStack.getType() != Material.PLAYER_HEAD) {
+            this.itemStack.setType(Material.PLAYER_HEAD);
+        }
 
-        //this.itemStack.setItemMeta(meta);
+        SkullMeta meta = (SkullMeta) this.itemStack.getItemMeta();
+        if (meta != null) {
+            // Aplica o perfil diretamente via API nativa do Paper
+            meta.setPlayerProfile(profile);
+            this.itemStack.setItemMeta(meta);
+        }
+
         return this;
     }
+
 
     public static ItemBuilder skull() {
         return new ItemBuilder(Material.PLAYER_HEAD);
@@ -229,8 +227,8 @@ public class ItemBuilder {
         return new ItemBuilder(Material.PLAYER_HEAD).customSkull(player);
     }
 
-    public static ItemBuilder skull(@NotNull String value) {
-        return new ItemBuilder(Material.PLAYER_HEAD).customSkull(value);
+    public static ItemBuilder skull(@NotNull String url) {
+        return new ItemBuilder(Material.PLAYER_HEAD).customSkullUrl(url);
     }
 
     public ItemStack build() {

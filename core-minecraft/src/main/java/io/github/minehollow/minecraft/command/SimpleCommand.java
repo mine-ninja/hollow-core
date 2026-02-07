@@ -18,7 +18,7 @@ public abstract class SimpleCommand extends Command {
      * @deprecated Use {@link #setRequiredPermission(String)} instead.
      */
     @Deprecated(since = "1.0.0", forRemoval = true)
-    protected String requiredPermission = null;
+    private String requiredPermission = null;
     protected String noPermissionMessage = "§cVocê não tem permissão para executar este comando.";
 
     protected boolean playersOnly = false;

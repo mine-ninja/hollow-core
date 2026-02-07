@@ -23,6 +23,7 @@ import io.github.minehollow.minecraft.teleport.TeleportTrafficListener;
 import io.github.minehollow.minecraft.util.message.AdventureFormatters;
 import io.github.minehollow.minecraft.util.message.input.ChatInput;
 import io.github.minehollow.minecraft.vanish.VanishManager;
+import io.github.minehollow.minecraft.wallet.PlayerWalletBukkitService;
 import io.github.minehollow.sdk.AbstractPlatform;
 import io.github.minehollow.sdk.MinecraftServerPlatform;
 import io.github.minehollow.sdk.Platform;
@@ -123,6 +124,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     private final SimpleMenuManager menuManager;
     private final GameRuleManager gameRuleManager;
     private final TeleportManager teleportManager;
+    private final PlayerWalletBukkitService playerWalletService;
 
 
     @Getter
@@ -148,8 +150,8 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         this.menuManager = new SimpleMenuManager(this);
 
         this.gameRuleManager = new GameRuleManager(this);
-
         this.teleportManager = new TeleportManager(this);
+        this.playerWalletService = new PlayerWalletBukkitService(this);
 
         this.centralCart = new CentralCart();
         this.centralCart.initSocket();

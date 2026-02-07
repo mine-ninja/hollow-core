@@ -6,7 +6,6 @@ import io.github.minehollow.minecraft.util.message.StringUtils;
 import io.github.minehollow.minecraft.util.sound.PredefinedSound;
 import io.github.minehollow.mines.MinesPlugin;
 import io.github.minehollow.mines.filler.MineFiller;
-import io.github.minehollow.sdk.player.wallet.Wallet;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import org.bukkit.GameMode;
@@ -74,12 +73,13 @@ public class BlockBreakListener implements Listener {
         }
 
         final var platform = BukkitPlatform.getInstance();
-        final Wallet playerWallet = platform.getWalletService().getCachedWalletOrThrow(player.getUniqueId());
         final var currencyManager = platform.getCurrencyManager();
 
         for (final var entry : blockConfig.getCurrencyValues().entrySet()) {
             if (currencyManager.getCurrency(entry.getKey()) != null) {
-                playerWallet.incrementCurrencyAmount(entry.getKey(), BigDecimal.valueOf(entry.getValue()));
+                BukkitPlatform.getInstance()
+                  .getPlayerWalletService()
+                  .addCurrencyValue(player.getUniqueId(), entry.getKey(), BigDecimal.valueOf(entry.getValue()));
             }
         }
 

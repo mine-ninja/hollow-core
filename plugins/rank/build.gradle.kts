@@ -6,7 +6,7 @@ plugins {
 }
 
 base {
-    archivesName.set("skills")
+    archivesName.set("ranks")
 }
 
 repositories {
@@ -28,6 +28,8 @@ repositories {
 
 dependencies {
     compileOnly(project(":core-minecraft"))
+
+    implementation("net.objecthunter:exp4j:0.4.8")
 
     implementation(platform("com.intellectualsites.bom:bom-newest:1.55")) // Ref: https://github.com/IntellectualSites/bom
     compileOnly("com.fastasyncworldedit:FastAsyncWorldEdit-Core")
@@ -68,6 +70,9 @@ tasks.withType(xyz.jpenilla.runtask.task.AbstractRun::class) {
 
 tasks.shadowJar {
     relocate("okhttp3", "io.github.minehollow.core.libs.okhttp3")
+
+    // relocate exp4j so we can update it without breaking plugins that depend on older versions
+    relocate("net.objecthunter.exp4j", "io.github.minehollow.core.libs.exp4j")
 
     archiveClassifier.set("")
     archiveVersion.set("")

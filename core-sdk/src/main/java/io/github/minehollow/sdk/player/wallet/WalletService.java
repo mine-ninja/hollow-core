@@ -1,5 +1,7 @@
 package io.github.minehollow.sdk.player.wallet;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.mongodb.client.model.*;
 import io.github.minehollow.sdk.util.data.MongoRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -7,22 +9,30 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class WalletService {
 
     private static final FindOneAndUpdateOptions UPDATE_OPTIONS = new FindOneAndUpdateOptions().upsert(true).returnDocument(ReturnDocument.AFTER);
-    private final Map<UUID, Wallet> localCache = new ConcurrentHashMap<>();
     private final MongoRepository<UUID, Wallet> walletMongoRepository = new MongoRepository<>(Wallet.class);
 
+
+    private final Cache<@NotNull UUID, Wallet> localCache = Caffeine.newBuilder()
+      .expireAfterWrite(5, TimeUnit.MINUTES)
+      .expireAfterAccess(30, TimeUnit.MINUTES)
+      .build();
+
     public @Nullable Wallet getCachedWallet(@NotNull UUID playerId) {
-        return localCache.get(playerId);
+        return localCache.getIfPresent(playerId);
     }
 
     public void clearCachedWallet(@NotNull UUID playerId) {
-        localCache.remove(playerId);
+        localCache.invalidate(playerId);
     }
 
     public @Nullable Wallet getOrLoadWallet(@NotNull UUID playerId) {
@@ -31,7 +41,7 @@ public class WalletService {
     }
 
     public @Nullable Wallet getOrLoadWallet(@NotNull String playerName) {
-        return localCache.values()
+        return localCache.asMap().values()
           .stream()
           .filter(w -> w.playerName().equalsIgnoreCase(playerName)).findFirst()
           .orElseGet(() -> walletMongoRepository.findFirstFromProperty("playerName", playerName));

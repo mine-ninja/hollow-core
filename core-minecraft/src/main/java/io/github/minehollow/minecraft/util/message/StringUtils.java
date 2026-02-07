@@ -144,6 +144,12 @@ public class StringUtils {
         return component;
     }
 
+    public static void send(Audience audience, String... messages) {
+        for (String message : messages) {
+            audience.sendMessage(text(message));
+        }
+    }
+
     public static void send(Audience audience, String message) {
         audience.sendMessage(text(message));
     }

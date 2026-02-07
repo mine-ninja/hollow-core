@@ -2,8 +2,20 @@ package io.github.minehollow.minecraft.util;
 
 import io.github.minehollow.minecraft.util.message.StringUtils;
 import net.kyori.adventure.text.Component;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.regex.Pattern;
 
 public final class ProgressBarGenerator {
+
+    // check if string starts with "<gradient:" and ends with ">"
+    private static final Pattern GRADIENT_MINIMESSAGE_START_PATTERN = Pattern.compile("^<gradient:[^>]+>$");
+    private static final String GRADIENT_CLOSE_TAG = "</gradient>";
+
+
+    private static boolean isGradientMinimessage(@NotNull String input) {
+        return GRADIENT_MINIMESSAGE_START_PATTERN.matcher(input).matches();
+    }
 
     private static final char DEFAULT_FILLED = '█';
     private static final char DEFAULT_EMPTY = '░';
@@ -11,6 +23,7 @@ public final class ProgressBarGenerator {
     private ProgressBarGenerator() {
         throw new UnsupportedOperationException("Utility class");
     }
+
 
     public static String generateStr(
       double current,
@@ -25,6 +38,7 @@ public final class ProgressBarGenerator {
             throw new IllegalArgumentException("Tamanho e máximo devem ser maiores que 0");
         }
 
+
         int filledCount = (int) ((current / max) * size);
         filledCount = Math.min(Math.max(filledCount, 0), size);
         int emptyCount = size - filledCount;
@@ -34,11 +48,19 @@ public final class ProgressBarGenerator {
         if (filledCount > 0) {
             sb.append(filledColor);
             sb.append(String.valueOf(filled).repeat(filledCount));
+
+            if (isGradientMinimessage(filledColor)) {
+                sb.append(GRADIENT_CLOSE_TAG);
+            }
         }
 
         if (emptyCount > 0) {
             sb.append(emptyColor);
             sb.append(String.valueOf(empty).repeat(emptyCount));
+
+            if (isGradientMinimessage(emptyColor)) {
+                sb.append(GRADIENT_CLOSE_TAG);
+            }
         }
 
         return sb.toString();
