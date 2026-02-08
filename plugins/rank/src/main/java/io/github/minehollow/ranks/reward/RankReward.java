@@ -48,6 +48,7 @@ public record RankReward(
         final var section = rootSection.createSection(id);
         section.set("range", range.toString());
         section.set("every-x-levels", everyXLevels);
+        section.set("permission-to-receive", permissionToReceive);
         section.set("display-name", displayName);
         section.set("commands", commandsToExecute);
         section.set("items-to-give", itemsToGive);

@@ -1,6 +1,7 @@
 package io.github.minehollow.ranks.menu;
 
 import io.github.minehollow.minecraft.BukkitPlatform;
+import io.github.minehollow.minecraft.currency.CurrencyFormatter;
 import io.github.minehollow.minecraft.menu.config.MenuConfig;
 import io.github.minehollow.minecraft.menu.pagination.DynamicPaginationContext;
 import io.github.minehollow.minecraft.menu.pagination.DynamicPaginationMenu;
@@ -32,6 +33,7 @@ public class RankLevelListMenu extends DynamicPaginationMenu<Integer> {
     private static final ItemStack PREVIOUS_PAGE_ICON = ItemBuilder.of(Material.ARROW).name("<yellow>Página Anterior").build();
     private static final ItemStack NEXT_PAGE_ICON = ItemBuilder.of(Material.ARROW).name("<yellow>Próxima Página").build();
     private static final PredefinedSound SUCCESS_SOUND = new PredefinedSound(Sound.ENTITY_PLAYER_LEVELUP, 0.5F, 1.0F);
+    private static final PredefinedSound ERROR_SOUND = new PredefinedSound(Sound.ENTITY_VILLAGER_NO, 0.5F, 1.0F);
 
     private static final IntArrayList LEVELS = IntArrayList.wrap(IntStream.rangeClosed(1, 99).toArray());
 
@@ -42,11 +44,11 @@ public class RankLevelListMenu extends DynamicPaginationMenu<Integer> {
         final var player = ctx.getPlayer();
         final var uuid = player.getUniqueId();
         final var playerProgress = plugin.getPlayerRankProgressService().getCachedProgress(uuid);
-
         final var wallet = BukkitPlatform.getInstance().getWalletService().getOrLoadWallet(uuid);
+
         if (playerProgress == null || wallet == null) {
             player.closeInventory();
-            StringUtils.send(player, "<red>Erro ao carregar dados (Progresso/Carteira). Tente novamente.");
+            StringUtils.send(player, "<red>Erro ao carregar dados. Tente novamente.");
             return false;
         }
 
@@ -67,14 +69,13 @@ public class RankLevelListMenu extends DynamicPaginationMenu<Integer> {
                 ctx.update();
             });
 
-            // --- Cabeçalho (Header) Otimizado ---
             final int currentRank = playerProgress.getCurrentRank();
             final double coins = wallet.getCurrencyAmount("rankup_coins").doubleValue();
-            final double needed = plugin.getMoneyCostForRank(currentRank + 1);
+            final double needed = plugin.getMoneyCostForRank(Math.min(currentRank + 1, RanksPlugin.MAX_LEVEL));
             final double progressPercent = Math.clamp((coins / needed) * 100, 0, 100);
 
             final long unclaimedCount = LEVELS.stream()
-              .filter(lvl -> lvl <= currentRank && !playerProgress.hasClaimedLevelReward(lvl))
+              .filter(lvl -> lvl < currentRank && !playerProgress.hasClaimedLevelReward(lvl))
               .count();
 
             final String progressBar = ProgressBarGenerator.generateStr(coins, needed, 10, '■', '■', "<gradient:#C77DFF:#9D4EDD>", "<gray>");
@@ -106,46 +107,41 @@ public class RankLevelListMenu extends DynamicPaginationMenu<Integer> {
 
         final int currentRank = progress.getCurrentRank();
         final boolean hasClaimed = progress.hasClaimedLevelReward(level);
-        final boolean isUnlocked = level <= currentRank;
 
-        // Definição de Estado
+        // Regra: Pode resgatar se o nível for MENOR que o atual
+        final boolean isUnlockedForClaim = level < currentRank;
+        final boolean isCurrentLevel = (level == currentRank);
+
         Material material;
         String color;
-        String status;
-        boolean canClaimNow = isUnlocked && !hasClaimed;
 
         if (hasClaimed) {
             material = Material.BLACK_STAINED_GLASS_PANE;
             color = "<#808080>";
-            status = "<gray>✔ Recompensas resgatadas";
-        } else if (level == currentRank) {
+        } else if (isCurrentLevel) {
             material = Material.YELLOW_STAINED_GLASS_PANE;
-            color = "<#FAD02C>";
-            status = "<yellow>➲ Nível Atual";
-        } else if (isUnlocked) {
+            color = "<yellow>";
+        } else if (isUnlockedForClaim) {
             material = Material.LIME_STAINED_GLASS_PANE;
             color = "<#40ff00>";
-            status = "<green>✦ Nível Alcançado";
         } else {
             material = Material.RED_STAINED_GLASS_PANE;
             color = "<#FF4B2B>";
-            status = "<dark_gray>✕ Bloqueado";
         }
 
         ItemBuilder builder = ItemBuilder.of(material)
           .name(color + "<bold>RANK " + level)
-          .amount(Math.clamp(level, 1, 64)) // Minecraft padrão limita ícones a 64
-          .flags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS)
-          .addLore(" " + status);
+          .meta(meta -> meta.setMaxStackSize(99))
+          .amount(Math.clamp(level, 1, 99))
+          .flags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS);
 
-        // Adiciona custo apenas se não foi alcançado
-        if (!isUnlocked) {
+        // Adiciona o custo se o nível não foi superado ainda (Atual ou Futuro)
+        if (!isUnlockedForClaim) {
             double cost = plugin.getMoneyCostForRank(level);
-            builder.addLore(" <gray>Investimento: <green>$" + String.format("%.0f", cost));
+            builder.addLore(" <gray>Investimento: <green>$" + CurrencyFormatter.formatValue(cost));
         }
 
         builder.addLore("", "<gray>Prêmios de Evolução:");
-
         List<RankReward> rewards = plugin.getRankRewardManager().getRewardsForRank(level);
         if (rewards.isEmpty()) {
             builder.addLore(" <dark_gray>• Sem prêmios");
@@ -153,12 +149,12 @@ public class RankLevelListMenu extends DynamicPaginationMenu<Integer> {
             rewards.forEach(r -> builder.addLore(" <white>• " + r.displayName()));
         }
 
-        // --- Lógica de Brilho (Glow) e Chamada de Ação ---
-        if (canClaimNow) {
+        if (isUnlockedForClaim && !hasClaimed) {
             builder.glow();
-            builder.addLore("", " <gradient:#2ECC71:#27AE60><bold>CLICK PARA RESGATAR</bold></gradient>");
-        } else if (!isUnlocked) {
-            builder.addLore("", " <red>Bloqueado: <gray>Alcance este nível primeiro");
+            builder.addLore("", " <green><bold>CLIQUE PARA RESGATAR</bold></gradient>");
+        } else if (isCurrentLevel) {
+            // Alterado de <orange> para <gold>
+            builder.addLore("", " <gold>Complete este nível para liberar os prêmios!");
         }
 
         return builder.build();
@@ -168,21 +164,37 @@ public class RankLevelListMenu extends DynamicPaginationMenu<Integer> {
         final Player player = (Player) event.getWhoClicked();
         final var progress = plugin.getPlayerRankProgressService().getCachedProgress(player.getUniqueId());
 
-        if (progress == null || progress.getCurrentRank() < level) return;
-        if (progress.hasClaimedLevelReward(level)) return;
+        if (progress == null) return;
+
+        if (level >= progress.getCurrentRank()) {
+            StringUtils.send(player, "<red>Você ainda está no nível " + progress.getCurrentRank() + ". Complete o nível " + level + " primeiro!");
+            ERROR_SOUND.play(player);
+            return;
+        }
+
+        if (progress.hasClaimedLevelReward(level)) {
+            StringUtils.send(player, "<red>Você já resgatou as recompensas do nível " + level + "!");
+            return;
+        }
 
         if (!plugin.getRankRewardManager().canReceiveRewards(player, level)) {
-            StringUtils.send(player, "<red>Inventário cheio!");
+            StringUtils.send(player, "<red>Inventário cheio! Libere espaço para os itens.");
+            ERROR_SOUND.play(player);
             return;
         }
 
         try {
-            plugin.getRankRewardManager().giveRewardsToPlayer(player, level);
             progress.markLevelRewardClaimed(level);
             plugin.getPlayerRankProgressService().updatePlayerProgress(progress, true);
+
+            plugin.getRankRewardManager().giveRewardsToPlayer(player, level);
+
             SUCCESS_SOUND.play(player);
+            StringUtils.send(player, "<green><b>SUCESSO!</b> Recompensas do nível <white>" + level + " <green>foram entregues.");
+
         } catch (Exception e) {
-            log.error("Erro ao entregar prêmio nível {} para {}", level, player.getName(), e);
+            log.error("Erro crítico no resgate: Player={}, Level={}", player.getName(), level, e);
+            StringUtils.send(player, "<red>Erro interno ao processar recompensa. Notifique a staff.");
         }
     }
 }

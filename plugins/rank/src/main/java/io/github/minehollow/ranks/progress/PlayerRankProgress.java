@@ -39,4 +39,10 @@ public class PlayerRankProgress {
     public void markLevelRewardClaimed(int level) {
         levelRewardsClaimed.add(level);
     }
+
+    public void resetProgress() {
+        this.currentRank = 1;
+        this.prestigeLevel = 0;
+        this.levelRewardsClaimed.clear();
+    }
 }

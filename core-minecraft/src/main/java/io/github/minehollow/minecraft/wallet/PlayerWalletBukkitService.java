@@ -41,20 +41,22 @@ public class PlayerWalletBukkitService {
       @NotNull String currencyId,
       @NotNull BigDecimal newAmount
     ) {
-        final var wallet = platform.getWalletService().getCachedWallet(playerId);
-        if (wallet == null) {
-            throw new IllegalStateException("Wallet not found for player: " + playerId);
-        }
+        Thread.startVirtualThread(() -> {
+            final var wallet = platform.getWalletService().getOrLoadWallet(playerId);
+            if (wallet == null) {
+                throw new IllegalStateException("Wallet not found for player: " + playerId);
+            }
 
-        final var actualBalance = wallet.getCurrencyAmount(currencyId);
+            final var actualBalance = wallet.getCurrencyAmount(currencyId);
 
-        final var event = new PlayerWalletBalanceChangeEvent(playerId, currencyId, actualBalance, newAmount);
-        if (!event.callEvent()) {
-            return;
-        }
+            final var event = new PlayerWalletBalanceChangeEvent(playerId, currencyId, actualBalance, newAmount);
+            if (!event.callEvent()) {
+                return;
+            }
 
-        wallet.setCurrencyAmount(currencyId, event.getNewBalance());
-        platform.getExecutorService().execute(() -> platform.getWalletService().updateWallet(wallet));
+            wallet.setCurrencyAmount(currencyId, event.getNewBalance());
+            platform.getExecutorService().execute(() -> platform.getWalletService().updateWallet(wallet));
+        });
     }
 
     public void addCurrencyValue(
@@ -62,21 +64,23 @@ public class PlayerWalletBukkitService {
       @NotNull String currencyId,
       @NotNull BigDecimal amountToAdd
     ) {
-        final var wallet = platform.getWalletService().getCachedWallet(playerId);
-        if (wallet == null) {
-            throw new IllegalStateException("Wallet not found for player: " + playerId);
-        }
+        Thread.startVirtualThread(() -> {
+            final var wallet = platform.getWalletService().getOrLoadWallet(playerId);
+            if (wallet == null) {
+                throw new IllegalStateException("Wallet not found for player: " + playerId);
+            }
 
-        final var actualBalance = wallet.getCurrencyAmount(currencyId);
-        final var newBalance = actualBalance.add(amountToAdd);
+            final var actualBalance = wallet.getCurrencyAmount(currencyId);
+            final var newBalance = actualBalance.add(amountToAdd);
 
-        final var event = new PlayerWalletBalanceChangeEvent(playerId, currencyId, actualBalance, newBalance);
-        if (!event.callEvent()) {
-            return;
-        }
+            final var event = new PlayerWalletBalanceChangeEvent(playerId, currencyId, actualBalance, newBalance);
+            if (!event.callEvent()) {
+                return;
+            }
 
-        wallet.setCurrencyAmount(currencyId, event.getNewBalance());
-        platform.getExecutorService().execute(() -> platform.getWalletService().updateWallet(wallet));
+            wallet.setCurrencyAmount(currencyId, event.getNewBalance());
+            platform.getExecutorService().execute(() -> platform.getWalletService().updateWallet(wallet));
+        });
     }
 
 
@@ -85,23 +89,25 @@ public class PlayerWalletBukkitService {
       @NotNull String currencyId,
       @NotNull BigDecimal amountToSubtract
     ) {
-        final var wallet = platform.getWalletService().getCachedWallet(playerId);
-        if (wallet == null) {
-            throw new IllegalStateException("Wallet not found for player: " + playerId);
-        }
+        Thread.startVirtualThread(() -> {
+            final var wallet = platform.getWalletService().getOrLoadWallet(playerId);
+            if (wallet == null) {
+                throw new IllegalStateException("Wallet not found for player: " + playerId);
+            }
 
-        final var actualBalance = wallet.getCurrencyAmount(currencyId);
-        var newBalance = actualBalance.subtract(amountToSubtract);
-        if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
-            newBalance = BigDecimal.ZERO;
-        }
+            final var actualBalance = wallet.getCurrencyAmount(currencyId);
+            var newBalance = actualBalance.subtract(amountToSubtract);
+            if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
+                newBalance = BigDecimal.ZERO;
+            }
 
-        final var event = new PlayerWalletBalanceChangeEvent(playerId, currencyId, actualBalance, newBalance);
-        if (!event.callEvent()) {
-            return;
-        }
+            final var event = new PlayerWalletBalanceChangeEvent(playerId, currencyId, actualBalance, newBalance);
+            if (!event.callEvent()) {
+                return;
+            }
 
-        wallet.setCurrencyAmount(currencyId, event.getNewBalance());
-        platform.getExecutorService().execute(() -> platform.getWalletService().updateWallet(wallet));
+            wallet.setCurrencyAmount(currencyId, event.getNewBalance());
+            platform.getExecutorService().execute(() -> platform.getWalletService().updateWallet(wallet));
+        });
     }
 }

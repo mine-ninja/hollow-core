@@ -27,7 +27,6 @@ public class CurrencyBasedCommand extends SimpleCommand implements Listener {
 
     private final BukkitPlatform platform;
     private final Currency currency;
-    private final Map<UUID, Long> cooldownMap = new ConcurrentHashMap<>();
 
     public CurrencyBasedCommand(BukkitPlatform platform, Currency currency, boolean allowPayments) {
         super(currency.commandName());
@@ -36,10 +35,6 @@ public class CurrencyBasedCommand extends SimpleCommand implements Listener {
         Bukkit.getPluginManager().registerEvents(this, platform.getPlugin());
     }
 
-    @EventHandler
-    public void quit(PlayerQuitEvent event) {
-        cooldownMap.remove(event.getPlayer().getUniqueId());
-    }
 
     @Override
     public void performCommand(@NotNull CommandContext ctx) throws CommandFailedException {

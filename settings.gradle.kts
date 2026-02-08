@@ -11,5 +11,6 @@ include(
   "plugins:skills",
   "plugins:kits",
   "plugins:mines",
-  "plugins:rank"
+  "plugins:rank",
+  "plugins:lobby"
 )

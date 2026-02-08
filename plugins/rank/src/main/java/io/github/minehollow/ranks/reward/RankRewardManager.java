@@ -66,9 +66,13 @@ public class RankRewardManager {
         );
     }
 
+    // Local: RankRewardManager.java
+
     public boolean canReceiveRewards(Player player, int rank) {
         final var rewards = getRewardsForRank(rank);
-        return rewards.stream().anyMatch(reward -> reward.canBeGivenToPlayer(player));
+        if (rewards.isEmpty()) return true;
+
+        return rewards.stream().allMatch(reward -> reward.canBeGivenToPlayer(player));
     }
 
     public void giveRewardsToPlayer(@NotNull Player player, int rank) {
@@ -95,8 +99,9 @@ public class RankRewardManager {
     public void registerRankReward(@NotNull RankReward reward) {
         final var levelRange = reward.range();
         final int everyXLevels = reward.everyXLevels();
+
         for (int rank = levelRange.min(); rank <= levelRange.max(); rank++) {
-            if (everyXLevels > 0 && (rank - levelRange.min()) % everyXLevels != 0) {
+            if (everyXLevels > 0 && rank % everyXLevels != 0) {
                 continue;
             }
             addRewardToLevel(rank, reward);

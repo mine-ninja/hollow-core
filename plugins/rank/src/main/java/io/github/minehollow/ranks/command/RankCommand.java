@@ -9,6 +9,8 @@ import io.github.minehollow.ranks.menu.RankLevelListMenu;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class RankCommand extends SimpleCommand {
 
     private final RanksPlugin plugin;
@@ -40,6 +42,7 @@ public class RankCommand extends SimpleCommand {
         switch (subCommand.toLowerCase()) {
             case "addLevel" -> handleAddLevel(ctx);
             case "removeLevel" -> handleRemoveLevel(ctx);
+            case "resetplayer" -> handleResetPlayer(ctx);
             case "checkcost" -> handleCheckCost(ctx);
             default -> throw new CommandFailedException("Sub-comando inválido.");
         }
@@ -62,7 +65,35 @@ public class RankCommand extends SimpleCommand {
     }
 
     public void handleRemoveLevel(@NotNull CommandContext ctx) {
+        final var target = ctx.getLocalPlayerOrThrow(1, "Use: /rank removeLevel <player> <level>");
+        final int level = ctx.getIntOrThrow(2, "Use: /rank removeLevel <player> <level>");
 
+        Thread.startVirtualThread(() -> {
+            final var progress = plugin.getPlayerRankProgressService().getCachedProgress(target.getUniqueId());
+            if (progress == null) {
+                ctx.getSender().sendMessage("§cProgresso de rank do jogador não encontrado.");
+                return;
+            }
+
+            progress.setCurrentRank(level);
+            plugin.getPlayerRankProgressService().updatePlayerProgress(progress);
+        });
+    }
+
+    public void handleResetPlayer(@NotNull CommandContext ctx) {
+        final var target = ctx.getLocalPlayerOrThrow(1, "Use: /rank resetplayer <player>");
+
+        Thread.startVirtualThread(() -> {
+            final var progress = plugin.getPlayerRankProgressService().getCachedProgress(target.getUniqueId());
+            if (progress == null) {
+                ctx.getSender().sendMessage("§cProgresso de rank do jogador não encontrado.");
+                return;
+            }
+
+            progress.resetProgress();
+            plugin.getPlayerRankProgressService().updatePlayerProgress(progress);
+            ctx.sendMessage("§aProgresso de rank do jogador " + target.getName() + " foi resetado.");
+        });
     }
 
     public void handleCheckCost(@NotNull CommandContext ctx) {
@@ -73,5 +104,16 @@ public class RankCommand extends SimpleCommand {
         } else {
             ctx.getSender().sendMessage("§aCusto para o nível " + level + ": §e" + cost);
         }
+    }
+
+    @Override
+    public List<String> performTabComplete(@NotNull CommandContext ctx) {
+        if (ctx.getArgs().length == 1) {
+            return List.of("addLevel", "removeLevel", "resetPlayer", "checkCost").stream()
+              .filter(sub -> sub.startsWith(ctx.getRawArgOrNull(0).toLowerCase()))
+              .toList();
+        }
+
+        return List.of();
     }
 }
