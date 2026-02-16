@@ -1,14 +1,13 @@
 package io.github.minehollow.minecraft.vanish;
 
 import io.github.minehollow.minecraft.BukkitPlatform;
-import io.github.minehollow.sdk.player.account.PlayerAccount;
 import io.github.minehollow.sdk.util.data.RedisCache;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.UUID;
 
 public class VanishManager {
 
@@ -22,25 +21,21 @@ public class VanishManager {
     }
 
     public void vanish(Player player) {
-        PlayerAccount playerAccount = BukkitPlatform.getInstance().getPlayerAccountService().getCachedAccount(player.getUniqueId());
 
-        if (playerAccount != null) {
-            setVanish(player.getUniqueId(), true);
+        setVanish(player.getUniqueId(), true);
 
-            for (Player target : Bukkit.getOnlinePlayers())
-                if (!canSeeIfVanished(target))
-                    target.hidePlayer(player);
+        for (Player target : Bukkit.getOnlinePlayers()) {
+            if (!canSeeIfVanished(target)) {
+                target.hidePlayer(player);
+            }
         }
     }
 
     public void unvanish(Player player) {
-        PlayerAccount playerAccount = BukkitPlatform.getInstance().getPlayerAccountService().getCachedAccount(player.getUniqueId());
+        setVanish(player.getUniqueId(), false);
 
-        if (playerAccount != null) {
-            setVanish(player.getUniqueId(), false);
-
-            for (Player target : Bukkit.getOnlinePlayers())
-                target.showPlayer(player);
+        for (Player target : Bukkit.getOnlinePlayers()) {
+            target.showPlayer(player);
         }
     }
 

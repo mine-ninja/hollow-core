@@ -39,6 +39,8 @@ dependencies {
     implementation("it.unimi.dsi:fastutil:8.5.8")
 
     compileOnly("com.google.guava:guava:33.3.1-jre")
+
+    compileOnly("net.luckperms:api:5.4")
 }
 
 tasks.withType<JavaCompile> {

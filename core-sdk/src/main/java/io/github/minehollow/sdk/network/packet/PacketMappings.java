@@ -1,19 +1,13 @@
 package io.github.minehollow.sdk.network.packet;
 
-import io.github.minehollow.sdk.network.packet.impl.connection.ConnectionHandshakePacket;
 import io.github.minehollow.sdk.network.packet.impl.gamerule.GameRuleUpdatePacket;
 import io.github.minehollow.sdk.network.packet.impl.generic.JsonPacket;
 import io.github.minehollow.sdk.network.packet.impl.internal.PingPacket;
 import io.github.minehollow.sdk.network.packet.impl.internal.PongPacket;
-import io.github.minehollow.sdk.network.packet.impl.party.*;
 import io.github.minehollow.sdk.network.packet.impl.player.*;
 import io.github.minehollow.sdk.network.packet.impl.player.discord.PlayerLinkedDiscordPacket;
 import io.github.minehollow.sdk.network.packet.impl.player.discord.PlayerUnlinkDiscordPacket;
 import io.github.minehollow.sdk.network.packet.impl.player.discord.PlayerUnlinkedDiscordPacket;
-import io.github.minehollow.sdk.network.packet.impl.player.permission.PlayerLoseGroupPacket;
-import io.github.minehollow.sdk.network.packet.impl.player.permission.PlayerLosePermissionPacket;
-import io.github.minehollow.sdk.network.packet.impl.player.permission.PlayerReceiveGroupPacket;
-import io.github.minehollow.sdk.network.packet.impl.player.permission.PlayerReceivePermissionPacket;
 import io.github.minehollow.sdk.network.packet.impl.player.teleport.PlayerTeleportToLocationPacket;
 import io.github.minehollow.sdk.network.packet.impl.player.teleport.PlayerTeleportToTargetPacket;
 import io.github.minehollow.sdk.network.packet.impl.server.*;
@@ -59,8 +53,8 @@ final class PacketMappings {
         entry(97, ServerCategoryMessagePacket.class),
         entry(98, GlobalBroadcastLegacyMessagePacket.class),
         entry(99, GlobalBroadcastMessagePacket.class),
-        entry(10, PlayerReceiveGroupPacket.class),
-        entry(11, PlayerLoseGroupPacket.class),
+//        entry(10, PlayerReceiveGroupPacket.class),
+//        entry(11, PlayerLoseGroupPacket.class),
 
         entry(12, PlayerTeleportToTargetPacket.class),
         entry(13, PlayerTeleportToLocationPacket.class),
@@ -74,23 +68,14 @@ final class PacketMappings {
         entry(19, PlayerConnectToSubCategoryPacket.class),
         entry(20, GameRuleUpdatePacket.class),
 
-        entry(21, PlayerReceivePermissionPacket.class),
-        entry(22, PlayerLosePermissionPacket.class),
+//        entry(21, PlayerReceivePermissionPacket.class),
+//        entry(22, PlayerLosePermissionPacket.class),
 
         entry(23, PlayerLinkedDiscordPacket.class),
         entry(24, PlayerUnlinkDiscordPacket.class),
         entry(25, PlayerUnlinkedDiscordPacket.class),
-
-        entry(26, ConnectionHandshakePacket.class),
-        entry(27, PlayerUpdateAccountCachePacket.class),
-
-        //PARTY
-        entry(28, PartyExpiredInvitePacket.class),
-        entry(29, PartyMessagePacket.class),
-        entry(30, PartyLeaderMessagePacket.class),
-        entry(31, PartyInvitePacket.class),
-        entry(32, PartyDeletedPacket.class)
-      )
+        entry(27, PlayerUpdateAccountCachePacket.class)
+        )
     );
     /**
      * Mapeia o ID de um pacote para a classe correspondente.

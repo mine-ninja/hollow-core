@@ -1,39 +1,28 @@
 package io.github.minehollow.minecraft.internal.listener;
 
 import io.github.minehollow.minecraft.BukkitPlatform;
-import io.github.minehollow.minecraft.event.account.PlayerAccountLoadEvent;
 import io.github.minehollow.minecraft.gamerule.listener.GameRuleUpdateListener;
 import io.github.minehollow.minecraft.internal.events.PlayerReceiveMessageEvent;
-import io.github.minehollow.minecraft.task.Tasks;
-import io.github.minehollow.minecraft.vanish.VanishManager;
 import io.github.minehollow.sdk.network.channel.NetworkChannel;
 import io.github.minehollow.sdk.network.packet.impl.gamerule.GameRuleUpdatePacket;
-import io.github.minehollow.sdk.network.packet.impl.player.PlayerUpdateAccountCachePacket;
 import io.github.minehollow.sdk.network.packet.impl.player.SendMessageToPlayerPacket;
 import io.github.minehollow.sdk.network.packet.impl.player.SendModernMessageToPlayerPacket;
 import io.github.minehollow.sdk.network.packet.impl.player.SendSoundToPlayerPacket;
 import io.github.minehollow.sdk.network.packet.impl.player.discord.PlayerLinkedDiscordPacket;
 import io.github.minehollow.sdk.network.packet.impl.player.discord.PlayerUnlinkedDiscordPacket;
-import io.github.minehollow.sdk.network.packet.impl.player.permission.PlayerLoseGroupPacket;
-import io.github.minehollow.sdk.network.packet.impl.player.permission.PlayerLosePermissionPacket;
-import io.github.minehollow.sdk.network.packet.impl.player.permission.PlayerReceiveGroupPacket;
-import io.github.minehollow.sdk.network.packet.impl.player.permission.PlayerReceivePermissionPacket;
 import io.github.minehollow.sdk.network.packet.impl.player.teleport.PlayerTeleportToLocationPacket;
 import io.github.minehollow.sdk.network.packet.impl.player.teleport.PlayerTeleportToTargetPacket;
 import io.github.minehollow.sdk.network.packet.impl.staff.GoCachePacket;
 import io.github.minehollow.sdk.network.packet.impl.staff.StaffMessagePacket;
 import io.github.minehollow.sdk.network.packet.impl.wallet.WalletRefreshRequestPacket;
 import io.github.minehollow.sdk.network.packet.listener.PacketListener;
-import io.github.minehollow.sdk.network.packet.listener.PacketListener.Headers;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.event.Listener;
 import org.jetbrains.annotations.NotNull;
+
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -51,20 +40,14 @@ public class InternalPacketListeners {
 
         networkClient.registerPacketListener(SendMessageToPlayerPacket.class, new SendMessagePacketListener());
         networkClient.registerPacketListener(StaffMessagePacket.class, new StaffMessagePacketListener());
-        networkClient.registerPacketListener(PlayerReceiveGroupPacket.class, new PlayerGroupReceivePacketListener(platform));
-        networkClient.registerPacketListener(PlayerLoseGroupPacket.class, new PlayerLoseGroupPacketListener(platform));
         networkClient.registerPacketListener(SendModernMessageToPlayerPacket.class, new ModernMessageToPlayerPacketListener());
         networkClient.registerPacketListener(SendSoundToPlayerPacket.class, new SendSoundToPlayerPacketListener());
         networkClient.registerPacketListener(PlayerTeleportToTargetPacket.class, new TargetedTeleportListener());
         networkClient.registerPacketListener(GoCachePacket.class, new GoCacheListener());
         networkClient.registerPacketListener(WalletRefreshRequestPacket.class, new WalletUpdateListener());
-        networkClient.registerPacketListener(PlayerReceiveGroupPacket.class, new StaffTrackingListener());
         networkClient.registerPacketListener(GameRuleUpdatePacket.class, new GameRuleUpdateListener(platform));
-        networkClient.registerPacketListener(PlayerReceivePermissionPacket.class, new PlayerPermissionReceivePacketListener());
-        networkClient.registerPacketListener(PlayerLosePermissionPacket.class, new PlayerLosePermissionPacketListener());
         networkClient.registerPacketListener(PlayerLinkedDiscordPacket.class, new PlayerLinkedDiscordPacketListener());
         networkClient.registerPacketListener(PlayerUnlinkedDiscordPacket.class, new PlayerUnlinkedDiscordPacketListener());
-        networkClient.registerPacketListener(PlayerUpdateAccountCachePacket.class, new PlayerUpdateAccountCacheListener());
 
         final var listener = new GoCacheListener();
 
@@ -72,36 +55,6 @@ public class InternalPacketListeners {
         Bukkit.getPluginManager().registerEvents(listener, platform.getPlugin());
     }
 
-    private static void refreshPlayerPerms(Headers headers, UUID playerId) {
-        final var platform = BukkitPlatform.getInstance();
-        final var currentServerId = BukkitPlatform.getInstance().getId();
-        if (headers.serverOriginId().equals(currentServerId)) {
-            return;
-        }
-
-        final var localPlayer = Bukkit.getPlayer(playerId);
-        if (localPlayer == null) return;
-
-        final var accountFromRedis = platform.getPlayerAccountService().loadFromRedis(playerId);
-        if (accountFromRedis != null) {
-            log.debug("Refreshing permissions for player {} from redis cache", localPlayer.getName());
-            platform.getPlayerAccountService().updateCaches(accountFromRedis);
-            Tasks.runAsyncLater(() -> platform.getPermissionInjector().injectPermissions(localPlayer), 1);
-        } else {
-            platform.getPlayerAccountService()
-                .loadPlayerAccount(playerId)
-                .whenComplete((found, error) -> {
-                    if (found != null) {
-                        log.debug("Refreshing permissions for player {} from database", localPlayer.getName());
-                        Tasks.runAsyncLater(() -> platform.getPermissionInjector().injectPermissions(localPlayer), 1);
-                    } else if (error != null) {
-                        log.error("Failed to load player account for uuid {}", playerId, error);
-                    } else {
-                        log.warn("Could not find player account for uuid " + playerId);
-                    }
-                });
-        }
-    }
 
     public static class WalletUpdateListener implements PacketListener<WalletRefreshRequestPacket> {
 
@@ -123,42 +76,14 @@ public class InternalPacketListeners {
                 final var teleportToLocationPacket = new PlayerTeleportToLocationPacket(packet.playerId(), destination);
 
                 BukkitPlatform.getInstance()
-                    .getNetworkClient()
-                    .sendNetworkPacket(NetworkChannel.OPERATION, teleportToLocationPacket);
+                  .getNetworkClient()
+                  .sendNetworkPacket(NetworkChannel.OPERATION, teleportToLocationPacket);
             }
         }
     }
 
     public static class GoCacheListener implements PacketListener<GoCachePacket>, Listener {
-
         private static final HashMap<UUID, UUID> goCache = new HashMap<>();
-
-        @EventHandler(priority = EventPriority.LOWEST)
-        public void onJoin(PlayerAccountLoadEvent event) {
-            UUID uuid = event.getLoadedAccount().uniqueId();
-            Player player = Bukkit.getPlayer(uuid);
-
-            if (player != null) {
-                UUID uuidTarget = goCache.get(uuid);
-
-                if (uuidTarget != null) {
-                    goCache.remove(uuid);
-
-                    Tasks.runSync(() -> {
-                        if (player.hasPermission("hollow.vanish")) {
-                            VanishManager vanishManager = BukkitPlatform.getInstance().getVanishManager();
-                            vanishManager.vanish(player);
-                        }
-
-                        Player target = Bukkit.getPlayer(uuidTarget);
-
-                        if (target != null) {
-                            player.teleport(target);
-                        }
-                    });
-                }
-            }
-        }
 
         @Override
         public void onReceivePacket(@NotNull GoCachePacket packet, @NotNull Headers headers) {
@@ -208,29 +133,6 @@ public class InternalPacketListeners {
     }
 
 
-    @RequiredArgsConstructor
-    public static class PlayerGroupReceivePacketListener implements PacketListener<PlayerReceiveGroupPacket> {
-
-        private final BukkitPlatform platform;
-
-        @Override
-        public void onReceivePacket(@NotNull PlayerReceiveGroupPacket packet, @NotNull Headers headers) {
-            refreshPlayerPerms(headers, packet.playerId());
-        }
-    }
-
-
-    @RequiredArgsConstructor
-    public static class PlayerLoseGroupPacketListener implements PacketListener<PlayerLoseGroupPacket> {
-
-        private final BukkitPlatform platform;
-
-        @Override
-        public void onReceivePacket(@NotNull PlayerLoseGroupPacket packet, @NotNull Headers headers) {
-            refreshPlayerPerms(headers, packet.playerId());
-        }
-    }
-
     public static class MessageToPlayerPacketListener implements PacketListener<SendMessageToPlayerPacket> {
         @Override
         public void onReceivePacket(@NotNull SendMessageToPlayerPacket packet, @NotNull Headers headers) {
@@ -261,25 +163,6 @@ public class InternalPacketListeners {
             if (player == null) return;
             player.playSound(player.getLocation(), packet.soundName(), packet.volume(), packet.pitch());
 
-        }
-    }
-
-    @RequiredArgsConstructor
-    public static class PlayerPermissionReceivePacketListener implements PacketListener<PlayerReceivePermissionPacket> {
-
-        @Override
-        public void onReceivePacket(@NotNull PlayerReceivePermissionPacket packet, @NotNull Headers headers) {
-            refreshPlayerPerms(headers, packet.playerId());
-        }
-    }
-
-
-    @RequiredArgsConstructor
-    public static class PlayerLosePermissionPacketListener implements PacketListener<PlayerLosePermissionPacket> {
-
-        @Override
-        public void onReceivePacket(@NotNull PlayerLosePermissionPacket packet, @NotNull Headers headers) {
-            refreshPlayerPerms(headers, packet.playerId());
         }
     }
 
@@ -316,43 +199,6 @@ public class InternalPacketListeners {
             if (!packet.message().isBlank()) {
                 player.sendMessage(packet.message());
             }
-        }
-    }
-
-    private static void refreshPlayerAccountLocalCaches(Headers headers, UUID playerId) {
-        final var platform = BukkitPlatform.getInstance();
-        final var currentServerId = BukkitPlatform.getInstance().getId();
-        if (headers.serverOriginId().equalsIgnoreCase(currentServerId)) {
-            return;
-        }
-
-        var account = platform.getPlayerAccountService().loadFromRedis(playerId);
-        if (account != null) {
-            platform.getPlayerAccountService().updateCaches(account);
-            log.debug("Refreshing local cache for player {} from redis cache", account.playerName());
-        } else {
-            platform.getPlayerAccountService()
-                .loadPlayerAccount(playerId)
-                .whenComplete((found, error) -> {
-                    if (found != null) {
-                        log.debug("Refreshing local cache for player {} from database", found.playerName());
-                    } else {
-                        if (error != null) {
-                            log.error("Failed to load player account for uuid " + playerId, error);
-                        } else {
-                            log.warn("Could not find player account for uuid " + playerId);
-                        }
-                    }
-                });
-        }
-    }
-
-    @RequiredArgsConstructor
-    public static class PlayerUpdateAccountCacheListener implements PacketListener<PlayerUpdateAccountCachePacket> {
-
-        @Override
-        public void onReceivePacket(@NotNull PlayerUpdateAccountCachePacket packet, @NotNull Headers headers) {
-            refreshPlayerAccountLocalCaches(headers, packet.playerId());
         }
     }
 }

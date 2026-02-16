@@ -9,9 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-/*
- * @author Lucasmellof, Lucas de Mello Freitas created on 22/10/2025
- */
+
 public class UuidMapCodec<T> implements Codec<Map<UUID, T>> {
     private final Codec<T> valueCodec;
 

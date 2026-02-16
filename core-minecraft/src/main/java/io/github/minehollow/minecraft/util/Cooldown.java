@@ -9,7 +9,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * Os cooldowns são associados a uma chave única e podem ser definidos em milissegundos ou segundos.
  * Cada jogador pode ter múltiplos cooldowns associados a chaves diferentes.
  *
- * @author Lucasmellof, Lucas de Mello Freitas created on 18/11/2021
  */
 public class Cooldown {
 

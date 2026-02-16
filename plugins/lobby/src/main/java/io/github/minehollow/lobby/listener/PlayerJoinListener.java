@@ -48,6 +48,8 @@ public class PlayerJoinListener implements Listener {
         player.showTitle(WELCOME_TITLE);
         JOIN_SOUND.play(player);
 
+
+
         player.setGameMode(GameMode.ADVENTURE);
         player.setHealth(20.0);
         player.setFoodLevel(20);
@@ -66,6 +68,8 @@ public class PlayerJoinListener implements Listener {
         inventory.clear();
         player.getActivePotionEffects().forEach(effect -> player.removePotionEffect(effect.getType()));
         e.joinMessage(null);
+
+        player.getInventory().setItem(4, LobbyPlugin.SERVER_SELECTOR);
     }
 
 }

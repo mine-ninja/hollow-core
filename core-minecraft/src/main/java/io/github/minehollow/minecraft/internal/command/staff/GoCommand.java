@@ -37,22 +37,5 @@ public class GoCommand extends SimpleCommand {
         if (player.hasPermission("hollow.vanish")) {
             BukkitPlatform.getInstance().getVanishManager().vanish(player);
         }
-
-        var playerAccount = platform.getPlayerAccountService().getCachedAccount(player.getUniqueId());
-        platform.getTeleportManager().teleport(playerAccount, name, ConnectionReason.COMMAND, COMMAND_SUCCESS.formatted(name));
-
-        /*if (target != null) {
-            if (player.hasPermission("hollow.vanish"))
-                BukkitPlatform.getInstance().getVanishManager().vanish(player);
-
-            player.sendMessage(COMMAND_SUCCESS.formatted(target.getName()));
-            player.teleport(target);
-            return;
-        }
-
-
-
-        final var goMsgPacket = new GoCommandPacket(player.getUniqueId(), name);
-        platform.getNetworkClient().sendNetworkPacket(NetworkChannel.GO, goMsgPacket);*/
     }
 }

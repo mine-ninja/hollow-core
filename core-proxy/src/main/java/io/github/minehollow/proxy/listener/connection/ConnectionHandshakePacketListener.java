@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import io.github.minehollow.sdk.connection.ConnectionStatus;
-import io.github.minehollow.sdk.network.packet.impl.connection.ConnectionHandshakePacket;
 import io.github.minehollow.sdk.network.packet.listener.PacketListener;
 import org.jetbrains.annotations.NotNull;
 

@@ -4,9 +4,6 @@ import io.github.minehollow.minecraft.BukkitPlatform;
 import io.github.minehollow.minecraft.command.SimpleCommand;
 import io.github.minehollow.minecraft.command.context.CommandContext;
 import io.github.minehollow.minecraft.command.exception.CommandFailedException;
-import io.github.minehollow.sdk.network.channel.NetworkChannel;
-import io.github.minehollow.sdk.network.packet.impl.staff.StaffMessagePacket;
-import io.github.minehollow.sdk.player.subscription.SubscriptionCategoryType;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -25,21 +22,17 @@ public class StaffMessageCommand extends SimpleCommand {
     @Override
     public void performCommand(@NotNull CommandContext ctx) throws CommandFailedException {
         final var player = ctx.getSenderAsPlayer();
-        final var account = platform.getPlayerAccountService().getCachedAccount(player.getUniqueId());
-        if (account == null) {
-            throw new CommandFailedException("§cOcorreu um erro ao executar o comando. Tente novamente mais tarde.");
-        }
 
-        final var tagFormat = account.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL);
-        final var msg = ctx.isArgsLength(0) ? "" : ctx.joinArgs(0);
-        if (msg.isEmpty()) {
-            throw new CommandFailedException("§cVocê precisa informar uma mensagem para enviar.");
-        }
-
-        final var format = FORMAT.replace("{player}", tagFormat)
-          .replace("{msg}", msg);
-
-        final var staffMsgPacket = new StaffMessagePacket(player.getUniqueId(), format);
-        platform.getNetworkClient().sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, staffMsgPacket);
+//        final var tagFormat = account.getFormattedDisplayName(SubscriptionCategoryType.GLOBAL);
+//        final var msg = ctx.isArgsLength(0) ? "" : ctx.joinArgs(0);
+//        if (msg.isEmpty()) {
+//            throw new CommandFailedException("§cVocê precisa informar uma mensagem para enviar.");
+//        }
+//
+//        final var format = FORMAT.replace("{player}", tagFormat)
+//          .replace("{msg}", msg);
+//
+//        final var staffMsgPacket = new StaffMessagePacket(player.getUniqueId(), format);
+//        platform.getNetworkClient().sendNetworkPacket(NetworkChannel.PLAYER_MESSAGE, staffMsgPacket);
     }
 }

@@ -3,22 +3,28 @@ package io.github.minehollow.minecraft.util.range;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.IntConsumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public record IntRange(int min, int max) {
 
-    // Transforma uma string tipo "5-10" ou "7" em um IntRange
+    private static final Pattern RANGE_PATTERN = Pattern.compile("^\\(?(-?\\d+)\\)?(?:\\s*-\\s*\\(?(-?\\d+)\\)?)?$");
+
+    // suported formats: "5", "5-10", "(5)", "(5)-(10)", "5 - 10", "(5) - (10)"
     public static IntRange parseString(@NotNull String rangeStr) {
-        final var parts = rangeStr.split("-");
-        if (parts.length == 1) {
-            int value = Integer.parseInt(parts[0].trim());
-            return single(value);
-        } else if (parts.length == 2) {
-            int min = Integer.parseInt(parts[0].trim());
-            int max = Integer.parseInt(parts[1].trim());
+        Matcher matcher = RANGE_PATTERN.matcher(rangeStr.trim());
+        if (matcher.matches()) {
+            int min = Integer.parseInt(matcher.group(1));
+
+            if (matcher.group(2) == null) {
+                return single(min);
+            }
+
+            int max = Integer.parseInt(matcher.group(2));
             return of(min, max);
-        } else {
-            throw new IllegalArgumentException("Invalid range format: " + rangeStr);
         }
+
+        throw new IllegalArgumentException("Invalid range format: " + rangeStr);
     }
 
     public static IntRange of(int min, int max) {

@@ -12,10 +12,7 @@ import io.github.minehollow.minecraft.centralcart.listener.MapWatcher;
 import io.github.minehollow.minecraft.command.SimpleCommand;
 import io.github.minehollow.minecraft.command.context.CommandContext;
 import io.github.minehollow.minecraft.command.exception.CommandFailedException;
-import io.github.minehollow.minecraft.compat.PAPICompat;
-import io.github.minehollow.minecraft.compat.VaultCompat;
 import io.github.minehollow.minecraft.menu.input.SignInputListener;
-import io.github.minehollow.minecraft.placeholder.HollowPapiExtension;
 import io.github.minehollow.minecraft.plugin.SimplePlugin;
 import io.github.minehollow.minecraft.task.Tasks;
 import io.github.minehollow.sdk.server.GameServer;
@@ -113,17 +110,6 @@ public class BukkitPlatformPlugin extends SimplePlugin {
 
         if (manager.getPlugin("PlaceholderAPI") != null) {
             this.getLogger().info("PlaceholderAPI integrado com sucesso.");
-            if (!new PAPICompat(this, bukkitPlatform.getNameTagResolver()).register()) {
-                throw new IllegalStateException("Não foi possível registrar a compatibilidade com PlaceholderAPI.");
-            }
-
-            if (!new HollowPapiExtension().register()) {
-                throw new IllegalStateException("Não foi possível registrar a extensão HollowPapiExtension com PlaceholderAPI.");
-            }
-        }
-
-        if (manager.isPluginEnabled("Vault")) {
-            VaultCompat.register(this);
         }
     }
 

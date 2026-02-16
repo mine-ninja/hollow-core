@@ -6,7 +6,6 @@ import io.github.minehollow.sdk.AbstractPlatform;
 import io.github.minehollow.sdk.ProxyPlatform;
 import io.github.minehollow.proxy.listener.*;
 import io.github.minehollow.sdk.network.channel.NetworkChannel;
-import io.github.minehollow.sdk.network.packet.impl.connection.ConnectionHandshakePacket;
 import io.github.minehollow.sdk.network.packet.impl.player.PlayerConnectToServerPacket;
 import io.github.minehollow.sdk.network.packet.impl.player.PlayerDirectPlayGameCategoryPacket;
 import io.github.minehollow.sdk.network.packet.impl.player.PlayerConnectToSubCategoryPacket;

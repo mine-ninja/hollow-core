@@ -1,20 +1,14 @@
 package io.github.minehollow.proxy;
 
-import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.player.KickedFromServerEvent;
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
-import com.velocitypowered.api.permission.PermissionFunction;
-import com.velocitypowered.api.permission.PermissionProvider;
-import com.velocitypowered.api.permission.PermissionSubject;
-import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
-import io.github.minehollow.sdk.player.account.PlayerAccount;
 import io.github.minehollow.sdk.player.state.PlayerNetworkStateManager;
 import io.github.minehollow.sdk.server.GameServer;
 import io.github.minehollow.sdk.server.type.ServerCategoryType;
@@ -199,29 +193,5 @@ public class VelocityPlatformPlugin {
             server.getServerInfo().getAddress().getPort())
         );
         log.info("===================");
-    }
-
-    public static final class PlayerPermissionsProvider implements PermissionProvider, PermissionFunction {
-        private final Player player;
-        private final PlayerAccount account;
-
-        public PlayerPermissionsProvider(Player player, PlayerAccount account) {
-            this.player = player;
-            this.account = account;
-        }
-
-        @Override
-        public PermissionFunction createFunction(PermissionSubject subject) {
-            Preconditions.checkState(subject == this.player, "createFunction called with different argument");
-            return this;
-        }
-
-        @Override
-        public Tristate getPermissionValue(String permission) {
-            if (this.account == null || permission.equals("velocity.command.server")) {
-                return Tristate.FALSE;
-            }
-            return this.account.hasPermission(permission) ? Tristate.TRUE : Tristate.UNDEFINED;
-        }
     }
 }

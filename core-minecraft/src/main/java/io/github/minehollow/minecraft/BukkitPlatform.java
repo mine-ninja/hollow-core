@@ -10,16 +10,10 @@ import io.github.minehollow.minecraft.event.tick.AsyncServerTickEvent;
 import io.github.minehollow.minecraft.gamerule.GameRuleManager;
 import io.github.minehollow.minecraft.gamerule.listener.WorldLoadListener;
 import io.github.minehollow.minecraft.internal.command.InternalCommandManager;
-import io.github.minehollow.minecraft.internal.listener.*;
-import io.github.minehollow.minecraft.internal.listener.connection.ConnectionHandshakePacketListener;
+import io.github.minehollow.minecraft.internal.listener.InternalPacketListeners;
+import io.github.minehollow.minecraft.internal.listener.InternalPlayerListener;
 import io.github.minehollow.minecraft.menu.SimpleMenuManager;
-import io.github.minehollow.minecraft.nametag.resolver.LegacyNameTagResolver;
-import io.github.minehollow.minecraft.nametag.resolver.ModernNameTagResolver;
-import io.github.minehollow.minecraft.nametag.resolver.NameTagResolver;
-import io.github.minehollow.minecraft.permission.PermissionInjector;
 import io.github.minehollow.minecraft.task.Tasks;
-import io.github.minehollow.minecraft.teleport.TeleportManager;
-import io.github.minehollow.minecraft.teleport.TeleportTrafficListener;
 import io.github.minehollow.minecraft.util.message.AdventureFormatters;
 import io.github.minehollow.minecraft.util.message.input.ChatInput;
 import io.github.minehollow.minecraft.vanish.VanishManager;
@@ -27,9 +21,7 @@ import io.github.minehollow.minecraft.wallet.PlayerWalletBukkitService;
 import io.github.minehollow.sdk.AbstractPlatform;
 import io.github.minehollow.sdk.MinecraftServerPlatform;
 import io.github.minehollow.sdk.Platform;
-import io.github.minehollow.sdk.group.PlayerGroup;
 import io.github.minehollow.sdk.network.channel.NetworkChannel;
-import io.github.minehollow.sdk.network.packet.impl.connection.ConnectionHandshakePacket;
 import io.github.minehollow.sdk.network.packet.impl.player.PlayerConnectToServerPacket;
 import io.github.minehollow.sdk.network.packet.impl.player.PlayerConnectToSubCategoryPacket;
 import io.github.minehollow.sdk.network.packet.impl.player.PlayerDirectPlayGameCategoryPacket;
@@ -37,7 +29,6 @@ import io.github.minehollow.sdk.network.packet.impl.player.SendSoundToPlayerPack
 import io.github.minehollow.sdk.network.packet.impl.server.ServerRegisterPacket;
 import io.github.minehollow.sdk.network.packet.impl.server.ServerUnregisterPacket;
 import io.github.minehollow.sdk.player.state.PlayerNetworkStateManager;
-import io.github.minehollow.sdk.player.subscription.SubscriptionCategoryType;
 import io.github.minehollow.sdk.server.GameServer;
 import io.github.minehollow.sdk.server.ServerPlayers;
 import io.github.minehollow.sdk.server.type.ServerCategoryType;
@@ -118,17 +109,13 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     private final ServerCategoryType serverCategoryType;
     private final ServerSubCategoryType serverSubCategoryType;
     private final InternalCommandManager internalCommandManager;
-    private final PermissionInjector permissionInjector;
     private final CurrencyManager currencyManager;
     private final VanishManager vanishManager;
     private final SimpleMenuManager menuManager;
     private final GameRuleManager gameRuleManager;
-    private final TeleportManager teleportManager;
     private final PlayerWalletBukkitService playerWalletService;
 
 
-    @Getter
-    private NameTagResolver nameTagResolver;
     @Getter
     private CentralCart centralCart;
 
@@ -144,24 +131,15 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         this.serverCategoryType = serverCategoryType;
         this.serverSubCategoryType = Property.getEnum("SERVER_SUB_CATEGORY", ServerSubCategoryType.class, ServerSubCategoryType.NONE);
         this.internalCommandManager = new InternalCommandManager(this);
-        this.permissionInjector = PermissionInjector.fromCurrentPlatform(this);
         this.currencyManager = new CurrencyManager(this);
         this.vanishManager = new VanishManager(this);
         this.menuManager = new SimpleMenuManager(this);
 
         this.gameRuleManager = new GameRuleManager(this);
-        this.teleportManager = new TeleportManager(this);
         this.playerWalletService = new PlayerWalletBukkitService(this);
 
         this.centralCart = new CentralCart();
         this.centralCart.initSocket();
-
-        final var usesModernTags = Property.getBoolean("USE_MODERN_TAGS", false);
-        if (usesModernTags) {
-            this.nameTagResolver = new ModernNameTagResolver(this);
-        } else {
-            this.nameTagResolver = new LegacyNameTagResolver(this);
-        }
 
         this.discordService = new DiscordService(this);
 
@@ -202,19 +180,14 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         networkClient.sendNetworkPacket(NetworkChannel.SERVER_STATUS, serverRegisterPacket);
 
         Bukkit.getPluginManager().registerEvents(new InternalPlayerListener(this), plugin);
-        Bukkit.getPluginManager().registerEvents(new PlayerGroupUpdatingListener(this), plugin);
-        Bukkit.getPluginManager().registerEvents(new StaffTrackingListener(), plugin);
-        Bukkit.getPluginManager().registerEvents(new PlayerPermissionUpdatingListener(this), plugin);
-        Bukkit.getPluginManager().registerEvents(new TeleportTrafficListener(this), plugin);
 
         ChatInput.init(plugin);
+
 
         AdventureFormatters.init();
 
         final var internalPackets = new InternalPacketListeners(this);
         internalPackets.setup();
-
-        networkClient.registerPacketListener(ConnectionHandshakePacket.class, new ConnectionHandshakePacketListener(this));
 
         this.online = true;
 
@@ -275,13 +248,6 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         return new GameServer(this.getId(), this.getServerCategoryType(), this.getServerSubCategoryType(), this.getServerHostAddress(), this.getPlayerCount(), this.online);
     }
 
-    public boolean isGroupAllowedToJoin(@NotNull PlayerGroup playerGroup) {
-        final var allowedGroups = Property.get("ALLOWED_GROUPS"); // "ADMIN,MOD,TRIAL,DEFAULT"
-        if (allowedGroups == null) return true;
-
-        return allowedGroups.contains(playerGroup.name());
-    }
-
     public String getDisallowJoinMessage() {
         return Property.get("DISALLOW_JOIN_MESSAGE", "§cVocê não tem permissão para entrar neste servidor.");
     }
@@ -291,10 +257,6 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         return plugin;
     }
 
-    @NotNull
-    public PermissionInjector getPermissionInjector() {
-        return permissionInjector;
-    }
 
     public void updateServerInfo() {
         if (!online) return;
@@ -324,16 +286,6 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     public void tryToPlaySoundToPlayer(@NotNull UUID playerId, @NotNull String soundKey, float volume, float pitch) {
         final var sendSoundPacket = new SendSoundToPlayerPacket(playerId, soundKey, volume, pitch);
         networkClient.sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, sendSoundPacket);
-    }
-
-    @SuppressWarnings("all")
-    public void tryToPlaySoundToPlayer(@NotNull UUID playerId, @NotNull Sound sound, float volume, float pitch) {
-        final var sendSoundPacket = new SendSoundToPlayerPacket(playerId, sound.getKey().toString(), volume, pitch);
-        networkClient.sendNetworkPacket(NetworkChannel.PLAYER_CONNECTION, sendSoundPacket);
-    }
-
-    public SubscriptionCategoryType getSubscriptionCategoryType() {
-        return SubscriptionCategoryType.GLOBAL;
     }
 
     public boolean isRunningOnNewVersions() {

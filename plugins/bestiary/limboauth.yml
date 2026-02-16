@@ -1,0 +1,329 @@
+version: "1.1.14"
+# Available serializers:
+# LEGACY_AMPERSAND - "&c&lExample &c&9Text".
+# LEGACY_SECTION - "§c§lExample §c§9Text".
+# MINIMESSAGE - "<bold><red>Example</red> <blue>Text</blue></bold>". (https://webui.adventure.kyori.net/)
+# GSON - "[{"text":"Example","bold":true,"color":"red"},{"text":" ","bold":true},{"text":"Text","bold":true,"color":"blue"}]". (https://minecraft.tools/en/json_text.php/)
+# GSON_COLOR_DOWNSAMPLING - Same as GSON, but uses downsampling.
+serializer: LEGACY_AMPERSAND
+prefix: "&f"
+
+# Don't use \n, use {NL} for new line, and {PRFX} for prefix.
+main:
+  # Maximum time for player to authenticate in milliseconds. If the player stays on the auth limbo for longer than this time, then the player will be kicked.
+  auth-time: 60000
+  enable-bossbar: true
+  # Available colors: PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
+  bossbar-color: RED
+  # Available overlays: PROGRESS, NOTCHED_6, NOTCHED_10, NOTCHED_12, NOTCHED_20
+  bossbar-overlay: NOTCHED_20
+  min-password-length: 4
+  # Max password length for the BCrypt hashing algorithm, which is used in this plugin, can't be higher than 71. You can set a lower value than 71.
+  max-password-length: 71
+  check-password-strength: true
+  unsafe-passwords-file: "unsafe_passwords.txt"
+  # Players with premium nicknames should register/auth if this option is enabled
+  # Players with premium nicknames must login with a premium Minecraft account if this option is disabled
+  online-mode-need-auth: false
+  # WARNING: its experimental feature, so disable only if you really know what you are doing
+  # When enabled, this option will keep default 'online-mode-need-auth' behavior
+  # When disabled, this option will disable premium authentication for unregistered players if they fail it once,
+  # allowing offline-mode players to use online-mode usernames
+  # Does nothing when enabled, but when disabled require 'save-premium-accounts: true', 'online-mode-need-auth: false' and 'purge_premium_cache_millis > 100000'
+  online-mode-need-auth-strict: true
+  # Needs floodgate plugin if disabled.
+  floodgate-need-auth: true
+  # TOTALLY disables hybrid auth feature
+  force-offline-mode: false
+  # Forces all players to get offline uuid
+  force-offline-uuid: false
+  # If enabled, the plugin will firstly check whether the player is premium through the local database, and secondly through Mojang API.
+  check-premium-priority-internal: true
+  # Delay in milliseconds before sending auth-confirming titles and messages to the player. (login-premium-title, login-floodgate, etc.)
+  premium-and-floodgate-messages-delay: 1250
+  # Forcibly set player's UUID to the value from the database
+  # If the player had the cracked account, and switched to the premium account, the cracked UUID will be used.
+  save-uuid: true
+  # Saves in the database the accounts of premium users whose login is via online-mode-need-auth: false
+  # Can be disabled to reduce the size of stored data in the database
+  save-premium-accounts: true
+  enable-totp: true
+  totp-need-password: true
+  register-need-repeat-password: true
+  change-password-need-old-password: true
+  # Used in unregister and premium commands.
+  confirm-keyword: "confirm"
+  # This prefix will be added to offline mode players nickname
+  offline-mode-prefix: ""
+  # This prefix will be added to online mode players nickname
+  online-mode-prefix: ""
+  # If you want to migrate your database from another plugin, which is not using BCrypt.
+  # You can set an old hash algorithm to migrate from.
+  # AUTHME - AuthMe SHA256(SHA256(password) + salt) that looks like $SHA$salt$hash (AuthMe, MoonVKAuth, DSKAuth, DBA)
+  # AUTHME_NP - AuthMe SHA256(SHA256(password) + salt) that looks like SHA$salt$hash (JPremium)
+  # SHA256_NP - SHA256(password) that looks like SHA$salt$hash
+  # SHA256_P - SHA256(password) that looks like $SHA$salt$hash
+  # SHA512_NP - SHA512(password) that looks like SHA$salt$hash
+  # SHA512_P - SHA512(password) that looks like $SHA$salt$hash
+  # SHA512_DBA - DBA plugin SHA512(SHA512(password) + salt) that looks like SHA$salt$hash (DBA, JPremium)
+  # MD5 - Basic md5 hash
+  # ARGON2 - Argon2 hash that looks like $argon2i$v=1234$m=1234,t=1234,p=1234$hash
+  # MOON_SHA256 - Moon SHA256(SHA256(password)) that looks like $SHA$hash (no salt)
+  # SHA256_NO_SALT - SHA256(password) that looks like $SHA$hash (NexAuth)
+  # SHA512_NO_SALT - SHA512(password) that looks like $SHA$hash (NexAuth)
+  # SHA512_P_REVERSED_HASH - SHA512(password) that looks like $SHA$hash$salt (nLogin)
+  # SHA512_NLOGIN - SHA512(SHA512(password) + salt) that looks like $SHA$hash$salt (nLogin)
+  # CRC32C - Basic CRC32C hash
+  # PLAINTEXT - Plain text
+  migration-hash: AUTHME
+  # Available dimensions: OVERWORLD, NETHER, THE_END
+  dimension: THE_END
+  purge-cache-millis: 3600000
+  purge-premium-cache-millis: 28800000
+  purge-bruteforce-cache-millis: 28800000
+  # Used to ban IPs when a possible attacker incorrectly enters the password
+  bruteforce-max-attempts: 10
+  # QR Generator URL, set {data} placeholder
+  qr-generator-url: "https://api.qrserver.com/v1/create-qr-code/?data={data}&size=200x200&ecc=M&margin=30"
+  totp-issuer: "LimboAuth by Elytrium"
+  bcrypt-cost: 10
+  login-attempts: 3
+  ip-limit-registrations: 3
+  totp-recovery-codes-amount: 16
+  # Time in milliseconds, when ip limit works, set to 0 for disable.
+  ip-limit-valid-time: 21600000
+  # Regex of allowed nicknames
+  # ^ means the start of the line, $ means the end of the line
+  # [A-Za-z0-9_] is a character set of A-Z, a-z, 0-9 and _
+  # {3,16} means that allowed length is from 3 to 16 chars
+  allowed-nickname-regex: "^[A-Za-z0-9_]{3,16}$"
+  load-world: false
+  # World file type:
+  #  SCHEMATIC (MCEdit .schematic, 1.12.2 and lower, not recommended)
+  #  STRUCTURE (structure block .nbt, any Minecraft version is supported, but the latest one is recommended).
+  #  WORLDEDIT_SCHEM (WorldEdit .schem, any Minecraft version is supported, but the latest one is recommended).
+  world-file-type: STRUCTURE
+  world-file-path: "world.nbt"
+  disable-falling: true
+  # World time in ticks (24000 ticks == 1 in-game day)
+  world-ticks: 1000
+  # World light level (from 0 to 15)
+  world-light-level: 15
+  # Available: ADVENTURE, CREATIVE, SURVIVAL, SPECTATOR
+  game-mode: ADVENTURE
+  # Custom isPremium URL
+  # You can use Mojang one's API (set by default)
+  # Or CloudFlare one's: https://api.ashcon.app/mojang/v2/user/%s
+  # Or use this code to make your own API: https://blog.cloudflare.com/minecraft-api-with-workers-coffeescript/
+  # Or implement your own API, it should just respond with HTTP code 200 (see parameters below) only if the player is premium
+  ispremium-auth-url: "https://api.mojang.com/users/profiles/minecraft/%s"
+  # Status codes (see the comment above)
+  # Responses with unlisted status codes will be identified as responses with a server error
+  # Set 200 if you use using Mojang or CloudFlare API
+  status-code-user-exists:
+    - 200
+  # Set 204 and 404 if you use Mojang API, 404 if you use CloudFlare API
+  status-code-user-not-exists:
+    - 204
+    - 404
+  # Set 429 if you use Mojang or CloudFlare API
+  status-code-rate-limit:
+    - 429
+  # Sample Mojang API exists response: {"name":"hevav","id":"9c7024b2a48746b3b3934f397ae5d70f"}
+  # Sample CloudFlare API exists response: {"uuid":"9c7024b2a48746b3b3934f397ae5d70f","username":"hevav", ...}
+  #
+  # Sample Mojang API not exists response (sometimes can be empty): {"path":"/users/profiles/minecraft/someletters1234566","errorMessage":"Couldn't find any profile with that name"}
+  # Sample CloudFlare API not exists response: {"code":404,"error":"Not Found","reason":"No user with the name 'someletters123456' was found"}
+  #
+  # Responses with an invalid scheme will be identified as responses with a server error
+  # Set this parameter to [], to disable JSON scheme validation
+  user-exists-json-validator-fields:
+    - "name"
+    - "id"
+  json-uuid-field: "id"
+  user-not-exists-json-validator-fields: []
+  # If Mojang rate-limits your server, we cannot determine if the player is premium or not
+  # This option allows you to choose whether every player will be defined as premium or as cracked while Mojang is rate-limiting the server
+  # True - as premium; False - as cracked
+  on-rate-limit-premium: true
+  # If Mojang API is down, we cannot determine if the player is premium or not
+  # This option allows you to choose whether every player will be defined as premium or as cracked while Mojang API is unavailable
+  # True - as premium; False - as cracked
+  on-server-error-premium: true
+  register-command:
+    - "/r"
+    - "/reg"
+    - "/register"
+  login-command:
+    - "/l"
+    - "/log"
+    - "/login"
+  totp-command:
+    - "/2fa"
+    - "/totp"
+  # New players will be kicked with registrations-disabled-kick message
+  disable-registrations: false
+  # Implement the automatic login using the plugin, the LimboAuth client mod and optionally using a custom launcher
+  # See https://github.com/Elytrium/LimboAuth-ClientMod
+  mod:
+    enabled: true
+    # Should the plugin forbid logging in without a mod
+    login-only-by-mod: false
+    # The key must be the same in the plugin config and in the server hash issuer, if you use it
+    verify-key: "uNkhcficcdSnpfWkd4vtZT7X"
+  world-coords:
+    x: 0
+    y: 0
+    z: 0
+  auth-coords:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    yaw: 0.0
+    pitch: 0.0
+  cracked-title-settings:
+    fade-in: 10
+    stay: 70
+    fade-out: 20
+    clear-after-login: false
+  premium-title-settings:
+    fade-in: 10
+    stay: 70
+    fade-out: 20
+  backend-api:
+    # Should backend API be enabled?
+    # Required for PlaceholderAPI expansion to work (https://github.com/UserNugget/LimboAuth-Expansion)
+    enabled: false
+    # Backend API token
+    token: "18adozb7eo08v"
+    # Available endpoints:
+    #  premium_state, hash, totp_token, login_date, reg_date, token_issued_at,
+    #  uuid, premium_uuid, ip, login_ip, token_issued_at
+    enabled-endpoints:
+      - "premium_state"
+      - "login_date"
+      - "reg_date"
+      - "uuid"
+      - "premium_uuid"
+      - "token_issued_at"
+  # Available values: FALSE, TRUE, PERMISSION
+  #  FALSE - the command will be disallowed
+  #  TRUE - the command will be allowed if player has false permission state
+  #  PERMISSION - the command will be allowed if player has true permission state
+  command-permission-state:
+    # Permission: limboauth.commands.changepassword
+    change-password: TRUE
+    # Permission: limboauth.commands.destroysession
+    destroy-session: PERMISSION
+    # Permission: limboauth.commands.premium
+    premium: PERMISSION
+    # Permission: limboauth.commands.totp
+    totp: PERMISSION
+    # Permission: limboauth.commands.unregister
+    unregister: PERMISSION
+    # Permission: limboauth.admin.forcechangepassword
+    force-change-password: PERMISSION
+    # Permission: limboauth.admin.forceregister
+    force-register: PERMISSION
+    # Permission: limboauth.admin.forcelogin
+    force-login: PERMISSION
+    # Permission: limboauth.admin.forceunregister
+    force-unregister: PERMISSION
+    # Permission: limboauth.admin.reload
+    reload: PERMISSION
+    # Permission: limboauth.admin.help
+    help: TRUE
+  strings:
+    reload: "{PRFX} &fRecarregado com sucesso!"
+    error-occurred: "{PRFX} &fOcorreu um erro interno!"
+    ratelimited: "{PRFX} &fPor favor, aguarde antes de usar novamente!"
+    database-error-kick: "{PRFX} &fOcorreu um erro no banco de dados!"
+    not-player: "{PRFX} &fO console não tem permissão para executar este comando!"
+    not-registered: "{PRFX} &fVocê não está registrado ou sua conta é &dPREMIUM&f!"
+    cracked-command: "{PRFX}{NL}&fVocê não pode usar este comando pois sua conta é &dPREMIUM&f!"
+    wrong-password: "{PRFX} &fSenha incorreta!"
+    nickname-invalid-kick: "{PRFX}{NL}&fSeu nickname contém caracteres proibidos. Por favor, mude seu nickname!"
+    reconnect-kick: "{PRFX}{NL}&fReconecte-se ao servidor para verificar sua conta!"
+    # 6 horas por padrão em ip-limit-valid-time
+    ip-limit-kick: "{PRFX}{NL}{NL}&fSeu IP atingiu o máximo de contas registradas. Se isso for um erro, reinicie seu roteador ou aguarde cerca de 6 horas."
+    wrong-nickname-case-kick: "{PRFX}{NL}&fVocê deve entrar usando o nome &d{0}&f, não &d{1}&f."
+    bossbar: "{PRFX} Você tem &d{0} &fsegundos restantes para fazer login."
+    times-up: "{PRFX}{NL}&fO tempo de autenticação acabou."
+    login-premium: "{PRFX} Você foi conectado automaticamente usando a conta premium!" # Pode estar vazio.
+    login-premium-title: "{PRFX} Bem-vindo!" # Pode estar vazio.
+    login-premium-subtitle: "&fVocê foi conectado como jogador premium!" # Pode estar vazio.
+    login-floodgate: "{PRFX} Você foi conectado automaticamente usando a conta bedrock!" # Pode estar vazio.
+    login-floodgate-title: "{PRFX} Bem-vindo!" # Pode estar vazio.
+    login-floodgate-subtitle: "&fVocê foi conectado como jogador bedrock!" # Pode estar vazio.
+    login: "{PRFX} &fPor favor, faça login usando &d/login <senha>&f, você tem &d{0} &ftentativas."
+    login-wrong-password: "{PRFX} &fVocê digitou a senha errada, você tem &d{0} &ftentativas restantes."
+    login-wrong-password-kick: "{PRFX}{NL}&fVocê digitou a senha errada várias vezes!"
+    login-successful: "{PRFX} &fLogin realizado com sucesso!"
+    login-title: "&fPor favor, faça login usando &d/login <senha>&f." # Pode estar vazio.
+    login-subtitle: "&fVocê tem &d{0} &ftentativas." # Pode estar vazio.
+    login-successful-title: "{PRFX}" # Pode estar vazio.
+    login-successful-subtitle: "&fLogin realizado com sucesso!" # Pode estar vazio.
+    # Ou se register-need-repeat-password estiver definido como false, remova a parte "<repetir senha>".
+    register: "{PRFX} Por favor, registre-se usando &d/register <senha> <repetir senha>"
+    register-different-passwords: "{PRFX} &fAs senhas digitadas são diferentes!"
+    register-password-too-short: "{PRFX} &fVocê digitou uma senha muito curta, use uma diferente!"
+    register-password-too-long: "{PRFX} &fVocê digitou uma senha muito longa, use uma diferente!"
+    register-password-unsafe: "{PRFX} &fSua senha é insegura, use uma diferente!"
+    register-successful: "{PRFX} &fRegistrado com sucesso!"
+    register-title: "{PRFX}" # Pode estar vazio.
+    register-subtitle: "&fPor favor, registre-se usando &d/register <senha> <repetir senha>" # Pode estar vazio.
+    register-successful-title: "{PRFX}" # Pode estar vazio.
+    register-successful-subtitle: "&fRegistrado com sucesso!" # Pode estar vazio.
+    unregister-successful: "{PRFX}{NL}&fRegistro removido com sucesso!"
+    unregister-usage: "{PRFX} Uso: &d/unregister <senha atual> confirm"
+    premium-successful: "{PRFX}{NL}&fEstado da conta alterado para &dPREMIUM &fcom sucesso!"
+    already-premium: "{PRFX} &fSua conta já é &dPREMIUM&f!"
+    not-premium: "{PRFX} &fSua conta não é &dPREMIUM&f!"
+    premium-usage: "{PRFX} Uso: &d/premium <senha atual> confirm"
+    event-cancelled: "{PRFX} Evento de autenticação foi cancelado"
+    force-unregister-successful: "{PRFX} &d{0} &fremovido do registro com sucesso!"
+    force-unregister-kick: "{PRFX}{NL}&fVocê foi removido do registro por um administrador!"
+    force-unregister-not-successful: "{PRFX} &fNão foi possível remover &d{0} &fdo registro. Provavelmente este jogador nunca esteve neste servidor."
+    force-unregister-usage: "{PRFX} Uso: &d/forceunregister <nickname>"
+    registrations-disabled-kick: "{PRFX} Os registros estão desabilitados no momento."
+    change-password-successful: "{PRFX} &fSenha alterada com sucesso!"
+    # Ou se change-password-need-old-pass estiver definido como false, remova a parte "<senha antiga>".
+    change-password-usage: "{PRFX} Uso: &d/changepassword <senha antiga> <nova senha>"
+    force-change-password-successful: "{PRFX} &fSenha alterada com sucesso para o jogador &d{0}&f!"
+    force-change-password-message: "{PRFX} &fSua senha foi alterada para &d{0} &fpor um administrador!"
+    force-change-password-not-successful: "{PRFX} &fNão foi possível alterar a senha de &d{0}&f. Provavelmente este jogador nunca esteve neste servidor."
+    force-change-password-not-registered: "{PRFX} &fO jogador &d{0} &fnão está registrado."
+    force-change-password-usage: "{PRFX} Uso: &d/forcechangepassword <nickname> <nova senha>"
+    force-register-usage: "{PRFX} Uso: &d/forceregister <nickname> <senha>"
+    force-register-incorrect-nickname: "{PRFX} &fO nickname contém caracteres proibidos."
+    force-register-taken-nickname: "{PRFX} &fEste nickname já está em uso."
+    force-register-successful: "{PRFX} &fJogador &d{0} &fregistrado com sucesso!"
+    force-register-not-successful: "{PRFX} &fNão foi possível registrar o jogador &d{0}&f."
+    force-login-usage: "{PRFX} Uso: &d/forcelogin <nickname>"
+    force-login-successful: "{PRFX} &d{0} &fautenticado com sucesso!"
+    force-login-unknown-player: "{PRFX} &fNão foi possível encontrar o jogador &d{0} &fpara autenticar!"
+    totp: "{PRFX} Por favor, digite sua chave 2FA usando &d/2fa <chave>"
+    totp-title: "{PRFX}" # Pode estar vazio.
+    totp-subtitle: "&fDigite sua chave 2FA usando &d/2fa <chave>" # Pode estar vazio.
+    totp-successful: "{PRFX} &f2FA ativado com sucesso!"
+    totp-disabled: "{PRFX} &f2FA desativado com sucesso!"
+    # Ou se totp-need-pass estiver definido como false, remova a parte "<senha atual>".
+    totp-usage: "{PRFX} Uso: &d/2fa enable <senha atual>&f ou &d/2fa disable <chave totp>&f."
+    totp-wrong: "{PRFX} &fChave 2FA incorreta!"
+    totp-already-enabled: "{PRFX} &f2FA já está ativado. Desative usando &d/2fa disable <chave>&f."
+    totp-qr: "{PRFX} Clique aqui para abrir o código QR 2FA no navegador."
+    totp-token: "{PRFX} &fSeu token 2FA &7(Clique para copiar)&f: &d{0}"
+    totp-recovery: "{PRFX} &fSeus códigos de recuperação &7(Clique para copiar)&f: &d{0}"
+    destroy-session-successful: "{PRFX} &fSua sessão foi destruída, você precisará fazer login novamente após reconectar."
+    mod-session-expired: "{PRFX} Sua sessão expirou, faça login novamente."
+
+# Database settings
+database:
+  # Database type: mariadb, mysql, postgresql, sqlite or h2.
+  storage-type: H2
+  # Settings for Network-based database (like MySQL, PostgreSQL):
+  hostname: "127.0.0.1:3306"
+  user: "user"
+  password: "password"
+  database: "limboauth"
+  connection-parameters: "?autoReconnect=true&initialTimeout=1&useSSL=false"

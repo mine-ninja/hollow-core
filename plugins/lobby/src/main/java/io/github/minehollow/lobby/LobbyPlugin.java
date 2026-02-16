@@ -6,21 +6,28 @@ import io.github.minehollow.lobby.command.NPCCommand;
 import io.github.minehollow.lobby.command.SpawnCommand;
 import io.github.minehollow.lobby.hologram.HologramManager;
 import io.github.minehollow.lobby.listener.*;
+import io.github.minehollow.lobby.menu.ServerMenu;
 import io.github.minehollow.lobby.npc.NPCManager;
 import io.github.minehollow.lobby.service.SkinService;
+import io.github.minehollow.minecraft.menu.MenuUtil;
 import io.github.minehollow.minecraft.plugin.SimplePlugin;
+import io.github.minehollow.minecraft.util.item.ItemBuilder;
 import lombok.Getter;
 import me.tofaa.entitylib.APIConfig;
 import me.tofaa.entitylib.EntityLib;
 import me.tofaa.entitylib.spigot.SpigotEntityLibPlatform;
-import net.minecraft.server.commands.SetSpawnCommand;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Getter
 public class LobbyPlugin extends SimplePlugin {
+
+
+    public static ItemStack SERVER_SELECTOR;
 
 
     private ExecutorService asyncExecutor;
@@ -33,6 +40,14 @@ public class LobbyPlugin extends SimplePlugin {
 
     @Override
     public void onEnable() {
+
+        SERVER_SELECTOR = ItemBuilder.of(Material.COMPASS)
+          .name("<gold>Seletor de Servidores")
+          .lore(
+            "<gray>Clique para escolher um servidor!"
+          )
+          .build();
+
         this.saveDefaultConfig();
         this.asyncExecutor = Executors.newVirtualThreadPerTaskExecutor();
 
@@ -73,6 +88,9 @@ public class LobbyPlugin extends SimplePlugin {
         registerCommands("spawn", new SpawnCommand(this));
         registerCommands("npc", new NPCCommand(npcManager, skinService));
         registerCommands("hologram", new HologramCommand(hologramManager));
+
+        MenuUtil.registerMenus(new ServerMenu());
+
     }
 
     @Override
@@ -87,6 +105,8 @@ public class LobbyPlugin extends SimplePlugin {
             hologramManager.unloadAll();
         }
 
+
+
         getServer().getMessenger().unregisterOutgoingPluginChannel(this, "BungeeCord");
         PacketEvents.getAPI().terminate();
 
@@ -98,4 +118,5 @@ public class LobbyPlugin extends SimplePlugin {
         getConfig().set("spawn-location", location);
         saveConfig();
     }
+
 }

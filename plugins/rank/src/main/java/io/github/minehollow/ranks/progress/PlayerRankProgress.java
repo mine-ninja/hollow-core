@@ -19,7 +19,7 @@ public class PlayerRankProgress {
     public static PlayerRankProgress createNewProgress(
       @NotNull UUID playerId
     ) {
-        return new PlayerRankProgress(playerId, 1, 0, new HashSet<>());
+        return new PlayerRankProgress(playerId, 1, 0, new HashSet<>(), true);
     }
 
     @BsonId
@@ -27,6 +27,7 @@ public class PlayerRankProgress {
     private int currentRank;
     private int prestigeLevel;
     private Set<Integer> levelRewardsClaimed;
+    private boolean autoRankup;
 
     public boolean canClaimLevelReward(int level) {
         return currentRank > level && !levelRewardsClaimed.contains(level);

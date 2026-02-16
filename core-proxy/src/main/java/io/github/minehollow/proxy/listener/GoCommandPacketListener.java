@@ -13,10 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
-/**
- * @author Meiallu. Created on 19/08/2025
- * @project lugin-core
- */
+
 @RequiredArgsConstructor
 public class GoCommandPacketListener implements PacketListener<GoCommandPacket> {
 

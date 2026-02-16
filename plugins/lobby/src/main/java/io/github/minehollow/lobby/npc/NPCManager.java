@@ -1,9 +1,8 @@
 package io.github.minehollow.lobby.npc;
 
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
 import io.github.minehollow.lobby.LobbyPlugin;
 import io.github.minehollow.lobby.hologram.HologramManager;
+import io.github.minehollow.minecraft.BukkitPlatform;
 import io.github.minehollow.minecraft.util.Cooldown;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -228,15 +227,18 @@ public class NPCManager {
     }
 
     public void handleInteraction(@NotNull Player player, int entityId) {
-        if (Cooldown.setIfNotInCooldownSec(player.getUniqueId(), 2L, "npc_interaction")) {
+        final var handler = getNPCByEntityId(entityId);
+        if (handler == null) return;
+
+        final var data = handler.getData();
+        if (data.interaction() == null || data.interaction().isBlank()) return;
+
+        if (Cooldown.isInCooldown(player.getUniqueId(), "npc_interaction")) {
             return;
         }
 
-        var handler = getNPCByEntityId(entityId);
-        if (handler == null) return;
 
-        var data = handler.getData();
-        if (data.interaction() == null || data.interaction().isBlank()) return;
+        Cooldown.setCooldownSec(player.getUniqueId(), 2L, "npc_interaction");
 
         var interaction = data.interaction().replace("{player}", player.getName());
 
@@ -253,10 +255,8 @@ public class NPCManager {
     }
 
     private void sendPlayerToServer(@NotNull Player player, @NotNull String server) {
-        ByteArrayDataOutput out = ByteStreams.newDataOutput();
-        out.writeUTF("Connect");
-        out.writeUTF(server);
-        player.sendPluginMessage(plugin, "BungeeCord", out.toByteArray());
+        BukkitPlatform.getInstance()
+          .tryConnectPlayerToServer(player.getUniqueId(), server);
     }
 
     public void addViewerToAll(@NotNull Player player) {

@@ -11,17 +11,18 @@ base {
 }
 
 repositories {
-    mavenCentral()
     maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
-    maven { url = uri("https://jitpack.io") }
     maven { url = uri("https://oss.sonatype.org/content/groups/public/") }
     maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots") }
     maven { url = uri("https://repo.dmulloy2.net/repository/public/") }
     maven { url = uri("https://repo.extendedclip.com/releases/") }
     maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://repo.tcoded.com/releases")
-}
 
+    mavenCentral()
+    maven { url = uri("https://jitpack.io") }
+
+}
 configurations.all {
     resolutionStrategy {
         force("com.fasterxml.jackson.core:jackson-core:2.19.1")
@@ -65,10 +66,10 @@ dependencies {
         exclude(group = "com.fasterxml.jackson.datatype")
     }
 
-    compileOnly("com.github.NEZNAMY", "TAB-API", "5.5.0")
     compileOnlyApi("com.github.retrooper:packetevents-spigot:2.11.1")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7") { isTransitive = false }
     compileOnly("me.clip:placeholderapi:2.11.6") { isTransitive = false }
+
 }
 
 java {
@@ -100,6 +101,7 @@ tasks.withType(xyz.jpenilla.runtask.task.AbstractRun::class) {
     }
     jvmArgs("-XX:+AllowEnhancedClassRedefinition")
 }
+
 
 tasks.shadowJar {
     relocate("okhttp3", "io.github.minehollow.core.libs.okhttp3")

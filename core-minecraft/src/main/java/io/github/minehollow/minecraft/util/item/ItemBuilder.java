@@ -2,8 +2,6 @@ package io.github.minehollow.minecraft.util.item;
 
 import com.destroystokyo.paper.profile.PlayerProfile;
 import com.destroystokyo.paper.profile.ProfileProperty;
-import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.properties.Property;
 import io.github.minehollow.minecraft.BukkitPlatform;
 import io.github.minehollow.minecraft.util.message.StringUtils;
 import net.kyori.adventure.text.Component;
@@ -16,6 +14,7 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,10 +24,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-/**
- * @author Rok, Pedro Lucas nmm. Created on 17/07/2025
- * @project factions-essentials
- */
+
 public class ItemBuilder {
     // TODO - Move to CORE
     public static final NamespacedKey MENU_KEY = new NamespacedKey(BukkitPlatform.getInstance().getPlugin(), "menu_item");
@@ -181,6 +177,11 @@ public class ItemBuilder {
 
     public ItemBuilder menuItem() {
         itemStack.editMeta(meta -> meta.getPersistentDataContainer().set(MENU_KEY, PersistentDataType.BOOLEAN, true));
+        return this;
+    }
+
+    public ItemBuilder nbt(@NotNull Consumer<PersistentDataContainer> containerConsumer) {
+        itemStack.editMeta(meta -> containerConsumer.accept(meta.getPersistentDataContainer()));
         return this;
     }
 
