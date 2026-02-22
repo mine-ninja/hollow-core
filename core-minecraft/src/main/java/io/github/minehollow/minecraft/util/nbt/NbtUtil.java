@@ -9,20 +9,19 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public class NbtUtil {
 
     public static <T> @Nullable T supplyFromItemPersistentData(
         @NotNull ItemStack itemStack,
-        @NotNull Function<PersistentDataContainer , T> supplier
+        @NotNull Function<PersistentDataContainer, T> supplier
     ) {
         if (itemStack.getItemMeta() == null) {
             return null;
         }
 
         final var container = itemStack.getItemMeta().getPersistentDataContainer();
-        return supplier.get();
+        return supplier.apply(container);
     }
 
     public static void useItemPersistentData(

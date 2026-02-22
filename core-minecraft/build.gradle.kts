@@ -39,6 +39,7 @@ dependencies {
     api(project(":core-sdk"))
     api("fr.mrmicky:fastboard:2.1.5")
 
+
     implementation("net.kyori:adventure-platform-bukkit:4.4.1") {
         exclude(group = "com.fasterxml.jackson.core")
         exclude(group = "com.fasterxml.jackson.datatype")

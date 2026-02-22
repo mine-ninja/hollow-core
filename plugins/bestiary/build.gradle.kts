@@ -30,6 +30,8 @@ dependencies {
     api("io.github.tofaa2:spigot:3.1.0-SNAPSHOT")
     compileOnly(project(":core-minecraft"))
 
+    // use the "leaf-api.jar" inside the core-minecraft/libs/ directory as a compileOnly dependency
+
     paperweight.paperDevBundle("1.21.4-R0.1-SNAPSHOT")
 }
 

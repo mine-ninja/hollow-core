@@ -1,5 +1,5 @@
-name: LobbyPlugin
-main: io.github.minehollow.lobby.LobbyPlugin
+name: Bestiary
+main: io.github.minehollow.bestiary.BestiaryPlugin
 version: 1.0.0
 author: sasuked
 folia-supported: true

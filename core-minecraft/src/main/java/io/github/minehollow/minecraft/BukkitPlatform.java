@@ -3,6 +3,7 @@ package io.github.minehollow.minecraft;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import io.github.minehollow.minecraft.centralcart.CentralCart;
+import io.github.minehollow.minecraft.chunk.ChunkTickHandler;
 import io.github.minehollow.minecraft.currency.Currency;
 import io.github.minehollow.minecraft.currency.CurrencyManager;
 import io.github.minehollow.minecraft.discord.DiscordService;
@@ -39,6 +40,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -164,6 +166,8 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
           0, 50, TimeUnit.MILLISECONDS
         );
 
+        ChunkTickHandler.register();
+
         menuManager.initialize();
 
         internalCommandManager.registerInternalCommands();
@@ -199,6 +203,14 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
 
     @Override
     public void close() {
+
+        if(this.getServerCategoryType() != ServerCategoryType.LOBBY) {
+            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+                this.tryConnectPlayerToServerCategory(onlinePlayer.getUniqueId(), ServerCategoryType.LOBBY);
+            }
+        }
+
+
         log.debug("Closing Bukkit Platform with category: {}", serverCategoryType.getDisplayName());
         networkClient.sendNetworkPacket(NetworkChannel.SERVER_STATUS, new ServerUnregisterPacket(this.getId()));
 

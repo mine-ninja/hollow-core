@@ -1,14 +1,12 @@
 package io.github.minehollow.bestiary;
 
 import com.github.retrooper.packetevents.PacketEvents;
-import io.github.minehollow.bestiary.archetype.MobArchetypeService;
-import io.github.minehollow.bestiary.command.MobEditCommand;
-import io.github.minehollow.bestiary.custom.CustomMobManager;
-import io.github.minehollow.bestiary.menu.ArchetypeEditMenu;
-import io.github.minehollow.bestiary.menu.ArchetypeListMenu;
-import io.github.minehollow.bestiary.spawner.CustomMobSpawner;
-import io.github.minehollow.bestiary.spawner.SpawnerService;
-import io.github.minehollow.minecraft.menu.MenuUtil;
+import io.github.minehollow.bestiary.command.MonsterCommand;
+import io.github.minehollow.bestiary.command.SpawnerCommand;
+import io.github.minehollow.bestiary.model.CustomMonsterModelManager;
+import io.github.minehollow.bestiary.monster.MonsterListener;
+import io.github.minehollow.bestiary.monster.MonsterManager;
+import io.github.minehollow.bestiary.spawner.SpawnerManager;
 import io.github.minehollow.minecraft.plugin.SimplePlugin;
 import lombok.Getter;
 import me.tofaa.entitylib.APIConfig;
@@ -18,31 +16,36 @@ import me.tofaa.entitylib.spigot.SpigotEntityLibPlatform;
 @Getter
 public class BestiaryPlugin extends SimplePlugin {
 
-    private MobArchetypeService mobArchetypeService;
-    private SpawnerService spawnerService;
-    private CustomMobManager customMobManager;
+    private CustomMonsterModelManager customMonsterModelManager;
 
+
+    private MonsterManager monsterManager;
+    private SpawnerManager spawnerManager;
 
     @Override
     public void onEnable() {
+        this.saveDefaultConfig();
+
         SpigotEntityLibPlatform platform = new SpigotEntityLibPlatform(this);
         APIConfig settings = new APIConfig(PacketEvents.getAPI()).usePlatformLogger();
 
         EntityLib.init(platform, settings);
 
-        this.mobArchetypeService = new MobArchetypeService();
-        this.mobArchetypeService.loadAllArchetypes();
+        this.customMonsterModelManager = new CustomMonsterModelManager(this);
+        this.customMonsterModelManager.loadModels();
 
-        this.spawnerService = new SpawnerService(this);
-        this.spawnerService.preCacheAllSpawners();
+        this.monsterManager = new MonsterManager(this, customMonsterModelManager);
 
-        this.customMobManager = new CustomMobManager(this);
+        this.spawnerManager = new SpawnerManager(this, monsterManager);
 
-        MenuUtil.registerMenus(
-            new ArchetypeListMenu(this),
-            new ArchetypeEditMenu(this)
+        this.registerListeners(
+            new MonsterListener(monsterManager)
         );
 
-        registerCommands("mobedit", new MobEditCommand(this));
+        this.registerCommands(
+            "bestiary",
+            new MonsterCommand(customMonsterModelManager , monsterManager),
+            new SpawnerCommand(spawnerManager, customMonsterModelManager)
+        );
     }
 }
