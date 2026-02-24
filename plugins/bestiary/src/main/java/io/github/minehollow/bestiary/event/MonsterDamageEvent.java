@@ -1,6 +1,6 @@
 package io.github.minehollow.bestiary.event;
 
-import io.github.minehollow.bestiary.monster.MonsterManager.ActiveMonster;
+import io.github.minehollow.bestiary.monster.ActiveMonster;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Cancellable;

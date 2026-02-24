@@ -2,6 +2,8 @@ package io.github.minehollow.bestiary.model;
 
 import io.github.minehollow.minecraft.util.range.DoubleRange;
 import io.github.minehollow.minecraft.util.range.IntRange;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.bukkit.configuration.ConfigurationSection;
@@ -9,9 +11,6 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Data
 @AllArgsConstructor
@@ -26,6 +25,8 @@ public class CustomMonsterModel {
     private DoubleRange defensePerLevelRange;
     private Map<EquipmentSlot, ItemStack> equipment;
     private Map<ItemStack, Double> possibleDrops;
+    private double scale;
+    private boolean useBossBar;
 
 
     public static CustomMonsterModel readFromSection(@NotNull ConfigurationSection section) {
@@ -37,13 +38,18 @@ public class CustomMonsterModel {
         final DoubleRange damagePerLevel = DoubleRange.parseString(section.getString("damage-per-level", "1-5"));
         final DoubleRange defensePerLevel = DoubleRange.parseString(section.getString("defense-per-level", "0-3"));
 
+        final double scale = section.getDouble("scale", 1.0);
+        final boolean useBossBar = section.getBoolean("use-boss-bar", false);
+
         final Map<EquipmentSlot, ItemStack> equipment = new HashMap<>();
         final ConfigurationSection equipmentSection = section.getConfigurationSection("equipment");
 
         if (equipmentSection != null) {
             for (String key : equipmentSection.getKeys(false)) {
                 final ItemStack item = equipmentSection.getItemStack(key);
-                if (item == null) continue;
+                if (item == null) {
+                    continue;
+                }
                 try {
                     equipment.put(EquipmentSlot.valueOf(key.toUpperCase()), item);
                 } catch (IllegalArgumentException ignored) {
@@ -57,7 +63,9 @@ public class CustomMonsterModel {
         if (dropsSection != null) {
             for (String key : dropsSection.getKeys(false)) {
                 final ConfigurationSection dropEntry = dropsSection.getConfigurationSection(key);
-                if (dropEntry == null) continue;
+                if (dropEntry == null) {
+                    continue;
+                }
 
                 final ItemStack item = dropEntry.getItemStack("item");
                 final double chance = dropEntry.getDouble("chance", 1.0);
@@ -68,10 +76,12 @@ public class CustomMonsterModel {
             }
         }
 
+
+
         return new CustomMonsterModel(
             id, displayName, entityType,
             levelRange, healthPerLevel, damagePerLevel, defensePerLevel,
-            equipment, possibleDrops
+            equipment, possibleDrops, scale, useBossBar
         );
     }
 
@@ -84,6 +94,8 @@ public class CustomMonsterModel {
         section.set("health-per-level", healthPerLevelRange.toString());
         section.set("damage-per-level", damagePerLevelRange.toString());
         section.set("defense-per-level", defensePerLevelRange.toString());
+        section.set("scale", scale);
+        section.set("use-boss-bar", useBossBar);
 
         final ConfigurationSection equipSection = section.createSection("equipment");
         for (Map.Entry<EquipmentSlot, ItemStack> entry : equipment.entrySet()) {

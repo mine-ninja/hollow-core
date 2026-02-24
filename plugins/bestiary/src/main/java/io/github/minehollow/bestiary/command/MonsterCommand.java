@@ -10,6 +10,7 @@ import io.github.minehollow.minecraft.command.subcommand.SimpleSubCommand;
 import io.github.minehollow.minecraft.util.range.DoubleRange;
 import io.github.minehollow.minecraft.util.range.IntRange;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import org.bukkit.entity.EntityType;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +18,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * /monster <subcommand> [args]
  * <p>
- * Subcomandos: create  <id> <entityType> <levelRange> <hpPerLevel> <dmgPerLevel> <defPerLevel> <displayName...> delete  <id> edit    <id> <field> <value> spawn
+ * Subcomandos: create  <id> <entityType> <levelRange> <hpPerLevel> <dmgPerLevel> <defPerLevel> <displayName...> delete  <id> edit    <id> <field> <value>
+ * spawn
  * <id> list info    <id>
  */
 public class MonsterCommand extends SimpleCommand {
@@ -79,7 +81,7 @@ public class MonsterCommand extends SimpleCommand {
 
             CustomMonsterModel model = new CustomMonsterModel(
                 id, displayName, type, level, hp, dmg, def,
-                new java.util.HashMap<>(), new java.util.HashMap<>()
+                new HashMap<>(), new HashMap<>(), 1.0, false
             );
             modelManager.registerModel(model);
             modelManager.saveModel(model);
@@ -133,7 +135,7 @@ public class MonsterCommand extends SimpleCommand {
 
     private static class EditSub extends SimpleSubCommand {
         private static final List<String> FIELDS = List.of(
-            "displayname", "entitytype", "levelrange", "hpperlevel", "dmgperlevel", "defperlevel"
+            "displayname", "entitytype", "levelrange", "hpperlevel", "dmgperlevel", "defperlevel", "scale"
         );
         private final CustomMonsterModelManager modelManager;
 
@@ -160,6 +162,7 @@ public class MonsterCommand extends SimpleCommand {
                 case "hpperlevel" -> model.setHealthPerLevelRange(DoubleRange.parseString(value));
                 case "dmgperlevel" -> model.setDamagePerLevelRange(DoubleRange.parseString(value));
                 case "defperlevel" -> model.setDefensePerLevelRange(DoubleRange.parseString(value));
+                case "scale" -> model.setScale(Double.parseDouble(value));
                 default -> throw new CommandFailedException("§cCampo desconhecido: §e" + field);
             }
 

@@ -26,7 +26,6 @@ public class MonsterStats {
     public static final String KEY_DAMAGE = "damage";
     public static final String KEY_DEFENSE = "defense";
 
-    // Keys estáticas — criadas uma única vez, compartilhadas por todas as instâncias
     private static final NamespacedKey KEY_NS_MODEL_ID;
     private static final NamespacedKey KEY_NS_LEVEL;
     private static final NamespacedKey KEY_NS_HEALTH;
@@ -64,6 +63,7 @@ public class MonsterStats {
         this.health = maxHealth;
         this.damage = damage;
         this.defense = defense;
+
         persist();
     }
 
@@ -143,6 +143,7 @@ public class MonsterStats {
         if (modelId != null) {
             pdc.set(KEY_NS_MODEL_ID, PersistentDataType.STRING, modelId);
         }
+
         pdc.set(KEY_NS_LEVEL, PersistentDataType.INTEGER, level);
         pdc.set(KEY_NS_MAX_HEALTH, PersistentDataType.DOUBLE, maxHealth);
         pdc.set(KEY_NS_HEALTH, PersistentDataType.DOUBLE, health);

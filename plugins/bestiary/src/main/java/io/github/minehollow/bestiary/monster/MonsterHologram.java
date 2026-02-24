@@ -2,6 +2,7 @@ package io.github.minehollow.bestiary.monster;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
+import com.github.retrooper.packetevents.util.Vector3f;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetPassengers;
 import io.github.minehollow.minecraft.util.message.StringUtils;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
@@ -17,7 +18,17 @@ import org.jetbrains.annotations.NotNull;
 
 public class MonsterHologram {
 
-    private static final int BG_COLOR = 0x40000000;
+    // String hpColor;
+    //        if (ratio > 0.7) {
+    //            hpColor = "<#5dc922>";
+    //        } else if (ratio > 0.5) {
+    //            hpColor = "<#ffc526>";
+    //        } else if(ratio > 0.3) {
+    //            hpColor = "<#ff6b26>";
+    //        } else {
+    //            hpColor = "<#fc1212>";
+    //        }
+
 
     private final Entity trackedEntity;
     private WrapperEntity display;
@@ -46,76 +57,54 @@ public class MonsterHologram {
 
     private void spawnDisplay() {
         display = new WrapperEntity(UUID.randomUUID(), EntityTypes.TEXT_DISPLAY);
-
         TextDisplayMeta meta = (TextDisplayMeta) display.getEntityMeta();
         meta.setBillboardConstraints(AbstractDisplayMeta.BillboardConstraints.CENTER);
-        meta.setShadow(true);
-        meta.setBackgroundColor(BG_COLOR);
+        meta.setShadow(false);
+        meta.setBackgroundColor(0);
+        meta.setTranslation(new Vector3f(0.0f, 0.2f, 0.0f));
 
         display.spawn(SpigotConversionUtil.fromBukkitLocation(trackedEntity.getLocation()));
 
         for (Player player : Bukkit.getOnlinePlayers()) {
             display.addViewer(player.getUniqueId());
-            sendMountPacket(player);
+            PacketEvents.getAPI().getPlayerManager().sendPacket(player, getPassengersPacket());
         }
     }
 
-    public void addViewer(@NotNull Player player) {
-        if (display != null && display.isSpawned()) {
-            display.addViewer(player.getUniqueId());
-            sendMountPacket(player);
-        }
+    public WrapperPlayServerSetPassengers getPassengersPacket() {
+        return new WrapperPlayServerSetPassengers(trackedEntity.getEntityId(), new int[]{display.getEntityId()});
     }
 
-    public void removeViewer(@NotNull Player player) {
-        if (display != null && display.isSpawned()) {
-            display.removeViewer(player.getUniqueId());
-        }
+    public int getEntityId() {
+        return display != null ? display.getEntityId() : -1;
     }
 
-    public void sendMountPacket(@NotNull Player player) {
-        if (display == null || !display.isSpawned()) {
-            return;
-        }
 
-        // Passengers atuais da entidade Bukkit + nosso display
-        int[] bukkit = trackedEntity.getPassengers()
-            .stream().mapToInt(Entity::getEntityId).toArray();
-
-        int[] passengers = new int[bukkit.length + 1];
-        System.arraycopy(bukkit, 0, passengers, 0, bukkit.length);
-        passengers[bukkit.length] = display.getEntityId();
-
-        PacketEvents.getAPI()
-            .getPlayerManager()
-            .sendPacket(
-                player, new WrapperPlayServerSetPassengers(
-                    trackedEntity.getEntityId(), passengers
-                )
-            );
-    }
-
+    private static final char HEALTH_SYMBOL = '❤';
+    private static final double[] R_T = {0.7, 0.5, 0.3, 0.0};
+    private static final String[] C_T = {"<#5dc922>", "<#ffc526>", "<#ff6b26>", "<#fc1212>"};
+    private static final String LVL_G = "<gradient:#f0b01d:#edb22b:#f0b01d>";
 
     private static Component buildText(String displayName, int level, double health, double maxHealth) {
-        double ratio = maxHealth > 0 ? health / maxHealth : 0;
+        if (maxHealth <= 0) {
+            return Component.empty();
+        }
+        final double ratio = health / maxHealth;
 
-        final String hpGradient = ratio > 0.5
-                                  ? "<gradient:#4cff6e:#a8ffbc:#4cff6e>"   // verde — brilho suave no meio
-                                  : ratio > 0.25
-                                    ? "<gradient:#ffd84c:#fff0a0:#ffd84c>"   // amarelo — realce quente
-                                    : "<gradient:#ff4c4c:#ff9a9a:#ff4c4c>";  // vermelho — brilho rosado
+        String hpColor = C_T[0];
+        for (int i = 0; i < 4; i++) {
+            if (ratio > R_T[i]) {
+                hpColor = C_T[i];
+                break;
+            }
+        }
 
-        final String nameGradient = "<gradient:#e8e8e8:#ffffff:#e8e8e8>";
-        final String levelGradient = "<gradient:#c8960c:#ffd966:#c8960c>";
-
-        Component nameLine = StringUtils.formatString(
-            nameGradient + displayName + " " + levelGradient + "[Nível. " + level + "]"
-        );
-
-        Component hpLine = StringUtils.formatString(
-            String.format(hpGradient + "❤ %.1f / %.1f", health, maxHealth)
-        );
-
-        return nameLine.append(Component.newline()).append(hpLine);
+        return Component.text()
+            .append(io.github.minehollow.minecraft.util.message.StringUtils.formatString(displayName))
+            .append(Component.space())
+            .append(io.github.minehollow.minecraft.util.message.StringUtils.formatString(LVL_G + "[Lvl " + level + "]"))
+            .append(Component.newline())
+            .append(StringUtils.formatString(hpColor + HEALTH_SYMBOL + " %.1f/%.1f".formatted(health, maxHealth)))
+            .build();
     }
 }

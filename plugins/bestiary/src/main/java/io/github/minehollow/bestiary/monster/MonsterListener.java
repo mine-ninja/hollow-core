@@ -1,7 +1,11 @@
 package io.github.minehollow.bestiary.monster;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import io.github.minehollow.bestiary.display.DamageIndicator;
+import io.github.minehollow.minecraft.event.tick.AsyncServerTickEvent;
+import io.github.minehollow.minecraft.task.Tasks;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -11,43 +15,48 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.world.EntitiesLoadEvent;
 import org.jetbrains.annotations.NotNull;
 
 public class MonsterListener implements Listener {
 
+    private static final double PLAYER_PROXIMITY_RADIUS = 64.0;
     private final MonsterManager monsterManager;
+
+    private final Queue<Runnable> mainThreadTasks = new ConcurrentLinkedQueue<>();
 
     public MonsterListener(@NotNull MonsterManager monsterManager) {
         this.monsterManager = monsterManager;
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onPlayerJoin(PlayerJoinEvent event){
-        final var player = event.getPlayer();
-        for (final var active : monsterManager.getAllActive()) {
-            active.hologram().addViewer(player);
-        }
-    }
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void handleTick(AsyncServerTickEvent event) {
+        for (final var activeMonster : monsterManager.getAllActive()) {
+            if (activeMonster.isInactiveFor(30, TimeUnit.SECONDS)) {
+                mainThreadTasks.add(() -> monsterManager.removeSilently(activeMonster.entity().getUniqueId()));
+                continue;
+            }
 
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onPlayerQuit(PlayerJoinEvent event){
-        final var player = event.getPlayer();
-        for (final var active : monsterManager.getAllActive()) {
-            active.hologram().removeViewer(player);
+            if (activeMonster.hasPlayersAround(PLAYER_PROXIMITY_RADIUS)) {
+                activeMonster.updateActivity();
+            }
+        }
+
+        if (!mainThreadTasks.isEmpty()) {
+            Tasks.runSync(() -> {
+                Runnable task;
+                while ((task = mainThreadTasks.poll()) != null) {
+                    task.run();
+                }
+            });
         }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onEntityDamage(EntityDamageEvent event) {
-        if (!(event.getEntity() instanceof LivingEntity living)) {
+        if (!(event.getEntity() instanceof LivingEntity living) || !monsterManager.isCustomMonster(living)) {
             return;
         }
-        if (!monsterManager.isCustomMonster(living)) {
-            return;
-        }
-
         monsterManager.handleDamage(living, event.getFinalDamage(), event.getCause());
     }
 
@@ -59,49 +68,38 @@ public class MonsterListener implements Listener {
         }
 
         monster.hologram().remove();
-
         event.getDrops().clear();
         event.setDroppedExp(0);
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerAttackMonster(EntityDamageByEntityEvent event) {
-        if (!(event.getDamager() instanceof Player player)) {
+        if (event.isCancelled() || !(event.getDamager() instanceof Player p) || !(event.getEntity() instanceof LivingEntity living)) {
             return;
         }
-        if (!(event.getEntity() instanceof LivingEntity living)) {
+        if (monsterManager.getActive(living.getUniqueId()) == null) {
             return;
         }
 
-        MonsterManager.ActiveMonster active = monsterManager.getActive(living.getUniqueId());
-        if (active == null) {
-            return;
-        }
+        boolean critical = p.getFallDistance() > 0 && !p.isOnGround();
+        DamageIndicator.spawn(living, event.getFinalDamage(), critical);
     }
 
     @EventHandler
     public void onEntitiesLoad(EntitiesLoadEvent event) {
         NamespacedKey modelIdKey = monsterManager.getModelIdKey();
         for (var entity : event.getEntities()) {
-            if (!(entity instanceof LivingEntity living)) {
-                continue;
-            }
-            if (monsterManager.getActive(entity.getUniqueId()) != null) {
+            if (!(entity instanceof LivingEntity living) || monsterManager.getActive(entity.getUniqueId()) != null) {
                 continue;
             }
             if (!MonsterStats.isCustomMonster(entity, modelIdKey)) {
                 continue;
             }
 
-            MonsterStats stats = new MonsterStats(
-                living,
-                key -> new NamespacedKey(MonsterStats.PDC_NAMESPACE, key)
-            );
-
-            if (stats.getModelId() == null) {
-                continue;
+            MonsterStats stats = new MonsterStats(living, key -> new NamespacedKey(MonsterStats.PDC_NAMESPACE, key));
+            if (stats.getModelId() != null) {
+                monsterManager.restoreFromEntity(living, stats);
             }
-            monsterManager.restoreFromEntity(living, stats);
         }
     }
 }

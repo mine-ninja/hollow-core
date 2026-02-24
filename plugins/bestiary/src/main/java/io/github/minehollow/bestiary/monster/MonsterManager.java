@@ -6,6 +6,8 @@ import io.github.minehollow.bestiary.event.MonsterDeathEvent;
 import io.github.minehollow.bestiary.event.MonsterSpawnEvent;
 import io.github.minehollow.bestiary.model.CustomMonsterModel;
 import io.github.minehollow.bestiary.model.CustomMonsterModelManager;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
@@ -28,8 +30,9 @@ public class MonsterManager {
     private final CustomMonsterModelManager modelManager;
     private final Random random = new Random();
 
-    // ConcurrentHashMap elimina necessidade de synchronized em todo acesso
-    private final Map<UUID, ActiveMonster> activeMonsters = new ConcurrentHashMap<>();
+    // Cache duplo para acesso rápido tanto por lógica de jogo (UUID) quanto por pacotes (Entity ID)
+    private final Map<UUID, ActiveMonster> activeByUUID = new ConcurrentHashMap<>();
+    private final Int2ObjectMap<ActiveMonster> activeById = new Int2ObjectOpenHashMap<>();
 
     private final NamespacedKey modelIdKey;
 
@@ -39,10 +42,6 @@ public class MonsterManager {
         this.modelIdKey = new NamespacedKey(MonsterStats.PDC_NAMESPACE, MonsterStats.KEY_MODEL_ID);
     }
 
-    /**
-     * Spawns a custom monster at the given location.
-     * Thread-safe — may be called from any thread.
-     */
     public @Nullable ActiveMonster spawn(@NotNull String modelId, @NotNull Location location) {
         CustomMonsterModel model = modelManager.getModelIfPresent(modelId);
         if (model == null) {
@@ -88,14 +87,20 @@ public class MonsterManager {
         MonsterHologram holo = new MonsterHologram(entity);
         holo.update(model.getDisplayName(), level, maxHealth, maxHealth);
 
+        entity.setPersistent(false);
+
         ActiveMonster active = new ActiveMonster(entity, stats, holo, model);
-        activeMonsters.put(entity.getUniqueId(), active);
+
+        // Registro nos dois caches
+        activeByUUID.put(entity.getUniqueId(), active);
+        activeById.put(entity.getEntityId(), active);
+
         return active;
     }
 
     public double handleDamage(@NotNull LivingEntity entity, double rawDamage,
                                @Nullable EntityDamageEvent.DamageCause cause) {
-        ActiveMonster active = activeMonsters.get(entity.getUniqueId());
+        ActiveMonster active = activeByUUID.get(entity.getUniqueId());
         if (active == null) return -1;
 
         MonsterDamageEvent damageEvent = new MonsterDamageEvent(entity, active, rawDamage, cause);
@@ -117,9 +122,10 @@ public class MonsterManager {
     }
 
     public void handleDeath(@NotNull LivingEntity entity) {
-        ActiveMonster active = activeMonsters.remove(entity.getUniqueId());
+        ActiveMonster active = activeByUUID.remove(entity.getUniqueId());
         if (active == null) return;
 
+        activeById.remove(entity.getEntityId());
         active.hologram().remove();
 
         List<ItemStack> drops = rollDrops(active);
@@ -136,25 +142,33 @@ public class MonsterManager {
     }
 
     public void removeSilently(@NotNull UUID uuid) {
-        ActiveMonster active = activeMonsters.remove(uuid);
-        if (active != null) active.hologram().remove();
+        ActiveMonster active = activeByUUID.remove(uuid);
+        if (active != null) {
+            activeById.remove(active.entity().getEntityId());
+            active.hologram().remove();
+        }
     }
 
     public void removeAll() {
-        new ArrayList<>(activeMonsters.keySet()).forEach(this::removeSilently);
+        new ArrayList<>(activeByUUID.keySet()).forEach(this::removeSilently);
     }
 
     public boolean isCustomMonster(@NotNull LivingEntity entity) {
-        return activeMonsters.containsKey(entity.getUniqueId())
+        return activeByUUID.containsKey(entity.getUniqueId())
                || MonsterStats.isCustomMonster(entity, modelIdKey);
     }
 
-    public @Nullable ActiveMonster getActive(@NotNull UUID uuid) {
-        return activeMonsters.get(uuid);
+    public @Nullable ActiveMonster getActive(@Nullable UUID uuid) {
+        return uuid == null ? null : activeByUUID.get(uuid);
+    }
+
+    // Novo método para o MonsterPacketListener buscar por ID de pacote
+    public @Nullable ActiveMonster getActive(int entityId) {
+        return activeById.get(entityId);
     }
 
     public @NotNull Collection<ActiveMonster> getAllActive() {
-        return Collections.unmodifiableCollection(activeMonsters.values());
+        return Collections.unmodifiableCollection(activeByUUID.values());
     }
 
     public @NotNull NamespacedKey getModelIdKey() {
@@ -173,7 +187,10 @@ public class MonsterManager {
 
         MonsterHologram holo = new MonsterHologram(entity);
         holo.update(model.getDisplayName(), stats.getLevel(), stats.getHealth(), stats.getMaxHealth());
-        activeMonsters.put(entity.getUniqueId(), new ActiveMonster(entity, stats, holo, model));
+
+        ActiveMonster active = new ActiveMonster(entity, stats, holo, model);
+        activeByUUID.put(entity.getUniqueId(), active);
+        activeById.put(entity.getEntityId(), active);
     }
 
     public void cleanup() {
@@ -188,11 +205,4 @@ public class MonsterManager {
         return result;
     }
 
-    public record ActiveMonster(
-        LivingEntity entity,
-        MonsterStats stats,
-        MonsterHologram hologram,
-        CustomMonsterModel model
-    ) {
-    }
 }

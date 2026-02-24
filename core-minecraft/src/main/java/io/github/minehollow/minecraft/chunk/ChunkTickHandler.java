@@ -1,24 +1,38 @@
 package io.github.minehollow.minecraft.chunk;
 
 import io.github.minehollow.event.MineHollowOptimizations;
-import lombok.extern.slf4j.Slf4j;
+import io.github.minehollow.minecraft.misc.chunk.ChunkPlayerCountCache;
+import io.github.minehollow.sdk.util.property.Property;
+import java.util.Optional;
 
-@Slf4j
-public class ChunkTickHandler {
+public final class ChunkTickHandler {
+
+
+    private static final String SPAWN_WORLD_NAME = Property.get("minehollow.optimizations.spawnWorldName", "world");
+    private static final boolean OPTIMIZE_CHUNK_TICKING = Property.getBoolean("minehollow.optimizations.optimizeChunkTicking", true);
+    private static final int SPAWN_CHUNK_RADIUS = Optional.of(
+            Property.get("minehollow.optimizations.spawnChunkRadius", "50")
+        )
+        .map(Integer::parseInt)
+        .orElse(50);
+
+
 
     public static void register() {
         MineHollowOptimizations.registerPreTickHandler((world, chunkX, chunkZ) -> {
-            if (isNearbyChunkSpawn(chunkX, chunkZ)) {
-                return false;
+            if (!OPTIMIZE_CHUNK_TICKING) {
+                return true;
             }
 
-            log.info("Chunk ({}, {}) is being ticked.", chunkX, chunkZ);
-            return true;
-        });
-    }
+            if (!world.getName().equals(SPAWN_WORLD_NAME)) {
+                return true;
+            }
 
-    // todos os 30 chunks ao redor do chunk do spawn (0,0) não devem ser tickados!
-    private static boolean isNearbyChunkSpawn(int chunkX, int chunkZ) {
-        return chunkX >= -50 && chunkX <= 50 && chunkZ >= -50 && chunkZ <= 50;
+            if (Math.abs(chunkX) <= SPAWN_CHUNK_RADIUS && Math.abs(chunkZ) <= SPAWN_CHUNK_RADIUS) {
+                return true;
+            }
+
+            return ChunkPlayerCountCache.isChunkActive(((long) chunkX & 0xFFFFFFFFL) | (((long) chunkZ & 0xFFFFFFFFL) << 32));
+        });
     }
 }

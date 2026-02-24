@@ -28,9 +28,15 @@ repositories {
 
 dependencies {
     api("io.github.tofaa2:spigot:3.1.0-SNAPSHOT")
+
+
     compileOnly(project(":core-minecraft"))
 
-    // use the "leaf-api.jar" inside the core-minecraft/libs/ directory as a compileOnly dependency
+
+    // add the bestiary/libs directory to the compile classpath so we can compile against the dependencies without shading them
+    compileOnly(fileTree("libs") {
+        include("*.jar")
+    })
 
     paperweight.paperDevBundle("1.21.4-R0.1-SNAPSHOT")
 }
