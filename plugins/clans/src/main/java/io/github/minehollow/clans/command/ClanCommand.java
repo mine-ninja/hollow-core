@@ -16,16 +16,15 @@ import io.github.minehollow.minecraft.command.exception.CommandFailedException;
 import io.github.minehollow.minecraft.menu.MenuUtil;
 import io.github.minehollow.minecraft.util.message.StringUtils;
 import io.github.minehollow.minecraft.wallet.WalletTransactionContext;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 public class ClanCommand extends SimpleCommand {
 
@@ -102,6 +101,11 @@ public class ClanCommand extends SimpleCommand {
             return;
         }
 
+        if (plugin.getClanService().getByName(name) != null) {
+            player.sendMessage(ClanResult.NAME_TAKEN.getMessage());
+            return;
+        }
+
         double cost = plugin.getConfig().getDouble("creation-cost", 5000.0);
         String currencyId = plugin.getConfig().getString("currency-id", "coins");
 
@@ -112,6 +116,15 @@ public class ClanCommand extends SimpleCommand {
         }
 
         Thread.startVirtualThread(() -> {
+            walletService.subtractCurrencyValue(
+                player.getUniqueId(),
+                currencyId,
+                BigDecimal.valueOf(cost),
+                WalletTransactionContext.builder().withInitiatorId(player.getUniqueId())
+                    .withReason("clan_creation")
+                    .build()
+            );
+
             ClanResult result = service.create(tag, name, player.getUniqueId());
             if (result == ClanResult.SUCCESS) {
                 walletService.subtractCurrencyValue(
@@ -134,7 +147,9 @@ public class ClanCommand extends SimpleCommand {
     private void handleInvite(@NotNull CommandContext ctx, @NotNull Player player) {
         String targetName = ctx.getRawArgOrThrow(1, msg().get("usage.invite"));
         Player target = Bukkit.getPlayer(targetName);
-        if (target == null) throw new CommandFailedException(msg().get("player-not-found"));
+        if (target == null) {
+            throw new CommandFailedException(msg().get("player-not-found"));
+        }
 
         Thread.startVirtualThread(() -> {
             ClanResult result = service.invite(player.getUniqueId(), target.getUniqueId());
@@ -180,7 +195,9 @@ public class ClanCommand extends SimpleCommand {
     private void handleKick(@NotNull CommandContext ctx, @NotNull Player player) {
         String targetName = ctx.getRawArgOrThrow(1, msg().get("usage.kick"));
         Player target = Bukkit.getPlayer(targetName);
-        if (target == null) throw new CommandFailedException(msg().get("player-not-found"));
+        if (target == null) {
+            throw new CommandFailedException(msg().get("player-not-found"));
+        }
 
         Thread.startVirtualThread(() -> {
             ClanResult result = service.kick(player.getUniqueId(), target.getUniqueId());
@@ -211,10 +228,11 @@ public class ClanCommand extends SimpleCommand {
             int maxMembers = clan.getMaxMembers(plugin.getSlotTable());
             String ownerName = resolvePlayerName(clan.getOwnerId());
             String ffStatus = clan.isFriendlyFire()
-                ? msg().get("friendly-fire-enabled")
-                : msg().get("friendly-fire-disabled");
+                              ? msg().get("friendly-fire-enabled")
+                              : msg().get("friendly-fire-disabled");
 
-            msg().sendList(player, "info",
+            msg().sendList(
+                player, "info",
                 "tag", clan.getTag(),
                 "name", clan.getName(),
                 "owner", ownerName,
@@ -229,7 +247,9 @@ public class ClanCommand extends SimpleCommand {
     private void handleTransfer(@NotNull CommandContext ctx, @NotNull Player player) {
         String targetName = ctx.getRawArgOrThrow(1, msg().get("usage.transfer"));
         Player target = Bukkit.getPlayer(targetName);
-        if (target == null) throw new CommandFailedException(msg().get("player-not-found"));
+        if (target == null) {
+            throw new CommandFailedException(msg().get("player-not-found"));
+        }
 
         Map<String, Object> data = new HashMap<>();
         data.put(ClanConfirmationMenu.KEY_ACTION, ClanConfirmationMenu.ACTION_TRANSFER);
@@ -304,10 +324,14 @@ public class ClanCommand extends SimpleCommand {
         String permName = ctx.getRawArgOrThrow(3, msg().get("usage.permission"));
 
         Player target = Bukkit.getPlayer(targetName);
-        if (target == null) throw new CommandFailedException(msg().get("player-not-found"));
+        if (target == null) {
+            throw new CommandFailedException(msg().get("player-not-found"));
+        }
 
         ClanPermission perm = ClanPermission.fromName(permName);
-        if (perm == null) throw new CommandFailedException(msg().get("invalid-permission", "permission", permName));
+        if (perm == null) {
+            throw new CommandFailedException(msg().get("invalid-permission", "permission", permName));
+        }
 
         Thread.startVirtualThread(() -> {
             ClanResult result = switch (action.toLowerCase()) {
@@ -327,11 +351,15 @@ public class ClanCommand extends SimpleCommand {
     }
 
     private void handleChat(@NotNull CommandContext ctx, @NotNull Player player) {
-        if (ctx.getArgs().length < 2) throw new CommandFailedException(msg().get("usage.chat"));
+        if (ctx.getArgs().length < 2) {
+            throw new CommandFailedException(msg().get("usage.chat"));
+        }
 
         StringBuilder sb = new StringBuilder();
         for (int i = 1; i < ctx.getArgs().length; i++) {
-            if (i > 1) sb.append(' ');
+            if (i > 1) {
+                sb.append(' ');
+            }
             sb.append(ctx.getArgs()[i]);
         }
         String message = sb.toString();
@@ -385,17 +413,23 @@ public class ClanCommand extends SimpleCommand {
 
     private void broadcastToClan(@NotNull String tag, @NotNull String message) {
         Clan clan = service.getByTag(tag);
-        if (clan == null) return;
+        if (clan == null) {
+            return;
+        }
 
         for (ClanMember m : clan.getMembers()) {
             Player online = Bukkit.getPlayer(m.getUuid());
-            if (online != null) StringUtils.send(online, message);
+            if (online != null) {
+                StringUtils.send(online, message);
+            }
         }
     }
 
     private @NotNull String resolvePlayerName(@NotNull java.util.UUID uuid) {
         Player online = Bukkit.getPlayer(uuid);
-        if (online != null) return online.getName();
+        if (online != null) {
+            return online.getName();
+        }
         var offline = Bukkit.getOfflinePlayer(uuid);
         return offline.getName() != null ? offline.getName() : uuid.toString().substring(0, 8);
     }
@@ -410,13 +444,17 @@ public class ClanCommand extends SimpleCommand {
             final String start = ctx.getArgs()[0].toLowerCase();
             List<String> suggestions = new ArrayList<>();
             for (String cmd : SUB_COMMANDS) {
-                if (cmd.startsWith(start)) suggestions.add(cmd);
+                if (cmd.startsWith(start)) {
+                    suggestions.add(cmd);
+                }
             }
             for (String alias : List.of(
                 "create", "disband", "invite", "join", "leave", "kick", "transfer",
                 "friendlyfire", "ff", "upgrade", "permission", "perm", "gui"
             )) {
-                if (alias.startsWith(start)) suggestions.add(alias);
+                if (alias.startsWith(start)) {
+                    suggestions.add(alias);
+                }
             }
             return suggestions;
         }

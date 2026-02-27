@@ -9,6 +9,7 @@ result:
   already-in-clan: "§cVocê já está em um clan."
   not-in-clan: "§cVocê não está em nenhum clan."
   tag-taken: "§cEssa tag já está em uso."
+  name-taken: "§cEsse nome já está em uso."
   clan-not-found: "§cClan não encontrado."
   not-owner: "§cApenas o dono do clan pode fazer isso."
   no-permission: "§cVocê não tem permissão para fazer isso."
