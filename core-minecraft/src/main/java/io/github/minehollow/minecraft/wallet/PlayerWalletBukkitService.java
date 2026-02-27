@@ -2,6 +2,8 @@ package io.github.minehollow.minecraft.wallet;
 
 import io.github.minehollow.minecraft.BukkitPlatform;
 import io.github.minehollow.minecraft.event.wallet.PlayerWalletBalanceChangeEvent;
+import io.github.minehollow.minecraft.event.wallet.PlayerWalletBalanceChangeEvent.ChangeType;
+import io.github.minehollow.sdk.player.wallet.Wallet;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +15,6 @@ public class PlayerWalletBukkitService {
 
     private final BukkitPlatform platform;
 
-
     public BigDecimal getPlayerBalance(@NotNull UUID playerId, @NotNull String currencyId) {
         final var wallet = platform.getWalletService().getCachedWallet(playerId);
         if (wallet == null) {
@@ -24,9 +25,9 @@ public class PlayerWalletBukkitService {
     }
 
     public boolean hasSufficientBalance(
-      @NotNull UUID playerId,
-      @NotNull String currencyId,
-      @NotNull BigDecimal amount
+        @NotNull UUID playerId,
+        @NotNull String currencyId,
+        @NotNull BigDecimal amount
     ) {
         final var wallet = platform.getWalletService().getCachedWallet(playerId);
         if (wallet == null) {
@@ -37,9 +38,10 @@ public class PlayerWalletBukkitService {
     }
 
     public void setCurrencyValue(
-      @NotNull UUID playerId,
-      @NotNull String currencyId,
-      @NotNull BigDecimal newAmount
+        @NotNull UUID playerId,
+        @NotNull String currencyId,
+        @NotNull BigDecimal newAmount,
+        @NotNull WalletTransactionContext context
     ) {
         Thread.startVirtualThread(() -> {
             final var wallet = platform.getWalletService().getOrLoadWallet(playerId);
@@ -48,21 +50,15 @@ public class PlayerWalletBukkitService {
             }
 
             final var actualBalance = wallet.getCurrencyAmount(currencyId);
-
-            final var event = new PlayerWalletBalanceChangeEvent(playerId, currencyId, actualBalance, newAmount);
-            if (!event.callEvent()) {
-                return;
-            }
-
-            wallet.setCurrencyAmount(currencyId, event.getNewBalance());
-            platform.getExecutorService().execute(() -> platform.getWalletService().updateWallet(wallet));
+            fireAndApply(wallet, playerId, currencyId, actualBalance, newAmount, ChangeType.SET, context);
         });
     }
 
     public void addCurrencyValue(
-      @NotNull UUID playerId,
-      @NotNull String currencyId,
-      @NotNull BigDecimal amountToAdd
+        @NotNull UUID playerId,
+        @NotNull String currencyId,
+        @NotNull BigDecimal amountToAdd,
+        @NotNull WalletTransactionContext context
     ) {
         Thread.startVirtualThread(() -> {
             final var wallet = platform.getWalletService().getOrLoadWallet(playerId);
@@ -72,22 +68,15 @@ public class PlayerWalletBukkitService {
 
             final var actualBalance = wallet.getCurrencyAmount(currencyId);
             final var newBalance = actualBalance.add(amountToAdd);
-
-            final var event = new PlayerWalletBalanceChangeEvent(playerId, currencyId, actualBalance, newBalance);
-            if (!event.callEvent()) {
-                return;
-            }
-
-            wallet.setCurrencyAmount(currencyId, event.getNewBalance());
-            platform.getExecutorService().execute(() -> platform.getWalletService().updateWallet(wallet));
+            fireAndApply(wallet, playerId, currencyId, actualBalance, newBalance, ChangeType.ADD, context);
         });
     }
 
-
     public void subtractCurrencyValue(
-      @NotNull UUID playerId,
-      @NotNull String currencyId,
-      @NotNull BigDecimal amountToSubtract
+        @NotNull UUID playerId,
+        @NotNull String currencyId,
+        @NotNull BigDecimal amountToSubtract,
+        @NotNull WalletTransactionContext context
     ) {
         Thread.startVirtualThread(() -> {
             final var wallet = platform.getWalletService().getOrLoadWallet(playerId);
@@ -96,18 +85,31 @@ public class PlayerWalletBukkitService {
             }
 
             final var actualBalance = wallet.getCurrencyAmount(currencyId);
-            var newBalance = actualBalance.subtract(amountToSubtract);
-            if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
-                newBalance = BigDecimal.ZERO;
-            }
-
-            final var event = new PlayerWalletBalanceChangeEvent(playerId, currencyId, actualBalance, newBalance);
-            if (!event.callEvent()) {
-                return;
-            }
-
-            wallet.setCurrencyAmount(currencyId, event.getNewBalance());
-            platform.getExecutorService().execute(() -> platform.getWalletService().updateWallet(wallet));
+            final var newBalance = actualBalance.subtract(amountToSubtract).max(BigDecimal.ZERO);
+            fireAndApply(wallet, playerId, currencyId, actualBalance, newBalance, ChangeType.SUBTRACT, context);
         });
+    }
+
+    // ---
+
+    private void fireAndApply(
+        @NotNull Wallet wallet,
+        @NotNull UUID playerId,
+        @NotNull String currencyId,
+        @NotNull BigDecimal oldBalance,
+        @NotNull BigDecimal newBalance,
+        @NotNull ChangeType changeType,
+        @NotNull WalletTransactionContext context
+    ) {
+        final var event = new PlayerWalletBalanceChangeEvent(
+            playerId, currencyId, oldBalance, newBalance, changeType, context
+        );
+
+        if (!event.callEvent()) {
+            return;
+        }
+
+        wallet.setCurrencyAmount(currencyId, event.getNewBalance());
+        platform.getWalletService().updateWallet(wallet);
     }
 }

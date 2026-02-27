@@ -53,13 +53,12 @@ public class DamageIndicator {
      * Spawna um indicador de dano flutuando ao redor do topo do mob. Pode ser chamado de qualquer thread.
      */
     public static void spawn(@NotNull Entity mob, double damage, boolean critical) {
-        double topY = mob.getBoundingBox().getMaxY();
-        Location loc = spawnLocation(mob.getLocation(), topY);
+        final double topY = mob.getBoundingBox().getMaxY();
+        final Location loc = spawnLocation(mob.getLocation(), topY);
 
-        // Spawn precisa ser na thread principal
-        WrapperEntity display = new WrapperEntity(UUID.randomUUID(), EntityTypes.TEXT_DISPLAY);
+        final WrapperEntity display = new WrapperEntity(UUID.randomUUID(), EntityTypes.TEXT_DISPLAY);
+        final TextDisplayMeta meta = (TextDisplayMeta) display.getEntityMeta();
 
-        TextDisplayMeta meta = (TextDisplayMeta) display.getEntityMeta();
         meta.setBillboardConstraints(AbstractDisplayMeta.BillboardConstraints.CENTER);
         meta.setShadow(true);
         meta.setBackgroundColor(0);
@@ -77,10 +76,10 @@ public class DamageIndicator {
     }
 
     private static Location spawnLocation(Location base, double topY) {
-        ThreadLocalRandom rng = ThreadLocalRandom.current();
-        double angle = rng.nextDouble(Math.PI * 2);
-        double dist = rng.nextDouble(SPREAD_RADIUS * 0.3, SPREAD_RADIUS);
-        double yExtra = rng.nextDouble(Y_MIN, Y_MAX);
+        final ThreadLocalRandom rng = ThreadLocalRandom.current();
+        final double angle = rng.nextDouble(Math.PI * 2);
+        final double dist = rng.nextDouble(SPREAD_RADIUS * 0.3, SPREAD_RADIUS);
+        final double yExtra = rng.nextDouble(Y_MIN, Y_MAX);
 
         return new Location(
             base.getWorld(),

@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 @RequiredArgsConstructor
 public class RankRewardManager {
@@ -53,12 +52,15 @@ public class RankRewardManager {
             return;
         }
 
-        rewardSection.getKeys(false)
-          .stream()
-          .map(rewardSection::getConfigurationSection)
-          .filter(Objects::nonNull)
-          .map(RankReward::readFromSection)
-          .forEach(this::registerRankReward);
+        rewardSection.getKeys(false).forEach(key -> {
+            try {
+                ConfigurationSection sub = rewardSection.getConfigurationSection(key);
+                if (sub == null) return;
+                registerRankReward(RankReward.readFromSection(sub));
+            } catch (Exception e) {
+                plugin.getLogger().warning("Failed to load rank reward '" + key + "': " + e.getMessage());
+            }
+        });
 
 
         Bukkit.getConsoleSender().sendMessage(

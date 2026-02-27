@@ -16,4 +16,5 @@ include(
     "plugins:bestiary",
     "plugins:quests",
     "plugins:mailbox",
+    "plugins:clans",
 )

@@ -7,6 +7,7 @@ import io.github.minehollow.bestiary.display.DamageIndicator;
 import io.github.minehollow.bestiary.model.CustomMonsterModelManager;
 import io.github.minehollow.bestiary.monster.MonsterListener;
 import io.github.minehollow.bestiary.monster.MonsterManager;
+import io.github.minehollow.bestiary.monster.ability.AbilityManager;
 import io.github.minehollow.bestiary.monster.packet.MonsterPacketListener;
 import io.github.minehollow.bestiary.spawner.SpawnerManager;
 import io.github.minehollow.minecraft.plugin.SimplePlugin;
@@ -22,6 +23,7 @@ public class BestiaryPlugin extends SimplePlugin {
 
 
     private MonsterManager monsterManager;
+    private AbilityManager abilityManager;
     private SpawnerManager spawnerManager;
 
     @Override
@@ -36,7 +38,8 @@ public class BestiaryPlugin extends SimplePlugin {
         this.customMonsterModelManager = new CustomMonsterModelManager(this);
         this.customMonsterModelManager.loadModels();
 
-        this.monsterManager = new MonsterManager(this, customMonsterModelManager);
+        this.abilityManager = new AbilityManager(this);
+        this.monsterManager = new MonsterManager(this, customMonsterModelManager, abilityManager);
         this.spawnerManager = new SpawnerManager(this, monsterManager);
 
         DamageIndicator.init(this);
@@ -56,6 +59,7 @@ public class BestiaryPlugin extends SimplePlugin {
 
     @Override
     public void onDisable() {
+        if (abilityManager != null) abilityManager.shutdown();
         DamageIndicator.shutdown();
     }
 }

@@ -1,0 +1,30 @@
+# ═══════════════════════════════════════════
+#  CLAN SYSTEM CONFIGURATION
+# ═══════════════════════════════════════════
+
+# Currency used for all clan transactions (from EconomyAPI)
+currency-id: "rankup_coins"
+
+# Cost to create a new clan
+creation-cost: 5000.0
+
+# Tag constraints
+tag:
+  min-length: 2
+  max-length: 5
+
+# Name constraints
+name:
+  min-length: 3
+  max-length: 20
+
+# ── Upgrades ──
+upgrades:
+  # Member slot tiers: tier -> { max-members, cost }
+  slots:
+    1: { max-members: 10, cost: 0.0 }
+    2: { max-members: 15, cost: 10000.0 }
+    3: { max-members: 20, cost: 25000.0 }
+    4: { max-members: 30, cost: 50000.0 }
+    5: { max-members: 50, cost: 100000.0 }
+

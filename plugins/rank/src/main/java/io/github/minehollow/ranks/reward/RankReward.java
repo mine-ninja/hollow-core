@@ -29,13 +29,14 @@ public record RankReward(
         final var id = section.getName();
         final var range = IntRange.parseString(section.getString("range", "1"));
         final var everyXLevels = section.getInt("every-x-levels", 0);
-        final var permissionToReceive = section.getString("permission-to-receive");
+        final var permissionRaw = section.getString("permission-to-receive");
+        final var permissionToReceive = (permissionRaw == null || permissionRaw.equalsIgnoreCase("null")) ? null : permissionRaw;
         final var displayName = requireNonNull(section.getString("display-name"), "Display name is required for reward: " + id);
         final var commands = section.getStringList("commands");
         final var rawItemsToGive = section.getList("items-to-give");
 
         @SuppressWarnings("unchecked")
-        List<ItemStack> itemsToGive = rawItemsToGive == null ? (List<ItemStack>) rawItemsToGive : rawItemsToGive.stream()
+        List<ItemStack> itemsToGive = rawItemsToGive == null ? List.of() : rawItemsToGive.stream()
           .filter(obj -> obj instanceof ItemStack)
           .map(obj -> (ItemStack) obj)
           .toList();

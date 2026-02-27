@@ -1,5 +1,6 @@
 package io.github.minehollow.minecraft.event.wallet;
 
+import io.github.minehollow.minecraft.wallet.WalletTransactionContext;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Bukkit;
@@ -22,20 +23,26 @@ public class PlayerWalletBalanceChangeEvent extends Event implements Cancellable
     private final String currencyId;
     private final BigDecimal oldBalance;
     private BigDecimal newBalance;
+    private final ChangeType changeType;
+    private final WalletTransactionContext context;
 
     private boolean cancelled = false;
 
     public PlayerWalletBalanceChangeEvent(
-      @NotNull UUID playerId,
-      @NotNull String currencyId,
-      @NotNull BigDecimal oldBalance,
-      @NotNull BigDecimal newBalance
+        @NotNull UUID playerId,
+        @NotNull String currencyId,
+        @NotNull BigDecimal oldBalance,
+        @NotNull BigDecimal newBalance,
+        @NotNull ChangeType changeType,
+        @NotNull WalletTransactionContext context
     ) {
         super(!Bukkit.isPrimaryThread());
         this.playerId = playerId;
         this.currencyId = currencyId;
         this.oldBalance = oldBalance;
         this.newBalance = newBalance;
+        this.changeType = changeType;
+        this.context = context;
     }
 
     @Override
@@ -51,13 +58,13 @@ public class PlayerWalletBalanceChangeEvent extends Event implements Cancellable
         return newBalance.compareTo(oldBalance) < 0;
     }
 
-    public boolean isNoChange() {
-        return newBalance.compareTo(oldBalance) == 0;
+    public BigDecimal getDelta() {
+        return newBalance.subtract(oldBalance);
     }
 
     public enum ChangeType {
-        INCREASE,
-        DECREASE,
-        NONE // ?????
+        SET,
+        ADD,
+        SUBTRACT
     }
 }

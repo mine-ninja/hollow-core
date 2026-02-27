@@ -58,6 +58,9 @@ public final class InternalPlayerListener implements Listener {
 
         vThreadExecutor.submit(() -> {
             try {
+                PlayerNetworkStateManager.getInstance()
+                        .setLastServerForPlayer(playerId, currentServerId);
+
                 platform.getNetworkClient().sendNetworkPacket(
                     NetworkChannel.PLAYER_CONNECTION,
                     new PlayerConnectedToServerPacket(playerId, currentServerId)

@@ -1,0 +1,8 @@
+name: ClansPlugin
+main: io.github.minehollow.clans.ClansPlugin
+version: 1.0.0
+author: sasuked
+folia-supported: true
+api-version: 1.13
+depend: [ BukkitPlatformPlugin ]
+

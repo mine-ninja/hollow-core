@@ -6,6 +6,8 @@ import io.github.minehollow.bestiary.event.MonsterDeathEvent;
 import io.github.minehollow.bestiary.event.MonsterSpawnEvent;
 import io.github.minehollow.bestiary.model.CustomMonsterModel;
 import io.github.minehollow.bestiary.model.CustomMonsterModelManager;
+import io.github.minehollow.bestiary.monster.ability.AbilityManager;
+import io.github.minehollow.bestiary.monster.goal.MobGoalManager;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.bukkit.Location;
@@ -28,6 +30,7 @@ public class MonsterManager {
 
     private final BestiaryPlugin plugin;
     private final CustomMonsterModelManager modelManager;
+    private final AbilityManager abilityManager;
     private final Random random = new Random();
 
     // Cache duplo para acesso rápido tanto por lógica de jogo (UUID) quanto por pacotes (Entity ID)
@@ -36,9 +39,11 @@ public class MonsterManager {
 
     private final NamespacedKey modelIdKey;
 
-    public MonsterManager(@NotNull BestiaryPlugin plugin, @NotNull CustomMonsterModelManager modelManager) {
+    public MonsterManager(@NotNull BestiaryPlugin plugin, @NotNull CustomMonsterModelManager modelManager,
+                          @NotNull AbilityManager abilityManager) {
         this.plugin = plugin;
         this.modelManager = modelManager;
+        this.abilityManager = abilityManager;
         this.modelIdKey = new NamespacedKey(MonsterStats.PDC_NAMESPACE, MonsterStats.KEY_MODEL_ID);
     }
 
@@ -84,12 +89,16 @@ public class MonsterManager {
         }
 
         MonsterStats stats = new MonsterStats(entity, model.getId(), level, maxHealth, damage, defense);
-        MonsterHologram holo = new MonsterHologram(entity);
+        stats.setScale(model.getScale());
+        MonsterHologram holo = new MonsterHologram(entity, model.getScale());
         holo.update(model.getDisplayName(), level, maxHealth, maxHealth);
 
         entity.setPersistent(false);
 
         ActiveMonster active = new ActiveMonster(entity, stats, holo, model);
+
+        // Apply custom AI goals + ability casting goals based on the model's behavior profile
+        MobGoalManager.applyBehavior(entity, model.getBehavior(), active, abilityManager);
 
         // Registro nos dois caches
         activeByUUID.put(entity.getUniqueId(), active);
@@ -175,6 +184,10 @@ public class MonsterManager {
         return modelIdKey;
     }
 
+    public @NotNull AbilityManager getAbilityManager() {
+        return abilityManager;
+    }
+
     void restoreFromEntity(@NotNull LivingEntity entity, @NotNull MonsterStats stats) {
         String modelId = stats.getModelId();
         if (modelId == null) return;
@@ -185,10 +198,15 @@ public class MonsterManager {
             return;
         }
 
-        MonsterHologram holo = new MonsterHologram(entity);
+        MonsterHologram holo = new MonsterHologram(entity, model.getScale());
         holo.update(model.getDisplayName(), stats.getLevel(), stats.getHealth(), stats.getMaxHealth());
+        stats.setScale(model.getScale());
 
         ActiveMonster active = new ActiveMonster(entity, stats, holo, model);
+
+        // Re-apply custom AI goals + ability casting on chunk reload
+        MobGoalManager.applyBehavior(entity, model.getBehavior(), active, abilityManager);
+
         activeByUUID.put(entity.getUniqueId(), active);
         activeById.put(entity.getEntityId(), active);
     }

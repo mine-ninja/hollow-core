@@ -93,6 +93,7 @@ public class BukkitPlatformPlugin extends SimplePlugin {
                 world.setGameRuleValue("doWeatherCycle", "false");
                 world.setGameRuleValue("doDaylightCycle", "false");
                 world.setGameRuleValue("doMobSpawning", "false");
+                world.setGameRuleValue("randomTickSpeed", "0");
             });
             manager.registerEvents(new LimboListener(), this);
         }

@@ -31,10 +31,12 @@ public class MonsterHologram {
 
 
     private final Entity trackedEntity;
+    private final double scale;
     private WrapperEntity display;
 
-    public MonsterHologram(@NotNull Entity trackedEntity) {
+    public MonsterHologram(@NotNull Entity trackedEntity, double scale) {
         this.trackedEntity = trackedEntity;
+        this.scale = scale;
         spawnDisplay();
     }
 
@@ -61,7 +63,11 @@ public class MonsterHologram {
         meta.setBillboardConstraints(AbstractDisplayMeta.BillboardConstraints.CENTER);
         meta.setShadow(false);
         meta.setBackgroundColor(0);
-        meta.setTranslation(new Vector3f(0.0f, 0.2f, 0.0f));
+
+        // Scale the Y offset so the hologram sits consistently above the head
+        // regardless of the mob's scale attribute.
+        meta.setTranslation(new Vector3f(0.0f, (float) (0.2 * scale), 0.0f));
+        meta.setScale(new Vector3f((float) scale, (float) scale, (float) scale));
 
         display.spawn(SpigotConversionUtil.fromBukkitLocation(trackedEntity.getLocation()));
 

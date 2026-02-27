@@ -1,0 +1,145 @@
+# ═══════════════════════════════════════════
+#  CLAN MESSAGES
+#  Supports MiniMessage format & {placeholders}
+# ═══════════════════════════════════════════
+
+# ── Result messages (ClanResult) ──
+result:
+  success: "§aOperação realizada com sucesso!"
+  already-in-clan: "§cVocê já está em um clan."
+  not-in-clan: "§cVocê não está em nenhum clan."
+  tag-taken: "§cEssa tag já está em uso."
+  clan-not-found: "§cClan não encontrado."
+  not-owner: "§cApenas o dono do clan pode fazer isso."
+  no-permission: "§cVocê não tem permissão para fazer isso."
+  owner-cannot-leave: "§cO dono não pode sair. Transfira a liderança ou disbande o clan."
+  cannot-kick-owner: "§cVocê não pode expulsar o dono do clan."
+  target-in-clan: "§cEsse jogador já está em um clan."
+  target-not-in-clan: "§cEsse jogador não está no seu clan."
+  not-invited: "§cVocê não tem convite para esse clan."
+  already-invited: "§cEsse jogador já foi convidado."
+  clan-full: "§cO clan está lotado."
+  max-tier: "§cO clan já está no nível máximo de vagas."
+  insufficient-funds: "§cSaldo insuficiente."
+  invalid-tag: "§cTag inválida. Use apenas letras e números (2-5 caracteres)."
+  invalid-name: "§cNome inválido (3-20 caracteres)."
+
+# ── General ──
+cooldown: "§cAguarde um pouco antes de tentar novamente."
+player-not-found: "§cJogador não encontrado."
+invalid-permission: "§cPermissão inválida: {permission}"
+use-grant-or-revoke: "§cUse grant ou revoke."
+no-upgrades-available: "§cNenhum upgrade disponível."
+max-tier-reached: "§aO clan já está no nível máximo!"
+reload-success: "§aConfiguração do plugin de clans recarregada com sucesso!"
+
+# ── Command usage ──
+usage:
+  create: "§cUse: /clan criar <tag> <nome>"
+  invite: "§cUse: /clan convidar <jogador>"
+  join: "§cUse: /clan entrar <tag>"
+  kick: "§cUse: /clan expulsar <jogador>"
+  transfer: "§cUse: /clan transferir <jogador>"
+  permission: "§cUse: /clan permissao <grant|revoke> <jogador> <permissão>"
+  chat: "§cUse: /clan chat <mensagem>"
+
+# ── Command feedback ──
+clan-created:
+  - " "
+  - "  <gradient:#C77DFF:#9D4EDD><bold>✦ CLAN CRIADO!</bold></gradient>"
+  - "  <gray>Tag:</gray> <white><bold>{tag}</bold></white>  <gray>Nome:</gray> <white>{name}</white>"
+  - " "
+
+invite-sent: "<green>Convite enviado para <white>{player}</white>."
+invite-received:
+  - " "
+  - "  <gradient:#C77DFF:#9D4EDD><bold>✉ CONVITE DE CLAN</bold></gradient>"
+  - "  <gray>Você foi convidado para o clan</gray> <white><bold>[{tag}]</bold></white>"
+  - "  <gray>Use</gray> <yellow>/clan entrar {tag}</yellow> <gray>para aceitar.</gray>"
+  - " "
+
+joined-clan: "<green>Você entrou no clan <white><bold>[{tag}]</bold></white>!"
+member-joined-broadcast: "<green>{player} entrou no clan!"
+left-clan: "<red>Você saiu do clan."
+member-left-broadcast: "<red>{player} saiu do clan."
+
+kick-success: "<green>Jogador <white>{player}</white> expulso do clan."
+kick-target: "<red>Você foi expulso do clan."
+
+friendly-fire-broadcast: "<yellow>Fogo amigo foi {status}<yellow>."
+friendly-fire-enabled: "<green>ativado"
+friendly-fire-disabled: "<red>desativado"
+friendly-fire-blocked: "§cFogo amigo está desativado no seu clan."
+
+upgrade-success: "<green>Vagas do clan aumentaram para <white>{slots}</white>!"
+
+permission-granted: "<green>Permissão <white>{permission}</white> concedida a <white>{player}</white>."
+permission-revoked: "<green>Permissão <white>{permission}</white> removida de <white>{player}</white>."
+
+chat-format: "<dark_aqua>[CLAN] <white>{player}:</white> <gray>{message}"
+
+# ── Info ──
+info:
+  - " "
+  - "  <gradient:#C77DFF:#9D4EDD><bold>✦ CLAN [{tag}]</bold></gradient>"
+  - "  <gray>Nome:</gray> <white>{name}</white>"
+  - "  <gray>Dono:</gray> <white>{owner}</white>"
+  - "  <gray>Membros:</gray> <white>{members}/{max_members}</white>"
+  - "  <gray>Nível de Vagas:</gray> <white>{tier}</white>"
+  - "  <gray>Fogo Amigo:</gray> <white>{friendly_fire}</white>"
+  - " "
+
+# ── Confirmation menu ──
+confirmation:
+  invalid-action: "§cAção inválida."
+  not-owner: "§cApenas o dono pode realizar essa ação."
+  target-not-defined: "§cJogador alvo não definido."
+  unknown-action: "§cAção desconhecida."
+  internal-error: "§cErro interno: alvo não encontrado."
+  confirm-cooldown: "§cAguarde um pouco antes de confirmar novamente."
+
+disband-success:
+  - " "
+  - "  <red><bold>✖ CLAN DESFEITO</bold></red>"
+  - "  <gray>O clan</gray> <white><bold>[{tag}]</bold></white> <gray>foi desfeito.</gray>"
+  - " "
+
+transfer-success:
+  - " "
+  - "  <gold><bold>👑 LIDERANÇA TRANSFERIDA</bold></gold>"
+  - "  <gray>A liderança foi transferida para</gray> <white><bold>{player}</bold></white>"
+  - " "
+
+transfer-target:
+  - " "
+  - "  <gold><bold>👑 VOCÊ É O NOVO LÍDER!</bold></gold>"
+  - "  <gray>Você agora é o dono do clan</gray> <white><bold>[{tag}]</bold></white>"
+  - " "
+
+# ── Menu messages ──
+menu:
+  not-in-clan: "§cVocê não está em nenhum clan."
+  member-not-found: "§cMembro não encontrado."
+  owner-only-settings: "§cApenas o dono pode acessar as configurações."
+  owner-only-permissions: "§cApenas o dono pode gerenciar permissões."
+  owner-only-transfer: "§cApenas o dono pode transferir a liderança."
+
+# ── Help ──
+help:
+  - " "
+  - "  <gradient:#C77DFF:#9D4EDD><bold>✦ COMANDOS DE CLAN</bold></gradient>"
+  - "  <gray>/clan menu</gray> <dark_gray>- Abrir menu do clan</dark_gray>"
+  - "  <gray>/clan criar <tag> <nome></gray> <dark_gray>- Criar um clan</dark_gray>"
+  - "  <gray>/clan desfazer</gray> <dark_gray>- Desfazer o clan</dark_gray>"
+  - "  <gray>/clan convidar <jogador></gray> <dark_gray>- Convidar jogador</dark_gray>"
+  - "  <gray>/clan entrar <tag></gray> <dark_gray>- Aceitar convite</dark_gray>"
+  - "  <gray>/clan sair</gray> <dark_gray>- Sair do clan</dark_gray>"
+  - "  <gray>/clan expulsar <jogador></gray> <dark_gray>- Expulsar jogador</dark_gray>"
+  - "  <gray>/clan info [tag]</gray> <dark_gray>- Info do clan</dark_gray>"
+  - "  <gray>/clan transferir <jogador></gray> <dark_gray>- Transferir liderança</dark_gray>"
+  - "  <gray>/clan fogoamigo</gray> <dark_gray>- Alternar fogo amigo</dark_gray>"
+  - "  <gray>/clan melhorar</gray> <dark_gray>- Melhorar vagas</dark_gray>"
+  - "  <gray>/clan chat <msg></gray> <dark_gray>- Chat do clan</dark_gray>"
+  - "  <gray>/clan permissao <grant|revoke> <jogador> <perm></gray>"
+  - " "
+

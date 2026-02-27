@@ -4,16 +4,14 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import io.github.minehollow.sdk.server.type.ServerCategoryType;
 import io.github.minehollow.sdk.util.data.RedisCache;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Gerencia o estado de rede dos jogadores, armazenando throwable recuperando informações
- * sobre o estado atual de cada jogador usando um cache Redis.
+ * Gerencia o estado de rede dos jogadores, armazenando throwable recuperando informações sobre o estado atual de cada jogador usando um cache Redis.
  */
 public class PlayerNetworkStateManager {
 
@@ -22,10 +20,14 @@ public class PlayerNetworkStateManager {
     private static final String PLAYER_STATE_CATEGORY_IDX_KEY = "playerStateCategoryIndex:";
     private static final String PLAYER_STATE_SERVER_IDX_KEY = "playerStateServerIndex:";
 
+
+    private static final long LAST_SERVER_REMEMBER_TTL_SECONDS = 60 * 60 * 12; // 12 horas
+    private static final String LAST_SERVER_REMEMBER_KEY = "playerLastServerRemember:";
+
+
     private static final class PlayerStateManagerHolder {
         private static final PlayerNetworkStateManager INSTANCE = new PlayerNetworkStateManager();
     }
-
 
     public static PlayerNetworkStateManager getInstance() {
         return PlayerStateManagerHolder.INSTANCE;
@@ -40,6 +42,16 @@ public class PlayerNetworkStateManager {
         this.PLAYER_STATE_CATEGORY_CACHE = Caffeine.newBuilder()
             .expireAfterWrite(5, TimeUnit.SECONDS)
             .build(key -> redisCache.hgetAll(PLAYER_STATE_CATEGORY_IDX_KEY + key));
+    }
+
+    public void setLastServerForPlayer(@NotNull UUID playerId, @NotNull String serverId) {
+        redisCache.getConnector()
+            .useJedis(jedis -> jedis.setex(LAST_SERVER_REMEMBER_KEY + playerId, LAST_SERVER_REMEMBER_TTL_SECONDS, serverId));
+    }
+
+    public @Nullable String getLastServerIdForPlayer(@NotNull UUID playerId) {
+        return redisCache.getConnector()
+            .supplyFromJedis(jedis -> jedis.get(LAST_SERVER_REMEMBER_KEY + playerId));
     }
 
     /**

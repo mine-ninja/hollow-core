@@ -4,8 +4,11 @@ import io.github.minehollow.minecraft.BukkitPlatform;
 import io.github.minehollow.minecraft.util.PlayerUtil;
 import io.github.minehollow.minecraft.util.message.StringUtils;
 import io.github.minehollow.minecraft.util.sound.PredefinedSound;
+import io.github.minehollow.minecraft.wallet.WalletTransactionContext;
 import io.github.minehollow.mines.MinesPlugin;
 import io.github.minehollow.mines.filler.MineFiller;
+import java.math.BigDecimal;
+import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import org.bukkit.GameMode;
@@ -19,23 +22,23 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-import java.math.BigDecimal;
-import java.util.concurrent.ThreadLocalRandom;
-
 @RequiredArgsConstructor
 public class BlockBreakListener implements Listener {
 
     private static final PredefinedSound NO_SPACE_SOUND = new PredefinedSound(Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, 1.0f);
     private static final Component NO_SPACE_MESSAGE = StringUtils.formatString(
-      "<red>Seu inventário está cheio! Esvazie seu inventário para coletar os itens."
+        "<red>Seu inventário está cheio! Esvazie seu inventário para coletar os itens."
     );
+
 
     private final MinesPlugin minesPlugin;
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void handleMineBlockBreak(@NotNull BlockBreakEvent event) {
         final Player player = event.getPlayer();
-        if (player.getGameMode() == GameMode.CREATIVE) return;
+        if (player.getGameMode() == GameMode.CREATIVE) {
+            return;
+        }
 
         final Block block = event.getBlock();
 
@@ -44,7 +47,9 @@ public class BlockBreakListener implements Listener {
         }
 
         final var mine = minesPlugin.getMineManager().getMineAt(block.getX(), block.getY(), block.getZ());
-        if (mine == null) return;
+        if (mine == null) {
+            return;
+        }
 
         final var blockConfig = mine.getBlockConfigs().get(block.getType());
         if (blockConfig == null) {
@@ -64,10 +69,11 @@ public class BlockBreakListener implements Listener {
             double experienceGain = random.nextDouble(minExp, maxExp);
             if (experienceGain > 0) {
                 event.setExpToDrop((int) (experienceGain + 0.5));
-                player.playSound(player.getLocation(),
-                  Sound.ENTITY_EXPERIENCE_ORB_PICKUP,
-                  0.7f + random.nextFloat() * 0.3f,
-                  0.9f + random.nextFloat() * 0.2f
+                player.playSound(
+                    player.getLocation(),
+                    Sound.ENTITY_EXPERIENCE_ORB_PICKUP,
+                    0.7f + random.nextFloat() * 0.3f,
+                    0.9f + random.nextFloat() * 0.2f
                 );
             }
         }
@@ -77,9 +83,14 @@ public class BlockBreakListener implements Listener {
 
         for (final var entry : blockConfig.getCurrencyValues().entrySet()) {
             if (currencyManager.getCurrency(entry.getKey()) != null) {
+                final var context = WalletTransactionContext.builder()
+                    .withInitiatorId(null)
+                    .withTargetId(player.getUniqueId())
+                    .build();
+
                 BukkitPlatform.getInstance()
-                  .getPlayerWalletService()
-                  .addCurrencyValue(player.getUniqueId(), entry.getKey(), BigDecimal.valueOf(entry.getValue()));
+                    .getPlayerWalletService()
+                    .addCurrencyValue(player.getUniqueId(), entry.getKey(), BigDecimal.valueOf(entry.getValue()), context);
             }
         }
 
@@ -104,7 +115,9 @@ public class BlockBreakListener implements Listener {
         final var tool = player.getInventory().getItemInMainHand();
         final var drops = block.getDrops(tool, player);
 
-        if (drops.isEmpty()) return;
+        if (drops.isEmpty()) {
+            return;
+        }
 
         for (ItemStack drop : drops) {
             int amount = drop.getAmount();

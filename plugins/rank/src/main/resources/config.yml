@@ -1,4 +1,3 @@
-
 # Define uma formula para calcular o XP necessário para subir de nível
 # Na formula padrão, o XP necessário para subir de nível aumenta exponencialmente
 # Ex:
@@ -8,3 +7,19 @@
 # Nível 4 -> 800 XP
 # Nível 5 -> 1118 XP...
 level-up-formula: "100 * (level ^ 1.5)"
+
+rank-rewards:
+  primeiro_rank:
+    display-name: "<gradient:#C77DFF:#9D4EDD>🎁 Presente de Boas-Vindas</gradient>"
+    range: "1"
+    every-x-levels: 0
+    commands:
+      - "give %player% diamond 1"
+    items-to-give: []
+  a_cada_5:
+    display-name: "<yellow>⭐ Bônus de Progresso"
+    range: "5-99"
+    every-x-levels: 5
+    commands:
+      - "give %player% emerald 1"
+    items-to-give: []

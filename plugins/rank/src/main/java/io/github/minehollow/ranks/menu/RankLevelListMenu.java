@@ -13,6 +13,8 @@ import io.github.minehollow.minecraft.util.sound.PredefinedSound;
 import io.github.minehollow.ranks.RanksPlugin;
 import io.github.minehollow.ranks.reward.RankReward;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import java.util.List;
+import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bukkit.Material;
@@ -22,9 +24,6 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
-import java.util.stream.IntStream;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -55,19 +54,21 @@ public class RankLevelListMenu extends DynamicPaginationMenu<Integer> {
         openHandler.setTitle(StringUtils.text("Níveis de Rank"));
         openHandler.setRows(6);
         openHandler.setLayout(
-          "    H    ",
-          "         ",
-          "  LLLLL  ",
-          "P LLLLL N",
-          "  LLLLL  ",
-          "         "
+            "         ",
+            " LLLLLLL ",
+            " LLLLLLL ",
+            " LLLLLLL ",
+            "         ",
+            "  P H N  "
         );
 
         Tasks.runAsync(() -> {
-            ctx.setPagination('L', LEVELS, this::generateRankLevelIcon, (level, event) -> {
-                giveRewards(level, event);
-                ctx.update();
-            });
+            ctx.setPagination(
+                'L', LEVELS, this::generateRankLevelIcon, (level, event) -> {
+                    giveRewards(level, event);
+                    ctx.update();
+                }
+            );
 
             final int currentRank = playerProgress.getCurrentRank();
             final double coins = wallet.getCurrencyAmount("rankup_coins").doubleValue();
@@ -75,23 +76,25 @@ public class RankLevelListMenu extends DynamicPaginationMenu<Integer> {
             final double progressPercent = Math.clamp((coins / needed) * 100, 0, 100);
 
             final long unclaimedCount = LEVELS.stream()
-              .filter(lvl -> lvl < currentRank && !playerProgress.hasClaimedLevelReward(lvl))
-              .count();
+                .filter(lvl -> lvl < currentRank && !playerProgress.hasClaimedLevelReward(lvl))
+                .count();
 
             final String progressBar = ProgressBarGenerator.generateStr(coins, needed, 10, '■', '■', "<gradient:#C77DFF:#9D4EDD>", "<gray>");
 
-            ctx.setItem('H', ItemBuilder.skull(player)
-              .name("<gradient:#C77DFF:#9D4EDD><bold>▎ SEU PERFIL</bold></gradient>")
-              .addLore(
-                " <dark_gray>Resumo da sua jornada</dark_gray>",
-                "",
-                " <gradient:#C77DFF:#9D4EDD>➲</gradient> <white>Nível <bold>" + currentRank + "</bold><yellow>✦",
-                "   " + progressBar + " <gray>" + String.format("%.1f%%", progressPercent),
-                "",
-                " <#C77DFF>★</#C77DFF> <white>Prestígio <bold>" + playerProgress.getPrestigeLevel() + "</bold>",
-                "",
-                " <gradient:#FDB924:#FAD02C>🎁 " + unclaimedCount + " recompensas prontas!</gradient>"
-              ).build());
+            ctx.setItem(
+                'H', ItemBuilder.skull(player)
+                    .name("<gradient:#C77DFF:#9D4EDD><bold>▎ SEU PERFIL</bold></gradient>")
+                    .addLore(
+                        " <dark_gray>Resumo da sua jornada</dark_gray>",
+                        "",
+                        " <gradient:#C77DFF:#9D4EDD>➲</gradient> <white>Nível <bold>" + currentRank + "</bold><yellow>✦",
+                        "   " + progressBar + " <gray>" + String.format("%.1f%%", progressPercent),
+                        "",
+                        " <#C77DFF>★</#C77DFF> <white>Prestígio <bold>" + playerProgress.getPrestigeLevel() + "</bold>",
+                        "",
+                        " <gradient:#FDB924:#FAD02C>🎁 " + unclaimedCount + " recompensas prontas!</gradient>"
+                    ).build()
+            );
 
             ctx.update();
         });
@@ -103,7 +106,9 @@ public class RankLevelListMenu extends DynamicPaginationMenu<Integer> {
 
     private @NotNull ItemStack generateRankLevelIcon(@NotNull Player player, int level) {
         final var progress = plugin.getPlayerRankProgressService().getCachedProgress(player.getUniqueId());
-        if (progress == null) return new ItemStack(Material.AIR);
+        if (progress == null) {
+            return new ItemStack(Material.AIR);
+        }
 
         final int currentRank = progress.getCurrentRank();
         final boolean hasClaimed = progress.hasClaimedLevelReward(level);
@@ -130,10 +135,10 @@ public class RankLevelListMenu extends DynamicPaginationMenu<Integer> {
         }
 
         ItemBuilder builder = ItemBuilder.of(material)
-          .name(color + "<bold>RANK " + level)
-          .meta(meta -> meta.setMaxStackSize(99))
-          .amount(Math.clamp(level, 1, 99))
-          .flags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS);
+            .name(color + "<bold>RANK " + level)
+            .meta(meta -> meta.setMaxStackSize(99))
+            .amount(Math.clamp(level, 1, 99))
+            .flags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS);
 
         // Adiciona o custo se o nível não foi superado ainda (Atual ou Futuro)
         if (!isUnlockedForClaim) {
@@ -164,7 +169,9 @@ public class RankLevelListMenu extends DynamicPaginationMenu<Integer> {
         final Player player = (Player) event.getWhoClicked();
         final var progress = plugin.getPlayerRankProgressService().getCachedProgress(player.getUniqueId());
 
-        if (progress == null) return;
+        if (progress == null) {
+            return;
+        }
 
         if (level >= progress.getCurrentRank()) {
             StringUtils.send(player, "<red>Você ainda está no nível " + progress.getCurrentRank() + ". Complete o nível " + level + " primeiro!");

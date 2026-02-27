@@ -15,6 +15,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntityRemoveEvent;
 import org.bukkit.event.world.EntitiesLoadEvent;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,6 +32,8 @@ public class MonsterListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void handleTick(AsyncServerTickEvent event) {
+        monsterManager.getAbilityManager().tick();
+
         for (final var activeMonster : monsterManager.getAllActive()) {
             if (activeMonster.isInactiveFor(30, TimeUnit.SECONDS)) {
                 mainThreadTasks.add(() -> monsterManager.removeSilently(activeMonster.entity().getUniqueId()));
@@ -70,6 +73,12 @@ public class MonsterListener implements Listener {
         monster.hologram().remove();
         event.getDrops().clear();
         event.setDroppedExp(0);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onEntityRemove(EntityRemoveEvent event) {
+        if (!(event.getEntity() instanceof LivingEntity living)) return;
+        monsterManager.removeSilently(living.getUniqueId());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

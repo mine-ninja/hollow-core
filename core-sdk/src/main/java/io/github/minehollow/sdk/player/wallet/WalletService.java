@@ -22,10 +22,7 @@ public class WalletService {
     private final MongoRepository<UUID, Wallet> walletMongoRepository = new MongoRepository<>(Wallet.class);
 
 
-    private final Cache<@NotNull UUID, Wallet> localCache = Caffeine.newBuilder()
-      .expireAfterWrite(5, TimeUnit.MINUTES)
-      .expireAfterAccess(30, TimeUnit.MINUTES)
-      .build();
+    private final Cache<@NotNull UUID, Wallet> localCache = Caffeine.newBuilder().build();
 
     public @Nullable Wallet getCachedWallet(@NotNull UUID playerId) {
         return localCache.getIfPresent(playerId);

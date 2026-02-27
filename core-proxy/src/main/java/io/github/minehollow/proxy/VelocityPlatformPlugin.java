@@ -13,16 +13,16 @@ import io.github.minehollow.sdk.player.state.PlayerNetworkStateManager;
 import io.github.minehollow.sdk.server.GameServer;
 import io.github.minehollow.sdk.server.type.ServerCategoryType;
 import io.github.minehollow.sdk.util.property.Property;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
-
-import java.util.concurrent.atomic.AtomicBoolean;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 
 @Plugin(
-  id = "hollow-core-proxy",
-  name = "hollow Core Proxy",
-  version = "1.0.0", description =
-  "Core plugin for Lugin Proxy"
+    id = "hollow-core-proxy",
+    name = "hollow Core Proxy",
+    version = "1.0.0", description =
+        "Core plugin for Lugin Proxy"
 )
 @Slf4j
 public class VelocityPlatformPlugin {
@@ -90,19 +90,24 @@ public class VelocityPlatformPlugin {
 
         final var lobbyServer = velocityPlatform.getRandomLobby();
         if (lobbyServer == null) {
-            log.error("Player {} was kicked but no lobby server is available. Available servers: {}",
-              player.getUsername(),
-              velocityPlatform.getGameServerService().queryAllServersInNetwork().size());
+            log.error(
+                "Player {} was kicked but no lobby server is available. Available servers: {}",
+                player.getUsername(),
+                velocityPlatform.getGameServerService().queryAllServersInNetwork().size()
+            );
             player.disconnect(Component.text("§cNenhum servidor de lobby disponível. Tente novamente mais tarde."));
             return;
         }
 
         final var query = proxyServer.getServer(lobbyServer.serverId());
         if (query.isEmpty()) {
-            log.error("Player {} was kicked but the lobby server {} was not registered in Velocity. Registered servers: {}",
-              player.getUsername(),
-              lobbyServer.serverId(),
-              proxyServer.getAllServers().stream().map(s -> s.getServerInfo().getName()).toList());
+            log.error(
+                "Player {} was kicked but the lobby server {} was not registered in Velocity. Registered servers: {}",
+                player.getUsername(),
+                lobbyServer.serverId(),
+                proxyServer.getAllServers()
+                    .stream().map(s -> s.getServerInfo().getName()).toList()
+            );
             player.disconnect(Component.text("§cServidor de lobby não encontrado. Tente novamente mais tarde."));
             return;
         }
@@ -130,16 +135,31 @@ public class VelocityPlatformPlugin {
 
         log.info("Player {} is choosing initial server...", player.getUsername());
 
+        final var lastServerForPlayer = PlayerNetworkStateManager.getInstance()
+            .getLastServerIdForPlayer(player.getUniqueId());
+
+        // try to send the player to the last server they were on, if it's still available
+        if (lastServerForPlayer != null && proxyServer.getServer(lastServerForPlayer).isPresent()) {
+            log.info("Player {} has a last server remembered: {}. Redirecting to it.", player.getUsername(), lastServerForPlayer);
+            event.setInitialServer(proxyServer.getServer(lastServerForPlayer).get());
+
+            player.sendMessage(MiniMessage.miniMessage().deserialize(
+                "<green>Bem-vindo de volta! Redirecionando para o último servidor que você estava...</green>"
+            ));
+
+            return;
+        }
+
         final var lobbyServer = velocityPlatform.getRandomLobby();
         if (lobbyServer == null) {
-            log.error("No lobby server available for player {}. Total servers in network: {}, Registered in Velocity: {}",
-              player.getUsername(),
-              velocityPlatform.getGameServerService().queryAllServersInNetwork().size(),
-              proxyServer.getAllServers().size());
+            log.error(
+                "No lobby server available for player {}. Total servers in network: {}, Registered in Velocity: {}",
+                player.getUsername(),
+                velocityPlatform.getGameServerService().queryAllServersInNetwork().size(),
+                proxyServer.getAllServers().size()
+            );
 
-            // Log detalhado dos servidores
             logAvailableServers();
-
             player.disconnect(Component.text("§cNenhum servidor de lobby disponível no momento. Tente novamente mais tarde."));
             return;
         }
@@ -148,10 +168,13 @@ public class VelocityPlatformPlugin {
 
         final var query = proxyServer.getServer(lobbyServer.serverId());
         if (query.isEmpty()) {
-            log.error("Lobby server {} not registered in Velocity for player {}. Registered servers: {}",
-              lobbyServer.serverId(),
-              player.getUsername(),
-              proxyServer.getAllServers().stream().map(s -> s.getServerInfo().getName()).toList());
+            log.error(
+                "Lobby server {} not registered in Velocity for player {}. Registered servers: {}",
+                lobbyServer.serverId(),
+                player.getUsername(),
+                proxyServer.getAllServers()
+                    .stream().map(s -> s.getServerInfo().getName()).toList()
+            );
 
             player.disconnect(Component.text("§cServidor de lobby não encontrado. Tente novamente mais tarde."));
             return;
@@ -167,8 +190,8 @@ public class VelocityPlatformPlugin {
     private void logAvailableServers() {
         var allServers = velocityPlatform.getGameServerService().queryAllServersInNetwork();
         var lobbyServers = allServers.stream()
-          .filter(s -> s.categoryType() == ServerCategoryType.LOBBY)
-          .toList();
+            .filter(s -> s.categoryType() == ServerCategoryType.LOBBY)
+            .toList();
 
         log.info("=== Server Status ===");
         log.info("Total servers in GameServerService: {}", allServers.size());
@@ -178,19 +201,23 @@ public class VelocityPlatformPlugin {
         log.info("Lobby servers details:");
         lobbyServers.forEach(server -> {
             boolean registeredInVelocity = proxyServer.getServer(server.serverId()).isPresent();
-            log.info("  - {} ({}:{}) - Registered in Velocity: {}",
-              server.serverId(),
-              server.hostAddress().host(),
-              server.hostAddress().port(),
-              registeredInVelocity);
+            log.info(
+                "  - {} ({}:{}) - Registered in Velocity: {}",
+                server.serverId(),
+                server.hostAddress().host(),
+                server.hostAddress().port(),
+                registeredInVelocity
+            );
         });
 
         log.info("Velocity registered servers:");
         proxyServer.getAllServers().forEach(server ->
-          log.info("  - {} ({}:{})",
-            server.getServerInfo().getName(),
-            server.getServerInfo().getAddress().getHostString(),
-            server.getServerInfo().getAddress().getPort())
+            log.info(
+                "  - {} ({}:{})",
+                server.getServerInfo().getName(),
+                server.getServerInfo().getAddress().getHostString(),
+                server.getServerInfo().getAddress().getPort()
+            )
         );
         log.info("===================");
     }

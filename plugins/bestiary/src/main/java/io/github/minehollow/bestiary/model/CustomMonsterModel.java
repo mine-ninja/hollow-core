@@ -1,8 +1,11 @@
 package io.github.minehollow.bestiary.model;
 
+import io.github.minehollow.bestiary.monster.ability.AbilityDefinition;
+import io.github.minehollow.bestiary.monster.goal.MobBehavior;
 import io.github.minehollow.minecraft.util.range.DoubleRange;
 import io.github.minehollow.minecraft.util.range.IntRange;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -27,6 +30,8 @@ public class CustomMonsterModel {
     private Map<ItemStack, Double> possibleDrops;
     private double scale;
     private boolean useBossBar;
+    private MobBehavior behavior;
+    private List<AbilityDefinition> abilities;
 
 
     public static CustomMonsterModel readFromSection(@NotNull ConfigurationSection section) {
@@ -40,6 +45,18 @@ public class CustomMonsterModel {
 
         final double scale = section.getDouble("scale", 1.0);
         final boolean useBossBar = section.getBoolean("use-boss-bar", false);
+
+        final MobBehavior behavior;
+        final ConfigurationSection behaviorSection = section.getConfigurationSection("behavior");
+        if (behaviorSection != null) {
+            behavior = MobBehavior.readFromSection(behaviorSection);
+        } else {
+            behavior = MobBehavior.DEFAULT_AGGRESSIVE;
+        }
+
+        final List<AbilityDefinition> abilities = AbilityDefinition.readAllFromSection(
+            section.getConfigurationSection("abilities")
+        );
 
         final Map<EquipmentSlot, ItemStack> equipment = new HashMap<>();
         final ConfigurationSection equipmentSection = section.getConfigurationSection("equipment");
@@ -81,7 +98,7 @@ public class CustomMonsterModel {
         return new CustomMonsterModel(
             id, displayName, entityType,
             levelRange, healthPerLevel, damagePerLevel, defensePerLevel,
-            equipment, possibleDrops, scale, useBossBar
+            equipment, possibleDrops, scale, useBossBar, behavior, abilities
         );
     }
 
@@ -96,6 +113,16 @@ public class CustomMonsterModel {
         section.set("defense-per-level", defensePerLevelRange.toString());
         section.set("scale", scale);
         section.set("use-boss-bar", useBossBar);
+
+        final ConfigurationSection behaviorSec = section.createSection("behavior");
+        behavior.writeToSection(behaviorSec);
+
+        if (abilities != null && !abilities.isEmpty()) {
+            final ConfigurationSection abilitiesSec = section.createSection("abilities");
+            for (AbilityDefinition ability : abilities) {
+                ability.writeToSection(abilitiesSec);
+            }
+        }
 
         final ConfigurationSection equipSection = section.createSection("equipment");
         for (Map.Entry<EquipmentSlot, ItemStack> entry : equipment.entrySet()) {

@@ -1,6 +1,7 @@
 package io.github.minehollow.bestiary.monster;
 
 import io.github.minehollow.bestiary.model.CustomMonsterModel;
+import io.github.minehollow.bestiary.monster.ability.AbilityCooldownTracker;
 import io.github.minehollow.bestiary.util.ProximityUtil;
 import io.github.minehollow.minecraft.util.stopwatch.Stopwatch;
 import java.util.concurrent.TimeUnit;
@@ -12,6 +13,7 @@ public final class ActiveMonster {
     private final MonsterStats stats;
     private final MonsterHologram hologram;
     private final CustomMonsterModel model;
+    private final AbilityCooldownTracker abilityCooldowns;
 
     private final Stopwatch inactiveTicks = new Stopwatch();
 
@@ -25,7 +27,9 @@ public final class ActiveMonster {
         this.stats = stats;
         this.hologram = hologram;
         this.model = model;
-
+        this.abilityCooldowns = new AbilityCooldownTracker(
+            model.getAbilities() != null ? model.getAbilities().size() : 0
+        );
     }
 
 
@@ -61,5 +65,9 @@ public final class ActiveMonster {
 
     public CustomMonsterModel model() {
         return model;
+    }
+
+    public AbilityCooldownTracker abilityCooldowns() {
+        return abilityCooldowns;
     }
 }

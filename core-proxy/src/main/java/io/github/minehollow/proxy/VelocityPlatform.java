@@ -13,7 +13,6 @@ import io.github.minehollow.sdk.network.packet.impl.player.teleport.PlayerTelepo
 import io.github.minehollow.sdk.network.packet.impl.server.ServerRegisterPacket;
 import io.github.minehollow.sdk.network.packet.impl.server.ServerUnregisterPacket;
 import io.github.minehollow.sdk.network.packet.impl.staff.GoCommandPacket;
-import io.github.minehollow.proxy.listener.connection.ConnectionHandshakePacketListener;
 import io.github.minehollow.sdk.server.GameServer;
 import io.github.minehollow.sdk.server.type.ServerCategoryType;
 import io.github.minehollow.sdk.util.address.HostAddress;
@@ -51,7 +50,6 @@ public class VelocityPlatform extends AbstractPlatform implements ProxyPlatform 
         networkClient.registerPacketListener(GoCommandPacket.class, new GoCommandPacketListener(this));
         networkClient.registerPacketListener(PlayerConnectToServerPacket.class, new PlayerConnectToServerListener(this));
         networkClient.registerPacketListener(PlayerConnectToSubCategoryPacket.class, new PlayerConnectToSubCategoryListener(this));
-        networkClient.registerPacketListener(ConnectionHandshakePacket.class, new ConnectionHandshakePacketListener(proxyServer));
 
         log.info("Packet listeners registered successfully");
 

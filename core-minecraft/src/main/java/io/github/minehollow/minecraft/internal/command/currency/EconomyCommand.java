@@ -6,13 +6,13 @@ import io.github.minehollow.minecraft.command.context.CommandContext;
 import io.github.minehollow.minecraft.command.exception.CommandFailedException;
 import io.github.minehollow.minecraft.currency.Currency;
 import io.github.minehollow.minecraft.task.Tasks;
+import io.github.minehollow.minecraft.wallet.WalletTransactionContext;
+import java.math.BigDecimal;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-
-import java.math.BigDecimal;
-import java.util.List;
 
 @Slf4j
 public class EconomyCommand extends SimpleCommand {
@@ -33,7 +33,6 @@ public class EconomyCommand extends SimpleCommand {
         final var currencyId = ctx.getRawArgOrThrow(2, "§cEspecifique a currency.");
         final var amountStr = ctx.getRawArgOrThrow(3, "§cEspecifique a quantia.");
 
-
         Currency currency = platform.getCurrencyManager().getCurrency(currencyId);
         if (currency == null) {
             throw new CommandFailedException("§cCurrency inválida: " + currencyId);
@@ -42,7 +41,9 @@ public class EconomyCommand extends SimpleCommand {
         BigDecimal amount;
         try {
             amount = new BigDecimal(amountStr);
-            if (amount.compareTo(BigDecimal.ZERO) < 0) throw new Exception();
+            if (amount.compareTo(BigDecimal.ZERO) < 0) {
+                throw new Exception();
+            }
         } catch (Exception e) {
             throw new CommandFailedException("§cQuantia inválida.");
         }
@@ -55,13 +56,17 @@ public class EconomyCommand extends SimpleCommand {
                     return;
                 }
 
+                final var context = WalletTransactionContext.builder()
+                    .withInitiatorId(null)
+                    .withTargetId(wallet.uniqueId())
+                    .withReason("admin_command: " + sub)
+                    .build();
+
                 switch (sub.toLowerCase()) {
-                    case "add" ->
-                      platform.getPlayerWalletService().addCurrencyValue(wallet.uniqueId(), currencyId, amount);
-                    case "remove" ->
-                      platform.getPlayerWalletService().subtractCurrencyValue(wallet.uniqueId(), currencyId, amount);
+                    case "add" -> platform.getPlayerWalletService().addCurrencyValue(wallet.uniqueId(), currencyId, amount, context);
+                    case "remove" -> platform.getPlayerWalletService().subtractCurrencyValue(wallet.uniqueId(), currencyId, amount, context);
                     case "set" -> {
-                        platform.getPlayerWalletService().setCurrencyValue(wallet.uniqueId(), currencyId, amount);
+                        platform.getPlayerWalletService().setCurrencyValue(wallet.uniqueId(), currencyId, amount, context);
                     }
                     default -> {
                         ctx.sendMessage("§cSubcomando inválido: " + sub);
@@ -78,15 +83,17 @@ public class EconomyCommand extends SimpleCommand {
 
     @Override
     public List<String> performTabComplete(@NotNull CommandContext ctx) {
-        if (ctx.isArgsLength(1)) return List.of("add", "remove", "set");
+        if (ctx.isArgsLength(1)) {
+            return List.of("add", "remove", "set");
+        }
 
         if (ctx.isArgsLength(2)) {
             String arg = ctx.getRawArgOrNull(1);
             return Bukkit.getOnlinePlayers()
-              .stream()
-              .map(Player::getName)
-              .filter(n -> arg == null || n.toLowerCase().startsWith(arg.toLowerCase()))
-              .toList();
+                .stream()
+                .map(Player::getName)
+                .filter(n -> arg == null || n.toLowerCase().startsWith(arg.toLowerCase()))
+                .toList();
         }
 
         if (ctx.isArgsLength(3)) {
