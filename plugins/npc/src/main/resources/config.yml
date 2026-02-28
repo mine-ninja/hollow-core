@@ -1,0 +1,23 @@
+# ═══════════════════════════════════════════
+#  NPC PLUGIN CONFIGURATION
+# ═══════════════════════════════════════════
+
+# Render distance for NPCs (in blocks)
+render-distance: 48
+
+# Auto-save interval in seconds (0 = disabled)
+auto-save-interval: 300
+
+# Whether to show NPCs to spectators
+show-to-spectators: false
+
+# Hologram defaults
+hologram:
+  default-offset: 2.2
+  background-color: 0x0
+
+# Scale limits
+scale:
+  min: 0.1
+  max: 5.0
+

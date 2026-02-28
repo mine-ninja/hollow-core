@@ -16,15 +16,15 @@ import io.github.minehollow.minecraft.command.exception.CommandFailedException;
 import io.github.minehollow.minecraft.menu.MenuUtil;
 import io.github.minehollow.minecraft.util.message.StringUtils;
 import io.github.minehollow.minecraft.wallet.WalletTransactionContext;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
 
 public class ClanCommand extends SimpleCommand {
 
@@ -52,15 +52,20 @@ public class ClanCommand extends SimpleCommand {
 
     @Override
     public void performCommand(@NotNull CommandContext ctx) throws CommandFailedException {
+        Player player = ctx.getSenderAsPlayer();
         String sub = ctx.getRawArgOrNull(0);
         if (sub == null) {
-            handleMenu(ctx.getSenderAsPlayer());
+            Clan playerClan = plugin.getClanService().getByPlayer(player.getUniqueId());
+            if (playerClan != null) {
+                handleMenu(ctx.getSenderAsPlayer());
+            } else {
+                sendHelp(player);
+            }
             return;
         }
 
-        Player player = ctx.getSenderAsPlayer();
-
         switch (sub.toLowerCase()) {
+            case "ajuda", "help" -> sendHelp(player);
             case "criar", "create" -> handleCreate(ctx, player);
             case "desfazer", "disband" -> handleDisband(player);
             case "convidar", "invite" -> handleInvite(ctx, player);
@@ -116,14 +121,16 @@ public class ClanCommand extends SimpleCommand {
         }
 
         Thread.startVirtualThread(() -> {
-            walletService.subtractCurrencyValue(
-                player.getUniqueId(),
-                currencyId,
-                BigDecimal.valueOf(cost),
-                WalletTransactionContext.builder().withInitiatorId(player.getUniqueId())
-                    .withReason("clan_creation")
-                    .build()
-            );
+            if (cost > 0) {
+                walletService.subtractCurrencyValue(
+                    player.getUniqueId(),
+                    currencyId,
+                    BigDecimal.valueOf(cost),
+                    WalletTransactionContext.builder().withInitiatorId(player.getUniqueId())
+                        .withReason("clan_creation")
+                        .build()
+                );
+            }
 
             ClanResult result = service.create(tag, name, player.getUniqueId());
             if (result == ClanResult.SUCCESS) {

@@ -1,0 +1,32 @@
+# ═══════════════════════════════════════════
+#  HOLLOWCORE ESSENTIALS CONFIGURATION
+# ═══════════════════════════════════════════
+
+spawn:
+  world: "world"
+
+teleport:
+  delay: 3              # seconds before teleporting (0 to disable)
+  request-timeout: 60   # seconds before a /tpa request expires
+  cancel-on-move: true  # cancels teleport if the player moves during delay
+
+homes:
+  default-limit: 1      # fallback limit when no hollow.homes.<n> permission is found
+
+tablist:
+  enabled: true
+  update-interval-ticks: 20
+  # All fields support PlaceholderAPI placeholders (e.g. %clans_tag%, %player_health%)
+  # and built-in placeholders: {player}, {online}, {max}, {ping}, {world}, {health}, {max_health}, {level}
+  header: "<gradient:#ff0000:#ffff00>Welcome to the Server!</gradient>"
+  footer: "<gray>Players online: <white>{online}<gray>/<white>{max}"
+  # Tab list and nametag prefix/suffix
+  # Supports MiniMessage + PlaceholderAPI (e.g. %clans_tag%) + built-in placeholders
+  prefix: ""
+  suffix: " <gray>[<white>{ping}ms<gray>]"
+  # Below-name display (shown under the nametag)
+  # Supports MiniMessage formatting + PlaceholderAPI + built-in placeholders
+  belowname:
+    enabled: true
+    format: "<#FF5555>❤ {health} <#555555>│ <#FFAA00>Lv.{level}"
+

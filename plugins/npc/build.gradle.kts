@@ -6,11 +6,12 @@ plugins {
 }
 
 base {
-    archivesName.set("clans")
+    archivesName.set("npc")
 }
 
 repositories {
     mavenCentral()
+    maven("https://maven.pvphub.me/tofaa")
     maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
     maven { url = uri("https://jitpack.io") }
     maven { url = uri("https://oss.sonatype.org/content/groups/public/") }
@@ -23,8 +24,8 @@ repositories {
 
 dependencies {
     compileOnly(project(":core-minecraft"))
-    compileOnly("me.clip:placeholderapi:2.11.6")
     paperweight.paperDevBundle("1.21.4-R0.1-SNAPSHOT")
+    implementation("io.github.tofaa2:spigot:3.1.0-SNAPSHOT")
 }
 
 java {
@@ -42,10 +43,6 @@ tasks.runServer {
 
     downloadPlugins {
         modrinth("packetevents", "2.9.5+spigot")
-        modrinth("placeholderapi", "2.11.6")
-        modrinth("tab-was-taken", "5.2.5")
-        url("https://github.com/MilkBowl/Vault/releases/download/1.7.3/Vault.jar")
-        url("https://github.com/dmulloy2/ProtocolLib/releases/download/5.4.0/ProtocolLib.jar")
     }
 }
 
@@ -58,11 +55,8 @@ tasks.withType(xyz.jpenilla.runtask.task.AbstractRun::class) {
 }
 
 tasks.shadowJar {
-    relocate("okhttp3", "io.github.minehollow.core.libs.okhttp3")
-
     archiveClassifier.set("")
     archiveVersion.set("")
-
     mergeServiceFiles()
     minimize()
 }

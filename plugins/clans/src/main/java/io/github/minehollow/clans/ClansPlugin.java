@@ -2,6 +2,7 @@ package io.github.minehollow.clans;
 
 import io.github.minehollow.clans.command.ClanCommand;
 import io.github.minehollow.clans.config.MessageConfig;
+import io.github.minehollow.clans.hook.PapiHook;
 import io.github.minehollow.clans.listener.ClanListener;
 import io.github.minehollow.clans.menu.ClanConfirmationMenu;
 import io.github.minehollow.clans.menu.ClanMainMenu;
@@ -46,6 +47,12 @@ public class ClansPlugin extends SimplePlugin {
             new ClanConfirmationMenu(this),
             new ClanTransferSelectMenu(this)
         );
+
+        // Register PlaceholderAPI expansion
+        if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            new PapiHook(clanService, slotTable).register();
+            log.info("PlaceholderAPI detected — clan placeholders registered.");
+        }
 
         log.info("ClansPlugin enabled — {} slot tiers loaded.", slotTable.length);
     }

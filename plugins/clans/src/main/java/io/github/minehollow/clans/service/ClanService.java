@@ -80,7 +80,7 @@ public class ClanService {
     public @Nullable Clan getByPlayer(@NotNull UUID playerId) {
         String tag = playerTagCache.getIfPresent(playerId);
         if (tag != null) {
-            Clan cached = tagCache.getIfPresent(tag);
+            Clan cached = tagCache.getIfPresent(tag.toUpperCase());
             if (cached != null) {
                 return cached;
             }
@@ -338,14 +338,16 @@ public class ClanService {
     }
 
     private void cache(@NotNull Clan clan) {
-        tagCache.put(clan.getTag(), clan);
+        String key = clan.getTag().toUpperCase();
+        tagCache.put(key, clan);
         for (ClanMember m : clan.getMembers()) {
-            playerTagCache.put(m.getUuid(), clan.getTag());
+            playerTagCache.put(m.getUuid(), key);
         }
     }
 
     private void evict(@NotNull Clan clan) {
-        tagCache.invalidate(clan.getTag());
+        String key = clan.getTag().toUpperCase();
+        tagCache.invalidate(key);
         for (ClanMember m : clan.getMembers()) {
             playerTagCache.invalidate(m.getUuid());
         }

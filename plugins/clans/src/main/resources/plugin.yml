@@ -5,4 +5,5 @@ author: sasuked
 folia-supported: true
 api-version: 1.13
 depend: [ BukkitPlatformPlugin ]
+softdepend: [ PlaceholderAPI ]
 

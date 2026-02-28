@@ -65,7 +65,7 @@ public class ClanMainMenu extends SimpleMenu {
 
         // ── Clan Info ──
         ctx.setItem(
-            'I', ItemBuilder.of(Material.BOOK)
+            'I', p -> ItemBuilder.of(Material.BOOK)
                 .name("<gradient:#C77DFF:#9D4EDD><bold>✦ Informações do Clan</bold></gradient>")
                 .addLore(
                     " ",
@@ -74,7 +74,6 @@ public class ClanMainMenu extends SimpleMenu {
                     " <gray>Dono:</gray> <white>" + resolvePlayerName(clan.getOwnerId()) + "</white>",
                     " <gray>Membros:</gray> <white>" + clan.getMembers().size() + "/" + clan.getMaxMembers(plugin.getSlotTable()) + "</white>",
                     " <gray>Nível de Vagas:</gray> <white>" + clan.getSlotTier() + "</white>",
-                    " <gray>Fogo Amigo:</gray> " + (clan.isFriendlyFire() ? "<green>Ativado" : "<red>Desativado"),
                     " "
                 )
                 .flags(ItemFlag.HIDE_ATTRIBUTES)

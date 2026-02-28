@@ -17,4 +17,6 @@ include(
     "plugins:quests",
     "plugins:mailbox",
     "plugins:clans",
+    "plugins:essentials",
+    "plugins:npc",
 )

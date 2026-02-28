@@ -6,7 +6,7 @@ plugins {
 }
 
 base {
-    archivesName.set("clans")
+    archivesName.set("essentials")
 }
 
 repositories {
