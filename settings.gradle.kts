@@ -19,4 +19,5 @@ include(
     "plugins:clans",
     "plugins:essentials",
     "plugins:npc",
+    "plugins:leaderboard",
 )

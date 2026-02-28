@@ -12,7 +12,6 @@ import io.github.minehollow.npc.api.actions.CommandAction;
 import io.github.minehollow.npc.api.actions.MessageAction;
 import io.github.minehollow.npc.api.actions.SoundAction;
 import io.github.minehollow.npc.impl.NpcRegistryImpl;
-import io.github.minehollow.npc.service.SkinService;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
@@ -298,6 +297,7 @@ public class NpcCommand extends SimpleCommand {
         catch (IllegalArgumentException e) { throw fail("§cTipo inválido: " + ctx.getRawArgOrThrow(2, "§cUso: /npc clicktype <id> <tipo>")); }
         npc.setClickType(type);
         registry().markDirty();
+
         ctx.sendMessage("§aTipo de clique do NPC §f" + npc.getId() + " §adefinido para §f" + type.name() + "§a.");
     }
 

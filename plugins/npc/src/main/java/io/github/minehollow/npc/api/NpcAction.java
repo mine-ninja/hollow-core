@@ -5,5 +5,6 @@ import org.jetbrains.annotations.NotNull;
 
 public interface NpcAction {
     void execute(@NotNull Player player, @NotNull Npc npc);
+
     String getType();
 }

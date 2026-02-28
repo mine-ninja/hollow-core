@@ -1,0 +1,29 @@
+# Leaderboard Definitions
+# Each leaderboard tracks a stat key from the StatService.
+#
+# Example:
+# leaderboards:
+#   kills:
+#     stat-key: kills
+#     period: WEEKLY
+#     display-name: "<gold><bold>Top Kills</bold></gold>"
+#     max-entries: 10
+#     header:
+#       - "<gray>━━━━━━━━━━━━━━━━━━━━"
+#       - "<gold><bold>Top Kills — Semanal</bold></gold>"
+#       - "<gray>━━━━━━━━━━━━━━━━━━━━"
+#     entry-format: "<yellow>{position}. <white>{player} <gray>- <aqua>{value}"
+#     footer:
+#       - "<gray>━━━━━━━━━━━━━━━━━━━━"
+#     empty-entry: "<dark_gray>{position}. ---"
+#     icon: DIAMOND_SWORD
+#     hologram:
+#       world: world
+#       x: 0.5
+#       y: 65.0
+#       z: 0.5
+#       yaw: 0.0
+#       pitch: 0.0
+
+leaderboards: {}
+

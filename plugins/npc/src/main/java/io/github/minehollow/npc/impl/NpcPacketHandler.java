@@ -8,18 +8,15 @@ import io.github.minehollow.npc.api.Npc;
 import io.github.minehollow.npc.api.NpcAction;
 import io.github.minehollow.npc.api.NpcClickEvent;
 import io.github.minehollow.npc.api.NpcClickType;
-import io.github.minehollow.minecraft.task.Tasks;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-
 /**
- * Listens for INTERACT_ENTITY packets and resolves them to NPC clicks.
- * Includes a per-player cooldown to prevent spam.
+ * Listens for INTERACT_ENTITY packets and resolves them to NPC clicks. Includes a per-player cooldown to prevent spam.
  */
 public class NpcPacketHandler extends PacketListenerAbstract {
 
@@ -34,22 +31,30 @@ public class NpcPacketHandler extends PacketListenerAbstract {
 
     @Override
     public void onPacketReceive(@NotNull PacketReceiveEvent event) {
-        if (event.getPacketType() != PacketType.Play.Client.INTERACT_ENTITY) return;
+        if (event.getPacketType() != PacketType.Play.Client.INTERACT_ENTITY) {
+            return;
+        }
 
         var wrapper = new WrapperPlayClientInteractEntity(event);
         int entityId = wrapper.getEntityId();
 
         Npc npc = registry.getByEntityId(entityId);
-        if (npc == null) return;
+        if (npc == null) {
+            return;
+        }
 
         Player player = (Player) event.getPlayer();
-        if (player == null) return;
+        if (player == null) {
+            return;
+        }
 
         // Cooldown check
         UUID uuid = player.getUniqueId();
         long now = System.currentTimeMillis();
         Long last = cooldowns.get(uuid);
-        if (last != null && now - last < CLICK_COOLDOWN_MS) return;
+        if (last != null && now - last < CLICK_COOLDOWN_MS) {
+            return;
+        }
         cooldowns.put(uuid, now);
 
         // Determine click type
@@ -57,21 +62,21 @@ public class NpcPacketHandler extends PacketListenerAbstract {
 
         // Check if NPC accepts this click type
         NpcClickType accepted = npc.getClickType();
-        if (accepted != NpcClickType.ANY && accepted != clickType) return;
+        if (accepted != NpcClickType.ANY && accepted != clickType) {
+            return;
+        }
 
         // Fire event + execute actions on the main thread
-        Tasks.runSync(() -> {
-            NpcClickEvent clickEvent = new NpcClickEvent(npc, player, clickType);
-            Bukkit.getPluginManager().callEvent(clickEvent);
+        NpcClickEvent clickEvent = new NpcClickEvent(npc, player, clickType);
+        Bukkit.getPluginManager().callEvent(clickEvent);
 
-            for (NpcAction action : npc.getActions()) {
-                action.execute(player, npc);
-            }
-        });
+        for (NpcAction action : npc.getActions()) {
+            action.execute(player, npc);
+        }
     }
 
     private @NotNull NpcClickType resolveClickType(@NotNull WrapperPlayClientInteractEntity wrapper,
-                                                    @NotNull Player player) {
+                                                   @NotNull Player player) {
         boolean sneaking = player.isSneaking();
         return switch (wrapper.getAction()) {
             case ATTACK -> sneaking ? NpcClickType.SHIFT_LEFT : NpcClickType.LEFT;

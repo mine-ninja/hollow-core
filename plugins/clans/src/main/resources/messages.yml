@@ -56,7 +56,8 @@ invite-received:
   - " "
   - "  <gradient:#C77DFF:#9D4EDD><bold>✉ CONVITE DE CLAN</bold></gradient>"
   - "  <gray>Você foi convidado para o clan</gray> <white><bold>[{tag}]</bold></white>"
-  - "  <gray>Use</gray> <yellow>/clan entrar {tag}</yellow> <gray>para aceitar.</gray>"
+  - " "
+  - "  {accept}  {decline}"
   - " "
 
 joined-clan: "<green>Você entrou no clan <white><bold>[{tag}]</bold></white>!"

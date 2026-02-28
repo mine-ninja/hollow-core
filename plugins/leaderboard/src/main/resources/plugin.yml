@@ -1,0 +1,8 @@
+name: LeaderboardPlugin
+main: io.github.minehollow.leaderboard.LeaderboardPlugin
+version: 1.0.0
+author: sasuked
+api-version: 1.13
+depend: [ BukkitPlatformPlugin, packetevents ]
+softdepend: [ PlaceholderAPI ]
+

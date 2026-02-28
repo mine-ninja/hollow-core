@@ -34,7 +34,7 @@ public class ClanListener implements Listener {
             event.setCancelled(true);
             MessageConfig cfg = MessageConfig.getInstance();
             if (cfg != null) {
-                attacker.sendMessage(cfg.get("friendly-fire-blocked"));
+                //attacker.sendMessage(cfg.get("friendly-fire-blocked"));
             }
         }
     }

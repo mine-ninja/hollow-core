@@ -82,7 +82,7 @@ public class NpcRegistryImpl implements NpcRegistry {
 
         npcs.put(id, npc);
         entityIdIndex.put(npc.getEntityId(), npc);
-        storage.markDirty();
+        markDirty();
         return npc;
     }
 
@@ -103,7 +103,7 @@ public class NpcRegistryImpl implements NpcRegistry {
 
         entityIdIndex.remove(npc.getEntityId());
         npc.despawn();
-        storage.markDirty();
+        markDirty();
         return true;
     }
 
@@ -119,8 +119,13 @@ public class NpcRegistryImpl implements NpcRegistry {
         return npcs.values();
     }
 
+    /**
+     * Marks as dirty and triggers an immediate async save so changes
+     * are persisted right away (e.g. after command mutations).
+     */
     public void markDirty() {
         storage.markDirty();
+        saveAll();
     }
 }
 

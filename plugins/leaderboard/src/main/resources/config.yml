@@ -1,0 +1,5 @@
+# Leaderboard Plugin Configuration
+
+# How often (in seconds) leaderboard data is refreshed from MongoDB
+refresh-interval: 30
+
