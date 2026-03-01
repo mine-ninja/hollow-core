@@ -5,25 +5,23 @@ import io.github.minehollow.minecraft.command.SimpleCommand;
 import io.github.minehollow.minecraft.command.context.CommandContext;
 import io.github.minehollow.minecraft.command.exception.CommandFailedException;
 import io.github.minehollow.minecraft.currency.Currency;
+import io.github.minehollow.minecraft.util.message.MessageConfig;
 import io.github.minehollow.minecraft.task.Tasks;
 import io.github.minehollow.minecraft.util.Cooldown;
+import io.github.minehollow.minecraft.util.message.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerQuitEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 @Slf4j
-public class CurrencyBasedCommand extends SimpleCommand implements Listener {
+public class  CurrencyBasedCommand extends SimpleCommand implements Listener {
 
     private final BukkitPlatform platform;
     private final Currency currency;
@@ -35,6 +33,24 @@ public class CurrencyBasedCommand extends SimpleCommand implements Listener {
         Bukkit.getPluginManager().registerEvents(this, platform.getPlugin());
     }
 
+    private MessageConfig messages() {
+        return platform.getMessageConfig();
+    }
+
+    /**
+     * Returns a MiniMessage Component for the given key and placeholders.
+     */
+    private Component msg(@NotNull String key, @NotNull Object... replacements) {
+        return messages().get("currency-messages", key, replacements);
+    }
+
+    /**
+     * Returns a raw MiniMessage string (pre-parsed) for use in CommandFailedException
+     * and getRawArgOrThrow error messages (which are parsed by SimpleCommand).
+     */
+    private String rawMsg(@NotNull String key, @NotNull Object... replacements) {
+        return messages().getRaw("currency-messages", key, replacements);
+    }
 
     @Override
     public void performCommand(@NotNull CommandContext ctx) throws CommandFailedException {
@@ -42,18 +58,23 @@ public class CurrencyBasedCommand extends SimpleCommand implements Listener {
         if (sub == null) {
             Player p = ctx.getSenderAsPlayer();
             BigDecimal bal = platform.getWalletService().getCachedWalletOrThrow(p.getUniqueId()).getCurrencyAmount(currency.id());
-            ctx.sendMessage("§fVocê tem §a" + currency.formatAmountSimple(bal) + "§f.");
+            ctx.sendMessage(msg("balance-self",
+              "symbol", currency.symbol(),
+              "balance", currency.formatAmountSimple(bal),
+              "currency", currency.displayName(),
+              "currency_plural", currency.pluralDisplayName()
+            ));
             return;
         }
 
         switch (sub.toLowerCase()) {
-            case "ver" -> handleViewBalance(ctx, ctx.getRawArgOrThrow(1, "§cEspecifique o jogador."));
+            case "ver" -> handleViewBalance(ctx, ctx.getRawArgOrThrow(1, rawMsg("eco-player-required")));
             case "pagar", "pay" -> {
-                if (!currency.allowPlayerPayments()) throw new CommandFailedException("§cPagamentos desabilitados.");
-                handlePay(ctx, ctx.getRawArgOrThrow(1, "§cEspecifique o jogador."), ctx.getRawArgOrThrow(2, "§cEspecifique a quantia."));
+                if (!currency.allowPlayerPayments()) throw new CommandFailedException(rawMsg("pay-disabled"));
+                handlePay(ctx, ctx.getRawArgOrThrow(1, rawMsg("eco-player-required")), ctx.getRawArgOrThrow(2, rawMsg("eco-amount-required")));
             }
             case "top" -> handleTop(ctx);
-            default -> throw new CommandFailedException("§cUse: ver, pagar ou top.");
+            default -> throw new CommandFailedException(rawMsg("usage"));
         }
     }
 
@@ -62,12 +83,18 @@ public class CurrencyBasedCommand extends SimpleCommand implements Listener {
             try {
                 var wallet = platform.getWalletService().getOrLoadWallet(targetName);
                 if (wallet == null) {
-                    ctx.sendMessage("§cJogador não encontrado.");
+                    ctx.sendMessage(msg("balance-other-error"));
                     return;
                 }
-                ctx.sendMessage("§fSaldo de §a" + targetName + "§f: §a" + currency.formatAmountSimple(wallet.getCurrencyAmount(currency.id())));
+                ctx.sendMessage(msg("balance-other",
+                  "target", targetName,
+                  "symbol", currency.symbol(),
+                  "balance", currency.formatAmountSimple(wallet.getCurrencyAmount(currency.id())),
+                  "currency", currency.displayName(),
+                  "currency_plural", currency.pluralDisplayName()
+                ));
             } catch (Exception e) {
-                ctx.sendMessage("§cErro ao buscar saldo.");
+                ctx.sendMessage(msg("balance-other-fetch-error"));
             }
         });
     }
@@ -75,51 +102,59 @@ public class CurrencyBasedCommand extends SimpleCommand implements Listener {
     private void handlePay(CommandContext ctx, String targetName, String amountStr) {
         Player sender = ctx.getSenderAsPlayer();
         if (sender.getName().equalsIgnoreCase(targetName)) {
-            throw new CommandFailedException("§cVocê não pode pagar a si mesmo.");
+            throw new CommandFailedException(rawMsg("pay-self"));
         }
 
         Player target = Bukkit.getPlayer(targetName);
-        if (target == null) throw new CommandFailedException("§cJogador offline.");
+        if (target == null) throw new CommandFailedException(rawMsg("pay-target-offline"));
 
         BigDecimal amount;
         try {
             amount = new BigDecimal(amountStr);
             if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new Exception("§cQuantia inválida.");
+                throw new Exception();
             }
         } catch (Exception e) {
-            throw new CommandFailedException("§cQuantia inválida.");
+            throw new CommandFailedException(rawMsg("pay-invalid-amount"));
         }
 
         if (!Cooldown.setIfNotInCooldown(sender.getUniqueId(), 5000L, "pay-" + currency.id())) {
-            throw new CommandFailedException("§cAguarde para pagar novamente.");
+            throw new CommandFailedException(rawMsg("pay-cooldown"));
         }
 
         Tasks.runAsync(() -> {
             try {
                 var source = platform.getWalletService().getCachedWallet(sender.getUniqueId());
                 if (source == null || !source.hasAmount(currency.id(), amount)) {
-                    ctx.sendMessage("§cSaldo insuficiente.");
+                    ctx.sendMessage(msg("pay-insufficient-balance"));
                     return;
                 }
 
                 final var updatedSource = platform.getWalletService().decrementCurrencyValue(sender.getUniqueId(), currency.id(), amount, true);
                 final var targetSource = platform.getWalletService().incrementCurrencyValue(target.getUniqueId(), currency.id(), amount, true);
 
-                ctx.sendMessage(
-                  "§fVocê pagou §a" + currency.formatAmountSimple(amount) + " §fa §a" + target.getName() + "§f. " +
-                  "Seu novo saldo é §a" + currency.formatAmountSimple(updatedSource.getCurrencyAmount(currency.id())) + "§f."
-                );
+                ctx.sendMessage(msg("pay-sent",
+                  "symbol", currency.symbol(),
+                  "amount", currency.formatAmountSimple(amount),
+                  "target", target.getName(),
+                  "balance", currency.formatAmountSimple(updatedSource.getCurrencyAmount(currency.id())),
+                  "currency", currency.displayName(),
+                  "currency_plural", currency.pluralDisplayName()
+                ));
 
-                target.sendMessage(
-                  "§fVocê recebeu §a" + currency.formatAmountSimple(amount) + " §fde §a" + sender.getName() + "§f. " +
-                  "Seu novo saldo é §a" + currency.formatAmountSimple(targetSource.getCurrencyAmount(currency.id())) + "§f."
+                messages().send(target, "currency-messages", "pay-received",
+                  "symbol", currency.symbol(),
+                  "amount", currency.formatAmountSimple(amount),
+                  "player", sender.getName(),
+                  "balance", currency.formatAmountSimple(targetSource.getCurrencyAmount(currency.id())),
+                  "currency", currency.displayName(),
+                  "currency_plural", currency.pluralDisplayName()
                 );
 
                 Cooldown.removeCooldown(sender.getUniqueId(), "pay-" + currency.id());
             } catch (Exception e) {
                 log.error("Erro no pagamento", e);
-                ctx.sendMessage("§cErro interno na transação.");
+                ctx.sendMessage(msg("pay-error"));
             }
         });
     }
@@ -128,19 +163,30 @@ public class CurrencyBasedCommand extends SimpleCommand implements Listener {
         Tasks.runAsync(() -> {
             var top = platform.getWalletService().getTopWalletsByCurrency(currency.id(), 10);
             if (top.isEmpty()) {
-                ctx.sendMessage("§cRanking vazio.");
+                ctx.sendMessage(msg("top-empty"));
                 return;
             }
 
-            ctx.sendMessage("§6Ranking " + currency.pluralDisplayName() + ":");
+            ctx.sendMessage(msg("top-header",
+              "currency", currency.displayName(),
+              "currency_plural", currency.pluralDisplayName(),
+              "symbol", currency.symbol()
+            ));
             for (int i = 0; i < top.size(); i++) {
                 var e = top.get(i);
-                ctx.sendMessage("§e" + (i + 1) + ". §f" + e.playerName() + " §7- §f" + currency.formatAmount(e.amount()));
+                ctx.sendMessage(msg("top-entry",
+                  "index", (i + 1),
+                  "player", e.playerName(),
+                  "amount", currency.formatAmount(e.amount()),
+                  "symbol", currency.symbol(),
+                  "currency", currency.displayName(),
+                  "currency_plural", currency.pluralDisplayName()
+                ));
             }
 
             if (ctx.getSender() instanceof Player p) {
                 long pos = platform.getWalletService().getWalletPositionInCurrencyRanking(p.getUniqueId(), currency.id());
-                ctx.sendMessage("§fSua posição: §a#" + pos);
+                ctx.sendMessage(msg("top-position", "position", pos));
             }
         });
     }

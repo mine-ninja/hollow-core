@@ -37,7 +37,7 @@ public class InternalCommandManager {
      */
     public void registerInternalCommands() {
         CommandMap commandMap = Bukkit.getCommandMap();
-        commandMap.register("hollow", new GameModeCommand());
+        commandMap.register("hollow", new GameModeCommand(platform));
 
         final var lobbyEnabled = Property.get("LOBBY_ENABLED", "true").equalsIgnoreCase("true");
         if (lobbyEnabled) {
@@ -56,6 +56,7 @@ public class InternalCommandManager {
         commandMap.register("hollow", new LinkCommand(platform));
         commandMap.register("hollow", new UnlinkCommand(platform));
         commandMap.register("hollow", new EconomyCommand(platform));
+        commandMap.register("hollow", new ReloadMessagesCommand(platform));
     }
 
     public void registerCurrencyCommand(@NotNull Currency currency) {

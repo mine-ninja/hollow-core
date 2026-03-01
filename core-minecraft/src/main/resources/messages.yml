@@ -1,0 +1,103 @@
+# ══════════════════════════════════════════════════════════
+#  Currency Messages Configuration
+#  Configurable messages for all currency commands.
+# ══════════════════════════════════════════════════════════
+#
+#  Placeholders available:
+#    {currency}        — Currency display name (e.g. "Coin")
+#    {currency_plural} — Currency plural name (e.g. "Coins")
+#    {symbol}          — Currency symbol (e.g. "$")
+#    {amount}          — Formatted amount
+#    {balance}         — Formatted balance
+#    {player}          — Player name (sender)
+#    {target}          — Target player name
+#    {position}        — Ranking position
+#    {index}           — Ranking index (1, 2, 3...)
+#
+#  Supports MiniMessage formatting.
+#  Reference: https://docs.advntr.dev/minimessage/format.html
+#
+# ══════════════════════════════════════════════════════════
+
+# ──────────────── GameMode messages ────────────────
+gamemode-messages:
+  invalid-usage: '<red>Modo de jogo inválido. Use: <yellow>survival<gray>, <yellow>creative<gray>, <yellow>adventure<gray>, <yellow>spectator<gray>.'
+  no-permission: '<red>Você não tem permissão para usar este modo de jogo.'
+  player-not-found: '<red>Jogador não encontrado: <yellow>{target}'
+  self-changed: '<green>Seu modo de jogo foi alterado para <yellow>{gamemode}<green>.'
+  other-changed: '<green>Modo de jogo de <yellow>{target}<green> alterado para <yellow>{gamemode}<green>.'
+  changed-by: '<green>Seu modo de jogo foi alterado para <yellow>{gamemode}<green> por <yellow>{player}<green>.'
+
+
+currency-messages:
+
+  # Default messages used by all currencies unless overridden
+  defaults:
+
+    # /money (self balance)
+    balance-self: "<white>Você tem <green>{symbol}{balance} {currency_plural}<white>."
+
+    # /money ver <player>
+    balance-other: "<white>Saldo de <green>{target}<white>: <green>{symbol}{balance} {currency_plural}"
+    balance-other-error: "<red>Jogador não encontrado."
+    balance-other-fetch-error: "<red>Erro ao buscar saldo."
+
+    # /money pagar <player> <amount>
+    pay-disabled: "<red>Pagamentos desabilitados para esta moeda."
+    pay-self: "<red>Você não pode pagar a si mesmo."
+    pay-target-offline: "<red>Jogador offline."
+    pay-invalid-amount: "<red>Quantia inválida."
+    pay-cooldown: "<red>Aguarde para pagar novamente."
+    pay-insufficient-balance: "<red>Saldo insuficiente."
+    pay-sent: "<white>Você pagou <green>{symbol}{amount} <white>a <green>{target}<white>. Seu novo saldo é <green>{symbol}{balance}<white>."
+    pay-received: "<white>Você recebeu <green>{symbol}{amount} <white>de <green>{player}<white>. Seu novo saldo é <green>{symbol}{balance}<white>."
+    pay-error: "<red>Erro interno na transação."
+
+    # /money top
+    top-empty: "<red>Ranking vazio."
+    top-header: "<gold>Ranking {currency_plural}:"
+    top-entry: "<yellow>{index}. <white>{player} <gray>- <white>{amount}"
+    top-position: "<white>Sua posição: <green>#{position}"
+
+    # /money usage
+    usage: "<red>Use: ver, pagar ou top."
+
+    # /eco (admin commands)
+    eco-usage: "<red>Use: /eco <add|remove|set> <jogador> <currency> <quantia>"
+    eco-player-required: "<red>Especifique o jogador."
+    eco-currency-required: "<red>Especifique a currency."
+    eco-amount-required: "<red>Especifique a quantia."
+    eco-invalid-currency: "<red>Currency inválida: {currency}"
+    eco-invalid-amount: "<red>Quantia inválida."
+    eco-player-not-found: "<red>Jogador não encontrado ou sem carteira."
+    eco-invalid-sub: "<red>Subcomando inválido: {sub}"
+    eco-success: "<green>Operação realizada com sucesso para <aqua>{target}<green>."
+    eco-error: "<red>Erro ao processar operação econômica."
+
+  # Per-currency overrides (optional)
+  # Use the currency ID as the key and override only the messages you want to customize.
+  # Any message not listed here will fallback to the defaults above.
+  overrides:
+    rankup_coins:
+      balance-self: "<white>Você possui <green>{symbol}{balance} <white>moedas de rankup."
+      balance-other: "<white>Saldo de <green>{target}<white>: <green>{symbol}{balance} <white>moedas de rankup."
+      balance-other-error: "<red>Jogador não encontrado."
+      balance-other-fetch-error: "<red>Erro ao buscar saldo de moedas."
+      pay-disabled: "<red>Pagamentos de moedas de rankup estão desabilitados."
+      pay-self: "<red>Você não pode enviar moedas para si mesmo."
+      pay-target-offline: "<red>Esse jogador está offline."
+      pay-invalid-amount: "<red>Quantia de moedas inválida."
+      pay-cooldown: "<red>Aguarde antes de enviar moedas novamente."
+      pay-insufficient-balance: "<red>Você não tem moedas de rankup suficientes."
+      pay-sent: "<white>Você enviou <green>{symbol}{amount} moedas <white>para <green>{target}<white>. Novo saldo: <green>{symbol}{balance}<white>."
+      pay-received: "<white>Você recebeu <green>{symbol}{amount} moedas <white>de <green>{player}<white>. Novo saldo: <green>{symbol}{balance}<white>."
+      pay-error: "<red>Erro ao processar a transação de moedas."
+      top-empty: "<red>Nenhum jogador no ranking de moedas."
+      top-header: "<gold><bold>Top 10 Moedas de Rankup:"
+      top-entry: "<yellow>#{index} <white>{player} <gray>— <green>{amount}"
+      top-position: "<white>Você está em <green>#{position}<white> no ranking."
+      usage: "<red>Use: /{command} ver, pagar ou top."
+      eco-success: "<green>Operação de moedas realizada com sucesso para <aqua>{target}<green>."
+      eco-error: "<red>Erro ao processar operação de moedas."
+
+

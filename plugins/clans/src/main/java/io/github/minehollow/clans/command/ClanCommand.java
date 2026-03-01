@@ -16,9 +16,6 @@ import io.github.minehollow.minecraft.command.exception.CommandFailedException;
 import io.github.minehollow.minecraft.menu.MenuUtil;
 import io.github.minehollow.minecraft.util.message.StringUtils;
 import io.github.minehollow.minecraft.wallet.WalletTransactionContext;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.event.HoverEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -167,7 +164,7 @@ public class ClanCommand extends SimpleCommand {
                 Clan clan = service.getByPlayer(player.getUniqueId());
                 String tag = clan != null ? clan.getTag() : "???";
                 msg().send(player, "invite-sent", "player", target.getName());
-                sendInviteMessage(target, tag);
+                msg().sendList(target, "invite-received", "tag", tag);
             } else {
                 player.sendMessage(result.getMessage());
             }
@@ -420,24 +417,6 @@ public class ClanCommand extends SimpleCommand {
     // ═══════════════════════════════════════
     //  HELPERS
     // ═══════════════════════════════════════
-
-    private void sendInviteMessage(@NotNull Player target, @NotNull String tag) {
-        Component acceptButton = StringUtils.text("<green><bold>[ACEITAR]</bold></green>")
-            .clickEvent(ClickEvent.runCommand("/clan entrar " + tag))
-            .hoverEvent(HoverEvent.showText(StringUtils.text("<green>Clique para aceitar o convite")));
-
-        Component declineButton = StringUtils.text("<red><bold>[RECUSAR]</bold></red>")
-            .clickEvent(ClickEvent.runCommand("/clan recusar " + tag))
-            .hoverEvent(HoverEvent.showText(StringUtils.text("<red>Clique para recusar o convite")));
-
-        List<String> rawLines = msg().getList("invite-received", "tag", tag);
-        for (String line : rawLines) {
-            Component component = StringUtils.text(line)
-                .replaceText(StringUtils.replaceComponent("{accept}", acceptButton))
-                .replaceText(StringUtils.replaceComponent("{decline}", declineButton));
-            target.sendMessage(component);
-        }
-    }
 
     private void broadcastToClan(@NotNull String tag, @NotNull String message) {
         Clan clan = service.getByTag(tag);

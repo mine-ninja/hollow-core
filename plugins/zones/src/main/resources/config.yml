@@ -1,0 +1,13 @@
+# ──────────────────────────────────────────
+# Zones — High-Performance Spatial Protection
+# ──────────────────────────────────────────
+# Zone types:
+#   CHUNK  — snap-to-grid, 16×16 aligned (O(1) lookup)
+#   CUBOID — block-precise, R-Tree indexed  (O(log n) lookup)
+#
+# Flag states: allow | deny | none (inherit from lower-priority zone)
+#
+# Bounds format: [minX, minY, minZ, maxX, maxY, maxZ]
+# ──────────────────────────────────────────
+
+zones:

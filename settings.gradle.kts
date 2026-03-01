@@ -20,4 +20,5 @@ include(
     "plugins:essentials",
     "plugins:npc",
     "plugins:leaderboard",
+    "plugins:zones",
 )

@@ -5,11 +5,13 @@ import io.github.minehollow.minecraft.command.SimpleCommand;
 import io.github.minehollow.minecraft.command.context.CommandContext;
 import io.github.minehollow.minecraft.command.exception.CommandFailedException;
 import io.github.minehollow.minecraft.currency.Currency;
+import io.github.minehollow.minecraft.util.message.MessageConfig;
 import io.github.minehollow.minecraft.task.Tasks;
 import io.github.minehollow.minecraft.wallet.WalletTransactionContext;
 import java.math.BigDecimal;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -26,16 +28,35 @@ public class EconomyCommand extends SimpleCommand {
         this.setRequiredPermission("economy.admin");
     }
 
+    private MessageConfig messages() {
+        return platform.getMessageConfig();
+    }
+
+    /**
+     * Returns a MiniMessage Component for the given currency and key.
+     */
+    private Component msg(@NotNull String currencyId, @NotNull String key, @NotNull Object... replacements) {
+        return messages().get("currency-messages", key, replacements);
+    }
+
+    /**
+     * Returns a raw MiniMessage string for use in CommandFailedException
+     * and getRawArgOrThrow error messages (parsed by SimpleCommand).
+     */
+    private String rawMsg(@NotNull String currencyId, @NotNull String key, @NotNull Object... replacements) {
+        return messages().getRaw("currency-messages", key, replacements);
+    }
+
     @Override
     public void performCommand(@NotNull CommandContext ctx) throws CommandFailedException {
-        final var sub = ctx.getRawArgOrThrow(0, "§cUse: /eco <add|remove|set> <jogador> <currency> <quantia>");
-        final var targetName = ctx.getRawArgOrThrow(1, "§cEspecifique o jogador.");
-        final var currencyId = ctx.getRawArgOrThrow(2, "§cEspecifique a currency.");
-        final var amountStr = ctx.getRawArgOrThrow(3, "§cEspecifique a quantia.");
+        final var sub = ctx.getRawArgOrThrow(0, rawMsg("_default", "eco-usage"));
+        final var targetName = ctx.getRawArgOrThrow(1, rawMsg("_default", "eco-player-required"));
+        final var currencyId = ctx.getRawArgOrThrow(2, rawMsg("_default", "eco-currency-required"));
+        final var amountStr = ctx.getRawArgOrThrow(3, rawMsg("_default", "eco-amount-required"));
 
         Currency currency = platform.getCurrencyManager().getCurrency(currencyId);
         if (currency == null) {
-            throw new CommandFailedException("§cCurrency inválida: " + currencyId);
+            throw new CommandFailedException(rawMsg("_default", "eco-invalid-currency", "currency", currencyId));
         }
 
         BigDecimal amount;
@@ -45,14 +66,14 @@ public class EconomyCommand extends SimpleCommand {
                 throw new Exception();
             }
         } catch (Exception e) {
-            throw new CommandFailedException("§cQuantia inválida.");
+            throw new CommandFailedException(rawMsg(currencyId, "eco-invalid-amount"));
         }
 
         Tasks.runAsync(() -> {
             try {
                 var wallet = platform.getWalletService().getOrLoadWallet(targetName);
                 if (wallet == null) {
-                    ctx.sendMessage("§cJogador não encontrado ou sem carteira.");
+                    ctx.sendMessage(msg(currencyId, "eco-player-not-found"));
                     return;
                 }
 
@@ -65,17 +86,15 @@ public class EconomyCommand extends SimpleCommand {
                 switch (sub.toLowerCase()) {
                     case "add" -> platform.getPlayerWalletService().addCurrencyValue(wallet.uniqueId(), currencyId, amount, context);
                     case "remove" -> platform.getPlayerWalletService().subtractCurrencyValue(wallet.uniqueId(), currencyId, amount, context);
-                    case "set" -> {
-                        platform.getPlayerWalletService().setCurrencyValue(wallet.uniqueId(), currencyId, amount, context);
-                    }
+                    case "set" -> platform.getPlayerWalletService().setCurrencyValue(wallet.uniqueId(), currencyId, amount, context);
                     default -> {
-                        ctx.sendMessage("§cSubcomando inválido: " + sub);
+                        ctx.sendMessage(msg(currencyId, "eco-invalid-sub", "sub", sub));
                         return;
                     }
                 }
-                ctx.sendMessage("§aOperação realizada com sucesso para §b" + targetName + "§a.");
+                ctx.sendMessage(msg(currencyId, "eco-success", "target", targetName));
             } catch (Exception e) {
-                ctx.sendMessage("§cErro ao processar operação econômica.");
+                ctx.sendMessage(msg(currencyId, "eco-error"));
                 log.error("Erro ao processar comando econômico", e);
             }
         });

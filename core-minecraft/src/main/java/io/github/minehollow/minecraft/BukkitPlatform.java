@@ -16,6 +16,7 @@ import io.github.minehollow.minecraft.internal.listener.InternalPlayerListener;
 import io.github.minehollow.minecraft.menu.SimpleMenuManager;
 import io.github.minehollow.minecraft.task.Tasks;
 import io.github.minehollow.minecraft.util.message.AdventureFormatters;
+import io.github.minehollow.minecraft.util.message.MessageConfig;
 import io.github.minehollow.minecraft.util.message.input.ChatInput;
 import io.github.minehollow.minecraft.vanish.VanishManager;
 import io.github.minehollow.minecraft.wallet.PlayerWalletBukkitService;
@@ -111,6 +112,7 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
     private final ServerCategoryType serverCategoryType;
     private final ServerSubCategoryType serverSubCategoryType;
     private final InternalCommandManager internalCommandManager;
+    private final MessageConfig messageConfig;
     private final CurrencyManager currencyManager;
     private final VanishManager vanishManager;
     private final SimpleMenuManager menuManager;
@@ -133,7 +135,8 @@ public class BukkitPlatform extends AbstractPlatform implements MinecraftServerP
         this.serverCategoryType = serverCategoryType;
         this.serverSubCategoryType = Property.getEnum("SERVER_SUB_CATEGORY", ServerSubCategoryType.class, ServerSubCategoryType.NONE);
         this.internalCommandManager = new InternalCommandManager(this);
-        this.currencyManager = new CurrencyManager(this);
+        this.messageConfig = new MessageConfig(plugin);
+        this.currencyManager = new CurrencyManager(this, messageConfig);
         this.vanishManager = new VanishManager(this);
         this.menuManager = new SimpleMenuManager(this);
 

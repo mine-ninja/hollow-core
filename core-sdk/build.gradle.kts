@@ -1,20 +1,6 @@
 // core-sdk build.gradle.kts
 plugins {
-    `java-library`
-    kotlin("jvm") version "2.3.0" // Kotlin version to use
-}
-
-// Configuração explícita do Java 21
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
-    }
-}
-
-repositories {
-    mavenCentral()
-    maven { url = uri("https://jitpack.io") }
-
+    kotlin("jvm") version "2.3.0"
 }
 
 dependencies {
@@ -39,16 +25,6 @@ dependencies {
     implementation("it.unimi.dsi:fastutil:8.5.8")
 
     compileOnly("com.google.guava:guava:33.3.1-jre")
-
     compileOnly("net.luckperms:api:5.4")
 }
 
-tasks.withType<JavaCompile> {
-    options.release.set(21)
-    options.encoding = "UTF-8"
-}
-
-// Configuração para resolver problemas de módulos
-tasks.withType<Jar> {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
