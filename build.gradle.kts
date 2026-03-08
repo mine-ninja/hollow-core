@@ -30,10 +30,10 @@ subprojects {
     }
 
     dependencies {
-        "compileOnly"("org.projectlombok:lombok:1.18.38")
-        "annotationProcessor"("org.projectlombok:lombok:1.18.38")
-        "compileOnly"("org.jetbrains:annotations:26.0.0")
-        "annotationProcessor"("org.jetbrains:annotations:26.0.0")
+        compileOnly("org.projectlombok:lombok:1.18.38")
+        annotationProcessor("org.projectlombok:lombok:1.18.38")
+        compileOnly("org.jetbrains:annotations:26.0.0")
+        annotationProcessor("org.jetbrains:annotations:26.0.0")
     }
 
     tasks.withType<JavaCompile> {
@@ -67,4 +67,12 @@ subprojects {
             shadow.archiveClassifier.set("")
         }
     }
+}
+
+tasks.register<Delete>("deleteDist") {
+    delete("dist")
+}
+
+tasks.named("clean") {
+    dependsOn("deleteDist")
 }

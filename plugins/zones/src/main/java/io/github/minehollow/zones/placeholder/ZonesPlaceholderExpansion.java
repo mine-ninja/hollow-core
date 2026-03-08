@@ -11,8 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * PlaceholderAPI expansion for zones.
- * Supported placeholders:
+ * PlaceholderAPI expansion for zones. All methods use zero-allocation query paths. Supported placeholders:
  * <ul>
  *   <li>%zones_current_id%</li>
  *   <li>%zones_current_name%</li>
@@ -30,20 +29,30 @@ public class ZonesPlaceholderExpansion extends PlaceholderExpansion {
     }
 
     @Override
-    public @NotNull String getIdentifier() { return "zones"; }
+    public @NotNull String getIdentifier() {
+        return "zones";
+    }
 
     @Override
-    public @NotNull String getAuthor() { return "sasuked"; }
+    public @NotNull String getAuthor() {
+        return "sasuked";
+    }
 
     @Override
-    public @NotNull String getVersion() { return "1.0.0"; }
+    public @NotNull String getVersion() {
+        return "1.0.0";
+    }
 
     @Override
-    public boolean persist() { return true; }
+    public boolean persist() {
+        return true;
+    }
 
     @Override
     public @Nullable String onPlaceholderRequest(Player player, @NotNull String params) {
-        if (player == null) return null;
+        if (player == null) {
+            return null;
+        }
 
         if (params.equalsIgnoreCase("current_id")) {
             Zone zone = manager.getHighestPriorityZone(player.getLocation());
@@ -58,7 +67,10 @@ public class ZonesPlaceholderExpansion extends PlaceholderExpansion {
         if (params.startsWith("flag_")) {
             String flagKey = params.substring(5);
             ZoneFlag flag = ZoneFlag.fromKey(flagKey);
-            if (flag == null) return "unknown_flag";
+            if (flag == null) {
+                return "unknown_flag";
+            }
+            // Uses ZoneManager.resolveFlag internally — zero allocation
             ZoneFlagState state = query.resolve(player.getLocation(), flag, player.getUniqueId());
             return state.name().toLowerCase();
         }

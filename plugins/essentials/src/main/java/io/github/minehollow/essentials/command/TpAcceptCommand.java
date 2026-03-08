@@ -47,4 +47,3 @@ public class TpAcceptCommand extends SimpleCommand {
         plugin.getTeleportService().teleport(requester, player.getLocation());
     }
 }
-

@@ -17,7 +17,7 @@ public class HomeCommand extends SimpleCommand {
     private final EssentialsPlugin plugin;
 
     public HomeCommand(@NotNull EssentialsPlugin plugin) {
-        super("home", "hollow.home");
+        super("home");
         this.plugin = plugin;
         this.playersOnly = true;
     }
@@ -60,4 +60,3 @@ public class HomeCommand extends SimpleCommand {
         return NONE_ARGS;
     }
 }
-

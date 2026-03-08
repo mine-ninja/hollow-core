@@ -3,6 +3,7 @@ package io.github.minehollow.essentials;
 import io.github.minehollow.essentials.command.*;
 import io.github.minehollow.essentials.config.MessageConfig;
 import io.github.minehollow.essentials.listener.EssentialsListener;
+import io.github.minehollow.essentials.service.BackService;
 import io.github.minehollow.essentials.service.HomeService;
 import io.github.minehollow.essentials.service.SpawnService;
 import io.github.minehollow.essentials.service.TeleportService;
@@ -21,6 +22,7 @@ public class EssentialsPlugin extends SimplePlugin {
     private HomeService homeService;
     private TpaService tpaService;
     private TeleportService teleportService;
+    private BackService backService;
     private TabListManager tabListManager;
 
     @Override
@@ -40,6 +42,7 @@ public class EssentialsPlugin extends SimplePlugin {
         int tpDelay = getConfig().getInt("teleport.delay", 3);
         boolean cancelOnMove = getConfig().getBoolean("teleport.cancel-on-move", true);
         this.teleportService = new TeleportService(tpDelay, cancelOnMove, messageConfig);
+        this.backService = new BackService();
 
         // TabList
         this.tabListManager = new TabListManager(this);
@@ -54,13 +57,14 @@ public class EssentialsPlugin extends SimplePlugin {
             new TpaCommand(this),
             new TpAcceptCommand(this),
             new TpDenyCommand(this),
+            new BackCommand(this),
             new HomeCommand(this),
             new SetHomeCommand(this),
             new DelHomeCommand(this),
             new HomesCommand(this),
             new EnderChestCommand(this),
             new CraftCommand(this),
-            new HollowCoreCommand(this)
+            new EssentialsCommand(this)
         );
 
         // Listeners

@@ -9,6 +9,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class TpHereCommand extends SimpleCommand {
 
     private final EssentialsPlugin plugin;
@@ -16,6 +18,7 @@ public class TpHereCommand extends SimpleCommand {
     public TpHereCommand(@NotNull EssentialsPlugin plugin) {
         super("tphere", "hollow.tphere");
         this.plugin = plugin;
+        this.setAliases(List.of("s"));
         this.playersOnly = true;
     }
 
@@ -35,5 +38,19 @@ public class TpHereCommand extends SimpleCommand {
         plugin.getTeleportService().teleport(target, sender.getLocation());
         msg().send(sender, "tp-teleported-here", "player", target.getName());
     }
-}
 
+    @Override
+    public List<String> performTabComplete(CommandContext ctx) {
+        if (ctx.getArgs().length == 0) {
+            return Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
+        }
+        if (ctx.getArgs().length == 1) {
+            String prefix = ctx.getArgs()[0].toLowerCase();
+            return Bukkit.getOnlinePlayers().stream()
+                .map(Player::getName)
+                .filter(name -> name.toLowerCase().startsWith(prefix))
+                .toList();
+        }
+        return List.of();
+    }
+}

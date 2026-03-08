@@ -18,7 +18,8 @@ import java.util.stream.Collectors;
 
 public final class NPCCommand extends SimpleCommand {
     private static final List<String> SUBCOMMANDS = Arrays.asList(
-      "create", "remove", "setskin", "teleport", "attach", "detach", "setinteraction", "list"
+      "create", "remove", "setskin", "teleport", "attach", "detach", "setinteraction", "list", "reload"
+      "create", "remove", "setskin", "teleport", "attach", "detach", "setinteraction", "list", "reload"
     );
 
     private final NPCManager npcManager;
@@ -30,13 +31,15 @@ public final class NPCCommand extends SimpleCommand {
         this.skinService = skinService;
 
         setDescription("Gerencia NPCs do lobby");
-        setUsage("/npc <create|remove|setskin|teleport|attach|detach|setinteraction|list>");
+        setUsage("/npc <create|remove|setskin|teleport|attach|detach|setinteraction|list|reload>");
+        setUsage("/npc <create|remove|setskin|teleport|attach|detach|setinteraction|list|reload>");
     }
 
     @Override
     public void performCommand(@NotNull CommandContext ctx) throws CommandFailedException {
         var sender = ctx.getSender();
-        var subCommand = ctx.getRawArgOrThrow(0, "<red>Use: /npc <create|remove|setskin|teleport|attach|detach|setinteraction|list>");
+        var subCommand = ctx.getRawArgOrThrow(0, "<red>Use: /npc <create|remove|setskin|teleport|attach|detach|setinteraction|list|reload>");
+        var subCommand = ctx.getRawArgOrThrow(0, "<red>Use: /npc <create|remove|setskin|teleport|attach|detach|setinteraction|list|reload>");
 
         switch (subCommand.toLowerCase()) {
             case "create" -> handleCreate(ctx);
@@ -47,6 +50,7 @@ public final class NPCCommand extends SimpleCommand {
             case "detach" -> handleDetachHologram(ctx);
             case "setinteraction" -> handleSetInteraction(ctx);
             case "list" -> handleList(ctx);
+            case "reload" -> handleReload(ctx);
             default ->
               StringUtils.send(sender, "<red>Subcomando desconhecido. Use: <yellow>/npc list <red>para ver os comandos disponíveis.");
         }
@@ -57,13 +61,19 @@ public final class NPCCommand extends SimpleCommand {
         var args = ctx.getArgs();
 
         // Subcomando principal
+
+        // Subcomando principal
         if (args.length == 1) {
             return filterStartingWith(SUBCOMMANDS, args[0]);
         }
 
         // Segundo argumento (ID do NPC)
+
+        // Segundo argumento (ID do NPC)
         if (args.length == 2) {
             var subCmd = args[0].toLowerCase();
+
+            // Comandos que precisam de ID de NPC existente
 
             // Comandos que precisam de ID de NPC existente
             if (List.of("remove", "setskin", "teleport", "tp", "attach", "detach", "setinteraction").contains(subCmd)) {
@@ -72,8 +82,12 @@ public final class NPCCommand extends SimpleCommand {
         }
 
         // Terceiro argumento
+
+        // Terceiro argumento
         if (args.length == 3) {
             var subCmd = args[0].toLowerCase();
+
+            // attach precisa de ID de holograma
 
             // attach precisa de ID de holograma
             if (subCmd.equals("attach")) {
@@ -81,10 +95,13 @@ public final class NPCCommand extends SimpleCommand {
             }
 
             // setskin pode aceitar nome de jogador online
+
+            // setskin pode aceitar nome de jogador online
             if (subCmd.equals("setskin")) {
                 return filterStartingWith(getOnlinePlayerNames(), args[2]);
             }
         }
+
 
         return NONE_ARGS;
     }
@@ -231,6 +248,12 @@ public final class NPCCommand extends SimpleCommand {
         });
     }
 
+    private void handleReload(@NotNull CommandContext ctx) throws CommandFailedException {
+        npcManager.unloadAll();
+        npcManager.load();
+        StringUtils.send(ctx.getSender(), "<green>✓ Todos os NPCs foram recarregados do disco!");
+    }
+
     private void requirePlayer(@NotNull CommandContext ctx) throws CommandFailedException {
         if (!(ctx.getSender() instanceof Player)) {
             throw new CommandFailedException("<red>Apenas jogadores podem executar este comando.");
@@ -254,4 +277,3 @@ public final class NPCCommand extends SimpleCommand {
           .map(Player::getName)
           .collect(Collectors.toList());
     }
-}

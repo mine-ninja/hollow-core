@@ -46,4 +46,3 @@ public class DelHomeCommand extends SimpleCommand {
         return NONE_ARGS;
     }
 }
-

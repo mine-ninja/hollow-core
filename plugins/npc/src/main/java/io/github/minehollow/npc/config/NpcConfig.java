@@ -16,6 +16,7 @@ public class NpcConfig {
     private double hologramOffset = 2.2;
     private List<NpcAction> actions = new ArrayList<>();
     private NpcClickType clickType = NpcClickType.RIGHT;
+    private boolean lookAtNearestPlayer = false;
 
     public NpcConfig(String id, Location location) {
         this.id = id;
@@ -24,7 +25,7 @@ public class NpcConfig {
 
     public NpcConfig(String id, Location location, String skinValue, String skinSignature,
                      double scale, List<String> hologramLines, double hologramOffset,
-                     List<NpcAction> actions, NpcClickType clickType) {
+                     List<NpcAction> actions, NpcClickType clickType, boolean lookAtNearestPlayer) {
         this.id = id;
         this.location = location;
         this.skinValue = skinValue;
@@ -34,6 +35,7 @@ public class NpcConfig {
         this.hologramOffset = hologramOffset;
         this.actions = new ArrayList<>(actions);
         this.clickType = clickType;
+        this.lookAtNearestPlayer = lookAtNearestPlayer;
     }
 
     public String getId() { return id; }
@@ -52,4 +54,6 @@ public class NpcConfig {
     public void setActions(List<NpcAction> actions) { this.actions = actions; }
     public NpcClickType getClickType() { return clickType; }
     public void setClickType(NpcClickType type) { this.clickType = type; }
+    public boolean isLookAtNearestPlayer() { return lookAtNearestPlayer; }
+    public void setLookAtNearestPlayer(boolean look) { this.lookAtNearestPlayer = look; }
 }

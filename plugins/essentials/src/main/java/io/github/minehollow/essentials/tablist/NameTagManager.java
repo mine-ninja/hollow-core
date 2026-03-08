@@ -11,7 +11,6 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -53,34 +52,46 @@ public class NameTagManager {
         }
     }
 
-    public void onJoin(@NotNull Player player, @NotNull String tablistUsername,
-                       @NotNull Component fullPrefix, @NotNull Component fullSuffix,
-                       @NotNull String dirtyKey) {
+    /**
+     * Phase 1 (called from onPreJoin): registers the player's team and broadcasts
+     * the team CREATE to all currently online players, so the nametag is visible
+     * immediately when the ADD_PLAYER packet arrives. Does NOT send existing teams
+     * to the joining player (they may not be ready to receive packets yet).
+     */
+    public void registerTeam(@NotNull Player player, @NotNull String tablistUsername,
+                             @NotNull Component fullPrefix, @NotNull Component fullSuffix,
+                             @NotNull String dirtyKey) {
         int weight = getWeight(player);
         String teamName = buildTeamName(weight, player.getName());
         tags.put(player.getUniqueId(), new PlayerTag(teamName, tablistUsername, dirtyKey, fullPrefix, fullSuffix));
 
-        Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
+        // Broadcast this player's team to all currently online players
+        WrapperPlayServerTeams createPacket = buildCreatePacket(teamName, tablistUsername, fullPrefix, fullSuffix);
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            packetPlayerManager.sendPacket(online, createPacket);
+        }
+    }
 
-        // Send all existing teams to the joining player
-        for (Player online : onlinePlayers) {
+    /**
+     * Phase 2 (called from delayed onJoin): sends all existing teams to the
+     * joining player so they can see everyone else's nametags.
+     */
+    public void sendExistingTeams(@NotNull Player player) {
+        for (Player online : Bukkit.getOnlinePlayers()) {
             if (online.equals(player)) continue;
             PlayerTag existing = tags.get(online.getUniqueId());
             if (existing == null) continue;
             packetPlayerManager.sendPacket(player,
                 buildCreatePacket(existing.teamName, existing.tablistUsername, existing.teamPrefix, existing.teamSuffix));
         }
-
-        // Send this player's team to everyone
-        WrapperPlayServerTeams createPacket = buildCreatePacket(teamName, tablistUsername, fullPrefix, fullSuffix);
-        for (Player online : onlinePlayers) {
-            packetPlayerManager.sendPacket(online, createPacket);
-        }
     }
 
     /**
      * Updates a player's nametag. Accepts a pre-built dirtyKey to avoid
      * string concatenation on every tick.
+     * <p>
+     * If the player's weight (rank) changed, the team is destroyed and re-created
+     * with a new team name so tab-list sorting is updated.
      */
     public void update(@NotNull Player player,
                        @NotNull Component fullPrefix, @NotNull Component fullSuffix,
@@ -92,7 +103,29 @@ public class NameTagManager {
         // Dirty check — skip entirely if nothing changed
         if (dirtyKey.equals(tag.dirtyKey)) return;
 
-        // Content changed — send update packet (reuse single packet for all viewers)
+        // Check if weight changed — if so, team name must be rebuilt for correct sort order
+        int currentWeight = getWeight(player);
+        String expectedTeamName = buildTeamName(currentWeight, player.getName());
+
+        if (!expectedTeamName.equals(tag.teamName)) {
+            // Weight changed (rank promotion/demotion) — remove old team, create new one
+            WrapperPlayServerTeams removePacket = buildRemovePacket(tag.teamName);
+            for (Player online : Bukkit.getOnlinePlayers()) {
+                packetPlayerManager.sendPacket(online, removePacket);
+            }
+
+            // Replace tag with new team name
+            PlayerTag newTag = new PlayerTag(expectedTeamName, tag.tablistUsername, dirtyKey, fullPrefix, fullSuffix);
+            tags.put(uuid, newTag);
+
+            WrapperPlayServerTeams createPacket = buildCreatePacket(expectedTeamName, tag.tablistUsername, fullPrefix, fullSuffix);
+            for (Player online : Bukkit.getOnlinePlayers()) {
+                packetPlayerManager.sendPacket(online, createPacket);
+            }
+            return;
+        }
+
+        // Weight unchanged — just update prefix/suffix content
         WrapperPlayServerTeams updatePacket = buildUpdatePacket(tag.teamName, fullPrefix, fullSuffix);
         for (Player online : Bukkit.getOnlinePlayers()) {
             packetPlayerManager.sendPacket(online, updatePacket);

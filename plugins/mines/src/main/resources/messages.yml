@@ -1,0 +1,74 @@
+# messages.yml - Virtual Mine Plugin
+# Use MiniMessage format: https://docs.advntr.dev/minimessage/
+
+mine:
+  no_definitions: "<red>Nenhuma definicao de mina carregada. Use <white>/mine def create <id></white> primeiro."
+  no_active_mine: "<red>Voce nao possui uma mina ativa."
+  not_in_mine: "<red>Voce nao esta em uma mina virtual."
+
+  created: "<green>Mina virtual criada: <white><id></white> <gray>(intervalo <range>, nivel selecionado <level>)"
+  not_found: "<red>Mina nao encontrada: <white><id></white>"
+
+  player_not_found: "<red>Jogador nao encontrado."
+  invited: "<green>Convite enviado para <white><player></white>."
+  invited_target: "<green>Voce entrou na mina virtual de <white><player></white>."
+
+  left: "<yellow>Voce saiu da mina virtual."
+  reset: "<green>Sua mina virtual foi resetada."
+  reset_teleport: "<yellow>Voce foi movido para o spawn da mina porque ela foi resetada."
+
+  teleport: "<green>Teleportado para a mina: <white><id></white>"
+  teleport_failed: "<red>Falha ao teleportar para o spawn da mina."
+
+  level_range_invalid: "<red>O nivel deve ser um intervalo como <white>1-10</white>."
+  level_range_min: "<red>O nivel minimo deve ser 1 ou maior."
+  level_range_parse: "<red>Intervalo de nivel invalido. Use <white>min-max</white>."
+
+  worldedit_select: "<yellow>Selecione uma area com o WorldEdit primeiro (<white>//pos1</white> e <white>//pos2</white>)."
+  must_be_in_mine_world: "<red>Voce deve estar no mundo <white><world></white> para executar este comando."
+
+  info:
+    header: "<aqua>Mina: <white><id></white>"
+    host: "<gray>Dono: <white><host></white>"
+    members: "<gray>Membros: <white><count></white>"
+    epoch: "<gray>Epoch: <white><epoch></white>"
+
+  def:
+    already_exists: "<red>Definicao de mina ja existe: <white><id></white>"
+    created: "<green>Definicao de mina criada: <white><id></white>"
+    deleted: "<yellow>Definicao de mina deletada: <white><id></white>"
+    not_found: "<red>Definicao de mina nao encontrada: <white><id></white>"
+    display_updated: "<green>Nome de exibicao atualizado para a mina <white><id></white>."
+    spawn_updated: "<green>Spawn atualizado para a mina <white><id></white>."
+    area_updated: "<green>Area <white><type></white> atualizada para a mina <white><id></white>."
+    list_header: "<aqua>Definicoes de mina:"
+    list_item: "<gray>- <white><id></white>"
+
+  usage:
+    - "<gray>/mine create [mineId] [min-max]"
+    - "<gray>/mine enter"
+    - "<gray>/mine invite <jogador>"
+    - "<gray>/mine leave"
+    - "<gray>/mine reset"
+    - "<gray>/mine info"
+    - "<gray>/mine def <create|delete|list|setdisplay|setspawn|setglobal|setmining>"
+
+  usage_cmd:
+    invite: "<yellow>Uso: <white>/mine invite <jogador></white>"
+    setglobal: "<yellow>Uso: <white>/mine setglobal <mineId></white>"
+    setmining: "<yellow>Uso: <white>/mine setmining <mineId></white>"
+    def_create: "<yellow>Uso: <white>/mine def create <mineId></white>"
+    def_delete: "<yellow>Uso: <white>/mine def delete <mineId></white>"
+    def_setdisplay: "<yellow>Uso: <white>/mine def setdisplay <mineId> <displayName></white>"
+    def_setspawn: "<yellow>Uso: <white>/mine def setspawn <mineId></white>"
+    def_setglobal: "<yellow>Uso: <white>/mine def setglobal <mineId></white>"
+    def_setmining: "<yellow>Uso: <white>/mine def setmining <mineId></white>"
+
+  def_usage:
+    - "<gray>/mine def create <mineId>"
+    - "<gray>/mine def delete <mineId>"
+    - "<gray>/mine def list"
+    - "<gray>/mine def setdisplay <mineId> <displayName>"
+    - "<gray>/mine def setspawn <mineId>"
+    - "<gray>/mine def setglobal <mineId>"
+    - "<gray>/mine def setmining <mineId>"

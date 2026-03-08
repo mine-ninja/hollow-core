@@ -19,8 +19,7 @@ import me.tofaa.entitylib.spigot.SpigotEntityLibPlatform;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Main NPC plugin class. Initializes EntityLib, loads NPCs from storage,
- * and registers the packet handler + visibility listener.
+ * Main NPC plugin class. Initializes EntityLib, loads NPCs from storage, and registers the packet handler + visibility listener.
  */
 @Slf4j
 public class NpcPlugin extends SimplePlugin {
@@ -75,6 +74,8 @@ public class NpcPlugin extends SimplePlugin {
 
         // Command
         registerCommands("npc", new NpcCommand(this));
+
+        Tasks.runAsyncRepeating(registryImpl::tickAll, 5, 5);
 
         // Auto-save task
         if (autoSaveInterval > 0) {

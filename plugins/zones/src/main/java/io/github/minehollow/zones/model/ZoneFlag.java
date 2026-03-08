@@ -17,7 +17,8 @@ public enum ZoneFlag {
     PVP("pvp"),
     HIDE_PLAYERS("hide-players"),
     COMMAND_EXECUTE("command-execute"),
-    INTERACT("interact");
+    INTERACT("interact"),
+    ENTRY("entry");
 
     private final String configKey;
 

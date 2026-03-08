@@ -1,1 +1,16 @@
-mine-world-name: 'world'
+mine-world-name: "world"
+
+default-mine-id: "1"
+
+mines:
+  1:
+    display-name: "<green>Mundo Selvagem"
+    head-url: "f8bc2f280ec0dcf9fcb8fa95bd35f40f0fd6782f123cbf2f4a3629f0652f6f38"
+    global-area: { min-x: 0, min-y: 60, min-z: 0, max-x: 63, max-y: 90, max-z: 63 }
+    mining-area: { min-x: 4, min-y: 62, min-z: 4, max-x: 59, max-y: 80, max-z: 59 }
+    block-palette:
+      blocks:
+        STONE: 65.0
+        COAL_ORE: 20.0
+        IRON_ORE: 10.0
+        GOLD_ORE: 5.0

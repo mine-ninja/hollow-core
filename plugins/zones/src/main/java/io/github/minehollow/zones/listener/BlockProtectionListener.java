@@ -3,11 +3,15 @@ package io.github.minehollow.zones.listener;
 import io.github.minehollow.zones.ZoneQuery;
 import io.github.minehollow.zones.model.ZoneFlag;
 import lombok.RequiredArgsConstructor;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.*;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockBurnEvent;
+import org.bukkit.event.block.BlockGrowEvent;
+import org.bukkit.event.block.BlockPhysicsEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.BlockSpreadEvent;
 
 import java.util.UUID;
 
@@ -18,6 +22,7 @@ import java.util.UUID;
 public class BlockProtectionListener implements Listener {
 
     private final ZoneQuery query;
+
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onBreak(BlockBreakEvent e) {

@@ -34,6 +34,7 @@ public class DynamicPaginationMenu<T> extends SimpleMenu {
         }
 
         ctx.initialize();
+        onPostOpen(ctx, openHandler);
         playerContexts.put(player.getUniqueId(), ctx);
         ctx.open();
     }

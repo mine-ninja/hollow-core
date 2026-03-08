@@ -7,7 +7,9 @@ import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.player.TextureProperty;
 import com.github.retrooper.packetevents.protocol.player.UserProfile;
 import com.github.retrooper.packetevents.util.Vector3f;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityHeadLook;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityRotation;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerTeams;
 import io.github.minehollow.minecraft.task.Tasks;
 import io.github.minehollow.npc.api.Npc;
@@ -15,6 +17,11 @@ import io.github.minehollow.npc.api.NpcAction;
 import io.github.minehollow.npc.api.NpcClickType;
 import io.github.minehollow.npc.config.NpcConfig;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArraySet;
 import me.tofaa.entitylib.EntityLib;
 import me.tofaa.entitylib.meta.display.TextDisplayMeta;
 import me.tofaa.entitylib.meta.types.PlayerMeta;
@@ -29,16 +36,9 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.CopyOnWriteArraySet;
-
 /**
- * Core NPC implementation backed by EntityLib's {@link WrapperPlayer}.
- * The NPC is a fake player entity — no real Bukkit entity is created.
- * Hologram lines use {@link WrapperEntity} with {@code TEXT_DISPLAY} type.
+ * Core NPC implementation backed by EntityLib's {@link WrapperPlayer}. The NPC is a fake player entity — no real Bukkit entity is created. Hologram lines use
+ * {@link WrapperEntity} with {@code TEXT_DISPLAY} type.
  */
 public class NpcImpl implements Npc {
 
@@ -48,11 +48,9 @@ public class NpcImpl implements Npc {
     private final NpcConfig config;
     private final double renderDistance;
 
-    // Entities
     private WrapperPlayer playerEntity;
     private final List<WrapperEntity> hologramEntities = new ArrayList<>();
 
-    // Viewers tracking
     private final Set<UUID> viewers = new CopyOnWriteArraySet<>();
     private boolean spawned = false;
 
@@ -61,7 +59,6 @@ public class NpcImpl implements Npc {
         this.renderDistance = renderDistance;
     }
 
-    // ── Npc interface ────────────────────────────────────────
 
     @Override
     public @NotNull String getId() {
@@ -85,7 +82,9 @@ public class NpcImpl implements Npc {
     @Override
     public void setSkin(@NotNull String value, @NotNull String signature) {
         config.setSkin(value, signature);
-        if (!spawned) return;
+        if (!spawned) {
+            return;
+        }
 
         // Must re-create the entity to apply new skin
         Set<UUID> oldViewers = new CopyOnWriteArraySet<>(viewers);
@@ -115,10 +114,10 @@ public class NpcImpl implements Npc {
         if (playerEntity != null) {
             // Scale attribute — entity data index 16+ depends on version
             // For 1.20.5+ the scale is attribute-based, applied via EntityLib meta
-            playerEntity.consumeEntityMeta(PlayerMeta.class, meta -> {
-                // PlayerMeta doesn't expose scale directly;
-                // we send raw metadata for the generic.scale attribute
-            });
+            playerEntity.consumeEntityMeta(
+                PlayerMeta.class, meta -> {
+                }
+            );
             // Send scale via raw packet
             sendScaleMetadata();
         }
@@ -195,7 +194,9 @@ public class NpcImpl implements Npc {
 
     @Override
     public void spawn() {
-        if (spawned) return;
+        if (spawned) {
+            return;
+        }
         createPlayerEntity();
         createHologramEntities();
         spawned = true;
@@ -203,7 +204,9 @@ public class NpcImpl implements Npc {
 
     @Override
     public void despawn() {
-        if (!spawned) return;
+        if (!spawned) {
+            return;
+        }
         spawned = false;
         viewers.clear();
 
@@ -229,12 +232,15 @@ public class NpcImpl implements Npc {
         return playerEntity != null ? playerEntity.getEntityId() : -1;
     }
 
-    // ── Viewer management ────────────────────────────────────
 
     public void addViewer(@NotNull Player player) {
-        if (!spawned || playerEntity == null) return;
+        if (!spawned || playerEntity == null) {
+            return;
+        }
         UUID uuid = player.getUniqueId();
-        if (!viewers.add(uuid)) return;
+        if (!viewers.add(uuid)) {
+            return;
+        }
 
         playerEntity.addViewer(uuid);
         for (WrapperEntity holo : hologramEntities) {
@@ -242,17 +248,21 @@ public class NpcImpl implements Npc {
         }
 
         // Delay metadata so the client has time to process the spawn
-        Tasks.runAsyncLater(() -> {
-            if (player.isOnline() && viewers.contains(uuid)) {
-                sendSkinMetadata(player);
-                sendTeamPacket(player);
-            }
-        }, 10L);
+        Tasks.runAsyncLater(
+            () -> {
+                if (player.isOnline() && viewers.contains(uuid)) {
+                    sendSkinMetadata(player);
+                    sendTeamPacket(player);
+                }
+            }, 10L
+        );
     }
 
     public void removeViewer(@NotNull Player player) {
         UUID uuid = player.getUniqueId();
-        if (!viewers.remove(uuid)) return;
+        if (!viewers.remove(uuid)) {
+            return;
+        }
 
         if (playerEntity != null) {
             playerEntity.removeViewer(uuid);
@@ -290,17 +300,21 @@ public class NpcImpl implements Npc {
 
         playerEntity = new WrapperPlayer(profile, entityId);
         playerEntity.setInTablist(false);
-        playerEntity.consumeEntityMeta(PlayerMeta.class, meta -> {
-            meta.setCustomName(Component.empty());
-            meta.setCustomNameVisible(false);
-        });
+        playerEntity.consumeEntityMeta(
+            PlayerMeta.class, meta -> {
+                meta.setCustomName(Component.empty());
+                meta.setCustomNameVisible(false);
+            }
+        );
 
         playerEntity.spawn(SpigotConversionUtil.fromBukkitLocation(config.getLocation()));
     }
 
     private void createHologramEntities() {
         List<String> lines = config.getHologramLines();
-        if (lines.isEmpty()) return;
+        if (lines.isEmpty()) {
+            return;
+        }
 
         Location base = config.getLocation().clone().add(0, config.getHologramOffset(), 0);
         double lineSpacing = 0.3 * config.getScale();
@@ -329,7 +343,9 @@ public class NpcImpl implements Npc {
     }
 
     private void rebuildHolograms() {
-        if (!spawned) return;
+        if (!spawned) {
+            return;
+        }
 
         Set<UUID> currentViewers = new CopyOnWriteArraySet<>(viewers);
 
@@ -351,10 +367,11 @@ public class NpcImpl implements Npc {
         }
     }
 
-    // ── Packet helpers ───────────────────────────────────────
 
     private void sendSkinMetadata(@NotNull Player player) {
-        if (playerEntity == null) return;
+        if (playerEntity == null) {
+            return;
+        }
         EntityData<Byte> skinData = new EntityData<>(17, EntityDataTypes.BYTE, ALL_SKIN_LAYERS);
         WrapperPlayServerEntityMetadata packet = new WrapperPlayServerEntityMetadata(
             playerEntity.getEntityId(), List.of(skinData));
@@ -362,7 +379,9 @@ public class NpcImpl implements Npc {
     }
 
     private void sendTeamPacket(@NotNull Player player) {
-        if (playerEntity == null) return;
+        if (playerEntity == null) {
+            return;
+        }
         WrapperPlayServerTeams.ScoreBoardTeamInfo info = new WrapperPlayServerTeams.ScoreBoardTeamInfo(
             Component.empty(), Component.empty(), Component.empty(),
             WrapperPlayServerTeams.NameTagVisibility.NEVER,
@@ -385,4 +404,57 @@ public class NpcImpl implements Npc {
         // Note: scale metadata index depends on protocol version.
         // We'll skip raw scale metadata for now — the hologram scaling handles visual feedback.
     }
+
+    public void onTick() {
+        if (!spawned || playerEntity == null || !config.isLookAtNearestPlayer() || viewers.isEmpty()) {
+            return;
+        }
+
+        Location npcLoc = config.getLocation();
+        Player nearest = null;
+        double nearestDistSq = Double.MAX_VALUE;
+
+        for (UUID viewerUuid : viewers) {
+            Player viewer = Bukkit.getPlayer(viewerUuid);
+            if (viewer == null || !viewer.isOnline()) {
+                continue;
+            }
+            double distSq = viewer.getLocation().distanceSquared(npcLoc);
+            if (distSq > getRenderDistanceSq()) {
+                continue;
+            }
+            if (distSq < nearestDistSq) {
+                nearestDistSq = distSq;
+                nearest = viewer;
+            }
+        }
+
+        if (nearest == null) {
+            return;
+        }
+
+        float yaw = calculateYaw(nearest, npcLoc);
+        WrapperPlayServerEntityRotation bodyPacket = new WrapperPlayServerEntityRotation(getEntityId(), yaw, 0.0f, true);
+        WrapperPlayServerEntityHeadLook headPacket = new WrapperPlayServerEntityHeadLook(getEntityId(), yaw);
+
+        for (UUID viewerUuid : viewers) {
+            Player viewer = Bukkit.getPlayer(viewerUuid);
+            if (viewer == null || !viewer.isOnline()) {
+                continue;
+            }
+            if (viewer.getLocation().distanceSquared(npcLoc) > getRenderDistanceSq()) {
+                continue;
+            }
+            PacketEvents.getAPI().getPlayerManager().sendPacket(viewer, bodyPacket);
+            PacketEvents.getAPI().getPlayerManager().sendPacket(viewer, headPacket);
+        }
+    }
+
+    private float calculateYaw(Player target, Location npcLoc) {
+        Location targetLoc = target.getLocation();
+        double dx = targetLoc.getX() - npcLoc.getX();
+        double dz = targetLoc.getZ() - npcLoc.getZ();
+        return (float) Math.toDegrees(Math.atan2(-dx, dz));
+    }
 }
+

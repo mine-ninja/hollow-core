@@ -27,6 +27,12 @@ public class NpcRegistryImpl implements NpcRegistry {
         this.renderDistance = renderDistance;
     }
 
+    public void tickAll(){
+        for (NpcImpl npc : npcs.values()) {
+            npc.onTick();
+        }
+    }
+
     /**
      * Loads all NPCs from storage and spawns them.
      */

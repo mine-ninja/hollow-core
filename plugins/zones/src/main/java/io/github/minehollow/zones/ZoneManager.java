@@ -1,10 +1,25 @@
 package io.github.minehollow.zones;
 
-import io.github.minehollow.zones.model.*;
+import io.github.minehollow.zones.model.Zone;
+import io.github.minehollow.zones.model.ZoneBounds;
+import io.github.minehollow.zones.model.ZoneFlag;
+import io.github.minehollow.zones.model.ZoneFlagState;
+import io.github.minehollow.zones.model.ZoneType;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TreeSet;
+import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.bukkit.Location;
@@ -14,29 +29,36 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-
 /**
- * Manages all zones: loading, saving, indexing (chunk map + cuboid list),
- * and spatial queries.
+ * Manages all zones: loading, saving, indexing (chunk map + cuboid sorted set), and spatial queries.
+ * <p>
+ * Cuboid zones live in a {@link TreeSet} sorted by priority descending, so insert/remove are
+ * O(log n) and iteration is always in priority order — no re-sorting ever needed.
+ * <p>
+ * Chunk zones use a {@link Long2ObjectOpenHashMap} for O(1) primitive-key lookup.
+ * <p>
+ * All hot-path query methods are zero-allocation.
  */
 @Slf4j
 public class ZoneManager {
+
+    /** Priority descending, then by id for stable uniqueness inside the TreeSet */
+    private static final Comparator<Zone> PRIORITY_DESC = Comparator
+        .comparingInt(Zone::getPriority).reversed()
+        .thenComparing(Zone::getId);
 
     private final JavaPlugin plugin;
     private final File configFile;
 
     /** All zones by id */
     @Getter
-    private final Object2ObjectOpenHashMap<String, Zone> zones = new Object2ObjectOpenHashMap<>();
+    private final Map<String, Zone> zones = new HashMap<>();
 
     /** Chunk-type zones indexed by packed chunk key */
-    private final Long2ObjectOpenHashMap<ObjectArrayList<Zone>> chunkIndex = new Long2ObjectOpenHashMap<>();
+    private final Long2ObjectOpenHashMap<ArrayList<Zone>> chunkIndex = new Long2ObjectOpenHashMap<>();
 
-    /** Cuboid-type zones sorted by priority descending for fast scan */
-    private final ObjectArrayList<Zone> cuboidZones = new ObjectArrayList<>();
+    /** Cuboid-type zones, always sorted by priority descending (O(log n) insert/remove) */
+    private final TreeSet<Zone> cuboidZones = new TreeSet<>(PRIORITY_DESC);
 
     public ZoneManager(@NotNull JavaPlugin plugin) {
         this.plugin = plugin;
@@ -62,14 +84,12 @@ public class ZoneManager {
             ConfigurationSection sec = root.getConfigurationSection(id);
             if (sec == null) continue;
             try {
-                Zone zone = deserialize(id, sec);
-                addZone(zone);
+                addZone(deserialize(id, sec));
             } catch (Exception e) {
                 log.warn("Failed to load zone '{}': {}", id, e.getMessage());
             }
         }
 
-        cuboidZones.sort(Comparator.comparingInt(Zone::getPriority).reversed());
         log.info("Loaded {} zones ({} chunk, {} cuboid)",
             zones.size(),
             zones.values().stream().filter(z -> z.getType() == ZoneType.CHUNK).count(),
@@ -118,13 +138,10 @@ public class ZoneManager {
                 z.getBounds().minX(), z.getBounds().minY(), z.getBounds().minZ(),
                 z.getBounds().maxX(), z.getBounds().maxY(), z.getBounds().maxZ()
             ));
-
             for (Map.Entry<ZoneFlag, ZoneFlagState> entry : z.getFlags().entrySet()) {
                 yaml.set(path + ".flags." + entry.getKey().configKey(), entry.getValue().name().toLowerCase(Locale.ROOT));
             }
-
-            List<String> memberStrings = z.getMembers().stream().map(UUID::toString).toList();
-            yaml.set(path + ".members", memberStrings);
+            yaml.set(path + ".members", z.getMembers().stream().map(UUID::toString).toList());
         }
 
         try {
@@ -141,8 +158,7 @@ public class ZoneManager {
         if (zone.getType() == ZoneType.CHUNK) {
             indexChunkZone(zone);
         } else {
-            cuboidZones.add(zone);
-            cuboidZones.sort(Comparator.comparingInt(Zone::getPriority).reversed());
+            cuboidZones.add(zone); // O(log n), always sorted
         }
     }
 
@@ -152,67 +168,197 @@ public class ZoneManager {
         if (zone.getType() == ZoneType.CHUNK) {
             chunkIndex.values().forEach(list -> list.remove(zone));
         } else {
-            cuboidZones.remove(zone);
+            cuboidZones.remove(zone); // O(log n)
         }
     }
 
     private void indexChunkZone(@NotNull Zone zone) {
         ZoneBounds b = zone.getBounds();
-        int minCX = b.minX() >> 4;
-        int maxCX = b.maxX() >> 4;
-        int minCZ = b.minZ() >> 4;
-        int maxCZ = b.maxZ() >> 4;
+        int minCX = b.minX() >> 4, maxCX = b.maxX() >> 4;
+        int minCZ = b.minZ() >> 4, maxCZ = b.maxZ() >> 4;
         for (int cx = minCX; cx <= maxCX; cx++) {
             for (int cz = minCZ; cz <= maxCZ; cz++) {
-                long key = chunkKey(cx, cz);
-                chunkIndex.computeIfAbsent(key, k -> new ObjectArrayList<>(2)).add(zone);
+                chunkIndex.computeIfAbsent(chunkKey(cx, cz), k -> new ArrayList<>(2)).add(zone);
             }
         }
     }
 
-    // ── Querying ───────────────────────────────────────
+    // ── Zero-allocation query API ──────────────────────
 
     /**
-     * Returns all zones that contain the given location, sorted by priority descending.
+     * Iterates over every zone that contains the given location.
+     * Visits chunk-indexed zones first, then cuboid zones (priority descending).
+     * Zero allocation — no list is created.
      */
-    @NotNull
-    public List<Zone> getZonesAt(@NotNull Location loc) {
-        if (loc.getWorld() == null) return Collections.emptyList();
-        String world = loc.getWorld().getName();
-        int x = loc.getBlockX();
-        int y = loc.getBlockY();
-        int z = loc.getBlockZ();
+    public void forEachZoneAt(@NotNull Location loc, @NotNull Consumer<Zone> consumer) {
+        if (loc.getWorld() == null) return;
+        forEachZoneAt(loc.getWorld().getName(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), consumer);
+    }
 
-        ObjectArrayList<Zone> result = new ObjectArrayList<>(4);
-
-        // O(1) chunk lookup
+    /**
+     * Iterates over every zone that contains the given block coordinates.
+     * Zero allocation — no list, no Location object needed.
+     */
+    public void forEachZoneAt(@NotNull String world, int x, int y, int z, @NotNull Consumer<Zone> consumer) {
         long key = chunkKey(x >> 4, z >> 4);
-        ObjectArrayList<Zone> chunkZones = chunkIndex.get(key);
-        if (chunkZones != null) {
-            for (int i = 0, len = chunkZones.size(); i < len; i++) {
-                Zone zone = chunkZones.get(i);
+        ArrayList<Zone> chunk = chunkIndex.get(key);
+        if (chunk != null) {
+            for (int i = 0, len = chunk.size(); i < len; i++) {
+                Zone zone = chunk.get(i);
                 if (zone.getWorld().equals(world) && zone.getBounds().contains(x, y, z)) {
-                    result.add(zone);
+                    consumer.accept(zone);
                 }
             }
         }
 
-        // O(n) cuboid scan (sorted by priority)
-        for (int i = 0, len = cuboidZones.size(); i < len; i++) {
-            Zone zone = cuboidZones.get(i);
+        // TreeSet iterates in priority-descending order naturally
+        for (Zone zone : cuboidZones) {
             if (zone.getWorld().equals(world) && zone.getBounds().contains(x, y, z)) {
-                result.add(zone);
+                consumer.accept(zone);
+            }
+        }
+    }
+
+    /**
+     * Tests if any zone at the location matches the predicate.
+     * Short-circuits on first match. Zero allocation.
+     */
+    public boolean anyZoneAt(@NotNull Location loc, @NotNull Predicate<Zone> predicate) {
+        if (loc.getWorld() == null) return false;
+        String world = loc.getWorld().getName();
+        int x = loc.getBlockX(), y = loc.getBlockY(), z = loc.getBlockZ();
+
+        long key = chunkKey(x >> 4, z >> 4);
+        ArrayList<Zone> chunk = chunkIndex.get(key);
+        if (chunk != null) {
+            for (int i = 0, len = chunk.size(); i < len; i++) {
+                Zone zone = chunk.get(i);
+                if (zone.getWorld().equals(world) && zone.getBounds().contains(x, y, z) && predicate.test(zone)) {
+                    return true;
+                }
             }
         }
 
-        result.sort(Comparator.comparingInt(Zone::getPriority).reversed());
-        return result;
+        for (Zone zone : cuboidZones) {
+            if (zone.getWorld().equals(world) && zone.getBounds().contains(x, y, z) && predicate.test(zone)) {
+                return true;
+            }
+        }
+        return false;
     }
 
+    /**
+     * Tests if any zone in the given chunk column matches the predicate.
+     * Zero allocation — no Location needed.
+     */
+    public boolean anyZoneInChunk(@NotNull String world, int chunkX, int chunkZ, @NotNull Predicate<Zone> predicate) {
+        long key = chunkKey(chunkX, chunkZ);
+        ArrayList<Zone> chunk = chunkIndex.get(key);
+        if (chunk != null) {
+            for (int i = 0, len = chunk.size(); i < len; i++) {
+                Zone zone = chunk.get(i);
+                if (zone.getWorld().equals(world) && predicate.test(zone)) {
+                    return true;
+                }
+            }
+        }
+
+        for (Zone zone : cuboidZones) {
+            if (zone.getWorld().equals(world) && zone.getBounds().intersectsChunk(chunkX, chunkZ) && predicate.test(zone)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Resolves a flag state at a location by walking zones in priority order.
+     * Returns the first non-NONE state found, or ALLOW if no zone defines the flag.
+     * Zero allocation.
+     *
+     * @param playerUuid if non-null, zones where the player is a member are skipped
+     */
+    @NotNull
+    public ZoneFlagState resolveFlag(@NotNull Location loc, @NotNull ZoneFlag flag, @Nullable UUID playerUuid) {
+        if (loc.getWorld() == null) return ZoneFlagState.ALLOW;
+        return resolveFlag(loc.getWorld().getName(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), flag, playerUuid);
+    }
+
+    /**
+     * Resolves a flag state at raw coordinates. Zero allocation, no Location needed.
+     */
+    @NotNull
+    public ZoneFlagState resolveFlag(@NotNull String world, int x, int y, int z,
+                                     @NotNull ZoneFlag flag, @Nullable UUID playerUuid) {
+        int bestPriority = Integer.MIN_VALUE;
+        ZoneFlagState bestState = ZoneFlagState.NONE;
+
+        // Chunk zones (unordered, scan all)
+        long key = chunkKey(x >> 4, z >> 4);
+        ArrayList<Zone> chunk = chunkIndex.get(key);
+        if (chunk != null) {
+            for (int i = 0, len = chunk.size(); i < len; i++) {
+                Zone zone = chunk.get(i);
+                if (!zone.getWorld().equals(world) || !zone.getBounds().contains(x, y, z)) continue;
+                if (playerUuid != null && zone.isMember(playerUuid)) continue;
+                ZoneFlagState state = zone.getFlagState(flag);
+                if (state != ZoneFlagState.NONE && zone.getPriority() > bestPriority) {
+                    bestPriority = zone.getPriority();
+                    bestState = state;
+                }
+            }
+        }
+
+        // Cuboid zones (TreeSet, priority descending — early exit once priority can't beat best)
+        for (Zone zone : cuboidZones) {
+            if (zone.getPriority() <= bestPriority) break;
+            if (!zone.getWorld().equals(world) || !zone.getBounds().contains(x, y, z)) continue;
+            if (playerUuid != null && zone.isMember(playerUuid)) continue;
+            ZoneFlagState state = zone.getFlagState(flag);
+            if (state != ZoneFlagState.NONE) {
+                bestState = state;
+                break; // highest priority cuboid that matches — done
+            }
+        }
+
+        return bestState == ZoneFlagState.NONE ? ZoneFlagState.ALLOW : bestState;
+    }
+
+    /**
+     * Returns the highest-priority zone containing the location, or null. Zero allocation.
+     */
     @Nullable
     public Zone getHighestPriorityZone(@NotNull Location loc) {
-        List<Zone> stack = getZonesAt(loc);
-        return stack.isEmpty() ? null : stack.getFirst();
+        if (loc.getWorld() == null) return null;
+        String world = loc.getWorld().getName();
+        int x = loc.getBlockX(), y = loc.getBlockY(), z = loc.getBlockZ();
+
+        Zone best = null;
+
+        // Chunk zones (unordered, find highest)
+        long key = chunkKey(x >> 4, z >> 4);
+        ArrayList<Zone> chunk = chunkIndex.get(key);
+        if (chunk != null) {
+            for (int i = 0, len = chunk.size(); i < len; i++) {
+                Zone zone = chunk.get(i);
+                if (zone.getWorld().equals(world) && zone.getBounds().contains(x, y, z)) {
+                    if (best == null || zone.getPriority() > best.getPriority()) {
+                        best = zone;
+                    }
+                }
+            }
+        }
+
+        // Cuboid zones (TreeSet, priority descending — first match wins or early exit)
+        for (Zone zone : cuboidZones) {
+            if (best != null && zone.getPriority() <= best.getPriority()) break;
+            if (zone.getWorld().equals(world) && zone.getBounds().contains(x, y, z)) {
+                best = zone;
+                break;
+            }
+        }
+
+        return best;
     }
 
     @Nullable

@@ -288,6 +288,14 @@ public class TabListManager {
 
         tabListPacketListener.register(player.getUniqueId(), tabDisplayName);
 
+        // Register team immediately so existing players see the nametag
+        // as soon as the ADD_PLAYER packet arrives (no 5-tick empty nametag gap)
+        String tablistUsername = tabListPacketListener.getTablistUsername(player.getUniqueId());
+        if (tablistUsername != null) {
+            nameTagManager.registerTeam(player, tablistUsername, teamPrefix, suffixComponent,
+                rawPrefix + "\1" + rawSuffix);
+        }
+
         CachedPlayerState cached = new CachedPlayerState();
         cached.rawPrefix = rawPrefix;
         cached.rawSuffix = rawSuffix;
@@ -309,11 +317,9 @@ public class TabListManager {
             CachedPlayerState cached = playerCache.get(uuid);
             if (cached == null) return;
 
-            String tablistUsername = tabListPacketListener.getTablistUsername(uuid);
-            if (tablistUsername == null) return;
-
-            nameTagManager.onJoin(player, tablistUsername,
-                cached.teamPrefix, cached.teamSuffix, cached.dirtyKey);
+            // Team was already broadcast to others in onPreJoin.
+            // Now send all existing teams to the joining player.
+            nameTagManager.sendExistingTeams(player);
 
             tabListPacketListener.sendAllDisplayNamesTo(player);
             tabListPacketListener.sendDisplayNameToAll(uuid);

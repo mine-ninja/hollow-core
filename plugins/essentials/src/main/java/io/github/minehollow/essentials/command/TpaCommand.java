@@ -5,9 +5,15 @@ import io.github.minehollow.essentials.config.MessageConfig;
 import io.github.minehollow.minecraft.command.SimpleCommand;
 import io.github.minehollow.minecraft.command.context.CommandContext;
 import io.github.minehollow.minecraft.command.exception.CommandFailedException;
+import io.github.minehollow.minecraft.util.message.StringUtils;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class TpaCommand extends SimpleCommand {
 
@@ -43,7 +49,48 @@ public class TpaCommand extends SimpleCommand {
         }
 
         msg().send(sender, "tpa-sent", "target", target.getName());
-        msg().send(target, "tpa-received", "player", sender.getName());
+
+        List<String> receivedLines = msg().getList("tpa-received", "player", sender.getName());
+        for(final var msg : receivedLines){
+            var component = StringUtils.formatString(msg)
+                .replaceText(StringUtils.replaceComponent("@accept_button@", this.createAcceptButton(sender)))
+                .replaceText(StringUtils.replaceComponent("@deny_button@", this.createDenyButton(sender)));
+
+            target.sendMessage(component);
+        }
+
+
+        //var receivedComponent = StringUtils.multiText(receivedLines.toArray(new String[0]))
+        //    .replaceText(StringUtils.replaceComponent("{accept_button}", this.createAcceptButton(sender)))
+        //    .replaceText(StringUtils.replaceComponent("{deny_button}", this.createDenyButton(sender)));
+
+        //target.sendMessage(receivedComponent);
+    }
+
+    private Component createAcceptButton(Player sender) {
+        return StringUtils.formatString("<green><b>ACEITAR</b>")
+            .clickEvent(ClickEvent.runCommand("/tpaccept " + sender.getUniqueId()))
+            .hoverEvent(HoverEvent.showText(StringUtils.formatString("<green>Clique para aceitar o pedido de teleporte.")));
+    }
+
+    private Component createDenyButton(Player sender) {
+        return StringUtils.formatString("<red><b>NEGAR</b>")
+            .clickEvent(ClickEvent.runCommand("/tpdeny"))
+            .hoverEvent(HoverEvent.showText(StringUtils.formatString("<red>Clique para negar o pedido de teleporte.")));
+    }
+
+    @Override
+    public List<String> performTabComplete(CommandContext ctx) {
+        if (ctx.getArgs().length == 0) {
+            return Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
+        }
+        if (ctx.getArgs().length == 1) {
+            String prefix = ctx.getArgs()[0].toLowerCase();
+            return Bukkit.getOnlinePlayers().stream()
+                .map(Player::getName)
+                .filter(name -> name.toLowerCase().startsWith(prefix))
+                .toList();
+        }
+        return List.of();
     }
 }
-

@@ -132,6 +132,7 @@ public class NpcStorage {
         }
 
         sec.set("click-type", config.getClickType().name());
+        sec.set("look-at-nearest-player", config.isLookAtNearestPlayer());
 
         if (!config.getActions().isEmpty()) {
             List<Map<String, Object>> actionList = new ArrayList<>();
@@ -152,7 +153,7 @@ public class NpcStorage {
             }
             case MessageAction msg -> map.put("message", msg.getMessage());
             case SoundAction snd -> {
-                map.put("sound", snd.getSound().key().value());
+                map.put("sound", snd.getSound().getKey().getKey());
                 map.put("volume", snd.getVolume());
                 map.put("pitch", snd.getPitch());
             }
@@ -200,6 +201,7 @@ public class NpcStorage {
         try {
             clickType = NpcClickType.valueOf(sec.getString("click-type", "RIGHT").toUpperCase());
         } catch (IllegalArgumentException ignored) {}
+        boolean lookAtNearestPlayer = sec.getBoolean("look-at-nearest-player", false);
 
         List<NpcAction> actions = new ArrayList<>();
         List<?> actionList = sec.getList("actions");
@@ -212,10 +214,9 @@ public class NpcStorage {
             }
         }
 
-        return new NpcConfig(id, loc, skinValue, skinSignature, scale, holoLines, holoOffset, actions, clickType);
+        return new NpcConfig(id, loc, skinValue, skinSignature, scale, holoLines, holoOffset, actions, clickType, lookAtNearestPlayer);
     }
 
-    @SuppressWarnings("unchecked")
     private NpcAction deserializeAction(@NotNull Map<?, ?> map) {
         String type = String.valueOf(map.get("type")).toUpperCase();
         return switch (type) {
@@ -249,4 +250,3 @@ public class NpcStorage {
         };
     }
 }
-

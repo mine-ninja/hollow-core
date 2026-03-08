@@ -1,4 +1,4 @@
-    package io.github.minehollow.zones.command;
+package io.github.minehollow.zones.command;
 
 import com.sk89q.worldedit.IncompleteRegionException;
 import com.sk89q.worldedit.WorldEdit;
@@ -11,6 +11,7 @@ import io.github.minehollow.zones.ZonesPlugin;
 import io.github.minehollow.zones.model.*;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,6 +23,7 @@ public class ZonesCommand extends SimpleCommand {
 
     public ZonesCommand(@NotNull ZonesPlugin plugin) {
         super("zones", "zones.admin");
+        setAliases(List.of("zone", "zona", "region"));
         this.plugin                = plugin;
         this.playersOnly = false;
     }
@@ -152,21 +154,20 @@ public class ZonesCommand extends SimpleCommand {
     // /zones info
     private void handleInfo(@NotNull CommandContext ctx) throws CommandFailedException {
         Player player = ctx.getSenderAsPlayer();
-        List<Zone> zones = plugin.getZoneManager().getZonesAt(player.getLocation());
+        Location loc = player.getLocation();
 
-        if (zones.isEmpty()) {
-            ctx.sendMessage("§7Você não está em nenhuma zona.");
-            return;
-        }
+        final int[] count = {0};
+        ctx.sendMessage("§6§l═══════════════════════════════════════════");
+        ctx.sendMessage("§e§l Zonas na sua posição:");
+        ctx.sendMessage("§6§l═══════════════════════════════════════════");
 
-        ctx.sendMessage("§6═══ Zonas na sua posição ═══");
-        for (int i = 0; i < zones.size(); i++) {
-            Zone z = zones.get(i);
-            ctx.sendMessage("§e" + (i + 1) + ". §f" + z.getDisplayName()
-                + " §7(id=" + z.getId() + ", tipo=" + z.getType()
-                + ", prioridade=" + z.getPriority() + ")");
-
-            StringBuilder flagsLine = new StringBuilder("   §7Flags: ");
+        plugin.getZoneManager().forEachZoneAt(loc, z -> {
+            count[0]++;
+            ctx.sendMessage("§b§l#" + count[0] + " §f§l" + z.getDisplayName());
+            ctx.sendMessage("  §7ID: §a" + z.getId() + " §8| §7Tipo: §a" + z.getType() + " §8| §7Prioridade: §a" + z.getPriority());
+            ctx.sendMessage("  §7Mundo: §a" + z.getWorld());
+            ctx.sendMessage("  §7Bounds: §a[" + z.getBounds().minX() + ", " + z.getBounds().minY() + ", " + z.getBounds().minZ() + "] §8→ §a[" + z.getBounds().maxX() + ", " + z.getBounds().maxY() + ", " + z.getBounds().maxZ() + "]");
+            StringBuilder flagsLine = new StringBuilder("  §7Flags: ");
             if (z.getFlags().isEmpty()) {
                 flagsLine.append("§8nenhuma");
             } else {
@@ -174,9 +175,18 @@ public class ZonesCommand extends SimpleCommand {
                     flagsLine.append(state == ZoneFlagState.DENY ? "§c" : "§a")
                         .append(flag.configKey()).append("=").append(state.name().toLowerCase(Locale.ROOT))
                         .append("§7, "));
+                if (flagsLine.lastIndexOf(", ") == flagsLine.length() - 3) {
+                    flagsLine.setLength(flagsLine.length() - 3);
+                }
             }
             ctx.sendMessage(flagsLine.toString());
+            ctx.sendMessage("§7-------------------------------------------");
+        });
+
+        if (count[0] == 0) {
+            ctx.sendMessage("§7Você não está em nenhuma zona.");
         }
+        ctx.sendMessage("§6§l═══════════════════════════════════════════");
     }
 
     // /zones reload

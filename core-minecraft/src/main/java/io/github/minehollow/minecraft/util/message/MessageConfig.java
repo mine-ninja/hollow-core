@@ -66,7 +66,7 @@ public class MessageConfig {
     }
 
     public void send(@NotNull Player player, @NotNull String section, @NotNull String key, @NotNull Object... replacements) {
-        StringUtils.send(player, getRaw(section, key, replacements));
+        player.sendMessage(get(section, key, replacements));
     }
 
     private String applyPlaceholders(@NotNull String text, @NotNull Object[] replacements) {

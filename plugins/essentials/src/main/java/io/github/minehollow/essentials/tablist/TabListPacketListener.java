@@ -182,15 +182,18 @@ public class TabListPacketListener extends PacketListenerAbstract {
             String tabUsername = tablistUsernames.get(uuid);
             if (tabUsername == null) continue;
 
-            Component displayName = displayNames.get(uuid);
-            if (displayName == null) continue;
-
             if (hasAddPlayer) {
                 entry.setGameProfile(new UserProfile(
                     uuid, tabUsername, profile.getTextureProperties()
                 ));
             }
 
+            // Use registered display name, or fall back to the original username
+            // so the player never appears as empty/invisible in the tab list
+            Component displayName = displayNames.get(uuid);
+            if (displayName == null) {
+                displayName = Component.text(profile.getName() != null ? profile.getName() : "");
+            }
             entry.setDisplayName(displayName);
             modified = true;
         }
