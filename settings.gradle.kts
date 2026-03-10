@@ -21,4 +21,5 @@ include(
     "plugins:npc",
     "plugins:leaderboard",
     "plugins:zones",
+    "plugins:hologram",
 )

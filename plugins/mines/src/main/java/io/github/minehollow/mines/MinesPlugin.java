@@ -4,8 +4,10 @@ import com.github.retrooper.packetevents.PacketEvents;
 import io.github.minehollow.minecraft.BukkitPlatform;
 import io.github.minehollow.minecraft.plugin.SimplePlugin;
 import io.github.minehollow.mines.command.MineCommand;
+import io.github.minehollow.mines.command.PickaxeCommand;
 import io.github.minehollow.mines.config.Messages;
 import io.github.minehollow.mines.instance.MineInstanceManager;
+import io.github.minehollow.mines.listener.GivePickaxeListener;
 import io.github.minehollow.mines.listener.VirtualMineBlockProtectionListener;
 import io.github.minehollow.mines.listener.VirtualMineListener;
 import io.github.minehollow.mines.listener.VirtualMinePacketListener;
@@ -58,8 +60,10 @@ public class MinesPlugin extends SimplePlugin {
 
         this.registerListeners(new VirtualMineListener(this, this.virtualMineService));
         this.registerListeners(new VirtualMineBlockProtectionListener(this.virtualMineService));
+        this.registerCommands(new GivePickaxeListener());
+
         PacketEvents.getAPI().getEventManager().registerListener(this.packetListener);
-        this.registerCommands("mine", new MineCommand(this));
+        this.registerCommands("mine", new MineCommand(this), new PickaxeCommand());
 
         log.info("Virtual mine system enabled with {} mine definitions.", this.definitionRegistry.getAll().size());
     }

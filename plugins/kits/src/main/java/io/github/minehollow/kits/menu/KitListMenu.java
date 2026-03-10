@@ -20,11 +20,20 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class KitListMenu extends SimpleMenu {
+    private static final int ITEMS_PER_ROW = 3;
+    private static final int MIN_CONTENT_ROWS = 2;
+    private static final int MAX_CONTENT_ROWS = 4;
+    private static final String BORDER_ROW = "XXXXXXXXX";
+    private static final String KIT_ROW = "XXKXKXKXX";
+    private static final String FOOTER_ROW = "XXXXXXXXX";
+    private static final String FOOTER_ROW_WITH_BACK = "BXXXXXXXX";
+
     private final KitService kitService;
 
     public KitListMenu(KitService kitService) {
@@ -41,21 +50,22 @@ public class KitListMenu extends SimpleMenu {
                 : "Kits Disponíveis";
 
         config.setTitle(StringUtils.text(title));
-        config.setLayout(
-                "XXXXXXXXX",
-                "XXKXKXKXX",
-                "XXKXKXKXX",
-                "BXXXXXXXX");
         config.setClickSound(new PredefinedSound(Sound.UI_BUTTON_CLICK, 0.5f, 1f));
 
         List<Kit> kits = categoryId != null
                 ? kitService.getKitsByCategory(categoryId)
                 : kitService.getAllKitsSync();
 
+        config.setLayout(buildLayout(kits.size(), categoryId != null));
         ctx.put("kits", kits);
 
         int[] slots = config.getLayout().get('K');
-        for (int i = 0; i < slots.length && i < kits.size(); i++) {
+        for (int i = 0; i < slots.length; i++) {
+            if (i >= kits.size()) {
+                ctx.setItem(slots[i], MenuItemsUtil.COMING_SOON);
+                continue;
+            }
+
             Kit kit = kits.get(i);
             ctx.setItem(slots[i], p -> renderKitIcon(p, kit), e -> {
                 e.setCancelled(true);
@@ -106,6 +116,15 @@ public class KitListMenu extends SimpleMenu {
             return categoryId;
         // Remove MiniMessage tags like <red>, <bold>, etc.
         return category.getDisplayName().replaceAll("<[^>]+>", "");
+    }
+
+    private String[] buildLayout(int kitCount, boolean hasBackButton) {
+        int contentRows = Math.max(MIN_CONTENT_ROWS, Math.min(MAX_CONTENT_ROWS, (kitCount + ITEMS_PER_ROW - 1) / ITEMS_PER_ROW));
+        String[] layout = new String[contentRows + 2];
+        layout[0] = BORDER_ROW;
+        Arrays.fill(layout, 1, contentRows + 1, KIT_ROW);
+        layout[layout.length - 1] = hasBackButton ? FOOTER_ROW_WITH_BACK : FOOTER_ROW;
+        return layout;
     }
 
     private ItemStack renderKitIcon(Player player, Kit kit) {

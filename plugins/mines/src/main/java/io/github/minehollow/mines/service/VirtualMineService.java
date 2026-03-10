@@ -291,32 +291,6 @@ public final class VirtualMineService {
             return;
         }
 
-        final var platform = BukkitPlatform.getInstance();
-        final var context = WalletTransactionContext.builder()
-            .withInitiatorId(null)
-            .withTargetId(player.getUniqueId())
-            .withReason("virtual_mine_block_break:" + instance.getDefinition().getId())
-            .build();
-
-        for (var entry : gainValues.object2LongEntrySet()) {
-            final String currencyId = entry.getKey();
-            final long amount = entry.getLongValue();
-
-            if (currencyId == null || currencyId.isBlank() || amount <= 0L) {
-                continue;
-            }
-
-            if (platform.getCurrencyManager().getCurrency(currencyId) == null) {
-                continue;
-            }
-
-            platform.getPlayerWalletService().addCurrencyValue(
-                player.getUniqueId(),
-                currencyId,
-                BigDecimal.valueOf(amount),
-                context
-            );
-        }
     }
 
     private boolean isPickaxe(@Nullable ItemStack itemStack) {

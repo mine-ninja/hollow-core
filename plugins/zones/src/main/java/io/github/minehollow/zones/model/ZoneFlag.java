@@ -15,6 +15,7 @@ public enum ZoneFlag {
     ITEM_DROP("item-drop"),
     ITEM_PICKUP("item-pickup"),
     PVP("pvp"),
+    DAMAGE("damage"),
     HIDE_PLAYERS("hide-players"),
     COMMAND_EXECUTE("command-execute"),
     INTERACT("interact"),

@@ -17,6 +17,10 @@ public class MenuItemsUtil {
             .lore("", "<dark_gray>Clique para voltar")
             .build();
 
+    public final ItemStack COMING_SOON = ItemBuilder.of(Material.BARRIER)
+            .name("Em breve..")
+            .build();
+
     public final ItemStack SAVE_BUTTON = ItemBuilder.of(Material.LIME_DYE)
             .name("<green>Salvar")
             .lore("", "<gray>Clique para salvar", "<gray>todas as alterações.")

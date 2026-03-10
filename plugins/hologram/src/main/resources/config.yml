@@ -1,0 +1,9 @@
+# HologramPlugin Configuration
+
+# Maximum distance (in blocks) at which holograms become visible to players.
+render-distance: 48
+
+# Auto-save interval in seconds. Set to 0 to disable auto-saving.
+# Holograms are always saved on plugin disable.
+auto-save-interval: 300
+

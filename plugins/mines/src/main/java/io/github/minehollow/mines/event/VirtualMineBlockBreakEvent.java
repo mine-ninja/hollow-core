@@ -28,18 +28,6 @@ public final class VirtualMineBlockBreakEvent extends Event implements Cancellab
 
     private boolean cancelled;
 
-    private Object2LongMap<String> currencyMap = Object2LongMaps.emptyMap();
-
-    public long getCurrencyAmount(String currency) {
-        return this.currencyMap.getLong(currency);
-    }
-
-    public void setCurrencyAmount(String currency, long amount) {
-        if (this.currencyMap.isEmpty()) {
-            this.currencyMap = new Object2LongArrayMap<>();
-        }
-        this.currencyMap.put(currency, amount);
-    }
 
     @Override
     public @NotNull HandlerList getHandlers() {
